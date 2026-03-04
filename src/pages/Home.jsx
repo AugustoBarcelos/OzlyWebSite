@@ -77,10 +77,10 @@ function Hero() {
               transition={{ duration: 0.7, delay: 0.5 }}
               className="mt-9 flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start"
             >
-              <a href="#" className="hover:opacity-80 transition">
+              <a href="#" className="flex items-center justify-center hover:opacity-80 transition">
                 <img src="/app-store.svg" alt="Download on App Store" className="h-14" />
               </a>
-              <a href="#" className="hover:opacity-80 transition">
+              <a href="#" className="flex items-center justify-center hover:opacity-80 transition">
                 <img src="/google-play.svg" alt="Get it on Google Play" className="h-14" />
               </a>
             </motion.div>
@@ -499,10 +499,10 @@ function BottomCta() {
             {t.hero.titleHighlight}
           </p>
           <div className="flex flex-col sm:flex-row items-center gap-4 justify-center">
-            <a href="#" className="hover:opacity-80 transition">
+            <a href="#" className="flex items-center justify-center hover:opacity-80 transition">
               <img src="/app-store.svg" alt="Download on App Store" className="h-14" />
             </a>
-            <a href="#" className="hover:opacity-80 transition">
+            <a href="#" className="flex items-center justify-center hover:opacity-80 transition">
               <img src="/google-play.svg" alt="Get it on Google Play" className="h-14" />
             </a>
           </div>
