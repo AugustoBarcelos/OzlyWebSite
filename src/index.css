@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  /* ── Ozly Brand Palette ── */
+  --color-brand-50: #e8f8f3;
+  --color-brand-100: #c5ede2;
+  --color-brand-200: #8edbc5;
+  --color-brand-300: #57c9a8;
+  --color-brand-400: #33c19e;
+  --color-brand-500: #2BBB97;
+  --color-brand-600: #24a383;
+  --color-brand-700: #1d8a6e;
+  --color-brand-800: #166d57;
+  --color-brand-900: #0f5443;
+
+  --color-lime-50: #f4fbe8;
+  --color-lime-100: #e6f5cc;
+  --color-lime-200: #cdeb99;
+  --color-lime-300: #b4e166;
+  --color-lime-400: #9DD760;
+  --color-lime-500: #89c94e;
+  --color-lime-600: #6fa83d;
+  --color-lime-700: #55872c;
+  --color-lime-800: #3c6620;
+  --color-lime-900: #234514;
+
+  --color-navy-50: #e8ecf0;
+  --color-navy-100: #c5cdd6;
+  --color-navy-200: #8b9bac;
+  --color-navy-300: #526982;
+  --color-navy-400: #2d4a63;
+  --color-navy-500: #1F2E3E;
+  --color-navy-600: #1b2936;
+  --color-navy-700: #162431;
+  --color-navy-800: #111c26;
+  --color-navy-900: #0c141b;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}

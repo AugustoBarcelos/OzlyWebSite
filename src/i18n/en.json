@@ -1,0 +1,101 @@
+{
+  "nav": {
+    "features": "Features",
+    "comparison": "Compare",
+    "pricing": "Pricing",
+    "support": "Support",
+    "download": "Download Now"
+  },
+  "hero": {
+    "badge": "Built for the daily hustle",
+    "title": "Unlimited Invoices & Tax Under Control.",
+    "titleHighlight": "Made for immigrants in Australia.",
+    "subtitle": "The only app with {visaShield} that locks your hours at 48h/fortnight. Send unlimited invoices, snap receipts for expenses and know exactly how much tax to pay for just {price}.",
+    "visaShield": "Visa Shield",
+    "price": "$15/mo",
+    "ctaAppStore": "Download on App Store",
+    "ctaGooglePlay": "Get it on Google Play"
+  },
+  "audience": {
+    "title": "Built by immigrants for the daily grind:",
+    "cleaners": "Cleaners",
+    "tradies": "Tradies",
+    "delivery": "Delivery",
+    "beauty": "Beauty"
+  },
+  "features": {
+    "title": "Everything an immigrant needs,",
+    "titleHighlight": "in one app.",
+    "subtitle": "Stop juggling 4 different apps. Ozly handles invoices, tax, expenses and visa compliance in one place.",
+    "visaShield": "Visa Shield",
+    "visaShieldDesc": "Protects your Student Visa. Tracks your hours and alerts you before you breach the 48h/fortnight limit.",
+    "invoices": "PDF Invoices",
+    "invoicesDesc": "No limits. Generate professional invoices and send them straight to your client's WhatsApp.",
+    "ocr": "Receipt OCR",
+    "ocrDesc": "Snap a photo of your receipt and deduct it from tax. No typing — AI extracts everything for you.",
+    "offline": "100% Offline",
+    "offlineDesc": "Works on the go, on the bus, no wifi needed. Syncs when you're back online."
+  },
+  "comparison": {
+    "title": "Ozly vs",
+    "titleHighlight": "The Competition",
+    "subtitle": "Other apps limit PDFs, charge a % of your earnings and ignore your visa rules.",
+    "headerFeature": "Feature",
+    "headerOzly": "Ozly",
+    "headerOthers": "Competition",
+    "unlimitedInvoices": "Unlimited invoices",
+    "noPercentFee": "No % fee on earnings",
+    "taxCalc": "Tax calculation (ATO)",
+    "ocrReceipts": "Receipt OCR",
+    "visaShield": "Visa Shield (48h/fortnight)",
+    "offline": "Works 100% Offline",
+    "fixedPrice": "Flat price ($15/mo)"
+  },
+  "pricing": {
+    "title": "One price. Everything included.",
+    "subtitle": "No surprises, no per-invoice fee, no percentage of your earnings.",
+    "price": "$15",
+    "period": "/mo",
+    "currency": "AUD · Cancel anytime",
+    "item1": "Unlimited PDF invoices",
+    "item2": "Visa Shield (48h/fortnight)",
+    "item3": "AI-powered receipt OCR",
+    "item4": "ATO tax estimation",
+    "item5": "Works 100% offline",
+    "item6": "Support in English",
+    "cta": "Get Started"
+  },
+  "footer": {
+    "copyright": "© 2026 Ozly. All rights reserved.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service"
+  },
+  "faq": {
+    "pageTitle": "Support & FAQ",
+    "pageSubtitle": "Find answers to common questions about Ozly. Can't find what you need? Get in touch.",
+    "backHome": "Back to home",
+    "contactTitle": "Still have questions?",
+    "contactSubtitle": "Send us an email and we'll get back to you quickly.",
+    "contactButton": "Send Email",
+    "q1": "What is Ozly?",
+    "a1": "Ozly is an app built especially for immigrants in Australia working as Sole Traders with an ABN. It combines unlimited invoices, expense tracking with OCR, tax estimation and Visa Shield all in one place.",
+    "q2": "What is Visa Shield?",
+    "a2": "Visa Shield monitors your work hours and alerts you before you breach the 48-hour per fortnight limit on your student visa. Work with peace of mind without risking your visa conditions.",
+    "q3": "How much does Ozly cost?",
+    "a3": "$15 AUD per month, flat price. No invoice limits, no percentage of your earnings, no surprises.",
+    "q4": "Does it work without internet?",
+    "a4": "Yes! Ozly works 100% offline. You can create invoices, log expenses and track your hours without wifi. Everything syncs automatically when you're back online.",
+    "q5": "How does receipt OCR work?",
+    "a5": "Just take a photo of your receipt. Ozly's AI automatically extracts the amount, date and description. Confirm it and the expense is logged for tax deduction.",
+    "q6": "Does the app calculate my tax?",
+    "a6": "Yes. Ozly estimates how much tax you'll owe following ATO (Australian Taxation Office) rules. No surprises at tax return time.",
+    "q7": "Can I send invoices via WhatsApp?",
+    "a7": "Yes! After generating the PDF invoice, you can share it directly via WhatsApp, email or any other app on your phone.",
+    "q8": "Is Ozly available in other languages?",
+    "a8": "Yes! Ozly is available in Portuguese, English and Spanish, both in the app and on the website.",
+    "q9": "How do I cancel my subscription?",
+    "a9": "You can cancel anytime directly through the App Store or Google Play. No hassle, no cancellation fee.",
+    "q10": "Is Ozly secure?",
+    "a10": "Yes. Your data is encrypted and stored securely. We don't share your information with third parties."
+  }
+}
