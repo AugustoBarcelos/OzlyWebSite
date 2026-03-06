@@ -47,6 +47,7 @@ export default function Navbar() {
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
           <img src={`${import.meta.env.BASE_URL}OSLY.svg`} alt="Ozly" className="h-36" />
+          <span className="text-2xl font-bold text-brand-500" style={{ fontFamily: "'Montserrat', sans-serif" }}>OZLY</span>
         </Link>
 
         {/* Desktop */}

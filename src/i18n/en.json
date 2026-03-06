@@ -65,6 +65,20 @@
     "item6": "Support in English",
     "cta": "Start Hustling"
   },
+  "homeFaq": {
+    "title": "Frequently Asked Questions",
+    "subtitle": "Quick answers to the most common questions about Ozly.",
+    "cta": "Full Guide & Help"
+  },
+  "guide": {
+    "title": "Complete User Guide & FAQ",
+    "subtitle": "Everything you need to know to use Ozly and organise your jobs, invoices and finances in Australia.",
+    "backHome": "Back to home",
+    "toc": "Contents",
+    "contactTitle": "Need more help?",
+    "contactSubtitle": "Send us an email and we'll get back to you quickly.",
+    "contactButton": "Send Email"
+  },
   "bottomCta": {
     "title": "While you're reading this, someone is sending an Invoice through Ozly.",
     "subtitle": "And getting paid faster than you. Download the app and start now."

@@ -6,7 +6,10 @@ export default function Footer() {
   return (
     <footer className="bg-navy-700 text-slate-400 py-10">
       <div className="mx-auto max-w-7xl px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm">
-        <img src={`${import.meta.env.BASE_URL}ozly_logo.svg`} alt="Ozly" className="h-7 brightness-0 invert" />
+        <div className="flex items-center gap-2">
+          <img src={`${import.meta.env.BASE_URL}OSLY.svg`} alt="Ozly" className="h-8 brightness-0 invert" />
+          <span className="text-lg font-bold text-white" style={{ fontFamily: "'Montserrat', sans-serif" }}>OZLY</span>
+        </div>
         <p>{t.footer.copyright}</p>
         <div className="flex gap-6">
           <a href="#" className="hover:text-white transition-colors">{t.footer.privacy}</a>

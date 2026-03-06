@@ -65,6 +65,20 @@
     "item6": "Suporte em Português",
     "cta": "Começar o Corre"
   },
+  "homeFaq": {
+    "title": "Perguntas Frequentes",
+    "subtitle": "Tire suas dúvidas mais comuns sobre o Ozly.",
+    "cta": "Guia Completo & Ajuda"
+  },
+  "guide": {
+    "title": "Guia Completo do Usuário & FAQ",
+    "subtitle": "Tudo que você precisa saber para usar o Ozly e organizar seus jobs, invoices e finanças na Austrália.",
+    "backHome": "Voltar ao início",
+    "toc": "Índice",
+    "contactTitle": "Precisa de mais ajuda?",
+    "contactSubtitle": "Manda um e-mail pra gente que respondemos rapidinho.",
+    "contactButton": "Enviar E-mail"
+  },
   "bottomCta": {
     "title": "Enquanto você lê isso, alguém tá mandando Invoice pelo Ozly.",
     "subtitle": "E recebendo mais rápido que você. Baixa o app e começa agora."

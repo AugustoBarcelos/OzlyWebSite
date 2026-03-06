@@ -1,5 +1,6 @@
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   FileText,
   Camera,
@@ -12,7 +13,9 @@ import {
   Bike,
   Sparkles,
   ChevronRight,
+  ChevronDown,
   DollarSign,
+  BookOpen,
 } from "lucide-react";
 import { useI18n } from "../i18n";
 import ScrollReveal from "../components/ScrollReveal";
@@ -539,6 +542,64 @@ function BottomCta() {
   );
 }
 
+/* ═══════════════════════ HOME FAQ ═══════════════════════ */
+function HomeFaq() {
+  const { t } = useI18n();
+  const [openIndex, setOpenIndex] = useState(null);
+  const faqKeys = ["q1", "q2", "q3", "q4", "q5"];
+
+  return (
+    <section className="bg-white py-24 md:py-32">
+      <div className="mx-auto max-w-3xl px-6">
+        <ScrollReveal>
+          <div className="text-center mb-14">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-navy-700 mb-4">
+              {t.homeFaq.title}
+            </h2>
+            <p className="text-slate-500 max-w-xl mx-auto">{t.homeFaq.subtitle}</p>
+          </div>
+        </ScrollReveal>
+
+        <div className="space-y-3">
+          {faqKeys.map((key, i) => (
+            <ScrollReveal key={key} delay={0.05 * i}>
+              <div className="border border-slate-200 rounded-2xl overflow-hidden hover:border-brand-200 transition">
+                <button
+                  onClick={() => setOpenIndex(openIndex === i ? null : i)}
+                  className="w-full flex items-center justify-between gap-4 px-6 py-5 text-left bg-white hover:bg-slate-50/50 transition"
+                >
+                  <span className="font-semibold text-slate-900">{t.faq[key]}</span>
+                  <ChevronDown
+                    size={20}
+                    className={`flex-shrink-0 text-slate-400 transition-transform duration-200 ${openIndex === i ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {openIndex === i && (
+                  <div className="px-6 pb-5 text-slate-600 leading-relaxed bg-white">
+                    {t.faq[key.replace("q", "a")]}
+                  </div>
+                )}
+              </div>
+            </ScrollReveal>
+          ))}
+        </div>
+
+        <ScrollReveal delay={0.3}>
+          <div className="text-center mt-10">
+            <Link
+              to="/guide"
+              className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-6 py-3.5 text-white font-semibold hover:bg-brand-600 transition shadow-lg shadow-brand-500/20"
+            >
+              <BookOpen size={18} />
+              {t.homeFaq.cta}
+            </Link>
+          </div>
+        </ScrollReveal>
+      </div>
+    </section>
+  );
+}
+
 /* ═══════════════════════ HOME ═══════════════════════ */
 export default function Home() {
   return (
@@ -548,6 +609,7 @@ export default function Home() {
       <FeaturesShowcase />
       <Comparison />
       <Pricing />
+      <HomeFaq />
       <BottomCta />
     </>
   );

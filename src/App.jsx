@@ -3,6 +3,7 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import Support from "./pages/Support";
+import Guide from "./pages/Guide";
 
 export default function App() {
   return (
@@ -11,6 +12,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/support" element={<Support />} />
+        <Route path="/guide" element={<Guide />} />
       </Routes>
       <Footer />
     </div>
