@@ -16,6 +16,7 @@ import {
   ChevronDown,
   DollarSign,
   BookOpen,
+  Mail,
 } from "lucide-react";
 import { useI18n } from "../i18n";
 import ScrollReveal from "../components/ScrollReveal";
@@ -585,14 +586,25 @@ function HomeFaq() {
         </div>
 
         <ScrollReveal delay={0.3}>
-          <div className="text-center mt-10">
-            <Link
-              to="/guide"
-              className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-6 py-3.5 text-white font-semibold hover:bg-brand-600 transition shadow-lg shadow-brand-500/20"
-            >
-              <BookOpen size={18} />
-              {t.homeFaq.cta}
-            </Link>
+          <div className="mt-14 text-center rounded-2xl bg-slate-50 border border-slate-200 p-10">
+            <h3 className="text-2xl font-bold text-navy-700 mb-2">{t.homeFaq.stillQuestions}</h3>
+            <p className="text-slate-500 mb-8 max-w-md mx-auto">{t.homeFaq.stillQuestionsDesc}</p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <a
+                href="mailto:support@ozly.app"
+                className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-6 py-3.5 text-white font-semibold hover:bg-brand-600 transition shadow-lg shadow-brand-500/20"
+              >
+                <Mail size={18} />
+                {t.homeFaq.contact}
+              </a>
+              <Link
+                to="/guide"
+                className="inline-flex items-center gap-2 rounded-full border-2 border-brand-500 px-6 py-3.5 text-brand-500 font-semibold hover:bg-brand-50 transition"
+              >
+                <BookOpen size={18} />
+                {t.homeFaq.cta}
+              </Link>
+            </div>
           </div>
         </ScrollReveal>
       </div>

@@ -68,7 +68,10 @@
   "homeFaq": {
     "title": "Preguntas Frecuentes",
     "subtitle": "Resolvé tus dudas más comunes sobre Ozly.",
-    "cta": "Guía Completa & Ayuda"
+    "cta": "Aprender Más",
+    "stillQuestions": "¿Todavía tenés dudas?",
+    "stillQuestionsDesc": "Contactanos o explorá nuestra guía completa con el paso a paso de cada funcionalidad.",
+    "contact": "Contactanos"
   },
   "guide": {
     "title": "Guía Completa del Usuario & FAQ",
