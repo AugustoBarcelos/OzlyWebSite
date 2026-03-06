@@ -1,10 +1,10 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import {
-  Shield,
   FileText,
   Camera,
-  Smartphone,
+  ClipboardCheck,
+  TrendingUp,
   CheckCircle,
   XCircle,
   SprayCan,
@@ -12,6 +12,7 @@ import {
   Bike,
   Sparkles,
   ChevronRight,
+  DollarSign,
 } from "lucide-react";
 import { useI18n } from "../i18n";
 import ScrollReveal from "../components/ScrollReveal";
@@ -26,7 +27,6 @@ function Hero() {
   const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
 
   const subtitle = t.hero.subtitle
-    .replace("{visaShield}", `<strong class="text-lime-500">${t.hero.visaShield}</strong>`)
     .replace("{price}", `<strong class="text-brand-500">${t.hero.price}</strong>`);
 
   return (
@@ -169,42 +169,8 @@ function AudienceBanner() {
 
 const featureSections = [
   {
-    titleKey: "visaShield",
-    descKey: "visaShieldDesc",
-    icon: Shield,
-    color: "lime",
-    mockupVariant: "lime",
-    screen: (
-      <div className="space-y-3">
-        <div className="flex items-center gap-2 mb-1">
-          <div className="w-8 h-8 rounded-lg bg-lime-100 flex items-center justify-center">
-            <Shield size={16} className="text-lime-600" />
-          </div>
-          <div className="h-4 rounded bg-slate-100 w-24" />
-        </div>
-        <div className="h-32 rounded-2xl bg-gradient-to-br from-lime-50 to-lime-100 flex items-center justify-center">
-          <div className="text-center">
-            <div className="text-3xl font-extrabold text-lime-600">32h</div>
-            <div className="text-[10px] text-lime-500 font-medium mt-0.5">/ 48h</div>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <div className="flex-1 h-14 rounded-xl bg-lime-50 flex items-center justify-center">
-            <div className="w-5 h-5 rounded-full bg-lime-200" />
-          </div>
-          <div className="flex-1 h-14 rounded-xl bg-slate-50 flex items-center justify-center">
-            <div className="w-5 h-5 rounded-full bg-slate-200" />
-          </div>
-        </div>
-        <div className="h-10 rounded-xl bg-lime-400 flex items-center justify-center">
-          <span className="text-[11px] font-bold text-white tracking-wide">VISA SAFE</span>
-        </div>
-      </div>
-    ),
-  },
-  {
-    titleKey: "invoices",
-    descKey: "invoicesDesc",
+    titleKey: "shifts",
+    descKey: "shiftsDesc",
     icon: FileText,
     color: "brand",
     mockupVariant: "teal",
@@ -287,44 +253,104 @@ const featureSections = [
     ),
   },
   {
-    titleKey: "offline",
-    descKey: "offlineDesc",
-    icon: Smartphone,
+    titleKey: "tracker",
+    descKey: "trackerDesc",
+    icon: ClipboardCheck,
+    color: "lime",
+    mockupVariant: "lime",
+    screen: (
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 mb-1">
+          <div className="w-8 h-8 rounded-lg bg-lime-100 flex items-center justify-center">
+            <ClipboardCheck size={16} className="text-lime-600" />
+          </div>
+          <div className="h-4 rounded bg-slate-100 w-24" />
+        </div>
+        {/* Invoice status rows */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2.5 rounded-xl bg-lime-50 p-3 border border-lime-100">
+            <div className="w-2.5 h-2.5 rounded-full bg-lime-500" />
+            <div className="flex-1">
+              <div className="h-2.5 rounded bg-lime-200 w-3/4" />
+            </div>
+            <span className="text-[9px] font-bold text-lime-600 bg-lime-100 rounded-full px-2 py-0.5">PAID</span>
+            <span className="text-[10px] font-bold text-lime-700">$320</span>
+          </div>
+          <div className="flex items-center gap-2.5 rounded-xl bg-amber-50 p-3 border border-amber-100">
+            <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+            <div className="flex-1">
+              <div className="h-2.5 rounded bg-amber-200 w-2/3" />
+            </div>
+            <span className="text-[9px] font-bold text-amber-600 bg-amber-100 rounded-full px-2 py-0.5">PENDING</span>
+            <span className="text-[10px] font-bold text-amber-700">$180</span>
+          </div>
+          <div className="flex items-center gap-2.5 rounded-xl bg-red-50 p-3 border border-red-100">
+            <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
+            <div className="flex-1">
+              <div className="h-2.5 rounded bg-red-200 w-1/2" />
+            </div>
+            <span className="text-[9px] font-bold text-red-500 bg-red-100 rounded-full px-2 py-0.5">OVERDUE</span>
+            <span className="text-[10px] font-bold text-red-600">$250</span>
+          </div>
+        </div>
+        {/* Summary bar */}
+        <div className="rounded-xl bg-slate-50 p-3 flex justify-between items-center">
+          <span className="text-[10px] font-semibold text-slate-500">Total</span>
+          <span className="text-[13px] font-extrabold text-slate-700">$750</span>
+        </div>
+      </div>
+    ),
+  },
+  {
+    titleKey: "forecast",
+    descKey: "forecastDesc",
+    icon: TrendingUp,
     color: "brand",
     mockupVariant: "teal",
     screen: (
       <div className="space-y-3">
         <div className="flex items-center gap-2 mb-1">
-          <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
-            <Smartphone size={16} className="text-slate-600" />
+          <div className="w-8 h-8 rounded-lg bg-brand-100 flex items-center justify-center">
+            <TrendingUp size={16} className="text-brand-600" />
           </div>
-          <div className="h-4 rounded bg-slate-100 w-16" />
-          <div className="ml-auto flex items-center gap-1">
-            <div className="w-2 h-3 rounded-sm bg-slate-300" />
-            <div className="w-2 h-4 rounded-sm bg-slate-300" />
-            <div className="w-2 h-5 rounded-sm bg-lime-400" />
+          <div className="h-4 rounded bg-slate-100 w-28" />
+        </div>
+        {/* Revenue row */}
+        <div className="rounded-xl bg-brand-50 p-3 space-y-1.5">
+          <div className="flex justify-between items-center">
+            <span className="text-[10px] font-semibold text-brand-400">Revenue</span>
+            <span className="text-[13px] font-extrabold text-brand-600">$4,200</span>
+          </div>
+          <div className="h-2 rounded-full bg-brand-100 overflow-hidden">
+            <div className="h-full w-full rounded-full bg-brand-400" />
           </div>
         </div>
-        <div className="h-28 rounded-2xl bg-gradient-to-br from-slate-50 to-brand-50 flex items-center justify-center">
-          <div className="text-center">
-            <Smartphone size={28} className="text-brand-400 mx-auto mb-1" />
-            <div className="text-[11px] font-bold text-slate-600">OFFLINE MODE</div>
-            <div className="text-[9px] text-lime-500 font-medium mt-0.5">All data saved locally</div>
+        {/* Expenses row */}
+        <div className="rounded-xl bg-slate-50 p-3 space-y-1.5">
+          <div className="flex justify-between items-center">
+            <span className="text-[10px] font-semibold text-slate-400">Expenses</span>
+            <span className="text-[13px] font-extrabold text-slate-600">-$680</span>
+          </div>
+          <div className="h-2 rounded-full bg-slate-200 overflow-hidden">
+            <div className="h-full w-[16%] rounded-full bg-slate-400" />
           </div>
         </div>
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 rounded-lg bg-lime-50 p-2.5">
-            <div className="w-2 h-2 rounded-full bg-lime-400" />
-            <div className="h-2.5 rounded bg-lime-200 flex-1" />
+        {/* Tax row */}
+        <div className="rounded-xl bg-red-50 p-3 space-y-1.5">
+          <div className="flex justify-between items-center">
+            <span className="text-[10px] font-semibold text-red-400">Tax (ATO)</span>
+            <span className="text-[13px] font-extrabold text-red-500">-$820</span>
           </div>
-          <div className="flex items-center gap-2 rounded-lg bg-lime-50 p-2.5">
-            <div className="w-2 h-2 rounded-full bg-lime-400" />
-            <div className="h-2.5 rounded bg-lime-200 w-3/4" />
+          <div className="h-2 rounded-full bg-red-100 overflow-hidden">
+            <div className="h-full w-[20%] rounded-full bg-red-400" />
           </div>
-          <div className="flex items-center gap-2 rounded-lg bg-brand-50 p-2.5">
-            <div className="w-2 h-2 rounded-full bg-brand-400 animate-pulse" />
-            <div className="h-2.5 rounded bg-brand-200 w-1/2" />
+        </div>
+        {/* Net profit highlight */}
+        <div className="rounded-2xl bg-gradient-to-r from-lime-400 to-lime-500 p-4 text-center">
+          <div className="text-[10px] font-semibold text-lime-50 mb-0.5">
+            <DollarSign size={10} className="inline -mt-0.5" /> Net Profit
           </div>
+          <div className="text-2xl font-extrabold text-white">$2,700</div>
         </div>
       </div>
     ),
@@ -393,7 +419,8 @@ const comparisonKeys = [
   "noPercentFee",
   "taxCalc",
   "ocrReceipts",
-  "visaShield",
+  "paymentTracking",
+  "profitForecast",
   "offline",
   "fixedPrice",
 ];
@@ -493,10 +520,10 @@ function BottomCta() {
       <div className="mx-auto max-w-4xl px-6 text-center">
         <ScrollReveal>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight mb-6">
-            {t.hero.title}
+            {t.bottomCta.title}
           </h2>
           <p className="text-brand-200 text-lg mb-10 max-w-xl mx-auto">
-            {t.hero.titleHighlight}
+            {t.bottomCta.subtitle}
           </p>
           <div className="flex flex-col sm:flex-row items-center gap-4 justify-center">
             <a href="#" className="flex items-center justify-center hover:opacity-80 transition">

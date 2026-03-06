@@ -7,11 +7,10 @@
     "download": "Download Now"
   },
   "hero": {
-    "badge": "Built for the daily hustle",
-    "title": "Unlimited Invoices & Tax Under Control.",
-    "titleHighlight": "Made for immigrants in Australia.",
-    "subtitle": "The only app with {visaShield} that locks your hours at 48h/fortnight. Send unlimited invoices, snap receipts for expenses and know exactly how much tax to pay for just {price}.",
-    "visaShield": "Visa Shield",
+    "badge": "Your business in your pocket",
+    "title": "No more mess. Shifts, Invoices & Tax in one place.",
+    "titleHighlight": "Built for ABN workers in Australia.",
+    "subtitle": "Schedule all your jobs, generate a PDF Invoice in 15 seconds and send it to your client on the spot. Track expenses, know how much the ATO will charge and see the clean cash in your pocket — all for just {price}.",
     "price": "$15/mo",
     "ctaAppStore": "Download on App Store",
     "ctaGooglePlay": "Get it on Google Play"
@@ -24,22 +23,22 @@
     "beauty": "Beauty"
   },
   "features": {
-    "title": "Everything an immigrant needs,",
+    "title": "Everything an ABN worker needs,",
     "titleHighlight": "in one app.",
-    "subtitle": "Stop juggling 4 different apps. Ozly handles invoices, tax, expenses and visa compliance in one place.",
-    "visaShield": "Visa Shield",
-    "visaShieldDesc": "Protects your Student Visa. Tracks your hours and alerts you before you breach the 48h/fortnight limit.",
-    "invoices": "PDF Invoices",
-    "invoicesDesc": "No limits. Generate professional invoices and send them straight to your client's WhatsApp.",
-    "ocr": "Receipt OCR",
-    "ocrDesc": "Snap a photo of your receipt and deduct it from tax. No typing — AI extracts everything for you.",
-    "offline": "100% Offline",
-    "offlineDesc": "Works on the go, on the bus, no wifi needed. Syncs when you're back online."
+    "subtitle": "Stop juggling 4 different apps. Ozly handles shifts, invoices, tax and expenses in one place.",
+    "shifts": "Shifts & Invoices",
+    "shiftsDesc": "Finished the job, generated the PDF and sent it to the client on the spot. Unlimited sends, no fuss.",
+    "ocr": "Smart Camera",
+    "ocrDesc": "Snapped a receipt from Bunnings or the servo? The app reads it, links it to the job and calculates your ATO deduction.",
+    "tracker": "Payment Tracker",
+    "trackerDesc": "One screen to see who paid, what's pending and who owes you. Stop losing money.",
+    "forecast": "Financial Forecast",
+    "forecastDesc": "Know exactly how much clean cash you'll have in your pocket at the end of the month. No surprises at Tax Return time."
   },
   "comparison": {
     "title": "Ozly vs",
     "titleHighlight": "The Competition",
-    "subtitle": "Other apps limit PDFs, charge a % of your earnings and ignore your visa rules.",
+    "subtitle": "Other apps limit PDFs, charge a % of your profit and are too complicated for someone hustling on the road. Ozly is offline and unlimited.",
     "headerFeature": "Feature",
     "headerOzly": "Ozly",
     "headerOthers": "Competition",
@@ -47,7 +46,8 @@
     "noPercentFee": "No % fee on earnings",
     "taxCalc": "Tax calculation (ATO)",
     "ocrReceipts": "Receipt OCR",
-    "visaShield": "Visa Shield (48h/fortnight)",
+    "paymentTracking": "Payment tracking",
+    "profitForecast": "Net profit forecast",
     "offline": "Works 100% Offline",
     "fixedPrice": "Flat price ($15/mo)"
   },
@@ -58,12 +58,16 @@
     "period": "/mo",
     "currency": "AUD · Cancel anytime",
     "item1": "Unlimited PDF invoices",
-    "item2": "Visa Shield (48h/fortnight)",
+    "item2": "Payment tracking",
     "item3": "AI-powered receipt OCR",
-    "item4": "ATO tax estimation",
+    "item4": "Financial forecast",
     "item5": "Works 100% offline",
     "item6": "Support in English",
-    "cta": "Get Started"
+    "cta": "Start Hustling"
+  },
+  "bottomCta": {
+    "title": "While you're reading this, someone is sending an Invoice through Ozly.",
+    "subtitle": "And getting paid faster than you. Download the app and start now."
   },
   "footer": {
     "copyright": "© 2026 Ozly. All rights reserved.",
@@ -78,13 +82,13 @@
     "contactSubtitle": "Send us an email and we'll get back to you quickly.",
     "contactButton": "Send Email",
     "q1": "What is Ozly?",
-    "a1": "Ozly is an app built especially for immigrants in Australia working as Sole Traders with an ABN. It combines unlimited invoices, expense tracking with OCR, tax estimation and Visa Shield all in one place.",
-    "q2": "What is Visa Shield?",
-    "a2": "Visa Shield monitors your work hours and alerts you before you breach the 48-hour per fortnight limit on your student visa. Work with peace of mind without risking your visa conditions.",
+    "a1": "Ozly is an app built especially for ABN workers in Australia — Cleaners, Tradies, Delivery riders and any Sole Trader. It combines shifts, unlimited invoices, expense tracking with OCR, payment tracker and financial forecast all in one place.",
+    "q2": "How does the Payment Tracker work?",
+    "a2": "The Tracker shows all your invoices organised by status: paid, pending and overdue. You instantly know who owes you and never lose track of money again.",
     "q3": "How much does Ozly cost?",
     "a3": "$15 AUD per month, flat price. No invoice limits, no percentage of your earnings, no surprises.",
     "q4": "Does it work without internet?",
-    "a4": "Yes! Ozly works 100% offline. You can create invoices, log expenses and track your hours without wifi. Everything syncs automatically when you're back online.",
+    "a4": "Yes! Ozly works 100% offline. You can create invoices, log expenses and track your jobs without wifi. Everything syncs automatically when you're back online.",
     "q5": "How does receipt OCR work?",
     "a5": "Just take a photo of your receipt. Ozly's AI automatically extracts the amount, date and description. Confirm it and the expense is logged for tax deduction.",
     "q6": "Does the app calculate my tax?",
@@ -95,7 +99,7 @@
     "a8": "Yes! Ozly is available in Portuguese, English and Spanish, both in the app and on the website.",
     "q9": "How do I cancel my subscription?",
     "a9": "You can cancel anytime directly through the App Store or Google Play. No hassle, no cancellation fee.",
-    "q10": "Is Ozly secure?",
-    "a10": "Yes. Your data is encrypted and stored securely. We don't share your information with third parties."
+    "q10": "What is the Financial Forecast?",
+    "a10": "The Financial Forecast shows how much clean cash you'll have in your pocket at the end of the month, after expenses and taxes. No surprises at Tax Return time."
   }
 }
