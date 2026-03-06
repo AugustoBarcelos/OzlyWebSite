@@ -45,7 +45,7 @@ export default function Navbar() {
     >
       <div className="mx-auto max-w-7xl flex items-center justify-between px-6 py-4">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2">
+        <Link to="/" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="flex items-center gap-2">
           <img src={`${import.meta.env.BASE_URL}OSLY.svg`} alt="Ozly" className="h-36" />
           <span className="text-2xl font-bold text-brand-500" style={{ fontFamily: "'Montserrat', sans-serif" }}>OZLY</span>
         </Link>
