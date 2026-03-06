@@ -78,10 +78,10 @@ function Hero() {
               className="mt-9 flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start"
             >
               <a href="#" className="flex items-center justify-center hover:opacity-80 transition">
-                <img src="/app-store.svg" alt="Download on App Store" className="h-14" />
+                <img src={`${import.meta.env.BASE_URL}app-store.svg`} alt="Download on App Store" className="h-14" />
               </a>
               <a href="#" className="flex items-center justify-center hover:opacity-80 transition">
-                <img src="/google-play.svg" alt="Get it on Google Play" className="h-14" />
+                <img src={`${import.meta.env.BASE_URL}google-play.svg`} alt="Get it on Google Play" className="h-14" />
               </a>
             </motion.div>
           </motion.div>
@@ -500,10 +500,10 @@ function BottomCta() {
           </p>
           <div className="flex flex-col sm:flex-row items-center gap-4 justify-center">
             <a href="#" className="flex items-center justify-center hover:opacity-80 transition">
-              <img src="/app-store.svg" alt="Download on App Store" className="h-14" />
+              <img src={`${import.meta.env.BASE_URL}app-store.svg`} alt="Download on App Store" className="h-14" />
             </a>
             <a href="#" className="flex items-center justify-center hover:opacity-80 transition">
-              <img src="/google-play.svg" alt="Get it on Google Play" className="h-14" />
+              <img src={`${import.meta.env.BASE_URL}google-play.svg`} alt="Get it on Google Play" className="h-14" />
             </a>
           </div>
         </ScrollReveal>
