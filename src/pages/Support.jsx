@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronDown, ArrowLeft, Mail } from "lucide-react";
+import { ChevronDown, ArrowLeft, Mail, BookOpen } from "lucide-react";
 import { useI18n } from "../i18n";
 
 const faqKeys = ["q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8", "q9", "q10"];
@@ -62,17 +62,26 @@ export default function Support() {
           ))}
         </div>
 
-        {/* Contact CTA */}
+        {/* Contact + Guide CTA */}
         <div className="mt-16 text-center rounded-2xl bg-white border border-slate-200 p-10">
-          <h2 className="text-2xl font-bold text-navy-700 mb-2">{t.faq.contactTitle}</h2>
-          <p className="text-slate-500 mb-6">{t.faq.contactSubtitle}</p>
-          <a
-            href="mailto:support@ozly.app"
-            className="inline-flex items-center gap-2.5 rounded-full bg-brand-500 px-6 py-3.5 text-white font-semibold hover:bg-brand-600 transition shadow-lg shadow-brand-500/30"
-          >
-            <Mail size={18} />
-            {t.faq.contactButton}
-          </a>
+          <h2 className="text-2xl font-bold text-navy-700 mb-2">{t.homeFaq.stillQuestions}</h2>
+          <p className="text-slate-500 mb-8 max-w-md mx-auto">{t.homeFaq.stillQuestionsDesc}</p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <a
+              href="mailto:support@ozly.app"
+              className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-6 py-3.5 text-white font-semibold hover:bg-brand-600 transition shadow-lg shadow-brand-500/20"
+            >
+              <Mail size={18} />
+              {t.homeFaq.contact}
+            </a>
+            <Link
+              to="/guide"
+              className="inline-flex items-center gap-2 rounded-full border-2 border-brand-500 px-6 py-3.5 text-brand-500 font-semibold hover:bg-brand-50 transition"
+            >
+              <BookOpen size={18} />
+              {t.homeFaq.cta}
+            </Link>
+          </div>
         </div>
       </div>
     </section>
