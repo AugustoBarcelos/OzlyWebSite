@@ -48,7 +48,7 @@ export default function Navbar() {
         <Link
           to="/"
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          className={`flex items-center gap-2 transition-all duration-300 ${
+          className={`flex items-center gap-0 transition-all duration-300 ${
             scrolled ? "md:opacity-100 md:visible invisible w-0 md:w-auto overflow-hidden" : ""
           }`}
         >
