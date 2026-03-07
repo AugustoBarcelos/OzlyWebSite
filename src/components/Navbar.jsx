@@ -44,11 +44,22 @@ export default function Navbar() {
       }`}
     >
       <div className="mx-auto max-w-7xl flex items-center justify-between px-6 py-4">
-        {/* Logo */}
-        <Link to="/" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="flex items-center gap-2">
+        {/* Logo — hidden on mobile when scrolled */}
+        <Link
+          to="/"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          className={`flex items-center gap-2 transition-all duration-300 ${
+            scrolled ? "md:opacity-100 md:visible invisible w-0 md:w-auto overflow-hidden" : ""
+          }`}
+        >
           <img src={`${import.meta.env.BASE_URL}OSLY.svg`} alt="Ozly" className="h-36" />
           <span className="text-2xl font-bold text-brand-500" style={{ fontFamily: "'Montserrat', sans-serif" }}>OZLY</span>
         </Link>
+
+        {/* Mobile hamburger — moves to left when logo hidden */}
+        <button onClick={() => setOpen(!open)} className="md:hidden text-slate-700" aria-label="Menu">
+          {open ? <X size={24} /> : <Menu size={24} />}
+        </button>
 
         {/* Desktop */}
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
@@ -93,11 +104,6 @@ export default function Navbar() {
             {t.nav.download}
           </a>
         </div>
-
-        {/* Mobile hamburger */}
-        <button onClick={() => setOpen(!open)} className="md:hidden text-slate-700" aria-label="Menu">
-          {open ? <X size={24} /> : <Menu size={24} />}
-        </button>
       </div>
 
       {/* Mobile menu */}
