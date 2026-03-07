@@ -52,7 +52,7 @@ export default function Navbar() {
             scrolled ? "md:opacity-100 md:visible invisible w-0 md:w-auto overflow-hidden" : ""
           }`}
         >
-          <img src={`${import.meta.env.BASE_URL}OSLY.svg`} alt="Ozly" className="h-36" />
+          <img src={`${import.meta.env.BASE_URL}OSLY.svg`} alt="Ozly" className="h-12" />
           <span className="text-2xl font-bold text-brand-500" style={{ fontFamily: "'Montserrat', sans-serif" }}>OZLY</span>
         </Link>
 
