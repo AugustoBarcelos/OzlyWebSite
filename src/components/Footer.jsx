@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useI18n } from "../i18n";
 
 export default function Footer() {
@@ -12,8 +13,8 @@ export default function Footer() {
         </div>
         <p>{t.footer.copyright}</p>
         <div className="flex gap-6">
-          <a href="#" className="hover:text-white transition-colors">{t.footer.privacy}</a>
-          <a href="#" className="hover:text-white transition-colors">{t.footer.terms}</a>
+          <Link to="/privacy-policy" className="hover:text-white transition-colors">{t.footer.privacy}</Link>
+          <Link to="/terms-of-use" className="hover:text-white transition-colors">{t.footer.terms}</Link>
         </div>
       </div>
     </footer>
