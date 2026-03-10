@@ -1,25 +1,28 @@
 import { useEffect } from "react";
+import { useI18n } from "../i18n";
 
 export default function PrivacyPolicy() {
+  const { t } = useI18n();
+  const p = t.privacy;
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
   return (
     <div className="bg-[#F8FAFC] min-h-screen pt-28 pb-20">
       <div className="mx-auto max-w-3xl px-6">
-        <h1 className="text-3xl font-bold text-navy-500 mb-1">Ozly &mdash; Privacy Policy</h1>
-        <p className="text-sm text-slate-500 mb-8">Effective Date: 10 March 2026 &nbsp;|&nbsp; Last Updated: 10 March 2026</p>
+        <h1 className="text-3xl font-bold text-navy-500 mb-1">Ozly &mdash; {p.title}</h1>
+        <p className="text-sm text-slate-500 mb-8">{p.effectiveDate} &nbsp;|&nbsp; {p.lastUpdated}</p>
 
         <div className="bg-brand-50 border-l-4 border-brand-500 rounded-r-lg p-5 mb-8">
-          <p className="text-sm text-navy-500"><strong>Summary:</strong> Ozly is a workforce-management and expense-tracking application designed for Australian contractors and small businesses. We collect only the data necessary to deliver our services. Your financial data is encrypted on your device, and you may request complete deletion of your account and all associated data at any time.</p>
+          <p className="text-sm text-navy-500"><strong>{p.summaryLabel}</strong> {p.summary}</p>
         </div>
 
-        <Section title="1. Who We Are">
+        <Section title={p.s1}>
           <p>Ozly (&ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;) is operated by Ozly Pty Ltd (ABN to be confirmed), based in Australia. This Privacy Policy explains how we collect, use, disclose, and protect your personal information when you use the Ozly mobile application (the &ldquo;App&rdquo;) available on the Apple App Store and Google Play Store.</p>
           <p>We are committed to complying with the <strong>Australian Privacy Act 1988 (Cth)</strong> and the <strong>Australian Privacy Principles (APPs)</strong>, as well as the privacy requirements of Apple and Google.</p>
           <p>For any privacy-related enquiry, please contact us at: <strong>privacy@ozly.com.au</strong></p>
         </Section>
 
-        <Section title="2. Information We Collect">
+        <Section title={p.s2}>
           <h3 className="text-lg font-semibold text-navy-500 mt-6 mb-2">2.1 Account &amp; Profile Information</h3>
           <p>When you create an account, we collect:</p>
           <ul>
@@ -113,7 +116,7 @@ export default function PrivacyPolicy() {
           </ul>
         </Section>
 
-        <Section title="3. How We Store Your Data">
+        <Section title={p.s3}>
           <h3 className="text-lg font-semibold text-navy-500 mt-6 mb-2">3.1 On-Device (Offline-First Architecture)</h3>
           <p>Your financial and work data is stored locally on your device using an encrypted SQLite database. We use <strong>SQLCipher</strong> (AES-256 encryption) to encrypt the local database at rest. This means your data remains accessible even without an internet connection and is protected if your device is lost or stolen.</p>
 
@@ -129,7 +132,7 @@ export default function PrivacyPolicy() {
           <p>Uploaded files (receipt images, profile avatars) are stored in Supabase Storage with access restricted to the authenticated user who uploaded them.</p>
         </Section>
 
-        <Section title="4. How We Use Your Information">
+        <Section title={p.s4}>
           <p>We use your personal information to:</p>
           <ul>
             <li>Provide and operate the App&apos;s core features (job tracking, invoicing, expense management).</li>
@@ -143,7 +146,7 @@ export default function PrivacyPolicy() {
           </ul>
         </Section>
 
-        <Section title="5. Third-Party Service Providers">
+        <Section title={p.s5}>
           <p>We share your data with the following third-party processors, solely as required to deliver our services:</p>
           <div className="overflow-x-auto my-4">
             <table className="w-full text-sm border-collapse">
@@ -198,12 +201,12 @@ export default function PrivacyPolicy() {
           <p>We do <strong>not</strong> sell, rent, or trade your personal information to any third party for marketing or advertising purposes.</p>
         </Section>
 
-        <Section title="6. Data Retention">
+        <Section title={p.s6}>
           <p>We retain your data for as long as your account is active. If you delete your account, all associated data is permanently removed (see Section 9 below).</p>
           <p>Anonymised analytics data may be retained for up to 24 months after account deletion for the purpose of improving our services.</p>
         </Section>
 
-        <Section title="7. Data Security">
+        <Section title={p.s7}>
           <p>We implement the following security measures:</p>
           <ul>
             <li><strong>Encryption at rest:</strong> Local database encrypted with SQLCipher (AES-256).</li>
@@ -216,7 +219,7 @@ export default function PrivacyPolicy() {
           </ul>
         </Section>
 
-        <Section title="8. Your Rights Under Australian Privacy Law">
+        <Section title={p.s8}>
           <p>Under the Privacy Act 1988 and the Australian Privacy Principles, you have the right to:</p>
           <ul>
             <li><strong>Access</strong> the personal information we hold about you.</li>
@@ -228,7 +231,7 @@ export default function PrivacyPolicy() {
         </Section>
 
         <div id="data-deletion" className="bg-red-50 border-l-4 border-red-500 rounded-r-lg p-5 my-8">
-          <h2 className="text-xl font-bold text-navy-500 mb-3">9. Account &amp; Data Deletion</h2>
+          <h2 className="text-xl font-bold text-navy-500 mb-3">{p.s9}</h2>
           <p className="text-sm text-slate-700 mb-3"><strong>You may request complete deletion of your account and all associated data at any time.</strong></p>
 
           <h3 className="text-base font-semibold text-navy-500 mt-4 mb-2">How to Delete Your Account:</h3>
@@ -257,15 +260,15 @@ export default function PrivacyPolicy() {
           <p className="text-sm text-slate-700">Deleting your Ozly account does <strong>not</strong> automatically cancel your App Store or Google Play subscription. You must cancel your subscription separately through your device&apos;s subscription settings to avoid further charges.</p>
         </div>
 
-        <Section title="10. International Data Transfers">
+        <Section title={p.s10}>
           <p>Your data may be processed on servers located outside Australia (e.g., Supabase infrastructure, Google Cloud services). Where this occurs, we ensure that appropriate safeguards are in place in accordance with APP 8 (cross-border disclosure of personal information).</p>
         </Section>
 
-        <Section title="11. Children's Privacy">
+        <Section title={p.s11}>
           <p>The App is not directed to children under the age of 16. We do not knowingly collect personal information from children. If we become aware that a child under 16 has provided us with personal information, we will take steps to delete such information promptly.</p>
         </Section>
 
-        <Section title="12. Changes to This Policy">
+        <Section title={p.s12}>
           <p>We may update this Privacy Policy from time to time. We will notify you of material changes by:</p>
           <ul>
             <li>Posting the updated policy on our website with a revised &ldquo;Last Updated&rdquo; date.</li>
@@ -274,7 +277,7 @@ export default function PrivacyPolicy() {
           <p>Your continued use of the App after any changes constitutes acceptance of the updated Privacy Policy.</p>
         </Section>
 
-        <Section title="13. Contact Us">
+        <Section title={p.s13}>
           <p>If you have any questions, concerns, or requests regarding this Privacy Policy or your personal data, please contact us:</p>
           <ul>
             <li><strong>Email:</strong> <a href="mailto:privacy@ozly.com.au">privacy@ozly.com.au</a></li>

@@ -7,7 +7,7 @@ import App from "./App.jsx";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <BrowserRouter basename="/OzlyWebSite">
+    <BrowserRouter>
       <I18nProvider>
         <App />
       </I18nProvider>

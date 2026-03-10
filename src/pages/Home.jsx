@@ -474,40 +474,147 @@ function Comparison() {
 }
 
 /* ═══════════════════════ PRICING ═══════════════════════ */
+const featureMatrix = [
+  //                           TFN    ABN    MAX
+  { key: "shifts",             tfn: true,  abn: true,  max: true  },
+  { key: "expensesOcr",        tfn: true,  abn: true,  max: true  },
+  { key: "visaShield",         tfn: true,  abn: true,  max: true  },
+  { key: "calendarSync",       tfn: true,  abn: true,  max: true  },
+  { key: "taxAnalytics",       tfn: true,  abn: true,  max: true  },
+  { key: "contractors",        tfn: false, abn: true,  max: true  },
+  { key: "invoices",           tfn: false, abn: true,  max: true  },
+  { key: "hoursComparison",    tfn: false, abn: true,  max: true  },
+  { key: "multiBusinesses",    tfn: false, abn: true,  max: true  },
+  { key: "toggleMode",         tfn: false, abn: false, max: true  },
+];
+
 function Pricing() {
   const { t } = useI18n();
-  const items = [t.pricing.item1, t.pricing.item2, t.pricing.item3, t.pricing.item4, t.pricing.item5, t.pricing.item6];
+  const p = t.pricing;
+
+  const plans = [
+    { id: "tfn", ...p.tfn, color: "brand",  highlight: false },
+    { id: "abn", ...p.abn, color: "brand",  highlight: false },
+    { id: "max", ...p.max, color: "amber",  highlight: true  },
+  ];
 
   return (
     <section id="pricing" className="bg-[#F8FAFC] py-24 md:py-32">
-      <div className="mx-auto max-w-3xl px-6 text-center">
+      <div className="mx-auto max-w-5xl px-6">
         <ScrollReveal>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-navy-700 mb-4">{t.pricing.title}</h2>
-          <p className="text-slate-500 mb-12 max-w-xl mx-auto">{t.pricing.subtitle}</p>
+          <div className="text-center mb-6">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-navy-700 mb-4">{p.title}</h2>
+            <p className="text-slate-500 max-w-xl mx-auto">{p.subtitle}</p>
+          </div>
+          <div className="text-center mb-12">
+            <span className="inline-block rounded-full bg-lime-100 px-5 py-2 text-sm font-bold text-lime-700">
+              {p.trialBadge}
+            </span>
+          </div>
         </ScrollReveal>
 
-        <ScrollReveal delay={0.15}>
-          <div className="inline-block rounded-3xl bg-white border border-slate-200 shadow-xl shadow-brand-500/5 p-10 md:p-14">
-            <div className="text-6xl font-extrabold text-brand-500 mb-1">
-              {t.pricing.price}<span className="text-2xl font-semibold text-slate-400">{t.pricing.period}</span>
-            </div>
-            <p className="text-slate-500 mb-8">{t.pricing.currency}</p>
+        {/* ── Mobile: stacked cards ── */}
+        <div className="flex flex-col gap-6 lg:hidden">
+          {plans.map((plan, pi) => (
+            <ScrollReveal key={plan.id} delay={0.1 * pi}>
+              <div className={`relative rounded-3xl bg-white border-2 p-8 ${plan.highlight ? "border-amber-400 shadow-xl shadow-amber-500/10" : "border-slate-200 shadow-lg shadow-brand-500/5"}`}>
+                {plan.highlight && (
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 px-5 py-1 text-xs font-bold text-white shadow-md">
+                    {p.bestValue}
+                  </div>
+                )}
+                <div className="text-center mb-6">
+                  <h3 className={`text-2xl font-extrabold mb-1 ${plan.highlight ? "text-amber-500" : "text-brand-500"}`}>{plan.name}</h3>
+                  <p className="text-slate-500 text-sm">{plan.desc}</p>
+                  <div className="mt-4">
+                    <span className={`text-5xl font-extrabold ${plan.highlight ? "text-amber-500" : "text-brand-500"}`}>{plan.price}</span>
+                    <span className="text-lg font-semibold text-slate-400">{p.perMonth}</span>
+                    <span className="block text-xs text-slate-400 mt-1">{p.currency}</span>
+                  </div>
+                </div>
+                <ul className="space-y-3 mb-8">
+                  {featureMatrix.map(({ key, [plan.id]: has }) => (
+                    <li key={key} className="flex items-center gap-3 text-sm">
+                      {has
+                        ? <CheckCircle size={16} className="text-lime-500 flex-shrink-0" />
+                        : <XCircle size={16} className="text-slate-300 flex-shrink-0" />
+                      }
+                      <span className={has ? "text-slate-700" : "text-slate-400"}>{p.features[key]}</span>
+                    </li>
+                  ))}
+                </ul>
+                <a
+                  href="#download"
+                  className={`flex items-center justify-center gap-2 rounded-full px-6 py-3.5 font-semibold transition shadow-lg ${
+                    plan.highlight
+                      ? "bg-gradient-to-r from-amber-400 to-amber-500 text-white hover:from-amber-500 hover:to-amber-600 shadow-amber-500/25"
+                      : "bg-brand-500 text-white hover:bg-brand-600 shadow-brand-500/25"
+                  }`}
+                >
+                  {p.cta} <ChevronRight size={18} />
+                </a>
+              </div>
+            </ScrollReveal>
+          ))}
+        </div>
 
-            <ul className="text-left space-y-3.5 text-slate-700 mb-10">
-              {items.map((item) => (
-                <li key={item} className="flex items-start gap-3">
-                  <CheckCircle size={18} className="text-lime-500 mt-0.5 flex-shrink-0" />
-                  <span>{item}</span>
-                </li>
+        {/* ── Desktop: comparison table ── */}
+        <ScrollReveal delay={0.15} className="hidden lg:block">
+          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-brand-500/5">
+            {/* Header */}
+            <div className="grid grid-cols-[1fr_repeat(3,160px)] items-end">
+              <div className="p-6" />
+              {plans.map((plan) => (
+                <div key={plan.id} className={`relative p-6 text-center ${plan.highlight ? "bg-amber-50/50" : ""}`}>
+                  {plan.highlight && (
+                    <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 rounded-b-lg bg-gradient-to-r from-amber-400 to-amber-500 px-4 py-1 text-[10px] font-bold text-white uppercase tracking-wider">
+                      {p.bestValue}
+                    </div>
+                  )}
+                  <h3 className={`text-xl font-extrabold mb-1 ${plan.highlight ? "text-amber-500" : "text-brand-500"}`}>{plan.name}</h3>
+                  <p className="text-slate-500 text-xs mb-3">{plan.desc}</p>
+                  <div>
+                    <span className={`text-4xl font-extrabold ${plan.highlight ? "text-amber-500" : "text-brand-500"}`}>{plan.price}</span>
+                    <span className="text-base font-semibold text-slate-400">{p.perMonth}</span>
+                  </div>
+                  <span className="text-[10px] text-slate-400">{p.currency}</span>
+                </div>
               ))}
-            </ul>
+            </div>
 
-            <a
-              href="#download"
-              className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-8 py-4 text-white font-semibold hover:bg-brand-600 transition shadow-xl shadow-brand-500/25"
-            >
-              {t.pricing.cta} <ChevronRight size={18} />
-            </a>
+            {/* Feature rows */}
+            {featureMatrix.map(({ key, tfn, abn, max }, i) => (
+              <div key={key} className={`grid grid-cols-[1fr_repeat(3,160px)] items-center border-t border-slate-100 ${i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}`}>
+                <div className="px-6 py-4 text-sm font-medium text-slate-700">{p.features[key]}</div>
+                {[tfn, abn, max].map((has, ci) => (
+                  <div key={ci} className={`px-6 py-4 flex justify-center ${plans[ci].highlight ? "bg-amber-50/30" : ""}`}>
+                    {has
+                      ? <CheckCircle size={20} className="text-lime-500" />
+                      : <span className="text-slate-300">&mdash;</span>
+                    }
+                  </div>
+                ))}
+              </div>
+            ))}
+
+            {/* CTA row */}
+            <div className="grid grid-cols-[1fr_repeat(3,160px)] items-center border-t border-slate-200 bg-slate-50/50">
+              <div className="p-6" />
+              {plans.map((plan) => (
+                <div key={plan.id} className={`p-6 flex justify-center ${plan.highlight ? "bg-amber-50/30" : ""}`}>
+                  <a
+                    href="#download"
+                    className={`inline-flex items-center gap-1.5 rounded-full px-5 py-2.5 text-sm font-semibold transition shadow-md ${
+                      plan.highlight
+                        ? "bg-gradient-to-r from-amber-400 to-amber-500 text-white hover:from-amber-500 hover:to-amber-600 shadow-amber-500/20"
+                        : "bg-brand-500 text-white hover:bg-brand-600 shadow-brand-500/20"
+                    }`}
+                  >
+                    {p.cta} <ChevronRight size={14} />
+                  </a>
+                </div>
+              ))}
+            </div>
           </div>
         </ScrollReveal>
       </div>

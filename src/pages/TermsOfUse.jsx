@@ -1,19 +1,23 @@
 import { useEffect } from "react";
+import { Link } from "react-router-dom";
+import { useI18n } from "../i18n";
 
 export default function TermsOfUse() {
+  const { t } = useI18n();
+  const tm = t.terms;
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
   return (
     <div className="bg-[#F8FAFC] min-h-screen pt-28 pb-20">
       <div className="mx-auto max-w-3xl px-6">
-        <h1 className="text-3xl font-bold text-navy-500 mb-1">Ozly &mdash; Terms of Use (EULA)</h1>
-        <p className="text-sm text-slate-500 mb-8">Effective Date: 10 March 2026 &nbsp;|&nbsp; Last Updated: 10 March 2026</p>
+        <h1 className="text-3xl font-bold text-navy-500 mb-1">Ozly &mdash; {tm.title}</h1>
+        <p className="text-sm text-slate-500 mb-8">{tm.effectiveDate} &nbsp;|&nbsp; {tm.lastUpdated}</p>
 
         <div className="bg-brand-50 border-l-4 border-brand-500 rounded-r-lg p-5 mb-8">
-          <p className="text-sm text-navy-500"><strong>Important:</strong> By downloading, installing, or using the Ozly application, you agree to be bound by these Terms of Use. If you do not agree to these terms, do not use the App.</p>
+          <p className="text-sm text-navy-500"><strong>{tm.importantLabel}</strong> {tm.importantText}</p>
         </div>
 
-        <Section title="1. Agreement &amp; Definitions">
+        <Section title={tm.s1}>
           <p>These Terms of Use (&ldquo;Terms&rdquo;, &ldquo;EULA&rdquo;) constitute a legally binding agreement between you (&ldquo;User&rdquo;, &ldquo;you&rdquo;, &ldquo;your&rdquo;) and Ozly Pty Ltd (&ldquo;Ozly&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;), governing your use of the Ozly mobile application (&ldquo;App&rdquo;) and related services.</p>
           <p>Key definitions:</p>
           <ul>
@@ -24,11 +28,11 @@ export default function TermsOfUse() {
           </ul>
         </Section>
 
-        <Section title="2. Eligibility">
+        <Section title={tm.s2}>
           <p>You must be at least 16 years of age to use the App. By using the App, you represent and warrant that you meet this age requirement and have the legal capacity to enter into these Terms.</p>
         </Section>
 
-        <Section title="3. Account Registration &amp; Security">
+        <Section title={tm.s3}>
           <ol>
             <li>You may register using your email address and password, Google Sign-In, or Sign in with Apple.</li>
             <li>You are responsible for maintaining the confidentiality of your account credentials.</li>
@@ -38,7 +42,7 @@ export default function TermsOfUse() {
           </ol>
         </Section>
 
-        <Section title="4. Description of the Service">
+        <Section title={tm.s4}>
           <p>Ozly is a workforce-management and financial-tracking application designed for Australian contractors and small businesses. The App provides:</p>
           <ul>
             <li>Job scheduling and time tracking.</li>
@@ -51,7 +55,7 @@ export default function TermsOfUse() {
         </Section>
 
         <div className="bg-amber-50 border-l-4 border-amber-500 rounded-r-lg p-5 my-8">
-          <h2 className="text-xl font-bold text-navy-500 mb-3">5. Subscriptions &amp; Payment Terms</h2>
+          <h2 className="text-xl font-bold text-navy-500 mb-3">{tm.s5}</h2>
 
           <h3 className="text-base font-semibold text-navy-500 mt-4 mb-2">5.1 Subscription Plans</h3>
           <p className="text-sm text-slate-700 mb-3">Ozly offers the following subscription tiers, managed through <strong>RevenueCat</strong> and processed by the Apple App Store or Google Play Store:</p>
@@ -97,11 +101,11 @@ export default function TermsOfUse() {
           <p className="text-sm text-slate-700 mt-2">We do not have the ability to process refunds directly, as all billing is handled by the respective app stores.</p>
         </div>
 
-        <Section title="6. Free Features &amp; Trial">
+        <Section title={tm.s6}>
           <p>Certain features of the App may be available without a subscription. We reserve the right to modify which features are included in free and paid tiers at any time, with reasonable notice to users.</p>
         </Section>
 
-        <Section title="7. User Content &amp; Data Ownership">
+        <Section title={tm.s7}>
           <ol>
             <li><strong>Your Data, Your Property:</strong> You retain full ownership of all Content you create or upload through the App, including but not limited to jobs, invoices, expenses, receipt images, and business records.</li>
             <li><strong>Licence to Us:</strong> By using the App, you grant us a limited, non-exclusive licence to store, process, and display your Content solely for the purpose of providing the Service to you.</li>
@@ -110,7 +114,7 @@ export default function TermsOfUse() {
           </ol>
         </Section>
 
-        <Section title="8. Acceptable Use">
+        <Section title={tm.s8}>
           <p>You agree <strong>not</strong> to:</p>
           <ul>
             <li>Use the App for any unlawful purpose or to facilitate tax fraud or evasion.</li>
@@ -124,7 +128,7 @@ export default function TermsOfUse() {
           </ul>
         </Section>
 
-        <Section title="9. Intellectual Property">
+        <Section title={tm.s9}>
           <ol>
             <li>The App, including its design, code, features, graphics, logos, and trademarks, is the exclusive property of Ozly Pty Ltd and is protected by Australian and international intellectual property laws.</li>
             <li>These Terms grant you a limited, non-exclusive, non-transferable, revocable licence to use the App for personal or business purposes in accordance with these Terms.</li>
@@ -132,7 +136,7 @@ export default function TermsOfUse() {
           </ol>
         </Section>
 
-        <Section title="10. Third-Party Services">
+        <Section title={tm.s10}>
           <p>The App integrates with the following third-party services. Your use of these services is subject to their respective terms:</p>
           <ul>
             <li><strong>Supabase</strong> &mdash; Cloud backend and authentication (<a href="https://supabase.com/terms" target="_blank" rel="noreferrer">Terms</a>).</li>
@@ -144,7 +148,7 @@ export default function TermsOfUse() {
         </Section>
 
         <div className="bg-amber-50 border-l-4 border-amber-500 rounded-r-lg p-5 my-8">
-          <h2 className="text-xl font-bold text-navy-500 mb-3">11. Disclaimer of Warranties</h2>
+          <h2 className="text-xl font-bold text-navy-500 mb-3">{tm.s11}</h2>
           <p className="text-sm text-slate-700 mb-2"><strong>THE APP IS PROVIDED ON AN &ldquo;AS IS&rdquo; AND &ldquo;AS AVAILABLE&rdquo; BASIS.</strong> TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, WE DISCLAIM ALL WARRANTIES, WHETHER EXPRESS, IMPLIED, OR STATUTORY, INCLUDING BUT NOT LIMITED TO:</p>
           <ul className="list-disc pl-5 text-sm text-slate-700 space-y-1">
             <li>WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.</li>
@@ -154,7 +158,7 @@ export default function TermsOfUse() {
         </div>
 
         <div className="bg-amber-50 border-l-4 border-amber-500 rounded-r-lg p-5 my-8">
-          <h2 className="text-xl font-bold text-navy-500 mb-3">12. Financial &amp; Tax Disclaimer</h2>
+          <h2 className="text-xl font-bold text-navy-500 mb-3">{tm.s12}</h2>
           <p className="text-sm text-slate-700 mb-2"><strong>Ozly is a record-keeping and productivity tool. It does NOT provide financial, tax, legal, or accounting advice.</strong></p>
           <ul className="list-disc pl-5 text-sm text-slate-700 space-y-1">
             <li>The expense categorisation and tax-deductibility suggestions generated by the OCR/AI features are <strong>indicative only</strong> and may be inaccurate.</li>
@@ -164,7 +168,7 @@ export default function TermsOfUse() {
           </ul>
         </div>
 
-        <Section title="13. Limitation of Liability">
+        <Section title={tm.s13}>
           <p>To the maximum extent permitted by Australian law (including the Australian Consumer Law):</p>
           <ol>
             <li>Our total aggregate liability to you for any claims arising out of or related to these Terms or the App shall not exceed the total amount you have paid to us for the App in the <strong>12 months</strong> preceding the claim.</li>
@@ -182,7 +186,7 @@ export default function TermsOfUse() {
           <p><strong>Nothing in these Terms excludes, restricts, or modifies any consumer guarantee, right, or remedy conferred by the Australian Consumer Law (Schedule 2 of the Competition and Consumer Act 2010) that cannot be excluded, restricted, or modified by agreement.</strong></p>
         </Section>
 
-        <Section title="14. Indemnification">
+        <Section title={tm.s14}>
           <p>You agree to indemnify, defend, and hold harmless Ozly Pty Ltd, its officers, directors, employees, and agents from and against any claims, damages, losses, liabilities, costs, and expenses (including reasonable legal fees) arising out of or related to:</p>
           <ul>
             <li>Your use of the App in violation of these Terms.</li>
@@ -192,19 +196,19 @@ export default function TermsOfUse() {
           </ul>
         </Section>
 
-        <Section title="15. Account Termination">
+        <Section title={tm.s15}>
           <ol>
-            <li><strong>By You:</strong> You may terminate your account at any time by deleting your account through Settings &gt; Delete Account. See our <a href="/privacy-policy#data-deletion">Privacy Policy &mdash; Data Deletion</a> for details on what data is removed.</li>
+            <li><strong>By You:</strong> You may terminate your account at any time by deleting your account through Settings &gt; Delete Account. See our <Link to="/privacy-policy#data-deletion" className="text-brand-500 underline hover:text-brand-600">{t.privacy.title} &mdash; {t.privacy.s9}</Link> for details on what data is removed.</li>
             <li><strong>By Us:</strong> We may suspend or terminate your account if you violate these Terms, engage in fraudulent activity, or if required by law. We will provide reasonable notice where practicable.</li>
             <li><strong>Effect of Termination:</strong> Upon termination, your licence to use the App is immediately revoked. Any active subscriptions must be cancelled separately through your app store. Data deletion follows the process described in our Privacy Policy.</li>
           </ol>
         </Section>
 
-        <Section title="16. Modifications to the Service">
+        <Section title={tm.s16}>
           <p>We reserve the right to modify, suspend, or discontinue any part of the App at any time, with or without notice. We will make reasonable efforts to notify users of material changes. We shall not be liable for any modification, suspension, or discontinuation of the Service.</p>
         </Section>
 
-        <Section title="17. Changes to These Terms">
+        <Section title={tm.s17}>
           <p>We may revise these Terms from time to time. Material changes will be communicated by:</p>
           <ul>
             <li>Posting the updated Terms on our website with a new &ldquo;Last Updated&rdquo; date.</li>
@@ -213,7 +217,7 @@ export default function TermsOfUse() {
           <p>Your continued use of the App after updated Terms are published constitutes your acceptance. If you do not agree to the revised Terms, you must stop using the App and delete your account.</p>
         </Section>
 
-        <Section title="18. Governing Law &amp; Dispute Resolution">
+        <Section title={tm.s18}>
           <ol>
             <li>These Terms are governed by the laws of the <strong>Commonwealth of Australia</strong> and the <strong>State of New South Wales</strong>.</li>
             <li>Any dispute arising out of or in connection with these Terms shall first be attempted to be resolved through good-faith negotiation between the parties.</li>
@@ -223,15 +227,15 @@ export default function TermsOfUse() {
           </ol>
         </Section>
 
-        <Section title="19. Severability">
+        <Section title={tm.s19}>
           <p>If any provision of these Terms is found to be invalid, illegal, or unenforceable by a court of competent jurisdiction, the remaining provisions shall continue in full force and effect.</p>
         </Section>
 
-        <Section title="20. Entire Agreement">
-          <p>These Terms, together with our <a href="/privacy-policy">Privacy Policy</a>, constitute the entire agreement between you and Ozly regarding your use of the App and supersede all prior agreements, representations, and understandings.</p>
+        <Section title={tm.s20}>
+          <p>These Terms, together with our <Link to="/privacy-policy" className="text-brand-500 underline hover:text-brand-600">{t.privacy.title}</Link>, constitute the entire agreement between you and Ozly regarding your use of the App and supersede all prior agreements, representations, and understandings.</p>
         </Section>
 
-        <Section title="21. Apple-Specific Terms (for iOS Users)">
+        <Section title={tm.s21}>
           <p>The following additional terms apply if you downloaded the App from the Apple App Store:</p>
           <ol>
             <li>These Terms are between you and Ozly Pty Ltd only, and <strong>not</strong> with Apple Inc. (&ldquo;Apple&rdquo;). Ozly, not Apple, is solely responsible for the App and its content.</li>
@@ -243,7 +247,7 @@ export default function TermsOfUse() {
           </ol>
         </Section>
 
-        <Section title="22. Contact Us">
+        <Section title={tm.s22}>
           <p>If you have any questions about these Terms, please contact us:</p>
           <ul>
             <li><strong>Email:</strong> <a href="mailto:support@ozly.com.au">support@ozly.com.au</a></li>

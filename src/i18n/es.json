@@ -52,18 +52,40 @@
     "fixedPrice": "Precio fijo ($15/mes)"
   },
   "pricing": {
-    "title": "Un precio. Todo incluido.",
-    "subtitle": "Sin sorpresas, sin tarifa por invoice, sin cobro de % sobre lo que ganás.",
-    "price": "$15",
-    "period": "/mes",
-    "currency": "AUD · Cancelá cuando quieras",
-    "item1": "Invoices PDF ilimitados",
-    "item2": "Control de pagos",
-    "item3": "OCR de recibos por IA",
-    "item4": "Previsión financiera",
-    "item5": "Funciona 100% offline",
-    "item6": "Soporte en Español",
-    "cta": "Empezar el Rebusque"
+    "title": "Elegí Tu Plan",
+    "subtitle": "Sin sorpresas, sin tarifa por invoice, sin cobro de %. Todos los planes incluyen 14 días gratis.",
+    "trialBadge": "14 días gratis en todos los planes",
+    "bestValue": "Mejor Valor",
+    "cta": "Empezar el Rebusque",
+    "perMonth": "/mes",
+    "currency": "AUD",
+    "tfn": {
+      "name": "TFN",
+      "desc": "Para contractors individuales",
+      "price": "$9"
+    },
+    "abn": {
+      "name": "ABN",
+      "desc": "Para negocios con ABN",
+      "price": "$15"
+    },
+    "max": {
+      "name": "MAX",
+      "desc": "TFN + ABN combinados",
+      "price": "$19"
+    },
+    "features": {
+      "shifts": "Shifts & Control de Jobs",
+      "expensesOcr": "Gastos con OCR",
+      "visaShield": "Visa Shield (monitor 48h)",
+      "calendarSync": "Google Calendar Sync",
+      "taxAnalytics": "Análisis Avanzado de Impuestos",
+      "contractors": "Gestión de Contractors",
+      "invoices": "Invoices PDF Profesionales",
+      "hoursComparison": "Comparación de Horas (ABN peers)",
+      "multiBusinesses": "Múltiples Negocios",
+      "toggleMode": "Alternar modo TFN ↔ ABN"
+    }
   },
   "homeFaq": {
     "title": "Preguntas Frecuentes",
@@ -90,6 +112,55 @@
     "copyright": "© 2026 Ozly. Todos los derechos reservados.",
     "privacy": "Política de Privacidad",
     "terms": "Términos de Uso"
+  },
+  "privacy": {
+    "title": "Política de Privacidad",
+    "effectiveDate": "Fecha de Vigencia: 10 de Marzo de 2026",
+    "lastUpdated": "Última Actualización: 10 de Marzo de 2026",
+    "summaryLabel": "Resumen:",
+    "summary": "Ozly es una aplicación de gestión laboral y control de gastos diseñada para contractors y pequeños negocios en Australia. Solo recopilamos los datos necesarios para brindar nuestros servicios. Tus datos financieros están encriptados en tu dispositivo, y podés solicitar la eliminación completa de tu cuenta y todos los datos asociados en cualquier momento.",
+    "s1": "1. Quiénes Somos",
+    "s2": "2. Información que Recopilamos",
+    "s3": "3. Cómo Almacenamos tus Datos",
+    "s4": "4. Cómo Usamos tu Información",
+    "s5": "5. Proveedores de Servicios Terceros",
+    "s6": "6. Retención de Datos",
+    "s7": "7. Seguridad de los Datos",
+    "s8": "8. Tus Derechos bajo la Ley de Privacidad Australiana",
+    "s9": "9. Eliminación de Cuenta y Datos",
+    "s10": "10. Transferencias Internacionales de Datos",
+    "s11": "11. Privacidad de Menores",
+    "s12": "12. Cambios en esta Política",
+    "s13": "13. Contactanos"
+  },
+  "terms": {
+    "title": "Términos de Uso (EULA)",
+    "effectiveDate": "Fecha de Vigencia: 10 de Marzo de 2026",
+    "lastUpdated": "Última Actualización: 10 de Marzo de 2026",
+    "importantLabel": "Importante:",
+    "importantText": "Al descargar, instalar o usar la aplicación Ozly, aceptás quedar sujeto a estos Términos de Uso. Si no estás de acuerdo con estos términos, no uses la App.",
+    "s1": "1. Acuerdo y Definiciones",
+    "s2": "2. Elegibilidad",
+    "s3": "3. Registro de Cuenta y Seguridad",
+    "s4": "4. Descripción del Servicio",
+    "s5": "5. Suscripciones y Términos de Pago",
+    "s6": "6. Funciones Gratuitas y Trial",
+    "s7": "7. Contenido del Usuario y Propiedad de los Datos",
+    "s8": "8. Uso Aceptable",
+    "s9": "9. Propiedad Intelectual",
+    "s10": "10. Servicios de Terceros",
+    "s11": "11. Descargo de Garantías",
+    "s12": "12. Aviso sobre Finanzas e Impuestos",
+    "s13": "13. Limitación de Responsabilidad",
+    "s14": "14. Indemnización",
+    "s15": "15. Terminación de Cuenta",
+    "s16": "16. Modificaciones al Servicio",
+    "s17": "17. Cambios en estos Términos",
+    "s18": "18. Ley Aplicable y Resolución de Disputas",
+    "s19": "19. Divisibilidad",
+    "s20": "20. Acuerdo Completo",
+    "s21": "21. Términos Específicos de Apple (para usuarios iOS)",
+    "s22": "22. Contactanos"
   },
   "faq": {
     "pageTitle": "Soporte & FAQ",

@@ -52,18 +52,40 @@
     "fixedPrice": "Flat price ($15/mo)"
   },
   "pricing": {
-    "title": "One price. Everything included.",
-    "subtitle": "No surprises, no per-invoice fee, no percentage of your earnings.",
-    "price": "$15",
-    "period": "/mo",
-    "currency": "AUD · Cancel anytime",
-    "item1": "Unlimited PDF invoices",
-    "item2": "Payment tracking",
-    "item3": "AI-powered receipt OCR",
-    "item4": "Financial forecast",
-    "item5": "Works 100% offline",
-    "item6": "Support in English",
-    "cta": "Start Hustling"
+    "title": "Choose Your Plan",
+    "subtitle": "No surprises, no per-invoice fee, no percentage of your earnings. All plans include a 14-day free trial.",
+    "trialBadge": "14-day free trial on all plans",
+    "bestValue": "Best Value",
+    "cta": "Start Hustling",
+    "perMonth": "/mo",
+    "currency": "AUD",
+    "tfn": {
+      "name": "TFN",
+      "desc": "For individual contractors",
+      "price": "$9"
+    },
+    "abn": {
+      "name": "ABN",
+      "desc": "For ABN businesses",
+      "price": "$15"
+    },
+    "max": {
+      "name": "MAX",
+      "desc": "TFN + ABN combined",
+      "price": "$19"
+    },
+    "features": {
+      "shifts": "Shifts & Job Tracking",
+      "expensesOcr": "Expenses with OCR",
+      "visaShield": "Visa Shield (48h monitor)",
+      "calendarSync": "Google Calendar Sync",
+      "taxAnalytics": "Advanced Tax Analytics",
+      "contractors": "Contractors Management",
+      "invoices": "Professional PDF Invoices",
+      "hoursComparison": "Hours Comparison (ABN peers)",
+      "multiBusinesses": "Multiple Businesses",
+      "toggleMode": "Toggle TFN ↔ ABN mode"
+    }
   },
   "homeFaq": {
     "title": "Frequently Asked Questions",
@@ -90,6 +112,55 @@
     "copyright": "© 2026 Ozly. All rights reserved.",
     "privacy": "Privacy Policy",
     "terms": "Terms of Service"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "effectiveDate": "Effective Date: 10 March 2026",
+    "lastUpdated": "Last Updated: 10 March 2026",
+    "summaryLabel": "Summary:",
+    "summary": "Ozly is a workforce-management and expense-tracking application designed for Australian contractors and small businesses. We collect only the data necessary to deliver our services. Your financial data is encrypted on your device, and you may request complete deletion of your account and all associated data at any time.",
+    "s1": "1. Who We Are",
+    "s2": "2. Information We Collect",
+    "s3": "3. How We Store Your Data",
+    "s4": "4. How We Use Your Information",
+    "s5": "5. Third-Party Service Providers",
+    "s6": "6. Data Retention",
+    "s7": "7. Data Security",
+    "s8": "8. Your Rights Under Australian Privacy Law",
+    "s9": "9. Account & Data Deletion",
+    "s10": "10. International Data Transfers",
+    "s11": "11. Children's Privacy",
+    "s12": "12. Changes to This Policy",
+    "s13": "13. Contact Us"
+  },
+  "terms": {
+    "title": "Terms of Use (EULA)",
+    "effectiveDate": "Effective Date: 10 March 2026",
+    "lastUpdated": "Last Updated: 10 March 2026",
+    "importantLabel": "Important:",
+    "importantText": "By downloading, installing, or using the Ozly application, you agree to be bound by these Terms of Use. If you do not agree to these terms, do not use the App.",
+    "s1": "1. Agreement & Definitions",
+    "s2": "2. Eligibility",
+    "s3": "3. Account Registration & Security",
+    "s4": "4. Description of the Service",
+    "s5": "5. Subscriptions & Payment Terms",
+    "s6": "6. Free Features & Trial",
+    "s7": "7. User Content & Data Ownership",
+    "s8": "8. Acceptable Use",
+    "s9": "9. Intellectual Property",
+    "s10": "10. Third-Party Services",
+    "s11": "11. Disclaimer of Warranties",
+    "s12": "12. Financial & Tax Disclaimer",
+    "s13": "13. Limitation of Liability",
+    "s14": "14. Indemnification",
+    "s15": "15. Account Termination",
+    "s16": "16. Modifications to the Service",
+    "s17": "17. Changes to These Terms",
+    "s18": "18. Governing Law & Dispute Resolution",
+    "s19": "19. Severability",
+    "s20": "20. Entire Agreement",
+    "s21": "21. Apple-Specific Terms (for iOS Users)",
+    "s22": "22. Contact Us"
   },
   "faq": {
     "pageTitle": "Support & FAQ",
