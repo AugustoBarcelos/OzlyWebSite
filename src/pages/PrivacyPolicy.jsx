@@ -280,7 +280,7 @@ export default function PrivacyPolicy() {
         <Section title={p.s13}>
           <p>If you have any questions, concerns, or requests regarding this Privacy Policy or your personal data, please contact us:</p>
           <ul>
-            <li><strong>Email:</strong> <a href="mailto:privacy@ozly.com.au">privacy@ozly.com.au</a></li>
+            <li><strong>Email:</strong> <a href="mailto:contact@ozly.au">contact@ozly.au</a></li>
             <li><strong>Website:</strong> <a href="https://ozly.com.au" target="_blank" rel="noreferrer">ozly.com.au</a></li>
           </ul>
           <p>If you are not satisfied with our response, you may lodge a complaint with the <strong>Office of the Australian Information Commissioner (OAIC)</strong> at <a href="https://www.oaic.gov.au/" target="_blank" rel="noreferrer">www.oaic.gov.au</a>.</p>

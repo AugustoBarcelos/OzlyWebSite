@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useContext, useState, useCallback, useEffect } from "react";
 import pt from "./pt.json";
 import en from "./en.json";
 import es from "./es.json";
@@ -34,6 +34,10 @@ export function I18nProvider({ children }) {
   }, []);
 
   const t = locales[lang] || locales.en;
+
+  useEffect(() => {
+    document.title = t.siteTitle;
+  }, [t.siteTitle]);
 
   return (
     <I18nContext.Provider value={{ lang, setLang, t }}>

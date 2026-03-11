@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Mail } from "lucide-react";
 import { useI18n } from "../i18n";
 
 export default function Footer() {
@@ -12,6 +13,12 @@ export default function Footer() {
           <span className="text-lg font-bold text-white" style={{ fontFamily: "'Montserrat', sans-serif" }}>OZLY</span>
         </div>
         <p>{t.footer.copyright}</p>
+        <div className="flex items-center gap-4">
+          <a href="mailto:contact@ozly.au" className="inline-flex items-center gap-1.5 hover:text-white transition-colors">
+            <Mail size={14} />
+            contact@ozly.au
+          </a>
+        </div>
         <div className="flex gap-6">
           <Link to="/privacy-policy" className="hover:text-white transition-colors">{t.footer.privacy}</Link>
           <Link to="/terms-of-use" className="hover:text-white transition-colors">{t.footer.terms}</Link>

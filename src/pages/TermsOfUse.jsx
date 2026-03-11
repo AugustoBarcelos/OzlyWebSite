@@ -37,7 +37,7 @@ export default function TermsOfUse() {
             <li>You may register using your email address and password, Google Sign-In, or Sign in with Apple.</li>
             <li>You are responsible for maintaining the confidentiality of your account credentials.</li>
             <li>You agree to provide accurate, current, and complete information during registration and to update such information as necessary.</li>
-            <li>You must notify us immediately at <a href="mailto:support@ozly.com.au">support@ozly.com.au</a> if you suspect unauthorised access to your account.</li>
+            <li>You must notify us immediately at <a href="mailto:support@ozly.au">support@ozly.au</a> if you suspect unauthorised access to your account.</li>
             <li>We reserve the right to suspend or terminate accounts that violate these Terms or are used for fraudulent purposes.</li>
           </ol>
         </Section>
@@ -250,7 +250,7 @@ export default function TermsOfUse() {
         <Section title={tm.s22}>
           <p>If you have any questions about these Terms, please contact us:</p>
           <ul>
-            <li><strong>Email:</strong> <a href="mailto:support@ozly.com.au">support@ozly.com.au</a></li>
+            <li><strong>Email:</strong> <a href="mailto:support@ozly.au">support@ozly.au</a></li>
             <li><strong>Website:</strong> <a href="https://ozly.com.au" target="_blank" rel="noreferrer">ozly.com.au</a></li>
           </ul>
         </Section>

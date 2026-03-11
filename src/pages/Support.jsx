@@ -68,7 +68,7 @@ export default function Support() {
           <p className="text-slate-500 mb-8 max-w-md mx-auto">{t.homeFaq.stillQuestionsDesc}</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
-              href="mailto:support@ozly.app"
+              href="mailto:support@ozly.au"
               className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-6 py-3.5 text-white font-semibold hover:bg-brand-600 transition shadow-lg shadow-brand-500/20"
             >
               <Mail size={18} />
