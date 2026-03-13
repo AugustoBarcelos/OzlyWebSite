@@ -11,80 +11,67 @@
     body { font-family: Inter, system-ui, sans-serif; background: #F8FAFC; color: #334155; margin: 0; padding: 0; line-height: 1.6; }
     .container { max-width: 720px; margin: 0 auto; padding: 80px 24px 60px; }
     h1 { font-size: 1.875rem; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
-    h2 { font-size: 1.25rem; font-weight: 700; color: #1e293b; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin: 32px 0 16px; }
-    h3 { font-size: 1.125rem; font-weight: 600; color: #1e293b; margin: 24px 0 8px; }
     p { margin: 12px 0; }
-    ul, ol { padding-left: 20px; margin: 8px 0; }
-    li { margin: 4px 0; }
     a { color: #2563eb; text-decoration: underline; }
-    strong { color: #475569; }
     .meta { font-size: 0.875rem; color: #64748b; margin-bottom: 32px; }
-    .warning { background: #fef2f2; border-left: 4px solid #ef4444; border-radius: 0 8px 8px 0; padding: 20px; margin: 24px 0; }
-    .info { background: #eff6ff; border-left: 4px solid #3b82f6; border-radius: 0 8px 8px 0; padding: 20px; margin: 24px 0; }
-    .steps { background: #f0fdf4; border-left: 4px solid #22c55e; border-radius: 0 8px 8px 0; padding: 20px; margin: 24px 0; }
-    .back { display: inline-block; margin-bottom: 24px; font-size: 0.875rem; }
+    label { display: block; font-weight: 600; color: #1e293b; margin-bottom: 6px; font-size: 0.875rem; }
+    input, textarea { width: 100%; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; font-size: 0.95rem; color: #334155; background: #fff; box-sizing: border-box; }
+    input:focus, textarea:focus { outline: none; border-color: #2BBB97; box-shadow: 0 0 0 3px rgba(43,187,151,0.15); }
+    textarea { resize: vertical; min-height: 80px; }
+    .field { margin-bottom: 20px; }
+    .btn { display: inline-block; background: #ef4444; color: #fff; font-weight: 600; font-size: 0.95rem; padding: 12px 32px; border: none; border-radius: 8px; cursor: pointer; font-family: inherit; transition: background 0.2s; }
+    .btn:hover { background: #dc2626; }
+    .info { background: #fef2f2; border-left: 4px solid #ef4444; border-radius: 0 8px 8px 0; padding: 16px 20px; margin-bottom: 32px; font-size: 0.875rem; }
+    .success { display: none; background: #f0fdf4; border-left: 4px solid #22c55e; border-radius: 0 8px 8px 0; padding: 20px; margin-top: 24px; }
   </style>
 </head>
 <body>
   <div class="container">
-    <a class="back" href="/">&larr; Back to Ozly</a>
-
     <h1>Delete Account &amp; Data</h1>
-    <p class="meta">How to permanently delete your Ozly account and all associated data.</p>
+    <p class="meta">Request the permanent deletion of your Ozly account and all associated data.</p>
 
     <div class="info">
-      <p><strong>Your data, your control.</strong> Ozly allows you to delete your account and all personal data at any time. Once deleted, your data cannot be recovered.</p>
+      <p style="margin:0;"><strong>Warning:</strong> Once your account is deleted, all your data (profile, jobs, invoices, expenses, receipts, and business records) will be <strong>permanently removed</strong> and cannot be recovered.</p>
     </div>
 
-    <h2>Option 1 — Delete from the App</h2>
-    <div class="steps">
-      <p>The quickest way to delete your account:</p>
-      <ol>
-        <li>Open the <strong>Ozly</strong> app on your device.</li>
-        <li>Go to <strong>Settings</strong>.</li>
-        <li>Tap <strong>"Delete Account"</strong>.</li>
-        <li>Type <strong>DELETE</strong> to confirm.</li>
-      </ol>
-      <p>Your account and all data will be removed immediately.</p>
+    <form id="deleteForm" action="https://formsubmit.co/privacy@ozly.au" method="POST">
+      <input type="hidden" name="_subject" value="Account Deletion Request" />
+      <input type="hidden" name="_captcha" value="false" />
+      <input type="hidden" name="_next" value="https://ozly.au/delete-account/?success=true" />
+
+      <div class="field">
+        <label for="name">Full Name</label>
+        <input type="text" id="name" name="name" placeholder="Your full name" required />
+      </div>
+
+      <div class="field">
+        <label for="email">Email Address (associated with your Ozly account)</label>
+        <input type="email" id="email" name="email" placeholder="you@example.com" required />
+      </div>
+
+      <div class="field">
+        <label for="reason">Reason for deletion (optional)</label>
+        <textarea id="reason" name="reason" placeholder="Let us know why you're leaving..."></textarea>
+      </div>
+
+      <button type="submit" class="btn">Request Account Deletion</button>
+    </form>
+
+    <div class="success" id="successMsg">
+      <p style="margin:0;"><strong>Request received.</strong> We will process your account deletion within 30 days and send you a confirmation email.</p>
     </div>
 
-    <h2>Option 2 — Request via Email</h2>
-    <p>If you can no longer access the app, you can request account deletion by email:</p>
-    <ol>
-      <li>Send an email to <strong><a href="mailto:privacy@ozly.au">privacy@ozly.au</a></strong>.</li>
-      <li>Use the <strong>same email address</strong> associated with your Ozly account.</li>
-      <li>Include the subject line: <strong>"Account Deletion Request"</strong>.</li>
-    </ol>
-    <p>We will process your request within <strong>30 days</strong> and confirm once complete.</p>
-
-    <h2>What Data Is Deleted?</h2>
-    <div class="warning">
-      <p>The following data is <strong>permanently and irreversibly</strong> deleted from our servers:</p>
-      <ul>
-        <li>Your user profile and authentication credentials.</li>
-        <li>All work hours, jobs, and associated calendar links.</li>
-        <li>All invoices and invoice line items.</li>
-        <li>All expenses and uploaded receipt images.</li>
-        <li>All contractor/client records.</li>
-        <li>All business records (ABN, banking details).</li>
-        <li>All analytics events associated with your account.</li>
-      </ul>
-      <p><strong>This action cannot be undone.</strong> Local data on your device is also cleared upon sign-out.</p>
-    </div>
-
-    <h2>Important: Cancel Your Subscription</h2>
-    <p>Deleting your Ozly account does <strong>not</strong> automatically cancel your App Store or Google Play subscription. To avoid further charges, cancel your subscription separately:</p>
-    <ul>
-      <li><strong>iPhone/iPad:</strong> Settings &rarr; Apple ID &rarr; Subscriptions &rarr; Ozly &rarr; Cancel.</li>
-      <li><strong>Android:</strong> Google Play Store &rarr; Menu &rarr; Subscriptions &rarr; Ozly &rarr; Cancel.</li>
-    </ul>
-
-    <h2>Questions?</h2>
-    <p>If you have any questions about the deletion process, contact us:</p>
-    <ul>
-      <li><strong>Email:</strong> <a href="mailto:privacy@ozly.au">privacy@ozly.au</a></li>
-      <li><strong>Privacy Policy:</strong> <a href="/privacy-policy/">ozly.au/privacy-policy</a></li>
-    </ul>
+    <p style="margin-top:32px; font-size:0.85rem; color:#64748b;">
+      You can also delete your account directly from the app: <strong>Settings &rarr; Delete Account</strong>.<br />
+      For questions, email <a href="mailto:privacy@ozly.au">privacy@ozly.au</a> &nbsp;|&nbsp; <a href="/privacy-policy/">Privacy Policy</a>
+    </p>
   </div>
+
+  <script>
+    if (new URLSearchParams(window.location.search).get('success') === 'true') {
+      document.getElementById('deleteForm').style.display = 'none';
+      document.getElementById('successMsg').style.display = 'block';
+    }
+  </script>
 </body>
 </html>
