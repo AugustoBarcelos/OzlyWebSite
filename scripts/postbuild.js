@@ -1,6 +1,6 @@
 /**
- * Post-build script: copies index.html into each SPA route directory
- * so GitHub Pages serves 200 (not 404) for direct navigation.
+ * Post-build script: copies index.html into SPA route directories
+ * that don't already have a static HTML file (from public/).
  */
 import { mkdirSync, copyFileSync, existsSync } from "fs";
 import { join, dirname } from "path";
@@ -12,17 +12,20 @@ const dist = join(__dirname, "..", "dist");
 const routes = [
   "/support",
   "/guide",
-  "/privacy-policy",
-  "/terms-of-use",
 ];
 
 const src = join(dist, "index.html");
 
 for (const route of routes) {
   const dir = join(dist, route);
+  const target = join(dir, "index.html");
+  if (existsSync(target)) {
+    console.log(`  ⏭ ${route}/index.html (static file exists)`);
+    continue;
+  }
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
-  copyFileSync(src, join(dir, "index.html"));
+  copyFileSync(src, target);
   console.log(`  ✓ ${route}/index.html`);
 }
 
-console.log("Post-build: all route pages created.");
+console.log("Post-build: done.");
