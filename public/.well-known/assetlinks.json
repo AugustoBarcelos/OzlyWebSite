@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.augusto.ozly",
+      "sha256_cert_fingerprints": [
+        "A4:F9:D8:82:56:8A:53:E1:59:CB:BA:F2:A2:19:19:40:79:F5:76:09:57:43:33:F9:4A:36:8E:AA:2F:7D:1C:1F"
+      ]
+    }
+  }
+]
