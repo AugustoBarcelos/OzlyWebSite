@@ -5,7 +5,9 @@
       "namespace": "android_app",
       "package_name": "com.augusto.ozly",
       "sha256_cert_fingerprints": [
-        "A4:F9:D8:82:56:8A:53:E1:59:CB:BA:F2:A2:19:19:40:79:F5:76:09:57:43:33:F9:4A:36:8E:AA:2F:7D:1C:1F"
+        "A4:F9:D8:82:56:8A:53:E1:59:CB:BA:F2:A2:19:19:40:79:F5:76:09:57:43:33:F9:4A:36:8E:AA:2F:7D:1C:1F",
+        "BC:C3:CB:91:A9:7E:C1:DB:04:B7:96:69:09:5B:F9:05:27:07:D9:ED:D1:47:F3:2F:3C:D8:23:53:F2:80:CD:7D",
+        "7B:D8:4B:A8:C9:95:43:30:21:08:D9:42:3F:EB:92:B7:AD:BA:7A:47:49:3A:29:EC:4D:86:3D:C2:7D:A5:BE:D2"
       ]
     }
   }
