@@ -201,7 +201,7 @@
     "q2": "¿Cómo funciona el Tracker de Morosos?",
     "a2": "El Tracker muestra todos tus invoices organizados por estado: pagados, pendientes y vencidos. Así sabés al toque quién te debe y no perdés más plata.",
     "q3": "¿Cuánto cuesta Ozly?",
-    "a3": "$15 AUD por mes, precio fijo. Sin límite de invoices, sin cobro de porcentaje sobre lo que ganás, sin sorpresas.",
+    "a3": "Ozly tiene 3 planes: TFN ($9/mes) para empleados, ABN ($15/mes) para los que tienen ABN, y MAX ($19/mes) para ambos. Todos incluyen 14 días de prueba gratis. Sin límite de invoices, sin porcentaje sobre tus ganancias.",
     "q4": "¿Funciona sin internet?",
     "a4": "¡Sí! Ozly funciona 100% offline. Podés crear invoices, registrar gastos y seguir tus jobs sin wifi. Cuando tengas conexión, todo se sincroniza automáticamente.",
     "q5": "¿Cómo funciona el OCR de recibos?",
@@ -215,6 +215,14 @@
     "q9": "¿Cómo cancelo mi suscripción?",
     "a9": "Podés cancelar en cualquier momento directamente desde la App Store o Google Play. Sin trámites, sin tarifa de cancelación.",
     "q10": "¿Qué es la Previsión Financiera?",
-    "a10": "La Previsión Financiera te muestra cuánta plata limpia te va a quedar en el bolsillo a fin de mes, descontando gastos e impuestos. Sin sorpresas a la hora del Tax Return."
+    "a10": "La Previsión Financiera te muestra cuánta plata limpia te va a quedar en el bolsillo a fin de mes, descontando gastos e impuestos. Sin sorpresas a la hora del Tax Return.",
+    "q11": "¿Qué es el Visa Shield?",
+    "a11": "El Visa Shield monitorea tus horas trabajadas por quincena (últimos 14 días corridos) para ayudarte a quedarte abajo del límite de 48 horas para visas de trabajo y estudiante. Suma las horas de TODOS tus ABNs automáticamente.",
+    "q12": "¿Qué es el Hustle Score?",
+    "a12": "El Hustle Score es un sistema de gamificación que te recompensa con XP por completar jobs, crear invoices, registrar gastos y mantener rachas. Avanzás por 4 niveles: Starter, Hustler, Pro y Legend.",
+    "q13": "¿Mis datos están seguros?",
+    "a13": "Sí. Tu base de datos local está encriptada con SQLCipher (AES-256), los tokens se guardan en el iOS Keychain / Android Keystore, y todos los datos del servidor están protegidos por Row-Level Security. Nunca registramos datos sensibles como TFN, BSB o contraseñas.",
+    "q14": "¿Cómo funciona el programa de referidos?",
+    "a14": "Compartí tu código de referral con amigos. Cuando se registren con tu código, los dos ganan recompensas. También ganás 500 XP por cada referido convertido."
   }
 }

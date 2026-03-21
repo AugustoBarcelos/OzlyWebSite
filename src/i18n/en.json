@@ -201,7 +201,7 @@
     "q2": "How does the Payment Tracker work?",
     "a2": "The Tracker shows all your invoices organised by status: paid, pending and overdue. You instantly know who owes you and never lose track of money again.",
     "q3": "How much does Ozly cost?",
-    "a3": "$15 AUD per month, flat price. No invoice limits, no percentage of your earnings, no surprises.",
+    "a3": "Ozly has 3 plans: TFN ($9/month) for employees, ABN ($15/month) for ABN holders, and MAX ($19/month) for both. All plans include a 14-day free trial. No invoice limits, no percentage of your earnings.",
     "q4": "Does it work without internet?",
     "a4": "Yes! Ozly works 100% offline. You can create invoices, log expenses and track your jobs without wifi. Everything syncs automatically when you're back online.",
     "q5": "How does receipt OCR work?",
@@ -215,6 +215,14 @@
     "q9": "How do I cancel my subscription?",
     "a9": "You can cancel anytime directly through the App Store or Google Play. No hassle, no cancellation fee.",
     "q10": "What is the Financial Forecast?",
-    "a10": "The Financial Forecast shows how much clean cash you'll have in your pocket at the end of the month, after expenses and taxes. No surprises at Tax Return time."
+    "a10": "The Financial Forecast shows how much clean cash you'll have in your pocket at the end of the month, after expenses and taxes. No surprises at Tax Return time.",
+    "q11": "What is Visa Shield?",
+    "a11": "Visa Shield monitors your work hours per fortnight (rolling 14 days) to help you stay under the 48-hour limit for work and student visas. It sums hours across ALL your ABNs automatically.",
+    "q12": "What is the Hustle Score?",
+    "a12": "The Hustle Score is a gamification system that rewards you with XP for completing jobs, creating invoices, logging expenses and maintaining streaks. You progress through 4 tiers: Starter, Hustler, Pro and Legend.",
+    "q13": "Is my data secure?",
+    "a13": "Yes. Your local database is encrypted with SQLCipher (AES-256), tokens are stored in the iOS Keychain / Android Keystore, and all server data is protected by Row-Level Security. We never log sensitive data like TFN, BSB or passwords.",
+    "q14": "How does the referral program work?",
+    "a14": "Share your unique referral code with friends. When they sign up using your code, both of you earn rewards. You also get 500 XP for each successful referral."
   }
 }

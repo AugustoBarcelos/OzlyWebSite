@@ -201,7 +201,7 @@
     "q2": "Como funciona o Tracker de Calote?",
     "a2": "O Tracker mostra todos os seus invoices organizados por status: pagos, pendentes e atrasados. Assim você sabe na hora quem tá te devendo e não perde mais dinheiro.",
     "q3": "Quanto custa o Ozly?",
-    "a3": "$15 AUD por mês, preço fixo. Sem limite de invoices, sem cobrança de porcentagem sobre o que você ganha, sem surpresas.",
+    "a3": "O Ozly tem 3 planos: TFN ($9/mês) para empregados, ABN ($15/mês) para quem tem ABN, e MAX ($19/mês) para ambos. Todos incluem 14 dias de trial grátis. Sem limite de invoices, sem porcentagem sobre seus ganhos.",
     "q4": "Funciona sem internet?",
     "a4": "Sim! O Ozly funciona 100% offline. Você pode criar invoices, registrar despesas e acompanhar seus jobs mesmo sem wifi. Quando tiver conexão, tudo sincroniza automaticamente.",
     "q5": "Como funciona o OCR de recibos?",
@@ -215,6 +215,14 @@
     "q9": "Como cancelo minha assinatura?",
     "a9": "Você pode cancelar a qualquer momento diretamente pela App Store ou Google Play. Sem burocracia, sem taxa de cancelamento.",
     "q10": "O que é a Previsão Financeira?",
-    "a10": "A Previsão Financeira mostra quanto dinheiro limpo vai sobrar no seu bolso no fim do mês, descontando despesas e impostos. Sem surpresa na hora do Tax Return."
+    "a10": "A Previsão Financeira mostra quanto dinheiro limpo vai sobrar no seu bolso no fim do mês, descontando despesas e impostos. Sem surpresa na hora do Tax Return.",
+    "q11": "O que é o Visa Shield?",
+    "a11": "O Visa Shield monitora suas horas trabalhadas por quinzena (últimos 14 dias corridos) para te ajudar a ficar abaixo do limite de 48 horas para vistos de trabalho e estudante. Soma as horas de TODOS os seus ABNs automaticamente.",
+    "q12": "O que é o Hustle Score?",
+    "a12": "O Hustle Score é um sistema de gamificação que te recompensa com XP por completar jobs, criar invoices, registrar despesas e manter streaks. Você avança por 4 tiers: Starter, Hustler, Pro e Legend.",
+    "q13": "Meus dados estão seguros?",
+    "a13": "Sim. Seu banco de dados local é criptografado com SQLCipher (AES-256), tokens ficam no iOS Keychain / Android Keystore, e todos os dados no servidor são protegidos por Row-Level Security. Nunca registramos dados sensíveis como TFN, BSB ou senhas.",
+    "q14": "Como funciona o programa de indicação?",
+    "a14": "Compartilhe seu código de referral com amigos. Quando se cadastrarem usando seu código, vocês dois ganham recompensas. Você também ganha 500 XP por cada indicação convertida."
   }
 }

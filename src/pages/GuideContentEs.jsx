@@ -137,6 +137,7 @@ export default function GuideContentEs({ SectionCard, SubSection, StepList, Bull
               ["Financial", "Pantalla Financiera", "—"],
               ["Fiscal", "Pantalla Fiscal", "Requiere Pro"],
               ["Expenses", "Pantalla de Gastos", "Requiere Pro"],
+              ["Hours Comparison", "Comparación horas ABN", "Requiere Pro + ABN"],
               ["Visa Shield", "Monitor de horas", "Requiere Pro + visa work/student"],
               ["Hustle", "Gamificación (XP)", "—"],
               ["Settings", "Configuración", "—"],
@@ -470,34 +471,34 @@ export default function GuideContentEs({ SectionCard, SubSection, StepList, Bull
 
         <SubSection title="Cómo ganar XP">
           <SimpleTable
-            headers={["Acción", "XP", "Observación"]}
+            headers={["Acción", "XP", "Nota"]}
             rows={[
               ["Crear job", "5 XP", "—"],
               ["Completar job", "20 XP", "—"],
               ["Crear invoice", "50 XP", "2x si Golden Hour"],
-              ["Golden Hour", "100 XP", "Invoice en hasta 60min después de completar job"],
+              ["Golden Hour (invoice en 60min)", "100 XP (2x)", "Timer en pantalla de conclusión"],
               ["Invoice pagada (a tiempo)", "100 XP", "—"],
-              ["Invoice pagada (atrasada)", "80 XP", "—"],
-              ["Registrar gasto", "100 XP", "120 XP si es deducible"],
-              ["Referral (exitoso)", "500 XP", "Referencia convertida"],
+              ["Invoice pagada (vencida)", "80 XP", "—"],
+              ["Registrar gasto", "100 XP", "120 XP si deducible"],
+              ["Referido (éxito)", "500 XP", "Referido convertido"],
               ["Streak 3 días", "+5 XP", "Bonus acumulativo"],
               ["Streak 7 días", "+10 XP", "Bonus acumulativo"],
-              ["Streak 14 días", "+30 XP", "Bonus acumulativo"],
+              ["Streak 14 días", "+30 XP", "Se reinicia"],
             ]}
           />
         </SubSection>
 
         <SubSection title="Tiers (Niveles por Semestre Fiscal)">
-          <P>El progreso se mide por <B>semestre fiscal australiano</B>: S1 (Jul–Dic) y S2 (Ene–Jun). Al final del semestre, tu tier se reevalúa.</P>
           <SimpleTable
-            headers={["Tier", "Asistencia", "XP Semestral", "Color", "Tema"]}
+            headers={["Nivel", "Presencia", "XP Semestral", "Color", "Efecto en Tema"]}
             rows={[
-              ["Starter", "< 50%", "0 XP", "Teal", "Por defecto"],
+              ["Starter", "< 50%", "0 XP", "Teal", "Tema estándar"],
               ["Hustler", "50%+", "300 XP", "Azul Royal", "Tonos azules"],
-              ["Pro", "75%+", "700 XP", "Violeta", "Tonos violetas"],
-              ["Legend", "90%+", "1.500 XP", "Dorado", "Fondo oscuro + dorado"],
+              ["Pro", "75%+", "700 XP", "Violeta", "Tonos violeta"],
+              ["Legend", "90%+", "1.500 XP", "Dorado", "Negro + dorado"],
             ]}
           />
+          <P>El progreso se mide por semestre fiscal australiano: S1 (Jul–Dic) y S2 (Ene–Jun).</P>
         </SubSection>
 
         <SubSection title="Defensa de Tier">
@@ -505,6 +506,15 @@ export default function GuideContentEs({ SectionCard, SubSection, StepList, Bull
             <li>Al final del semestre: si no alcanzaste la meta de XP de tu tier actual, <B>bajás 1 tier</B></li>
             <li>Si superaste la meta del siguiente tier, <B>subís automáticamente</B></li>
             <li>Starter se mantiene siempre (no se pierde)</li>
+          </BulletList>
+        </SubSection>
+
+        <SubSection title="Streak (Días Consecutivos)">
+          <BulletList>
+            <li>Cada día que usás la app suma 1 al streak</li>
+            <li>Bonus de XP en los hitos: <B>3 días (+5 XP)</B>, <B>7 días (+10 XP)</B>, <B>14 días (+30 XP)</B></li>
+            <li>Después de 14 días el streak se reinicia y empieza de nuevo</li>
+            <li>Si pasás un día sin usar la app, el streak vuelve a 0</li>
           </BulletList>
         </SubSection>
 
@@ -574,12 +584,31 @@ export default function GuideContentEs({ SectionCard, SubSection, StepList, Bull
           <BulletList>
             <li><B>Avatar</B> — Cámara / Galería / Eliminar</li>
             <li><B>Nombre</B> — max 100 chars</li>
-            <li><B>Dirección</B> — Completa (calle, depto, suburb, state, postcode)</li>
+            <li><B>Dirección</B> — Campos detallados:
+              <BulletList>
+                <li><B>Street</B> — calle (con autocomplete)</li>
+                <li><B>Apartment</B> — depto/unidad (opcional)</li>
+                <li><B>Suburb</B> — barrio/localidad (con autocomplete)</li>
+                <li><B>State</B> — estado australiano (con autocomplete)</li>
+                <li><B>Postcode</B> — código postal (con autocomplete)</li>
+              </BulletList>
+            </li>
             <li><B>Teléfono</B> — formato: +61 400 000 000</li>
             <li><B>Email</B> — solo lectura</li>
             <li><B>País de Origen</B> — para referencia</li>
             <li><B>Código de Referral</B> — generado automáticamente, compartible</li>
           </BulletList>
+        </SubSection>
+
+        <SubSection title="Cambiar Contraseña">
+          <StepList>
+            <li>Tocá <B>"Change Password"</B> en la sección de perfil</li>
+            <li>Ingresá tu <B>contraseña actual</B></li>
+            <li>Ingresá la <B>nueva contraseña</B> — la barra de fortaleza te indica la seguridad</li>
+            <li>Confirmá la nueva contraseña</li>
+            <li>Tocá <B>"Update"</B></li>
+          </StepList>
+          <Tip>Si olvidaste tu contraseña actual, usá "Forgot Password?" en la pantalla de Login para recibir un enlace de reset por email.</Tip>
         </SubSection>
 
         <SubSection title="Administrar Businesses/ABNs">
@@ -777,10 +806,11 @@ export default function GuideContentEs({ SectionCard, SubSection, StepList, Bull
           </StepList>
         </SubSection>
 
-        <SubSection title="Crear Gasto (2 caminos)">
+        <SubSection title="Crear Gasto (3 caminos)">
           <StepList>
             <li>Expenses → FAB "Add Expense"</li>
             <li>Dashboard → Deductible Expenses → "New Expense"</li>
+            <li>Jobs → Detalles del job → "Add Receipt" → cámara o galería</li>
           </StepList>
         </SubSection>
 
@@ -825,6 +855,8 @@ export default function GuideContentEs({ SectionCard, SubSection, StepList, Bull
             <FaqItem q="¿Puedo tener varios ABNs?" a="¡Sí! Agregá todos los ABNs que quieras en tu Perfil. Usá el selector en el menú lateral para alternar entre ellos." />
             <FaqItem q="¿Puedo cambiar mi tipo de visa después?" a="Sí. Profile → Visa Type. Los cálculos fiscales y de Medicare se recalculan automáticamente." />
             <FaqItem q="Olvidé mi contraseña, ¿y ahora?" a='Pantalla de Login → "Forgot Password?" → ingresá el email → te llega un enlace de reset por email.' />
+            <FaqItem q="¿Cómo cambio mi contraseña?" a='En el Perfil → "Change Password". Ingresá la contraseña actual, la nueva contraseña y confirmala. Si olvidaste la actual, usá "Forgot Password?" en el Login.' />
+            <FaqItem q="¿Cómo cambio mi foto de perfil?" a="En el Perfil → tocá el avatar circular. Opciones: Cámara (sacar foto nueva), Galería (elegir foto existente) o Eliminar (quitar foto actual)." />
           </div>
         </SubSection>
 
@@ -833,6 +865,13 @@ export default function GuideContentEs({ SectionCard, SubSection, StepList, Bull
             <FaqItem q="¿Y si trabajo sin invoice (pago en efectivo)?" a='Marcá "Skip Invoice" al crear el job. Cuenta en las horas (Visa Shield) pero no aparece en "To Invoice".' />
             <FaqItem q="¿Puedo adjuntar comprobante de pago?" a='Sí. En los detalles del job → "Add Receipt" → cámara o galería.' />
             <FaqItem q='¿Qué es el "Golden Hour"?' a="Si creás una invoice dentro de los 60 minutos después de completar un job, ganás 2x XP (100 en vez de 50)." />
+          </div>
+        </SubSection>
+
+        <SubSection title="Completar Jobs">
+          <div className="space-y-2">
+            <FaqItem q="¿Puedo completar un job antes de la hora de fin?" a='Sí. Tocá el job → "Complete". Las horas se registran según el horario real (inicio a la hora actual).' />
+            <FaqItem q="¿Qué pasa si olvido completar un job?" a="El job queda como pendiente. Podés completarlo después desde la pantalla de Jobs o desde el card Pending Jobs del Dashboard." />
           </div>
         </SubSection>
 
@@ -885,6 +924,7 @@ export default function GuideContentEs({ SectionCard, SubSection, StepList, Bull
           <div className="space-y-2">
             <FaqItem q="¿Cuál es la diferencia entre TFN, ABN y MAX?" a="TFN ($9/mes): para contractors individuales — shifts, gastos, impuestos, Visa Shield. ABN ($15/mes): todo de TFN + invoices PDF, múltiples negocios, comparación de horas. MAX ($19/mes): TFN + ABN combinados con cambio de modo." />
             <FaqItem q="¿El trial es gratis de verdad?" a="¡Sí! 14 días de acceso completo sin cobro. Cancelá en cualquier momento a través de la App Store o Google Play antes de que termine el trial." />
+            <FaqItem q="¿Cómo cancelo mi suscripción?" a="La suscripción se administra a través de la App Store (iOS) o Google Play (Android). Andá a Configuración del teléfono → Suscripciones → Ozly → Cancelar. Los datos se mantienen incluso después de cancelar." />
           </div>
         </SubSection>
 

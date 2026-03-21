@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { ChevronDown, ArrowLeft, Mail, BookOpen } from "lucide-react";
 import { useI18n } from "../i18n";
 
-const faqKeys = ["q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8", "q9", "q10"];
+const faqKeys = ["q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8", "q9", "q10", "q11", "q12", "q13", "q14"];
 
 function FaqItem({ question, answer }) {
   const [open, setOpen] = useState(false);

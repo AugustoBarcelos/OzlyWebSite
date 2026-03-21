@@ -137,6 +137,7 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
               ["Financial", "Financial Screen", "—"],
               ["Fiscal", "Fiscal Screen", "Requires Pro"],
               ["Expenses", "Expenses Screen", "Requires Pro"],
+              ["Hours Comparison", "ABN hours comparison", "Requires Pro + ABN"],
               ["Visa Shield", "Hours Monitor", "Requires Pro + work/student visa"],
               ["Hustle", "Gamification (XP)", "—"],
               ["Settings", "Settings", "—"],
@@ -475,40 +476,50 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
               ["Create job", "5 XP", "—"],
               ["Complete job", "20 XP", "—"],
               ["Create invoice", "50 XP", "2x if Golden Hour"],
-              ["Golden Hour", "100 XP", "Invoice within 60 min after completing a job"],
+              ["Golden Hour (invoice within 60min)", "100 XP (2x)", "Timer on completion screen"],
               ["Invoice paid (on time)", "100 XP", "—"],
-              ["Invoice paid (late)", "80 XP", "—"],
+              ["Invoice paid (overdue)", "80 XP", "—"],
               ["Log expense", "100 XP", "120 XP if deductible"],
-              ["Referral (successful)", "500 XP", "Converted referral"],
-              ["3-day streak", "+5 XP", "Cumulative bonus"],
-              ["7-day streak", "+10 XP", "Cumulative bonus"],
-              ["14-day streak", "+30 XP", "Cumulative bonus"],
+              ["Referral (success)", "500 XP", "Converted referral"],
+              ["Streak 3 days", "+5 XP", "Cumulative bonus"],
+              ["Streak 7 days", "+10 XP", "Cumulative bonus"],
+              ["Streak 14 days", "+30 XP", "Cumulative bonus"],
             ]}
           />
         </SubSection>
 
         <SubSection title="Tiers (Levels per Fiscal Semester)">
-          <P>Progress is measured by <B>Australian fiscal semester</B>: S1 (Jul–Dec) and S2 (Jan–Jun). At the end of the semester, your tier is re-evaluated.</P>
           <SimpleTable
-            headers={["Tier", "Attendance", "Semester XP", "Color", "Theme"]}
+            headers={["Level", "Presence", "Semester XP", "Color", "Theme Effect"]}
             rows={[
-              ["Starter", "< 50%", "0 XP", "Teal", "Default"],
+              ["Starter", "< 50%", "0 XP", "Teal", "Default theme"],
               ["Hustler", "50%+", "300 XP", "Royal Blue", "Blue tones"],
-              ["Pro", "75%+", "700 XP", "Violet", "Purple tones"],
-              ["Legend", "90%+", "1,500 XP", "Gold", "Dark background + gold"],
+              ["Pro", "75%+", "700 XP", "Violet", "Violet tones"],
+              ["Legend", "90%+", "1,500 XP", "Gold", "Black + gold"],
             ]}
           />
+          <P>Progress is measured per Australian fiscal semester: S1 (Jul–Dec) and S2 (Jan–Jun).</P>
         </SubSection>
 
         <SubSection title="Tier Defense">
           <BulletList>
-            <li>At the end of the semester: if you didn't reach the XP goal for your current tier, you <B>drop 1 tier</B></li>
-            <li>If you exceeded the goal for the next tier, you <B>move up automatically</B></li>
-            <li>Starter is always maintained (you can't lose it)</li>
+            <li>At the end of each fiscal semester, your tier is reassessed</li>
+            <li>Didn't meet target → <B>drops 1 tier</B></li>
+            <li>Exceeded next tier's target → <B>auto-promoted</B></li>
+            <li>Starter is always maintained (minimum floor)</li>
           </BulletList>
         </SubSection>
 
-        <SubSection title="Tax Savings Milestones">
+        <SubSection title="Streak (Consecutive Days)">
+          <BulletList>
+            <li>Counts consecutive days of app usage</li>
+            <li>Maximum 14 days, then resets and restarts</li>
+            <li>XP bonuses at milestones: 3 days (+5 XP), 7 days (+10 XP), and 14 days (+30 XP)</li>
+          </BulletList>
+        </SubSection>
+
+        <SubSection title="Fiscal Savings Milestones">
+          <P>6 badges: $100, $200, $500, $1,000, $2,000, $5,000.</P>
           <P>When you reach savings milestones with deductible expenses, badges appear:</P>
           <SimpleTable
             headers={["Amount", "Equivalence"]}
@@ -574,7 +585,7 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
           <BulletList>
             <li><B>Avatar</B> — Camera / Gallery / Delete</li>
             <li><B>Name</B> — max 100 chars</li>
-            <li><B>Address</B> — Full (street, apt, suburb, state, postcode)</li>
+            <li><B>Address</B> — fields: Street, Apartment, Suburb, State, Postcode (with Google Places autocomplete)</li>
             <li><B>Phone</B> — format: +61 400 000 000</li>
             <li><B>Email</B> — read-only</li>
             <li><B>Country of Origin</B> — for reference</li>
@@ -594,6 +605,17 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
             <li><B>PayID</B> — email, phone, or ABN for instant payments</li>
           </BulletList>
           <P>Button <B>"+"</B> to add a new business. Use the <B>ABN selector</B> in the side menu to switch between businesses.</P>
+        </SubSection>
+
+        <SubSection title="Change Password">
+          <StepList>
+            <li>Go to <B>Profile</B></li>
+            <li>Tap <B>"Change Password"</B></li>
+            <li>Enter your <B>current password</B></li>
+            <li>Enter the <B>new password</B> (must meet strength requirements)</li>
+            <li>Confirm the <B>new password</B></li>
+            <li>Tap <B>"Update"</B></li>
+          </StepList>
         </SubSection>
       </SectionCard>
 
@@ -651,9 +673,9 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
           <SimpleTable
             headers={["Plan", "Price", "Includes"]}
             rows={[
-              ["TFN ($9/mo)", "For individual contractors", "Shifts, OCR Expenses, Visa Shield, Calendar Sync, Taxes, Contractors"],
-              ["ABN ($15/mo)", "For businesses with ABN", "Everything in TFN + PDF Invoices, Hours Comparison, Multiple Businesses"],
-              ["MAX ($19/mo)", "TFN + ABN combined", "Full access to all features + switch between TFN ↔ ABN mode"],
+              ["TFN", "$9/mo", "Employees — shifts, OCR expenses, Visa Shield, Calendar Sync, tax analytics"],
+              ["ABN", "$15/mo", "ABN holders — everything in TFN + PDF invoices, hours comparison, multiple businesses"],
+              ["MAX", "$19/mo", "TFN + ABN combined — full access + toggle mode"],
             ]}
           />
           <BulletList>
@@ -777,10 +799,11 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
           </StepList>
         </SubSection>
 
-        <SubSection title="Create Expense (2 paths)">
+        <SubSection title="Create Expense (3 paths)">
           <StepList>
             <li>Expenses → FAB "Add Expense"</li>
             <li>Dashboard → Deductible Expenses → "New Expense"</li>
+            <li>Job Completion Sheet → "New Expense"</li>
           </StepList>
         </SubSection>
 
@@ -825,6 +848,8 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
             <FaqItem q="Can I have multiple ABNs?" a="Yes! Add as many ABNs as you want in your Profile. Use the selector in the side menu to switch between them." />
             <FaqItem q="Can I change my visa type later?" a="Yes. Profile → Visa Type. Tax and Medicare calculations are automatically recalculated." />
             <FaqItem q="I forgot my password, what now?" a='Login screen → "Forgot Password?" → enter email → a reset link arrives by email.' />
+            <FaqItem q="How do I change my password?" a='Go to Profile → tap "Change Password" → enter your current password, then the new one, confirm, and tap "Update".' />
+            <FaqItem q="Can I download my profile photo?" a="Yes. Go to Profile → tap your avatar → select the download or share option to save the photo to your device." />
           </div>
         </SubSection>
 
@@ -885,6 +910,14 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
           <div className="space-y-2">
             <FaqItem q="What's the difference between TFN, ABN, and MAX?" a="TFN ($9/mo): for individual contractors — shifts, expenses, taxes, Visa Shield. ABN ($15/mo): everything in TFN + PDF invoices, multiple businesses, hours comparison. MAX ($19/mo): TFN + ABN combined with mode switching." />
             <FaqItem q="Is the trial really free?" a="Yes! 14 days of full access with no charge. Cancel anytime through the App Store or Google Play before the trial ends." />
+            <FaqItem q="How do I cancel my subscription?" a="Go to the App Store (iOS) or Google Play (Android) → Subscriptions → Ozly → Cancel. You keep access until the current billing period ends." />
+          </div>
+        </SubSection>
+
+        <SubSection title="Jobs Completion">
+          <div className="space-y-2">
+            <FaqItem q="What happens when I complete a job?" a="The system logs your hours, starts the Golden Hour timer (60 min to create an invoice for 2x XP), and offers the option to generate an invoice immediately." />
+            <FaqItem q="Can I undo a job completion?" a="No. Once a job is marked as complete, it cannot be reverted. You can still edit or delete the job if needed." />
           </div>
         </SubSection>
 

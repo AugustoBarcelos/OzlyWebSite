@@ -137,6 +137,7 @@ export default function GuideContentPt({ SectionCard, SubSection, StepList, Bull
               ["Financial", "Tela Financeira", "—"],
               ["Fiscal", "Tela Fiscal", "Requer Pro"],
               ["Expenses", "Tela de Despesas", "Requer Pro"],
+              ["Hours Comparison", "Comparação horas ABN", "Requer Pro + ABN"],
               ["Visa Shield", "Monitor de horas", "Requer Pro + visto work/student"],
               ["Hustle", "Gamificação (XP)", "—"],
               ["Settings", "Configurações", "—"],
@@ -475,14 +476,14 @@ export default function GuideContentPt({ SectionCard, SubSection, StepList, Bull
               ["Criar job", "5 XP", "—"],
               ["Completar job", "20 XP", "—"],
               ["Criar invoice", "50 XP", "2x se Golden Hour"],
-              ["Golden Hour", "100 XP", "Invoice em até 60min após completar job"],
+              ["Golden Hour (invoice em até 60min)", "100 XP (2x)", "Timer na tela de conclusão"],
               ["Invoice paga (no prazo)", "100 XP", "—"],
               ["Invoice paga (atrasada)", "80 XP", "—"],
               ["Registrar despesa", "100 XP", "120 XP se dedutível"],
               ["Referral (sucesso)", "500 XP", "Indicação convertida"],
               ["Streak 3 dias", "+5 XP", "Bônus cumulativo"],
               ["Streak 7 dias", "+10 XP", "Bônus cumulativo"],
-              ["Streak 14 dias", "+30 XP", "Bônus cumulativo"],
+              ["Streak 14 dias", "+30 XP", "Reseta e recomeça"],
             ]}
           />
         </SubSection>
@@ -490,26 +491,35 @@ export default function GuideContentPt({ SectionCard, SubSection, StepList, Bull
         <SubSection title="Tiers (Níveis por Semestre Fiscal)">
           <P>O progresso é medido por <B>semestre fiscal australiano</B>: S1 (Jul–Dez) e S2 (Jan–Jun). Ao final do semestre, seu tier é reavaliado.</P>
           <SimpleTable
-            headers={["Tier", "Presença", "XP Semestral", "Cor", "Tema"]}
+            headers={["Nível", "Presença", "XP Semestral", "Cor", "Efeito no Tema"]}
             rows={[
-              ["Starter", "< 50%", "0 XP", "Teal", "Padrão"],
+              ["Starter", "< 50%", "0 XP", "Teal", "Tema padrão"],
               ["Hustler", "50%+", "300 XP", "Azul Royal", "Tons azuis"],
-              ["Pro", "75%+", "700 XP", "Violeta", "Tons roxos"],
-              ["Legend", "90%+", "1.500 XP", "Dourado", "Fundo escuro + dourado"],
+              ["Pro", "75%+", "700 XP", "Violeta", "Tons violeta"],
+              ["Legend", "90%+", "1.500 XP", "Dourado", "Preto + dourado"],
             ]}
           />
         </SubSection>
 
         <SubSection title="Defesa de Tier">
           <BulletList>
-            <li>Ao final do semestre: se não atingiu a meta de XP do tier atual, <B>cai 1 tier</B></li>
-            <li>Se ultrapassou a meta do próximo tier, <B>sobe automaticamente</B></li>
-            <li>Starter é sempre mantido (não perde)</li>
+            <li>Ao final do semestre fiscal, o tier é reavaliado</li>
+            <li>Se não atingiu a meta → desce 1 tier</li>
+            <li>Se ultrapassou a meta do próximo → sobe automaticamente</li>
+            <li>Starter é piso mínimo (sempre mantido)</li>
+          </BulletList>
+        </SubSection>
+
+        <SubSection title="Streak (Dias Consecutivos)">
+          <BulletList>
+            <li>Conta dias seguidos de uso do app</li>
+            <li>Máximo de 14 dias, depois reseta e recomeça</li>
+            <li>Bônus de XP aos marcos: 3, 7 e 14 dias</li>
           </BulletList>
         </SubSection>
 
         <SubSection title="Marcos de Economia Fiscal">
-          <P>Ao atingir marcos de economia com despesas dedutíveis, badges aparecem:</P>
+          <P>6 badges: $100, $200, $500, $1.000, $2.000, $5.000. Toque em qualquer badge para ver equivalência divertida.</P>
           <SimpleTable
             headers={["Valor", "Equivalência"]}
             rows={[
@@ -574,7 +584,7 @@ export default function GuideContentPt({ SectionCard, SubSection, StepList, Bull
           <BulletList>
             <li><B>Avatar</B> — Camera / Gallery / Delete</li>
             <li><B>Nome</B> — max 100 chars</li>
-            <li><B>Endereço</B> — Completo (rua, apt, suburb, state, postcode)</li>
+            <li><B>Endereço</B> — campos: Street, Apartment, Suburb, State, Postcode (com autocomplete via Google Places)</li>
             <li><B>Telefone</B> — formato: +61 400 000 000</li>
             <li><B>Email</B> — somente leitura</li>
             <li><B>País de Origem</B> — para referência</li>
@@ -594,6 +604,10 @@ export default function GuideContentPt({ SectionCard, SubSection, StepList, Bull
             <li><B>PayID</B> — email, telefone ou ABN para pagamentos instantâneos</li>
           </BulletList>
           <P>Botão <B>"+"</B> para adicionar novo negócio. Use o <B>seletor de ABN</B> no menu lateral para alternar entre negócios.</P>
+        </SubSection>
+
+        <SubSection title="Alterar Senha">
+          <P>Disponível apenas para login por email/senha. Toque em <B>"Change Password"</B> no Perfil.</P>
         </SubSection>
       </SectionCard>
 
@@ -648,16 +662,16 @@ export default function GuideContentPt({ SectionCard, SubSection, StepList, Bull
         <P>Settings → <B>"Upgrade to Pro"</B> ou toque em qualquer item que requer Pro.</P>
 
         <SubSection title="Planos Disponíveis">
+          <P><B>14 dias de trial grátis</B> em todos os planos.</P>
           <SimpleTable
-            headers={["Plano", "Preço", "Inclui"]}
+            headers={["Plano", "Preço", "Para quem"]}
             rows={[
-              ["TFN ($9/mês)", "Para contractors individuais", "Shifts, Despesas OCR, Visa Shield, Calendar Sync, Impostos, Contractors"],
-              ["ABN ($15/mês)", "Para negócios com ABN", "Tudo do TFN + Invoices PDF, Comparação de Horas, Múltiplos Negócios"],
-              ["MAX ($19/mês)", "TFN + ABN combinados", "Acesso completo a todos os recursos + alternar modo TFN ↔ ABN"],
+              ["TFN", "$9/mês", "Employees — shifts, despesas OCR, Visa Shield, Calendar Sync, impostos"],
+              ["ABN", "$15/mês", "ABN holders — tudo do TFN + invoices PDF, comparação horas, múltiplos negócios"],
+              ["MAX", "$19/mês", "TFN + ABN combinados — acesso completo + alternar modo"],
             ]}
           />
           <BulletList>
-            <li><B>14 dias de trial grátis</B> em todos os planos</li>
             <li>Opções: <B>Annual</B> (recomendado) e <B>Monthly</B></li>
             <li>Preços podem variar por região (gerenciados via RevenueCat)</li>
           </BulletList>
@@ -777,10 +791,11 @@ export default function GuideContentPt({ SectionCard, SubSection, StepList, Bull
           </StepList>
         </SubSection>
 
-        <SubSection title="Criar Despesa (2 caminhos)">
+        <SubSection title="Criar Despesa (3 caminhos)">
           <StepList>
             <li>Expenses → FAB "Add Expense"</li>
             <li>Dashboard → Deductible Expenses → "New Expense"</li>
+            <li>Job Completion Sheet → "New Expense" (após completar um job)</li>
           </StepList>
         </SubSection>
 
@@ -825,6 +840,8 @@ export default function GuideContentPt({ SectionCard, SubSection, StepList, Bull
             <FaqItem q="Posso ter vários ABNs?" a='Sim! Adicione quantos ABNs quiser no Perfil. Use o seletor no menu lateral para alternar.' />
             <FaqItem q="Posso mudar meu tipo de visto depois?" a="Sim. Profile → Visa Type. Os cálculos fiscais e Medicare recalculam automaticamente." />
             <FaqItem q="Esqueci a senha, e agora?" a='Tela de Login → "Forgot Password?" → digite email → link de reset chega por email.' />
+            <FaqItem q="Posso alterar minha senha?" a='Sim, se o login foi por email/senha. Vá em Perfil → "Change Password". Para Google ou Apple, a senha é gerenciada pelo provedor.' />
+            <FaqItem q="Posso baixar a foto de um recibo?" a="Sim. Ao visualizar em tela cheia, toque no botão de download." />
           </div>
         </SubSection>
 
@@ -833,6 +850,13 @@ export default function GuideContentPt({ SectionCard, SubSection, StepList, Bull
             <FaqItem q="E se eu trabalhar sem invoice (pagamento em dinheiro)?" a='Marque "Skip Invoice" ao criar o job. Ele conta nas horas (Visa Shield) mas não aparece em "To Invoice".' />
             <FaqItem q="Posso anexar comprovante de pagamento?" a='Sim. Nos detalhes do job → "Add Receipt" → câmera ou galeria.' />
             <FaqItem q='O que é o "Golden Hour"?' a="Se criar uma invoice até 60 minutos após completar um job, você ganha 2x XP (100 em vez de 50)." />
+          </div>
+        </SubSection>
+
+        <SubSection title="Jobs (Completion)">
+          <div className="space-y-2">
+            <FaqItem q="O que acontece quando completo um job?" a="Um bottom sheet de celebração aparece mostrando horas trabalhadas, receita gerada e XP ganho." />
+            <FaqItem q='Por que o botão "Generate Invoice" não aparece?' a='Isso acontece quando o job foi criado com "Skip Invoice" ativa.' />
           </div>
         </SubSection>
 
@@ -883,8 +907,9 @@ export default function GuideContentPt({ SectionCard, SubSection, StepList, Bull
 
         <SubSection title="Assinatura">
           <div className="space-y-2">
-            <FaqItem q="Qual a diferença entre TFN, ABN e MAX?" a="TFN ($9/mês): para contractors individuais — shifts, despesas, impostos, Visa Shield. ABN ($15/mês): tudo do TFN + invoices PDF, múltiplos negócios, comparação de horas. MAX ($19/mês): TFN + ABN combinados com alternar modo." />
-            <FaqItem q="O trial é gratuito mesmo?" a="Sim! 14 dias de acesso completo sem cobrança. Cancele a qualquer momento pela App Store ou Google Play antes do fim do trial." />
+            <FaqItem q="Quais são os planos?" a="TFN ($9/mês) para employees, ABN ($15/mês) para ABN holders, e MAX ($19/mês) para ambos. Todos incluem 14 dias de trial grátis." />
+            <FaqItem q="Como cancelar?" a="Cancele diretamente na App Store (iOS) ou Google Play (Android). Sem taxas de cancelamento." />
+            <FaqItem q="Tem período de teste?" a="Sim, 14 dias grátis para todas as funcionalidades Pro." />
           </div>
         </SubSection>
 
