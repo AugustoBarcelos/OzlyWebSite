@@ -12,7 +12,7 @@
     "title": "No more mess. Shifts, Invoices & Tax in one place.",
     "titleHighlight": "Built for ABN workers in Australia.",
     "subtitle": "Schedule all your jobs, generate a PDF Invoice in 15 seconds and send it to your client on the spot. Track expenses, know how much the ATO will charge and see the clean cash in your pocket — all for just {price}.",
-    "price": "$15/mo",
+    "price": "$15/mo ($3.50/week)",
     "ctaAppStore": "Download on App Store",
     "ctaGooglePlay": "Get it on Google Play"
   },
@@ -50,7 +50,7 @@
     "paymentTracking": "Payment tracking",
     "profitForecast": "Net profit forecast",
     "offline": "Works 100% Offline",
-    "fixedPrice": "Flat price ($15/mo)"
+    "fixedPrice": "Starting from $3.50/week ($15/mo)"
   },
   "pricing": {
     "title": "Choose Your Plan",
@@ -59,21 +59,25 @@
     "bestValue": "Best Value",
     "cta": "Start Hustling",
     "perMonth": "/mo",
+    "perWeek": "/wk",
     "currency": "AUD",
     "tfn": {
       "name": "TFN",
       "desc": "For individual contractors",
-      "price": "$9"
+      "price": "$9",
+      "weekly": "$2.10"
     },
     "abn": {
       "name": "ABN",
       "desc": "For ABN businesses",
-      "price": "$15"
+      "price": "$15",
+      "weekly": "$3.50"
     },
     "max": {
       "name": "MAX",
       "desc": "TFN + ABN combined",
-      "price": "$19"
+      "price": "$19",
+      "weekly": "$4.40"
     },
     "features": {
       "shifts": "Shifts & Job Tracking",

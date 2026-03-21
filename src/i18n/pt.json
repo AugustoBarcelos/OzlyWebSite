@@ -12,7 +12,7 @@
     "title": "Chega de bagunça. Shifts, Invoices e Imposto num lugar só.",
     "titleHighlight": "Feito pra quem roda de ABN na Austrália.",
     "subtitle": "Agende todos os seus jobs, gere Invoice PDF em 15 segundos e mande pro cliente na hora. Controle gastos, saiba quanto o ATO vai cobrar e veja o dinheiro limpo no bolso — tudo por apenas {price}.",
-    "price": "$15/mês",
+    "price": "$15/mês ($3.50/semana)",
     "ctaAppStore": "Baixar na App Store",
     "ctaGooglePlay": "Baixar no Google Play"
   },
@@ -50,7 +50,7 @@
     "paymentTracking": "Controle de pagamentos",
     "profitForecast": "Previsão de lucro líquido",
     "offline": "Funciona 100% Offline",
-    "fixedPrice": "Preço fixo ($15/mês)"
+    "fixedPrice": "A partir de $3.50/semana ($15/mês)"
   },
   "pricing": {
     "title": "Escolha Seu Plano",
@@ -59,21 +59,25 @@
     "bestValue": "Melhor Custo-Benefício",
     "cta": "Começar o Corre",
     "perMonth": "/mês",
+    "perWeek": "/sem",
     "currency": "AUD",
     "tfn": {
       "name": "TFN",
       "desc": "Para contractors individuais",
-      "price": "$9"
+      "price": "$9",
+      "weekly": "$2.10"
     },
     "abn": {
       "name": "ABN",
       "desc": "Para negócios com ABN",
-      "price": "$15"
+      "price": "$15",
+      "weekly": "$3.50"
     },
     "max": {
       "name": "MAX",
       "desc": "TFN + ABN combinados",
-      "price": "$19"
+      "price": "$19",
+      "weekly": "$4.40"
     },
     "features": {
       "shifts": "Shifts & Controle de Jobs",

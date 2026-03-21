@@ -529,6 +529,7 @@ function Pricing() {
                   <div className="mt-4">
                     <span className={`text-5xl font-extrabold ${plan.highlight ? "text-amber-500" : "text-brand-500"}`}>{plan.price}</span>
                     <span className="text-lg font-semibold text-slate-400">{p.perMonth}</span>
+                    {plan.weekly && <span className="block text-sm font-semibold text-slate-400 mt-1">{plan.weekly}{p.perWeek}</span>}
                     <span className="block text-xs text-slate-400 mt-1">{p.currency}</span>
                   </div>
                 </div>
@@ -577,6 +578,7 @@ function Pricing() {
                     <span className={`text-4xl font-extrabold ${plan.highlight ? "text-amber-500" : "text-brand-500"}`}>{plan.price}</span>
                     <span className="text-base font-semibold text-slate-400">{p.perMonth}</span>
                   </div>
+                  {plan.weekly && <span className="block text-xs font-semibold text-slate-400">{plan.weekly}{p.perWeek}</span>}
                   <span className="text-[10px] text-slate-400">{p.currency}</span>
                 </div>
               ))}
