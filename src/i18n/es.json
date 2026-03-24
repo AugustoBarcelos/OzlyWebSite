@@ -10,9 +10,9 @@
   "hero": {
     "badge": "Tu negocio en el bolsillo",
     "title": "Basta de quilombo. Shifts, Invoices e Impuesto en un solo lugar.",
-    "titleHighlight": "Hecho para los que laburan con ABN en Australia.",
-    "subtitle": "Agendá todos tus jobs, generá un Invoice PDF en 15 segundos y mandalo al cliente en el momento. Controlá gastos, sabé cuánto te va a cobrar el ATO y mirá la plata limpia en tu bolsillo — todo por solo {price}.",
-    "price": "$15/mes ($3.50/semana)",
+    "titleHighlight": "Hecho para los que laburan con ABN y TFN en Australia.",
+    "subtitle": "Sea ABN o TFN — agendá jobs, generá invoices, controlá gastos con IA, mirá tu sueldo neto después del PAYG, conocé los penalty rates de fines de semana y feriados, y gestioná todo desde una app. Desde {price}.",
+    "price": "$9/mes ($2.10/semana)",
     "ctaAppStore": "Descargar en App Store",
     "ctaGooglePlay": "Descargar en Google Play"
   },
@@ -24,17 +24,17 @@
     "beauty": "Beauty"
   },
   "features": {
-    "title": "Todo lo que el trabajador ABN necesita,",
+    "title": "Todo lo que el trabajador ABN y TFN necesita,",
     "titleHighlight": "en una sola app.",
-    "subtitle": "Dejá de usar 4 apps distintas. Ozly resuelve shifts, invoice, impuesto y gastos en un solo lugar.",
+    "subtitle": "Dejá de usar 4 apps distintas. Ozly resuelve shifts, invoice, impuesto, gastos, penalty rates y pronóstico salarial en un solo lugar.",
     "shifts": "Shifts & Invoices",
-    "shiftsDesc": "Terminaste el job, generaste el PDF y se lo mandaste al cliente al toque. Sin límite de envíos, sin vueltas.",
-    "ocr": "Cámara Inteligente",
-    "ocrDesc": "¿Sacaste foto del recibo de Bunnings o de la nafta? La app lo lee, lo vincula al job y ya calcula lo que el ATO te va a deducir.",
-    "tracker": "Tracker de Morosos",
-    "trackerDesc": "Una pantalla para ver al toque quién pagó, qué está pendiente y quién te debe. Dejá de perder plata.",
-    "forecast": "Previsión Financiera",
-    "forecastDesc": "Sabé exactamente cuánta plata limpia te va a quedar en el bolsillo a fin de mes. Sin sorpresas a la hora del Tax Return."
+    "shiftsDesc": "Creá jobs con duración flexible (1h hasta día completo), editá turnos en lote y generá PDF invoices al instante. TFN salta invoice automáticamente.",
+    "ocr": "Cámara Inteligente & Gasto Rápido",
+    "ocrDesc": "Sacá foto del recibo — la IA lee cada ítem, calcula la deducción y completa el formulario. O usá el Modo Rápido para registrar con un toque.",
+    "tracker": "Sueldo Neto & Penalty Rates",
+    "trackerDesc": "Mirá tu bruto, retención PAYG y neto en tiempo real. Cálculo automático de penalty rates para Sábados (150%), Domingos (200%) y feriados (250%) por el Cleaning Award.",
+    "forecast": "Conversor ABN ↔ TFN & Pronóstico Fiscal",
+    "forecastDesc": "Compará tu ingreso ABN vs sueldo TFN equivalente lado a lado. Conocé tu impuesto, super y Medicare levy. Ingresá sueldo como horario, anual, mensual o quincenal."
   },
   "comparison": {
     "title": "Ozly vs",
@@ -81,7 +81,7 @@
     },
     "features": {
       "shifts": "Shifts & Control de Jobs",
-      "expensesOcr": "Gastos con OCR",
+      "expensesOcr": "Gastos con IA OCR",
       "visaShield": "Visa Shield (monitor 48h)",
       "calendarSync": "Google Calendar Sync",
       "taxAnalytics": "Análisis Avanzado de Impuestos",
@@ -89,7 +89,14 @@
       "invoices": "Invoices PDF Profesionales",
       "hoursComparison": "Comparación de Horas (ABN peers)",
       "multiBusinesses": "Múltiples Negocios",
-      "toggleMode": "Alternar modo TFN ↔ ABN"
+      "toggleMode": "Alternar modo TFN ↔ ABN",
+      "penaltyRates": "Penalty Rates (Sáb/Dom/Feriados)",
+      "netSalary": "Pronóstico Sueldo Neto (PAYG)",
+      "bulkEdit": "Edición en Lote de Jobs",
+      "timesheets": "Timesheet PDF por Empleador",
+      "levelUp": "Celebración de Level Up",
+      "quickExpense": "Gasto Rápido & Inteligente",
+      "salaryModes": "Sueldo: Horario / Anual / Mensual / Quincenal"
     }
   },
   "homeFaq": {
@@ -227,6 +234,18 @@
     "q13": "¿Mis datos están seguros?",
     "a13": "Sí. Tu base de datos local está encriptada con SQLCipher (AES-256), los tokens se guardan en el iOS Keychain / Android Keystore, y todos los datos del servidor están protegidos por Row-Level Security. Nunca registramos datos sensibles como TFN, BSB o contraseñas.",
     "q14": "¿Cómo funciona el programa de referidos?",
-    "a14": "Compartí tu código de referral con amigos. Cuando se registren con tu código, los dos ganan recompensas. También ganás 500 XP por cada referido convertido."
+    "a14": "Compartí tu código de referral con amigos. Cuando se registren con tu código, los dos ganan recompensas. También ganás 500 XP por cada referido convertido.",
+    "q15": "¿Cuál es la diferencia entre modo TFN y ABN?",
+    "a15": "El modo TFN es para empleados (Tax File Number) — muestra sueldo neto después del PAYG, contribución de super, y no necesita invoices. El modo ABN es para contractors con Australian Business Number — incluye invoices, gestión de contractors y control de GST. El plan MAX te da los dos.",
+    "q16": "¿Cómo funcionan los penalty rates?",
+    "a16": "Ozly calcula automáticamente los penalty rates por el Cleaning Services Award (MA000022). Turnos de Sábado reciben 150%, Domingos 200% y feriados 250% de tu tarifa base. También conoce todos los feriados australianos por estado para 2026.",
+    "q17": "¿Puedo ingresar mi sueldo como anual o quincenal?",
+    "a17": "¡Sí! Los usuarios TFN pueden ingresar sueldo como Horario, Anual, Mensual o Quincenal. Ozly convierte automáticamente a tarifa horaria basada en 38h/semana y muestra tu bruto estimado, PAYG y sueldo neto.",
+    "q18": "¿Qué es el modo Gasto Rápido?",
+    "a18": "El modo Rápido permite registrar gastos con solo monto, categoría y fecha — sin foto de recibo. El modo Inteligente usa IA OCR para leer tu recibo y extraer todos los ítems automáticamente.",
+    "q19": "¿Puedo editar o borrar varios jobs a la vez?",
+    "a19": "¡Sí! Presioná largo cualquier job para entrar en modo de selección múltiple. Después seleccioná varios y editá la tarifa o borralos todos de una vez.",
+    "q20": "¿Cómo funciona el timesheet?",
+    "a20": "Ozly genera timesheets PDF profesionales de tus jobs completados. Podés filtrar por empleador/contractor, y el timesheet incluye fechas, horas, tarifas y totales. Compartilo directo por email o WhatsApp."
   }
 }

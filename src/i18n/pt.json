@@ -10,9 +10,9 @@
   "hero": {
     "badge": "Seu negócio no bolso",
     "title": "Chega de bagunça. Shifts, Invoices e Imposto num lugar só.",
-    "titleHighlight": "Feito pra quem roda de ABN na Austrália.",
-    "subtitle": "Agende todos os seus jobs, gere Invoice PDF em 15 segundos e mande pro cliente na hora. Controle gastos, saiba quanto o ATO vai cobrar e veja o dinheiro limpo no bolso — tudo por apenas {price}.",
-    "price": "$15/mês ($3.50/semana)",
+    "titleHighlight": "Feito pra quem trabalha de ABN e TFN na Austrália.",
+    "subtitle": "Seja ABN ou TFN — agende jobs, gere invoices, acompanhe despesas com IA, veja seu salário líquido depois do PAYG, saiba os penalty rates de fim de semana e feriados, e gerencie tudo num app só. A partir de {price}.",
+    "price": "$9/mês ($2.10/semana)",
     "ctaAppStore": "Baixar na App Store",
     "ctaGooglePlay": "Baixar no Google Play"
   },
@@ -24,17 +24,17 @@
     "beauty": "Beauty"
   },
   "features": {
-    "title": "Tudo que o trabalhador ABN precisa,",
+    "title": "Tudo que o trabalhador ABN e TFN precisa,",
     "titleHighlight": "num só app.",
-    "subtitle": "Chega de usar 4 apps diferentes. O Ozly resolve shifts, invoice, imposto e despesa num único lugar.",
+    "subtitle": "Chega de usar 4 apps diferentes. O Ozly resolve shifts, invoice, imposto, despesa, penalty rates e previsão salarial num único lugar.",
     "shifts": "Shifts & Invoices",
-    "shiftsDesc": "Fez o job, gerou o PDF e mandou pro cliente na hora. Sem limite de envios, sem frescura.",
-    "ocr": "Câmera Inteligente",
-    "ocrDesc": "Tirou foto da nota da Bunnings ou do posto? O app lê, vincula ao job e já calcula o que o ATO vai deduzir.",
-    "tracker": "Tracker de Calote",
-    "trackerDesc": "Uma tela pra ver na hora quem pagou, o que tá pendente e quem tá te devendo. Chega de perder dinheiro.",
-    "forecast": "Previsão Financeira",
-    "forecastDesc": "Saiba exatamente quanto dinheiro limpo vai sobrar no bolso no fim do mês. Sem surpresa na hora do Tax Return."
+    "shiftsDesc": "Crie jobs com duração flexível (1h até dia inteiro), edite turnos em lote e gere PDF invoices na hora. TFN pula invoice automaticamente.",
+    "ocr": "Câmera Inteligente & Despesa Rápida",
+    "ocrDesc": "Tire foto da nota — a IA lê cada item, calcula a dedução e preenche o formulário. Ou use o Modo Rápido pra lançar com um toque.",
+    "tracker": "Salário Líquido & Penalty Rates",
+    "trackerDesc": "Veja seu bruto, retenção PAYG e líquido em tempo real. Cálculo automático de penalty rates pra Sábados (150%), Domingos (200%) e feriados (250%) pelo Cleaning Award.",
+    "forecast": "Conversor ABN ↔ TFN & Previsão Fiscal",
+    "forecastDesc": "Compare sua renda ABN vs salário TFN equivalente lado a lado. Saiba seu imposto, super e Medicare levy. Insira salário como horário, anual, mensal ou quinzenal."
   },
   "comparison": {
     "title": "Ozly vs",
@@ -81,7 +81,7 @@
     },
     "features": {
       "shifts": "Shifts & Controle de Jobs",
-      "expensesOcr": "Despesas com OCR",
+      "expensesOcr": "Despesas com IA OCR",
       "visaShield": "Visa Shield (monitor 48h)",
       "calendarSync": "Google Calendar Sync",
       "taxAnalytics": "Análise Avançada de Impostos",
@@ -89,7 +89,14 @@
       "invoices": "Invoices PDF Profissionais",
       "hoursComparison": "Comparação de Horas (ABN peers)",
       "multiBusinesses": "Múltiplos Negócios",
-      "toggleMode": "Alternar modo TFN ↔ ABN"
+      "toggleMode": "Alternar modo TFN ↔ ABN",
+      "penaltyRates": "Penalty Rates (Sáb/Dom/Feriados)",
+      "netSalary": "Previsão Salário Líquido (PAYG)",
+      "bulkEdit": "Edição em Lote de Jobs",
+      "timesheets": "Timesheet PDF por Empregador",
+      "levelUp": "Celebração de Level Up",
+      "quickExpense": "Despesa Rápida & Inteligente",
+      "salaryModes": "Salário: Horário / Anual / Mensal / Quinzenal"
     }
   },
   "homeFaq": {
@@ -201,7 +208,7 @@
     "contactSubtitle": "Manda um e-mail pra gente que respondemos rapidinho.",
     "contactButton": "Enviar E-mail",
     "q1": "O que é o Ozly?",
-    "a1": "O Ozly é um app feito especialmente para quem trabalha com ABN na Austrália — Cleaners, Tradies, Delivery e qualquer Sole Trader. Ele reúne shifts, invoices ilimitados, controle de despesas com OCR, tracker de pagamentos e previsão financeira num único lugar.",
+    "a1": "O Ozly é um app feito pra quem trabalha com ABN e TFN na Austrália — Cleaners, Tradies, Delivery, Empregados e qualquer Sole Trader. Ele reúne shifts, invoices ilimitados, despesas com IA OCR, previsão de salário líquido, penalty rates, tracker de pagamentos e previsão financeira num único lugar.",
     "q2": "Como funciona o Tracker de Calote?",
     "a2": "O Tracker mostra todos os seus invoices organizados por status: pagos, pendentes e atrasados. Assim você sabe na hora quem tá te devendo e não perde mais dinheiro.",
     "q3": "Quanto custa o Ozly?",
@@ -227,6 +234,18 @@
     "q13": "Meus dados estão seguros?",
     "a13": "Sim. Seu banco de dados local é criptografado com SQLCipher (AES-256), tokens ficam no iOS Keychain / Android Keystore, e todos os dados no servidor são protegidos por Row-Level Security. Nunca registramos dados sensíveis como TFN, BSB ou senhas.",
     "q14": "Como funciona o programa de indicação?",
-    "a14": "Compartilhe seu código de referral com amigos. Quando se cadastrarem usando seu código, vocês dois ganham recompensas. Você também ganha 500 XP por cada indicação convertida."
+    "a14": "Compartilhe seu código de referral com amigos. Quando se cadastrarem usando seu código, vocês dois ganham recompensas. Você também ganha 500 XP por cada indicação convertida.",
+    "q15": "Qual a diferença entre modo TFN e ABN?",
+    "a15": "O modo TFN é pra empregados (Tax File Number) — mostra salário líquido depois do PAYG, contribuição de super, e não precisa de invoices. O modo ABN é pra contractors com Australian Business Number — inclui invoices, gestão de contractors e controle de GST. O plano MAX te dá os dois.",
+    "q16": "Como funcionam os penalty rates?",
+    "a16": "O Ozly calcula automaticamente os penalty rates pelo Cleaning Services Award (MA000022). Turnos de Sábado recebem 150%, Domingos 200% e feriados 250% da sua taxa base. Ele também conhece todos os feriados australianos por estado para 2026.",
+    "q17": "Posso inserir meu salário como anual ou quinzenal?",
+    "a17": "Sim! Usuários TFN podem inserir salário como Horário, Anual, Mensal ou Quinzenal. O Ozly converte automaticamente pra taxa horária baseada em 38h/semana e mostra seu bruto estimado, PAYG e salário líquido.",
+    "q18": "O que é o modo Despesa Rápida?",
+    "a18": "O modo Rápido permite registrar despesa com apenas valor, categoria e data — sem foto de recibo. O modo Inteligente usa IA OCR pra ler seu recibo e extrair todos os itens automaticamente. Você escolhe qual modo usar pra cada despesa.",
+    "q19": "Posso editar ou excluir vários jobs de uma vez?",
+    "a19": "Sim! Pressione longamente qualquer job pra entrar no modo de seleção múltipla. Depois selecione vários jobs e edite o valor/hora ou exclua todos de uma vez. Ótimo pra gerenciar turnos recorrentes.",
+    "q20": "Como funciona o timesheet?",
+    "a20": "O Ozly gera timesheets PDF profissionais dos seus jobs concluídos. Você pode filtrar por empregador/contractor, e o timesheet inclui datas, horas, valores e totais. Compartilhe direto por email ou WhatsApp."
   }
 }

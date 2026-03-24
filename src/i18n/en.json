@@ -10,9 +10,9 @@
   "hero": {
     "badge": "Your business in your pocket",
     "title": "No more mess. Shifts, Invoices & Tax in one place.",
-    "titleHighlight": "Built for ABN workers in Australia.",
-    "subtitle": "Schedule all your jobs, generate a PDF Invoice in 15 seconds and send it to your client on the spot. Track expenses, know how much the ATO will charge and see the clean cash in your pocket — all for just {price}.",
-    "price": "$15/mo ($3.50/week)",
+    "titleHighlight": "Built for ABN & TFN workers in Australia.",
+    "subtitle": "Whether you're ABN or TFN — schedule jobs, generate invoices, track expenses with AI, see your net salary after PAYG, know penalty rates for weekends & holidays, and manage everything from one app. Starting from just {price}.",
+    "price": "$9/mo ($2.10/week)",
     "ctaAppStore": "Download on App Store",
     "ctaGooglePlay": "Get it on Google Play"
   },
@@ -24,17 +24,17 @@
     "beauty": "Beauty"
   },
   "features": {
-    "title": "Everything an ABN worker needs,",
+    "title": "Everything ABN & TFN workers need,",
     "titleHighlight": "in one app.",
-    "subtitle": "Stop juggling 4 different apps. Ozly handles shifts, invoices, tax and expenses in one place.",
+    "subtitle": "Stop juggling 4 different apps. Ozly handles shifts, invoices, tax, expenses, penalty rates and salary forecasting in one place.",
     "shifts": "Shifts & Invoices",
-    "shiftsDesc": "Finished the job, generated the PDF and sent it to the client on the spot. Unlimited sends, no fuss.",
-    "ocr": "Smart Camera",
-    "ocrDesc": "Snapped a receipt from Bunnings or the servo? The app reads it, links it to the job and calculates your ATO deduction.",
-    "tracker": "Payment Tracker",
-    "trackerDesc": "One screen to see who paid, what's pending and who owes you. Stop losing money.",
-    "forecast": "Financial Forecast",
-    "forecastDesc": "Know exactly how much clean cash you'll have in your pocket at the end of the month. No surprises at Tax Return time."
+    "shiftsDesc": "Create jobs with flexible duration (1h to full day), bulk edit recurring shifts, and generate PDF invoices instantly. TFN workers get automatic skip-invoice mode.",
+    "ocr": "Smart Camera & Quick Expense",
+    "ocrDesc": "Snap a receipt — AI reads every item, calculates your deduction and populates the form. Or use Quick Mode for a one-tap expense entry.",
+    "tracker": "Net Salary & Penalty Rates",
+    "trackerDesc": "See your gross, PAYG withholding and net take-home in real time. Automatic penalty rate calculations for Saturdays (150%), Sundays (200%) and public holidays (250%) under the Cleaning Award.",
+    "forecast": "ABN ↔ TFN Converter & Tax Forecast",
+    "forecastDesc": "Compare your ABN income vs equivalent TFN salary side by side. Know your tax, super and Medicare levy. Enter salary as hourly, annual, monthly or fortnightly."
   },
   "comparison": {
     "title": "Ozly vs",
@@ -81,7 +81,7 @@
     },
     "features": {
       "shifts": "Shifts & Job Tracking",
-      "expensesOcr": "Expenses with OCR",
+      "expensesOcr": "Expenses with AI OCR",
       "visaShield": "Visa Shield (48h monitor)",
       "calendarSync": "Google Calendar Sync",
       "taxAnalytics": "Advanced Tax Analytics",
@@ -89,7 +89,14 @@
       "invoices": "Professional PDF Invoices",
       "hoursComparison": "Hours Comparison (ABN peers)",
       "multiBusinesses": "Multiple Businesses",
-      "toggleMode": "Toggle TFN ↔ ABN mode"
+      "toggleMode": "Toggle TFN ↔ ABN mode",
+      "penaltyRates": "Penalty Rates (Sat/Sun/Holidays)",
+      "netSalary": "Net Salary Forecast (PAYG)",
+      "bulkEdit": "Bulk Edit & Delete Jobs",
+      "timesheets": "Timesheet PDF per Employer",
+      "levelUp": "Hustle Level Up Celebrations",
+      "quickExpense": "Smart & Quick Expense Entry",
+      "salaryModes": "Salary: Hourly / Annual / Monthly / Fortnightly"
     }
   },
   "homeFaq": {
@@ -201,7 +208,7 @@
     "contactSubtitle": "Send us an email and we'll get back to you quickly.",
     "contactButton": "Send Email",
     "q1": "What is Ozly?",
-    "a1": "Ozly is an app built especially for ABN workers in Australia — Cleaners, Tradies, Delivery riders and any Sole Trader. It combines shifts, unlimited invoices, expense tracking with OCR, payment tracker and financial forecast all in one place.",
+    "a1": "Ozly is an app built for ABN and TFN workers in Australia — Cleaners, Tradies, Delivery riders, Employees and any Sole Trader. It combines shifts, unlimited invoices, expense tracking with AI OCR, net salary forecast, penalty rates, payment tracker and financial forecast all in one place.",
     "q2": "How does the Payment Tracker work?",
     "a2": "The Tracker shows all your invoices organised by status: paid, pending and overdue. You instantly know who owes you and never lose track of money again.",
     "q3": "How much does Ozly cost?",
@@ -227,6 +234,18 @@
     "q13": "Is my data secure?",
     "a13": "Yes. Your local database is encrypted with SQLCipher (AES-256), tokens are stored in the iOS Keychain / Android Keystore, and all server data is protected by Row-Level Security. We never log sensitive data like TFN, BSB or passwords.",
     "q14": "How does the referral program work?",
-    "a14": "Share your unique referral code with friends. When they sign up using your code, both of you earn rewards. You also get 500 XP for each successful referral."
+    "a14": "Share your unique referral code with friends. When they sign up using your code, both of you earn rewards. You also get 500 XP for each successful referral.",
+    "q15": "What is the difference between TFN and ABN mode?",
+    "a15": "TFN mode is designed for employees (Tax File Number) — it shows net salary after PAYG withholding, super contributions, and doesn't require invoices. ABN mode is for contractors with an Australian Business Number — it includes invoicing, contractor management, and GST tracking. MAX plan gives you both.",
+    "q16": "How do penalty rates work?",
+    "a16": "Ozly automatically calculates penalty rates based on the Cleaning Services Award (MA000022). Saturday shifts get 150%, Sundays 200%, and public holidays 250% of your base rate. It also knows all Australian public holidays by state for 2026.",
+    "q17": "Can I enter my salary as annual or fortnightly?",
+    "a17": "Yes! TFN users can enter their salary as Hourly, Annual, Monthly, or Fortnightly. Ozly automatically converts it to an hourly rate based on a standard 38-hour week and shows your estimated gross, PAYG and net take-home pay.",
+    "q18": "What is Quick Expense mode?",
+    "a18": "Quick Expense mode lets you log an expense with just the amount, category and date — no receipt photo needed. Smart mode uses AI OCR to read your receipt and extract all items automatically. You choose which mode suits each expense.",
+    "q19": "Can I bulk edit or delete multiple jobs?",
+    "a19": "Yes! Long-press any job to enter multi-select mode. You can then select multiple jobs and bulk edit the hourly rate or delete them all at once. Great for managing recurring shifts.",
+    "q20": "How does the timesheet work?",
+    "a20": "Ozly generates professional PDF timesheets from your completed jobs. You can filter by employer/contractor, and the timesheet includes dates, hours, rates, and totals. Share it directly via email or WhatsApp."
   }
 }
