@@ -96,7 +96,9 @@
       "timesheets": "Timesheet PDF por Empleador",
       "levelUp": "Celebración de Level Up",
       "quickExpense": "Gasto Rápido & Inteligente",
-      "salaryModes": "Sueldo: Horario / Anual / Mensual / Quincenal"
+      "salaryModes": "Sueldo: Horario / Anual / Mensual / Quincenal",
+      "reimbursements": "Reembolsos con Exportación PDF",
+      "messageTemplates": "Templates de Email Personalizables"
     }
   },
   "homeFaq": {
@@ -126,20 +128,21 @@
       { "id": "contractors", "label": "6. Contractors" },
       { "id": "invoices", "label": "7. Invoices" },
       { "id": "expenses", "label": "8. Expenses" },
-      { "id": "financial", "label": "9. Financial" },
-      { "id": "fiscal", "label": "10. Fiscal" },
-      { "id": "visa-shield", "label": "11. Visa Shield" },
-      { "id": "hustle-score", "label": "12. Hustle Score" },
-      { "id": "google-calendar", "label": "13. Google Calendar" },
-      { "id": "perfil", "label": "14. Perfil" },
-      { "id": "settings", "label": "15. Configuraciones" },
-      { "id": "assinatura-pro", "label": "16. Suscripción Pro" },
-      { "id": "modo-offline", "label": "17. Modo Offline" },
-      { "id": "indicacao", "label": "18. Referidos" },
-      { "id": "notificacoes", "label": "19. Notificaciones" },
-      { "id": "seguranca", "label": "20. Seguridad" },
-      { "id": "caminhos-alternativos", "label": "21. Caminos Alternativos" },
-      { "id": "faq", "label": "22. FAQ" }
+      { "id": "reimbursements", "label": "9. Reembolsos" },
+      { "id": "financial", "label": "10. Financial" },
+      { "id": "fiscal", "label": "11. Fiscal" },
+      { "id": "visa-shield", "label": "12. Visa Shield" },
+      { "id": "hustle-score", "label": "13. Hustle Score" },
+      { "id": "google-calendar", "label": "14. Google Calendar" },
+      { "id": "perfil", "label": "15. Perfil" },
+      { "id": "settings", "label": "16. Configuraciones" },
+      { "id": "assinatura-pro", "label": "17. Suscripción Pro" },
+      { "id": "modo-offline", "label": "18. Modo Offline" },
+      { "id": "indicacao", "label": "19. Referidos" },
+      { "id": "notificacoes", "label": "20. Notificaciones" },
+      { "id": "seguranca", "label": "21. Seguridad" },
+      { "id": "caminhos-alternativos", "label": "22. Caminos Alternativos" },
+      { "id": "faq", "label": "23. FAQ" }
     ]
   },
   "bottomCta": {
@@ -246,6 +249,16 @@
     "q19": "¿Puedo editar o borrar varios jobs a la vez?",
     "a19": "¡Sí! Presioná largo cualquier job para entrar en modo de selección múltiple. Después seleccioná varios y editá la tarifa o borralos todos de una vez.",
     "q20": "¿Cómo funciona el timesheet?",
-    "a20": "Ozly genera timesheets PDF profesionales de tus jobs completados. Podés filtrar por empleador/contractor, y el timesheet incluye fechas, horas, tarifas y totales. Compartilo directo por email o WhatsApp."
+    "a20": "Ozly genera timesheets PDF profesionales de tus jobs completados. Podés filtrar por empleador/contractor, y el timesheet incluye fechas, horas, tarifas y totales. Compartilo directo por email o WhatsApp.",
+    "q21": "¿Cómo funcionan los reembolsos?",
+    "a21": "Los usuarios TFN y MAX pueden registrar gastos laborales para reembolso (combustible, lavandería, herramientas, productos de limpieza, transporte, uniforme, celular, equipo). Usá el Modo Inteligente para escanear un recibo con IA o el Modo Rápido para ingresarlo manualmente. Seleccioná un período (semanal, quincenal, mensual), elegí la categoría y guardá. Después, seleccioná varios reembolsos, generá un PDF profesional con tus datos bancarios y envialo a tu empleador por email o WhatsApp.",
+    "q22": "¿Cómo exportar PDFs de reembolso?",
+    "a22": "Andá a Reembolsos, tocá el ícono de checklist para entrar en modo selección, elegí los ítems y tocá el ícono PDF. Revisá tus datos personales, número de documento y datos bancarios, y generá el PDF. Podés enviarlo por Email (con fotos de recibos adjuntas), WhatsApp, o guardarlo en el dispositivo. Los ítems se marcan automáticamente como 'emitidos' después de generar el PDF.",
+    "q23": "¿Cómo funciona el link de referidos?",
+    "a23": "Cada usuario recibe un código de referral único. Compartí tu link personal (ozly.au/refer/?code=TU_CODIGO) con amigos. Cuando lo abran en el celular, la página detecta automáticamente si es iOS o Android y muestra el botón de descarga correcto. Ingresan tu código al registrarse y los dos ganan recompensas + 500 XP.",
+    "q24": "¿Puedo usar Ozly sin internet?",
+    "a24": "¡Sí! Ozly funciona offline-first. Tus datos se guardan en una base de datos local encriptada (SQLCipher). Si perdés la conexión, la app carga tu sesión y datos del caché para que puedas seguir trabajando. Cuando te reconectes, todo se sincroniza automáticamente con la nube. Un banner 'Modo Offline' aparece mientras estés desconectado.",
+    "q25": "¿Puedo personalizar los mensajes de email para invoices y reembolsos?",
+    "a25": "¡Sí! Andá a Configuraciones y buscá Templates de Mensaje. Podés editar 3 templates: Envío de Invoice, Recordatorio de Invoice y Reembolso. Cada template soporta placeholders como {name}, {number}, {amount} y {date} que se completan automáticamente al enviar. Podés resetear al valor por defecto en cualquier momento."
   }
 }

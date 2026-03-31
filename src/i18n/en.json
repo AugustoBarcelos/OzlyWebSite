@@ -96,7 +96,9 @@
       "timesheets": "Timesheet PDF per Employer",
       "levelUp": "Hustle Level Up Celebrations",
       "quickExpense": "Smart & Quick Expense Entry",
-      "salaryModes": "Salary: Hourly / Annual / Monthly / Fortnightly"
+      "salaryModes": "Salary: Hourly / Annual / Monthly / Fortnightly",
+      "reimbursements": "Reimbursement Claims with PDF Export",
+      "messageTemplates": "Customisable Email Templates"
     }
   },
   "homeFaq": {
@@ -126,20 +128,21 @@
       { "id": "contractors", "label": "6. Contractors" },
       { "id": "invoices", "label": "7. Invoices" },
       { "id": "expenses", "label": "8. Expenses" },
-      { "id": "financial", "label": "9. Financial" },
-      { "id": "fiscal", "label": "10. Fiscal" },
-      { "id": "visa-shield", "label": "11. Visa Shield" },
-      { "id": "hustle-score", "label": "12. Hustle Score" },
-      { "id": "google-calendar", "label": "13. Google Calendar" },
-      { "id": "perfil", "label": "14. Profile" },
-      { "id": "settings", "label": "15. Settings" },
-      { "id": "assinatura-pro", "label": "16. Pro Subscription" },
-      { "id": "modo-offline", "label": "17. Offline Mode" },
-      { "id": "indicacao", "label": "18. Referral" },
-      { "id": "notificacoes", "label": "19. Notifications" },
-      { "id": "seguranca", "label": "20. Security" },
-      { "id": "caminhos-alternativos", "label": "21. Alternative Paths" },
-      { "id": "faq", "label": "22. FAQ" }
+      { "id": "reimbursements", "label": "9. Reimbursements" },
+      { "id": "financial", "label": "10. Financial" },
+      { "id": "fiscal", "label": "11. Fiscal" },
+      { "id": "visa-shield", "label": "12. Visa Shield" },
+      { "id": "hustle-score", "label": "13. Hustle Score" },
+      { "id": "google-calendar", "label": "14. Google Calendar" },
+      { "id": "perfil", "label": "15. Profile" },
+      { "id": "settings", "label": "16. Settings" },
+      { "id": "assinatura-pro", "label": "17. Pro Subscription" },
+      { "id": "modo-offline", "label": "18. Offline Mode" },
+      { "id": "indicacao", "label": "19. Referral" },
+      { "id": "notificacoes", "label": "20. Notifications" },
+      { "id": "seguranca", "label": "21. Security" },
+      { "id": "caminhos-alternativos", "label": "22. Alternative Paths" },
+      { "id": "faq", "label": "23. FAQ" }
     ]
   },
   "bottomCta": {
@@ -246,6 +249,16 @@
     "q19": "Can I bulk edit or delete multiple jobs?",
     "a19": "Yes! Long-press any job to enter multi-select mode. You can then select multiple jobs and bulk edit the hourly rate or delete them all at once. Great for managing recurring shifts.",
     "q20": "How does the timesheet work?",
-    "a20": "Ozly generates professional PDF timesheets from your completed jobs. You can filter by employer/contractor, and the timesheet includes dates, hours, rates, and totals. Share it directly via email or WhatsApp."
+    "a20": "Ozly generates professional PDF timesheets from your completed jobs. You can filter by employer/contractor, and the timesheet includes dates, hours, rates, and totals. Share it directly via email or WhatsApp.",
+    "q21": "How do reimbursements work?",
+    "a21": "TFN and MAX users can log work-related expenses for reimbursement (fuel, laundry, tools, cleaning supplies, transport, uniform, phone, equipment). Use Smart Mode to scan a receipt with AI or Quick Mode to enter details manually. Select a period (weekly, fortnightly, monthly), choose a category, and save. You can then select multiple reimbursements, generate a professional PDF with your bank details, and send it to your employer via email or WhatsApp.",
+    "q22": "How do I export reimbursement PDFs?",
+    "a22": "Go to Reimbursements, tap the checklist icon to enter select mode, pick the items you want, and tap the PDF icon. Review your personal details, invoice number and bank info, then generate the PDF. You can send it via Email (with receipt photos attached), WhatsApp, or save it to your device. Items are automatically marked as 'emitted' after generating the PDF.",
+    "q23": "How does the referral program link work?",
+    "a23": "Each user gets a unique referral code. Share your personal link (ozly.au/refer/?code=YOUR_CODE) with friends. When they open it on their phone, the page automatically detects whether they're on iOS or Android and shows the right download button. They enter your code during signup, and you both earn rewards plus 500 XP.",
+    "q24": "Can I use Ozly without internet?",
+    "a24": "Yes! Ozly is offline-first. Your data is stored in an encrypted local database (SQLCipher). If you lose internet, the app loads your cached session and data so you can keep working. When you reconnect, everything syncs automatically with the cloud. You'll see an 'Offline mode' banner while disconnected.",
+    "q25": "Can I customise the email messages for invoices and reimbursements?",
+    "a25": "Yes! Go to Settings and find Message Templates. You can edit three templates: Invoice Send, Invoice Reminder, and Reimbursement. Each template supports placeholders like {name}, {number}, {amount} and {date} that are filled in automatically when you send. You can reset to defaults any time."
   }
 }
