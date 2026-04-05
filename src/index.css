@@ -4,7 +4,27 @@ body {
   background-color: #ffffff;
 }
 
-/* ── Animated gradient blobs (reviews.io inspired) ── */
+/* ── Mesh gradient background (reviews.io inspired) ── */
+.mesh-gradient {
+  position: relative;
+}
+
+.mesh-gradient::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(200% 50% at 50% -10%, rgba(255,255,255,1) 0% 35%, rgba(255,255,255,0) 70%),
+    radial-gradient(60% 50% at 50% 45%, white 25%, rgba(255,255,255,0) 65%),
+    radial-gradient(80% 50% at 48% 40%, rgba(255, 251, 214, 0.7) 0% 25%, transparent 60%),
+    radial-gradient(70% 55% at 85% 15%, rgba(164, 236, 209, 0.35) 0% 30%, transparent 70%),
+    radial-gradient(50% 40% at 15% 60%, rgba(43, 187, 151, 0.08) 0%, transparent 70%),
+    #ffffff;
+  pointer-events: none;
+}
+
+/* Subtle teal/lime blobs for alternating sections */
 .gradient-section {
   position: relative;
   overflow: hidden;
@@ -13,11 +33,11 @@ body {
 .gradient-section::before {
   content: '';
   position: absolute;
-  top: -30%;
-  left: -20%;
-  width: 60%;
-  height: 80%;
-  background: radial-gradient(ellipse, rgba(43, 187, 151, 0.08) 0%, transparent 70%);
+  top: -20%;
+  left: -15%;
+  width: 50%;
+  height: 70%;
+  background: radial-gradient(ellipse, rgba(43, 187, 151, 0.06) 0%, transparent 70%);
   border-radius: 50%;
   animation: blob-drift 20s ease-in-out infinite alternate;
   pointer-events: none;
@@ -26,17 +46,16 @@ body {
 .gradient-section::after {
   content: '';
   position: absolute;
-  bottom: -20%;
-  right: -15%;
-  width: 50%;
-  height: 70%;
-  background: radial-gradient(ellipse, rgba(137, 201, 78, 0.07) 0%, transparent 70%);
+  bottom: -15%;
+  right: -10%;
+  width: 45%;
+  height: 60%;
+  background: radial-gradient(ellipse, rgba(255, 251, 214, 0.5) 0%, transparent 70%);
   border-radius: 50%;
   animation: blob-drift 25s ease-in-out infinite alternate-reverse;
   pointer-events: none;
 }
 
-/* Alternate variant with warm tones */
 .gradient-section-warm {
   position: relative;
   overflow: hidden;
@@ -45,11 +64,11 @@ body {
 .gradient-section-warm::before {
   content: '';
   position: absolute;
-  top: -25%;
-  right: -20%;
-  width: 55%;
-  height: 75%;
-  background: radial-gradient(ellipse, rgba(43, 187, 151, 0.06) 0%, transparent 70%);
+  top: -20%;
+  right: -15%;
+  width: 50%;
+  height: 65%;
+  background: radial-gradient(ellipse, rgba(164, 236, 209, 0.15) 0%, transparent 70%);
   border-radius: 50%;
   animation: blob-drift 22s ease-in-out infinite alternate;
   pointer-events: none;
@@ -58,11 +77,11 @@ body {
 .gradient-section-warm::after {
   content: '';
   position: absolute;
-  bottom: -30%;
-  left: -15%;
-  width: 50%;
-  height: 65%;
-  background: radial-gradient(ellipse, rgba(251, 191, 36, 0.06) 0%, transparent 70%);
+  bottom: -20%;
+  left: -10%;
+  width: 45%;
+  height: 55%;
+  background: radial-gradient(ellipse, rgba(255, 251, 214, 0.4) 0%, transparent 70%);
   border-radius: 50%;
   animation: blob-drift 28s ease-in-out infinite alternate-reverse;
   pointer-events: none;
@@ -73,6 +92,29 @@ body {
   33% { transform: translate(5%, 8%) scale(1.05); }
   66% { transform: translate(-3%, -5%) scale(0.95); }
   100% { transform: translate(2%, -3%) scale(1.02); }
+}
+
+/* ── Pricing card highlight (reviews.io style) ── */
+.pricing-card-highlight {
+  border: 2px solid #2BBB97;
+  position: relative;
+}
+
+.pricing-card-highlight .pricing-header {
+  background: linear-gradient(135deg, #2BBB97, #24a383);
+  color: white;
+  border-radius: 1.25rem 1.25rem 0 0;
+  margin: -2rem -2rem 1.5rem -2rem;
+  padding: 1.5rem 2rem;
+}
+
+@keyframes badge-sway {
+  0% { transform: translateX(-50%) rotate(-3deg); }
+  100% { transform: translateX(-50%) rotate(3deg); }
+}
+
+.pricing-badge {
+  animation: badge-sway 1.25s ease-in-out infinite alternate;
 }
 
 @theme {
