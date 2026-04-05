@@ -506,7 +506,7 @@ function Pricing() {
 
   return (
     <section id="pricing" className="bg-[#F8FAFC] py-24 md:py-32">
-      <div className="mx-auto max-w-5xl px-6">
+      <div className="mx-auto max-w-6xl px-6">
         <ScrollReveal>
           <div className="text-center mb-6">
             <h2 className="text-3xl sm:text-4xl font-extrabold text-navy-700 mb-4">{p.title}</h2>
@@ -570,7 +570,7 @@ function Pricing() {
         <ScrollReveal delay={0.15} className="hidden lg:block">
           <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-brand-500/5">
             {/* Header */}
-            <div className="grid grid-cols-[1fr_repeat(3,160px)] items-end">
+            <div className="grid grid-cols-[1fr_repeat(3,220px)] items-end">
               <div className="p-6" />
               {plans.map((plan) => (
                 <div key={plan.id} className={`relative p-6 text-center ${plan.highlight ? "bg-amber-50/50" : ""}`}>
@@ -582,19 +582,18 @@ function Pricing() {
                   <h3 className={`text-xl font-extrabold mb-1 ${plan.highlight ? "text-amber-500" : "text-brand-500"}`}>{plan.name}</h3>
                   <p className="text-slate-500 text-xs mb-3">{plan.desc}</p>
                   <div>
-                    <span className={`text-4xl font-extrabold ${plan.highlight ? "text-amber-500" : "text-brand-500"}`}>{plan.price}</span>
-                    <span className="text-base font-semibold text-slate-400">{p.perMonth}</span>
+                    <span className={`text-3xl font-extrabold ${plan.highlight ? "text-amber-500" : "text-brand-500"}`}>{plan.price}</span>
+                    <span className="text-sm font-semibold text-slate-400">{p.perMonth}</span>
                   </div>
-                  {plan.priceNote && <span className="block text-[10px] font-medium text-slate-400">{plan.priceNote}</span>}
-                  {plan.monthlyPrice && <span className="block text-[10px] text-slate-400">{plan.monthlyPrice}</span>}
-                  <span className="text-[10px] text-slate-400">{p.currency}</span>
+                  {plan.priceNote && <span className="block text-xs font-medium text-slate-400 mt-1">{plan.priceNote}</span>}
+                  <span className="text-[10px] text-slate-400 mt-0.5 block">{p.currency}</span>
                 </div>
               ))}
             </div>
 
             {/* Feature rows */}
             {featureMatrix.map(({ key, tfn, abn, max }, i) => (
-              <div key={key} className={`grid grid-cols-[1fr_repeat(3,160px)] items-center border-t border-slate-100 ${i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}`}>
+              <div key={key} className={`grid grid-cols-[1fr_repeat(3,220px)] items-center border-t border-slate-100 ${i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}`}>
                 <div className="px-6 py-4 text-sm font-medium text-slate-700">{p.features[key]}</div>
                 {[tfn, abn, max].map((has, ci) => (
                   <div key={ci} className={`px-6 py-4 flex justify-center ${plans[ci].highlight ? "bg-amber-50/30" : ""}`}>
@@ -608,7 +607,7 @@ function Pricing() {
             ))}
 
             {/* CTA row */}
-            <div className="grid grid-cols-[1fr_repeat(3,160px)] items-center border-t border-slate-200 bg-slate-50/50">
+            <div className="grid grid-cols-[1fr_repeat(3,220px)] items-center border-t border-slate-200 bg-slate-50/50">
               <div className="p-6" />
               {plans.map((plan) => (
                 <div key={plan.id} className={`p-6 flex justify-center ${plan.highlight ? "bg-amber-50/30" : ""}`}>
