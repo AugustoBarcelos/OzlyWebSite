@@ -456,32 +456,21 @@ function Comparison() {
           <div className="text-center mb-14">
             <h2 className="text-3xl sm:text-4xl font-extrabold text-navy-700">
               {t.comparison.title}{" "}
-              <span className="text-slate-400">{t.comparison.titleHighlight}</span>
+              <span className="text-brand-500">{t.comparison.titleHighlight}</span>
             </h2>
             <p className="mt-4 text-slate-500 max-w-xl mx-auto">{t.comparison.subtitle}</p>
           </div>
         </ScrollReveal>
 
         <ScrollReveal delay={0.15}>
-          <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
-            <div className="grid grid-cols-3 bg-slate-50 text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-wider">
-              <div className="px-4 sm:px-5 py-4">{t.comparison.headerFeature}</div>
-              <div className="px-4 sm:px-5 py-4 text-center text-brand-500">{t.comparison.headerOzly}</div>
-              <div className="px-4 sm:px-5 py-4 text-center">{t.comparison.headerOthers}</div>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
             {comparisonKeys.map((key, i) => (
-              <div
-                key={key}
-                className={`grid grid-cols-3 text-sm ${i % 2 === 0 ? "bg-white" : "bg-slate-50/50"} border-t border-slate-100`}
-              >
-                <div className="px-4 sm:px-5 py-4 font-medium text-slate-700">{t.comparison[key]}</div>
-                <div className="px-4 sm:px-5 py-4 flex justify-center">
-                  <CheckCircle size={20} className="text-lime-500" />
+              <ScrollReveal key={key} delay={0.05 * i}>
+                <div className="flex items-center gap-3 rounded-xl bg-white border border-slate-100 px-5 py-4 shadow-sm">
+                  <CheckCircle size={20} className="text-brand-500 flex-shrink-0" />
+                  <span className="text-sm font-medium text-slate-700">{t.comparison[key]}</span>
                 </div>
-                <div className="px-4 sm:px-5 py-4 flex justify-center">
-                  <XCircle size={20} className="text-red-400" />
-                </div>
-              </div>
+              </ScrollReveal>
             ))}
           </div>
         </ScrollReveal>
