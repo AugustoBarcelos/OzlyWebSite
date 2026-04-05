@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+body {
+  background-color: #F8FAFC;
+}
+
 @theme {
   /* ── Ozly Brand Palette ── */
   --color-brand-50: #e8f8f3;
