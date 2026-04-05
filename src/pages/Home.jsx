@@ -86,10 +86,10 @@ function Hero() {
               className="mt-9 flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start"
             >
               <a href="https://apps.apple.com/app/ozly/id6743189469" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center hover:opacity-80 transition">
-                <img src={`${import.meta.env.BASE_URL}app-store.svg`} alt="Download on App Store" className="h-14" />
+                <img src={`${import.meta.env.BASE_URL}app-store.svg`} alt="Download on App Store" className="h-14 rounded-lg dark:ring-1 dark:ring-slate-600" />
               </a>
               <a href="https://play.google.com/store/apps/details?id=com.augusto.ozly" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center hover:opacity-80 transition">
-                <img src={`${import.meta.env.BASE_URL}google-play.svg`} alt="Get it on Google Play" className="h-14" />
+                <img src={`${import.meta.env.BASE_URL}google-play.svg`} alt="Get it on Google Play" className="h-14 rounded-lg dark:ring-1 dark:ring-slate-600" />
               </a>
             </motion.div>
           </motion.div>
