@@ -1,10 +1,49 @@
 @import "tailwindcss";
 
+@theme {
+  /* ── Ozly Brand Palette ── */
+  --color-brand-50: #e8f8f3;
+  --color-brand-100: #c5ede2;
+  --color-brand-200: #8edbc5;
+  --color-brand-300: #57c9a8;
+  --color-brand-400: #33c19e;
+  --color-brand-500: #2BBB97;
+  --color-brand-600: #24a383;
+  --color-brand-700: #1d8a6e;
+  --color-brand-800: #166d57;
+  --color-brand-900: #0f5443;
+
+  --color-lime-50: #f4fbe8;
+  --color-lime-100: #e6f5cc;
+  --color-lime-200: #cdeb99;
+  --color-lime-300: #b4e166;
+  --color-lime-400: #9DD760;
+  --color-lime-500: #89c94e;
+  --color-lime-600: #6fa83d;
+  --color-lime-700: #55872c;
+
+  --color-navy-50: #e8ecf0;
+  --color-navy-100: #c5cdd6;
+  --color-navy-200: #8b9bac;
+  --color-navy-300: #526982;
+  --color-navy-400: #2d4a63;
+  --color-navy-500: #1F2E3E;
+  --color-navy-600: #1b2936;
+  --color-navy-700: #162431;
+  --color-navy-800: #111c26;
+  --color-navy-900: #0c141b;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   GLOBAL STYLES (cross-browser compatible)
+   ══════════════════════════════════════════════════════════════ */
+
 html, body {
   overflow-x: hidden;
   background-color: #ffffff;
 }
 
+/* ── Page gradient (brand teal + lime) ── */
 .ozly-gradient {
   overflow-x: hidden;
   background: linear-gradient(
@@ -30,19 +69,65 @@ html, body {
   );
 }
 
+/* ── Pricing card ── */
+.pricing-card-highlight {
+  border: 2px solid #2BBB97;
+  position: relative;
+}
+
+.pricing-card-highlight .pricing-header {
+  background: linear-gradient(135deg, #2BBB97, #24a383);
+  color: white;
+  border-radius: 1.25rem 1.25rem 0 0;
+  margin: -1.25rem -1.25rem 1.5rem -1.25rem;
+  padding: 1.25rem 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .pricing-card-highlight .pricing-header {
+    margin: -2rem -2rem 1.5rem -2rem;
+    padding: 1.5rem 2rem;
+  }
+}
+
+/* ── Badge sway animation ── */
+@keyframes badge-sway {
+  0% { transform: translateX(-50%) rotate(-3deg); }
+  100% { transform: translateX(-50%) rotate(3deg); }
+}
+
+.pricing-badge {
+  animation: badge-sway 1.25s ease-in-out infinite alternate;
+}
+
+/* ── Store badges: always visible on any bg ── */
+.store-badge-link {
+  background-color: #000000;
+  border-radius: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Scrollbar (Opera / Firefox / Chrome) ── */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   DARK MODE (all browsers: Chrome, Safari, Firefox, Opera, Edge)
+   ══════════════════════════════════════════════════════════════ */
+
 @media (prefers-color-scheme: dark) {
   html, body {
     background-color: #0c141b;
-  }
-
-  /* Store badge links: white bg in dark mode so black SVG badge stands out */
-  .store-badge-link {
-    background-color: #ffffff !important;
-    border-radius: 0.75rem;
-  }
-
-  .store-badge-link img {
-    filter: none !important;
   }
 
   .ozly-gradient {
@@ -60,6 +145,11 @@ html, body {
     );
   }
 
+  /* Store badges: white bg in dark so the black SVG badge pops */
+  .store-badge-link {
+    background-color: #ffffff;
+  }
+
   .pricing-card-highlight {
     border-color: #2BBB97;
   }
@@ -67,85 +157,8 @@ html, body {
   .pricing-card-highlight .pricing-header {
     background: linear-gradient(135deg, #1d8a6e, #166d57);
   }
-}
 
-/* ── Pricing card highlight (reviews.io style) ── */
-.pricing-card-highlight {
-  border: 2px solid #2BBB97;
-  position: relative;
-}
-
-.pricing-card-highlight .pricing-header {
-  background: linear-gradient(135deg, #2BBB97, #24a383);
-  color: white;
-  border-radius: 1.25rem 1.25rem 0 0;
-  margin: -1.5rem -1.5rem 1.5rem -1.5rem;
-  padding: 1.25rem 1.5rem;
-}
-
-@media (min-width: 640px) {
-  .pricing-card-highlight .pricing-header {
-    margin: -2rem -2rem 1.5rem -2rem;
-    padding: 1.5rem 2rem;
+  ::-webkit-scrollbar-thumb {
+    background: #334155;
   }
-}
-
-@keyframes badge-sway {
-  0% { transform: translateX(-50%) rotate(-3deg); }
-  100% { transform: translateX(-50%) rotate(3deg); }
-}
-
-.pricing-badge {
-  animation: badge-sway 1.25s ease-in-out infinite alternate;
-}
-
-@theme {
-  /* ── Ozly Brand Palette ── */
-  --color-brand-50: #e8f8f3;
-  --color-brand-100: #c5ede2;
-  --color-brand-200: #8edbc5;
-  --color-brand-300: #57c9a8;
-  --color-brand-400: #33c19e;
-  --color-brand-500: #2BBB97;
-  --color-brand-600: #24a383;
-  --color-brand-700: #1d8a6e;
-  --color-brand-800: #166d57;
-  --color-brand-900: #0f5443;
-
-  --color-lime-50: #f4fbe8;
-  --color-lime-100: #e6f5cc;
-  --color-lime-200: #cdeb99;
-  --color-lime-300: #b4e166;
-  --color-lime-400: #9DD760;
-  --color-lime-500: #89c94e;
-  --color-lime-600: #6fa83d;
-  --color-lime-700: #55872c;
-  --color-lime-800: #3c6620;
-  --color-lime-900: #234514;
-
-  --color-navy-50: #e8ecf0;
-  --color-navy-100: #c5cdd6;
-  --color-navy-200: #8b9bac;
-  --color-navy-300: #526982;
-  --color-navy-400: #2d4a63;
-  --color-navy-500: #1F2E3E;
-  --color-navy-600: #1b2936;
-  --color-navy-700: #162431;
-  --color-navy-800: #111c26;
-  --color-navy-900: #0c141b;
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 999px;
 }
