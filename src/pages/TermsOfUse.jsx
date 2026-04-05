@@ -18,7 +18,7 @@ export default function TermsOfUse() {
         </div>
 
         <Section title={tm.s1}>
-          <p>These Terms of Use (&ldquo;Terms&rdquo;, &ldquo;EULA&rdquo;) constitute a legally binding agreement between you (&ldquo;User&rdquo;, &ldquo;you&rdquo;, &ldquo;your&rdquo;) and Ozly Pty Ltd (&ldquo;Ozly&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;), governing your use of the Ozly mobile application (&ldquo;App&rdquo;) and related services.</p>
+          <p>These Terms of Use (&ldquo;Terms&rdquo;, &ldquo;EULA&rdquo;) constitute a legally binding agreement between you (&ldquo;User&rdquo;, &ldquo;you&rdquo;, &ldquo;your&rdquo;) and Ozly Ltd (&ldquo;Ozly&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;), governing your use of the Ozly mobile application (&ldquo;App&rdquo;) and related services.</p>
           <p>Key definitions:</p>
           <ul>
             <li><strong>&ldquo;App&rdquo;</strong> means the Ozly mobile application available on the Apple App Store and Google Play Store.</li>
@@ -130,7 +130,7 @@ export default function TermsOfUse() {
 
         <Section title={tm.s9}>
           <ol>
-            <li>The App, including its design, code, features, graphics, logos, and trademarks, is the exclusive property of Ozly Pty Ltd and is protected by Australian and international intellectual property laws.</li>
+            <li>The App, including its design, code, features, graphics, logos, and trademarks, is the exclusive property of Ozly Ltd and is protected by Australian and international intellectual property laws.</li>
             <li>These Terms grant you a limited, non-exclusive, non-transferable, revocable licence to use the App for personal or business purposes in accordance with these Terms.</li>
             <li>You may not copy, modify, distribute, sell, or lease any part of the App or its content without our prior written consent.</li>
           </ol>
@@ -187,7 +187,7 @@ export default function TermsOfUse() {
         </Section>
 
         <Section title={tm.s14}>
-          <p>You agree to indemnify, defend, and hold harmless Ozly Pty Ltd, its officers, directors, employees, and agents from and against any claims, damages, losses, liabilities, costs, and expenses (including reasonable legal fees) arising out of or related to:</p>
+          <p>You agree to indemnify, defend, and hold harmless Ozly Ltd, its officers, directors, employees, and agents from and against any claims, damages, losses, liabilities, costs, and expenses (including reasonable legal fees) arising out of or related to:</p>
           <ul>
             <li>Your use of the App in violation of these Terms.</li>
             <li>Your violation of any applicable law or regulation.</li>
@@ -238,7 +238,7 @@ export default function TermsOfUse() {
         <Section title={tm.s21}>
           <p>The following additional terms apply if you downloaded the App from the Apple App Store:</p>
           <ol>
-            <li>These Terms are between you and Ozly Pty Ltd only, and <strong>not</strong> with Apple Inc. (&ldquo;Apple&rdquo;). Ozly, not Apple, is solely responsible for the App and its content.</li>
+            <li>These Terms are between you and Ozly Ltd only, and <strong>not</strong> with Apple Inc. (&ldquo;Apple&rdquo;). Ozly, not Apple, is solely responsible for the App and its content.</li>
             <li>Apple has no obligation to provide maintenance or support services for the App.</li>
             <li>In the event of any failure of the App to conform to any applicable warranty, you may notify Apple, and Apple will refund the purchase price (if any). Apple has no other warranty obligation with respect to the App.</li>
             <li>Apple is not responsible for addressing any claims relating to the App, including product liability claims, regulatory compliance, or intellectual property infringement.</li>

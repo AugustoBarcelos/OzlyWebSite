@@ -12,6 +12,10 @@ import {
   Wrench,
   Bike,
   Sparkles,
+  ChefHat,
+  Coffee,
+  Heart,
+  Users,
   ChevronRight,
   ChevronDown,
   DollarSign,
@@ -81,10 +85,10 @@ function Hero() {
               transition={{ duration: 0.7, delay: 0.5 }}
               className="mt-9 flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start"
             >
-              <a href="#" className="flex items-center justify-center hover:opacity-80 transition">
+              <a href="https://apps.apple.com/app/ozly/id6743189469" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center hover:opacity-80 transition">
                 <img src={`${import.meta.env.BASE_URL}app-store.svg`} alt="Download on App Store" className="h-14" />
               </a>
-              <a href="#" className="flex items-center justify-center hover:opacity-80 transition">
+              <a href="https://play.google.com/store/apps/details?id=com.augusto.ozly" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center hover:opacity-80 transition">
                 <img src={`${import.meta.env.BASE_URL}google-play.svg`} alt="Get it on Google Play" className="h-14" />
               </a>
             </motion.div>
@@ -116,12 +120,13 @@ function Hero() {
         </div>
       </div>
 
-      {/* Scroll indicator */}
+      {/* Scroll indicator — clicks to below the fold */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.2, duration: 0.8 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 hidden md:block"
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 hidden md:block cursor-pointer"
+        onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })}
       >
         <motion.div
           animate={{ y: [0, 10, 0] }}
@@ -140,7 +145,11 @@ const audienceIcons = [
   { key: "cleaners", icon: SprayCan },
   { key: "tradies", icon: Wrench },
   { key: "delivery", icon: Bike },
-  { key: "beauty", icon: Sparkles },
+  { key: "kitchen", icon: ChefHat },
+  { key: "waitstaff", icon: Coffee },
+  { key: "hospitality", icon: Sparkles },
+  { key: "petsitting", icon: Heart },
+  { key: "agedcare", icon: Users },
 ];
 
 function AudienceBanner() {
@@ -150,17 +159,17 @@ function AudienceBanner() {
     <section className="bg-white py-14 border-y border-slate-100">
       <div className="mx-auto max-w-4xl px-6 text-center">
         <ScrollReveal>
-          <p className="text-slate-400 font-medium text-sm uppercase tracking-[0.2em] mb-7">
+          <p className="text-slate-900 font-semibold text-sm uppercase tracking-[0.2em] mb-7">
             {t.audience.title}
           </p>
         </ScrollReveal>
-        <div className="flex flex-wrap items-center justify-center gap-4 md:gap-6">
+        <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4">
           {audienceIcons.map(({ key, icon: Icon }, i) => (
             <ScrollReveal key={key} delay={0.1 * i}>
-              <div className="flex items-center gap-2.5 rounded-full bg-slate-50 px-5 py-3 text-slate-700 font-semibold text-sm border border-slate-200 hover:border-brand-300 hover:bg-brand-50/50 transition-colors">
-                <Icon size={18} className="text-brand-500" />
+              <span className="inline-flex items-center gap-2 text-slate-600 text-sm font-medium">
+                <Icon size={16} className="text-brand-500" />
                 {t.audience[key]}
-              </div>
+              </span>
             </ScrollReveal>
           ))}
         </div>
@@ -370,6 +379,7 @@ function FeatureShowcase({ feature, index }) {
   const { t } = useI18n();
   const isEven = index % 2 === 0;
   const { titleKey, descKey, icon: Icon, color, mockupVariant, screen } = feature;
+  const moduleKey = `${titleKey}Module`;
   const cs = colorStyles[color];
 
   return (
@@ -379,8 +389,15 @@ function FeatureShowcase({ feature, index }) {
           {/* Text */}
           <div className="flex-1 text-center lg:text-left max-w-lg">
             <ScrollReveal>
-              <div className={`inline-flex items-center justify-center w-14 h-14 rounded-2xl ${cs.icon} mb-6`}>
-                <Icon size={28} />
+              <div className="flex items-center gap-3 mb-6 justify-center lg:justify-start">
+                <div className={`inline-flex items-center justify-center w-14 h-14 rounded-2xl ${cs.icon}`}>
+                  <Icon size={28} />
+                </div>
+                {t.features[moduleKey] && (
+                  <span className="text-xs font-bold text-brand-600 bg-brand-50 border border-brand-200 rounded-full px-3 py-1 uppercase tracking-wide">
+                    {t.features[moduleKey]}
+                  </span>
+                )}
               </div>
             </ScrollReveal>
             <ScrollReveal delay={0.1}>
@@ -639,10 +656,10 @@ function BottomCta() {
             {t.bottomCta.subtitle}
           </p>
           <div className="flex flex-col sm:flex-row items-center gap-4 justify-center">
-            <a href="#" className="flex items-center justify-center hover:opacity-80 transition">
+            <a href="https://apps.apple.com/app/ozly/id6743189469" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center hover:opacity-80 transition">
               <img src={`${import.meta.env.BASE_URL}app-store.svg`} alt="Download on App Store" className="h-14" />
             </a>
-            <a href="#" className="flex items-center justify-center hover:opacity-80 transition">
+            <a href="https://play.google.com/store/apps/details?id=com.augusto.ozly" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center hover:opacity-80 transition">
               <img src={`${import.meta.env.BASE_URL}google-play.svg`} alt="Get it on Google Play" className="h-14" />
             </a>
           </div>
@@ -656,10 +673,10 @@ function BottomCta() {
 function HomeFaq() {
   const { t } = useI18n();
   const [openIndex, setOpenIndex] = useState(null);
-  const faqKeys = ["q1", "q2", "q3", "q4", "q5"];
+  const faqKeys = ["q1", "q2", "q3", "q4", "q5", "q6"];
 
   return (
-    <section className="bg-white py-24 md:py-32">
+    <section id="faq" className="bg-white py-24 md:py-32">
       <div className="mx-auto max-w-3xl px-6">
         <ScrollReveal>
           <div className="text-center mb-14">

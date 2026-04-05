@@ -17,7 +17,7 @@ export default function PrivacyPolicy() {
         </div>
 
         <Section title={p.s1}>
-          <p>Ozly (&ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;) is operated by Ozly Pty Ltd (ABN to be confirmed), based in Australia. This Privacy Policy explains how we collect, use, disclose, and protect your personal information when you use the Ozly mobile application (the &ldquo;App&rdquo;) available on the Apple App Store and Google Play Store.</p>
+          <p>Ozly (&ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;) is operated by Ozly Ltd (ABN 51 824 753 556), based in Australia. This Privacy Policy explains how we collect, use, disclose, and protect your personal information when you use the Ozly mobile application (the &ldquo;App&rdquo;) available on the Apple App Store and Google Play Store.</p>
           <p>We are committed to complying with the <strong>Australian Privacy Act 1988 (Cth)</strong> and the <strong>Australian Privacy Principles (APPs)</strong>, as well as the privacy requirements of Apple and Google.</p>
           <p>For any privacy-related enquiry, please contact us at: <strong>privacy@ozly.com.au</strong></p>
         </Section>
