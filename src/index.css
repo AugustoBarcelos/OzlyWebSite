@@ -35,9 +35,14 @@ html, body {
     background-color: #0c141b;
   }
 
-  /* Store badges: invert to white bg / dark text in dark mode */
-  .store-badge {
-    filter: invert(1) brightness(0.9);
+  /* Store badge links: white bg in dark mode so black SVG badge stands out */
+  .store-badge-link {
+    background-color: #ffffff !important;
+    border-radius: 0.75rem;
+  }
+
+  .store-badge-link img {
+    filter: none !important;
   }
 
   .ozly-gradient {
