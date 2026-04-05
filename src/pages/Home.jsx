@@ -481,17 +481,30 @@ function Comparison() {
 
 /* ═══════════════════════ PRICING ═══════════════════════ */
 const featureMatrix = [
-  //                           TFN    ABN    MAX
-  { key: "shifts",             tfn: true,  abn: true,  max: true  },
-  { key: "expensesOcr",        tfn: true,  abn: true,  max: true  },
-  { key: "visaShield",         tfn: true,  abn: true,  max: true  },
-  { key: "calendarSync",       tfn: true,  abn: true,  max: true  },
-  { key: "taxAnalytics",       tfn: true,  abn: true,  max: true  },
-  { key: "contractors",        tfn: false, abn: true,  max: true  },
-  { key: "invoices",           tfn: false, abn: true,  max: true  },
-  { key: "hoursComparison",    tfn: false, abn: true,  max: true  },
-  { key: "multiBusinesses",    tfn: false, abn: true,  max: true  },
-  { key: "toggleMode",         tfn: false, abn: false, max: true  },
+  //                                TFN    ABN    MAX
+  // ── Shared features ──
+  { key: "shifts",                  tfn: true,  abn: true,  max: true  },
+  { key: "expensesOcr",             tfn: true,  abn: true,  max: true  },
+  { key: "quickExpense",            tfn: true,  abn: true,  max: true  },
+  { key: "calendarSync",            tfn: true,  abn: true,  max: true  },
+  { key: "taxAnalytics",            tfn: true,  abn: true,  max: true  },
+  { key: "bulkEdit",                tfn: true,  abn: true,  max: true  },
+  { key: "timesheets",              tfn: true,  abn: true,  max: true  },
+  { key: "levelUp",                 tfn: true,  abn: true,  max: true  },
+  { key: "messageTemplates",        tfn: true,  abn: true,  max: true  },
+  // ── TFN exclusive ──
+  { key: "penaltyRates",            tfn: true,  abn: false, max: true  },
+  { key: "netSalary",               tfn: true,  abn: false, max: true  },
+  { key: "salaryModes",             tfn: true,  abn: false, max: true  },
+  { key: "visaShield",              tfn: true,  abn: false, max: true  },
+  { key: "reimbursements",          tfn: true,  abn: false, max: true  },
+  // ── ABN exclusive ──
+  { key: "contractors",             tfn: false, abn: true,  max: true  },
+  { key: "invoices",                tfn: false, abn: true,  max: true  },
+  { key: "hoursComparison",         tfn: false, abn: true,  max: true  },
+  { key: "multiBusinesses",         tfn: false, abn: true,  max: true  },
+  // ── MAX exclusive ──
+  { key: "toggleMode",              tfn: false, abn: false, max: true  },
 ];
 
 function Pricing() {
