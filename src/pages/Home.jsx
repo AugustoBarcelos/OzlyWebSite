@@ -534,9 +534,8 @@ function Pricing() {
                   <p className="text-slate-500 text-sm">{plan.desc}</p>
                   <div className="mt-4">
                     <span className={`text-5xl font-extrabold ${plan.highlight ? "text-amber-500" : "text-brand-500"}`}>{plan.price}</span>
-                    <span className="text-lg font-semibold text-slate-400">{p.perMonth}</span>
-                    {plan.priceNote && <span className="block text-xs font-medium text-slate-400 mt-1">{plan.priceNote}</span>}
-                    {plan.monthlyPrice && <span className="block text-xs text-slate-400 mt-0.5">{plan.monthlyPrice}</span>}
+                    <span className="text-lg font-semibold text-slate-400">{p.perWeek}</span>
+                    {plan.priceNote && <span className="block text-sm font-medium text-slate-400 mt-2">{plan.priceNote}</span>}
                     <span className="block text-xs text-slate-400 mt-1">{p.currency}</span>
                   </div>
                 </div>
@@ -583,7 +582,7 @@ function Pricing() {
                   <p className="text-slate-500 text-xs mb-3">{plan.desc}</p>
                   <div>
                     <span className={`text-3xl font-extrabold ${plan.highlight ? "text-amber-500" : "text-brand-500"}`}>{plan.price}</span>
-                    <span className="text-sm font-semibold text-slate-400">{p.perMonth}</span>
+                    <span className="text-sm font-semibold text-slate-400">{p.perWeek}</span>
                   </div>
                   {plan.priceNote && <span className="block text-xs font-medium text-slate-400 mt-1">{plan.priceNote}</span>}
                   <span className="text-[10px] text-slate-400 mt-0.5 block">{p.currency}</span>
@@ -630,6 +629,7 @@ function Pricing() {
         {/* Footnotes */}
         <div className="mt-8 text-center space-y-1">
           {p.annualNote && <p className="text-xs text-slate-400">{p.annualNote}</p>}
+          {p.monthlyNote && <p className="text-xs text-slate-400">{p.monthlyNote}</p>}
           {p.calendarNote && <p className="text-xs text-slate-400">{p.calendarNote}</p>}
         </div>
       </div>
