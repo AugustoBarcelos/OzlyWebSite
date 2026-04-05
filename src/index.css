@@ -102,11 +102,11 @@ html, body {
 
 /* ── Store badges: always visible on any bg ── */
 .store-badge-link {
-  background-color: #000000;
   border-radius: 0.75rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.3), 0 2px 8px rgba(0,0,0,0.1);
 }
 
 /* ── Scrollbar (Opera / Firefox / Chrome) ── */
@@ -145,9 +145,9 @@ html, body {
     );
   }
 
-  /* Store badges: white bg in dark so the black SVG badge pops */
+  /* Store badges: white outline so badge pops on dark bg */
   .store-badge-link {
-    background-color: #ffffff;
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.6), 0 2px 8px rgba(0,0,0,0.3);
   }
 
   .pricing-card-highlight {
