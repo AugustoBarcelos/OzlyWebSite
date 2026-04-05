@@ -9,19 +9,19 @@ function FaqItem({ question, answer }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="border border-slate-200 rounded-2xl overflow-hidden transition hover:border-brand-200">
+    <div className="border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden transition hover:border-brand-200">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between gap-4 px-6 py-5 text-left bg-white hover:bg-slate-50/50 transition"
+        className="w-full flex items-center justify-between gap-4 px-6 py-5 text-left bg-white dark:bg-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-700 transition"
       >
-        <span className="font-semibold text-slate-900">{question}</span>
+        <span className="font-semibold text-slate-900 dark:text-slate-100">{question}</span>
         <ChevronDown
           size={20}
           className={`flex-shrink-0 text-slate-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
         />
       </button>
       {open && (
-        <div className="px-6 pb-5 text-slate-600 leading-relaxed bg-white">
+        <div className="px-6 pb-5 text-slate-600 dark:text-slate-300 leading-relaxed bg-white dark:bg-slate-800">
           {answer}
         </div>
       )}
@@ -33,7 +33,7 @@ export default function Support() {
   const { t } = useI18n();
 
   return (
-    <section className="bg-[#F8FAFC] pt-28 pb-20 md:pt-36 md:pb-28 min-h-screen">
+    <section className="bg-[#F8FAFC] dark:bg-slate-950 pt-28 pb-20 md:pt-36 md:pb-28 min-h-screen">
       <div className="mx-auto max-w-3xl px-5">
         {/* Back link */}
         <Link
@@ -45,10 +45,10 @@ export default function Support() {
         </Link>
 
         <div className="text-center mb-12">
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-navy-700 mb-4">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-navy-700 dark:text-white mb-4">
             {t.faq.pageTitle}
           </h1>
-          <p className="text-slate-500 max-w-xl mx-auto">{t.faq.pageSubtitle}</p>
+          <p className="text-slate-500 dark:text-slate-400 max-w-xl mx-auto">{t.faq.pageSubtitle}</p>
         </div>
 
         {/* FAQ accordion */}
@@ -63,9 +63,9 @@ export default function Support() {
         </div>
 
         {/* Contact + Guide CTA */}
-        <div className="mt-16 text-center rounded-2xl bg-white border border-slate-200 p-10">
-          <h2 className="text-2xl font-bold text-navy-700 mb-2">{t.homeFaq.stillQuestions}</h2>
-          <p className="text-slate-500 mb-8 max-w-md mx-auto">{t.homeFaq.stillQuestionsDesc}</p>
+        <div className="mt-16 text-center rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-10">
+          <h2 className="text-2xl font-bold text-navy-700 dark:text-white mb-2">{t.homeFaq.stillQuestions}</h2>
+          <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-md mx-auto">{t.homeFaq.stillQuestionsDesc}</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
               href="mailto:support@ozly.au"

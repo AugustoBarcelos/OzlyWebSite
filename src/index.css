@@ -30,6 +30,35 @@ html, body {
   );
 }
 
+@media (prefers-color-scheme: dark) {
+  html, body {
+    background-color: #0c141b;
+  }
+
+  .ozly-gradient {
+    background: linear-gradient(
+      180deg,
+      #0f2620 0%,
+      #0c1f1a 5%,
+      #111c26 15%,
+      #0f2620 30%,
+      #0c141b 45%,
+      #111c26 60%,
+      #0f2620 75%,
+      #0c1f1a 88%,
+      #0c141b 100%
+    );
+  }
+
+  .pricing-card-highlight {
+    border-color: #2BBB97;
+  }
+
+  .pricing-card-highlight .pricing-header {
+    background: linear-gradient(135deg, #1d8a6e, #166d57);
+  }
+}
+
 /* ── Pricing card highlight (reviews.io style) ── */
 .pricing-card-highlight {
   border: 2px solid #2BBB97;

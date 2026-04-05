@@ -14,10 +14,10 @@ export default function PhoneMockup({ children, variant = "teal", className = ""
       <div
         className={`rounded-[3rem] bg-gradient-to-br ${gradients[variant]} p-[3px] shadow-2xl shadow-brand-500/20`}
       >
-        <div className="rounded-[2.85rem] bg-white overflow-hidden">
+        <div className="rounded-[2.85rem] bg-white dark:bg-slate-900 overflow-hidden">
           {/* Notch */}
           <div className="flex justify-center pt-3 pb-1">
-            <div className="w-24 h-[5px] rounded-full bg-slate-200" />
+            <div className="w-24 h-[5px] rounded-full bg-slate-200 dark:bg-slate-700" />
           </div>
           {/* Screen content */}
           <div className="px-4 pb-5 pt-2">
@@ -25,7 +25,7 @@ export default function PhoneMockup({ children, variant = "teal", className = ""
           </div>
           {/* Home indicator */}
           <div className="flex justify-center pb-3">
-            <div className="w-28 h-[4px] rounded-full bg-slate-200" />
+            <div className="w-28 h-[4px] rounded-full bg-slate-200 dark:bg-slate-700" />
           </div>
         </div>
       </div>

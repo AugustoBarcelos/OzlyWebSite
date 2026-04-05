@@ -44,8 +44,8 @@ function Hero() {
       className="relative min-h-screen flex items-center"
     >
       {/* Blobs */}
-      <div className="pointer-events-none absolute -top-32 left-1/4 h-[250px] w-[250px] sm:h-[400px] sm:w-[400px] md:h-[500px] md:w-[500px] rounded-full bg-brand-100/50 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-0 right-1/4 h-[200px] w-[200px] sm:h-[300px] sm:w-[300px] md:h-[400px] md:w-[400px] rounded-full bg-lime-100/40 blur-3xl" />
+      <div className="pointer-events-none absolute -top-32 left-1/4 h-[250px] w-[250px] sm:h-[400px] sm:w-[400px] md:h-[500px] md:w-[500px] rounded-full bg-brand-100/50 dark:bg-brand-900/20 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-0 right-1/4 h-[200px] w-[200px] sm:h-[300px] sm:w-[300px] md:h-[400px] md:w-[400px] rounded-full bg-lime-100/40 dark:bg-lime-900/15 blur-3xl" />
 
       <div className="relative mx-auto max-w-7xl w-full px-6 pt-28 pb-16 md:pt-32 md:pb-24">
         <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
@@ -55,7 +55,7 @@ function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="inline-block mb-5 rounded-full bg-lime-100 px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-lime-700"
+              className="inline-block mb-5 rounded-full bg-lime-100 dark:bg-lime-900/50 px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-lime-700 dark:text-lime-300"
             >
               {t.hero.badge}
             </motion.span>
@@ -64,7 +64,7 @@ function Hero() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.2 }}
-              className="text-4xl sm:text-5xl lg:text-[3.5rem] xl:text-6xl font-extrabold leading-[1.1] text-navy-700"
+              className="text-4xl sm:text-5xl lg:text-[3.5rem] xl:text-6xl font-extrabold leading-[1.1] text-navy-700 dark:text-white"
             >
               {t.hero.title}
               <br />
@@ -75,7 +75,7 @@ function Hero() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.35 }}
-              className="mt-7 max-w-lg mx-auto lg:mx-0 text-lg text-slate-500 leading-relaxed"
+              className="mt-7 max-w-lg mx-auto lg:mx-0 text-lg text-slate-500 dark:text-slate-400 leading-relaxed"
               dangerouslySetInnerHTML={{ __html: subtitle }}
             />
 
@@ -156,17 +156,17 @@ function AudienceBanner() {
   const { t } = useI18n();
 
   return (
-    <section className="py-14 border-y border-brand-100/50">
+    <section className="py-14 border-y border-brand-100/50 dark:border-brand-800/30">
       <div className="mx-auto max-w-4xl px-6 text-center">
         <ScrollReveal>
-          <p className="text-slate-900 font-semibold text-sm uppercase tracking-[0.2em] mb-7">
+          <p className="text-slate-900 dark:text-slate-100 font-semibold text-sm uppercase tracking-[0.2em] mb-7">
             {t.audience.title}
           </p>
         </ScrollReveal>
         <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4">
           {audienceIcons.map(({ key, icon: Icon }, i) => (
             <ScrollReveal key={key} delay={0.1 * i}>
-              <span className="inline-flex items-center gap-1.5 text-slate-600 text-xs sm:text-sm font-medium">
+              <span className="inline-flex items-center gap-1.5 text-slate-600 dark:text-slate-300 text-xs sm:text-sm font-medium">
                 <Icon size={16} className="text-brand-500" />
                 {t.audience[key]}
               </span>
@@ -394,19 +394,19 @@ function FeatureShowcase({ feature, index }) {
                   <Icon size={28} />
                 </div>
                 {t.features[moduleKey] && (
-                  <span className="text-xs font-bold text-brand-600 bg-brand-50 border border-brand-200 rounded-full px-3 py-1 uppercase tracking-wide">
+                  <span className="text-xs font-bold text-brand-600 dark:text-brand-300 bg-brand-50 dark:bg-brand-900/30 border border-brand-200 dark:border-brand-700 rounded-full px-3 py-1 uppercase tracking-wide">
                     {t.features[moduleKey]}
                   </span>
                 )}
               </div>
             </ScrollReveal>
             <ScrollReveal delay={0.1}>
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-navy-700 leading-tight">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-navy-700 dark:text-white leading-tight">
                 {t.features[titleKey]}
               </h2>
             </ScrollReveal>
             <ScrollReveal delay={0.2}>
-              <p className="mt-5 text-lg text-slate-500 leading-relaxed">
+              <p className="mt-5 text-lg text-slate-500 dark:text-slate-400 leading-relaxed">
                 {t.features[descKey]}
               </p>
             </ScrollReveal>
@@ -454,11 +454,11 @@ function Comparison() {
       <div className="mx-auto max-w-3xl px-6">
         <ScrollReveal>
           <div className="text-center mb-14">
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-navy-700">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-navy-700 dark:text-white">
               {t.comparison.title}{" "}
               <span className="text-brand-500">{t.comparison.titleHighlight}</span>
             </h2>
-            <p className="mt-4 text-slate-500 max-w-xl mx-auto">{t.comparison.subtitle}</p>
+            <p className="mt-4 text-slate-500 dark:text-slate-400 max-w-xl mx-auto">{t.comparison.subtitle}</p>
           </div>
         </ScrollReveal>
 
@@ -466,9 +466,9 @@ function Comparison() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
             {comparisonKeys.map((key, i) => (
               <ScrollReveal key={key} delay={0.05 * i}>
-                <div className="flex items-center gap-3 rounded-xl bg-white border border-slate-100 px-5 py-4 shadow-sm">
+                <div className="flex items-center gap-3 rounded-xl bg-white dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 px-5 py-4 shadow-sm">
                   <CheckCircle size={20} className="text-brand-500 flex-shrink-0" />
-                  <span className="text-sm font-medium text-slate-700">{t.comparison[key]}</span>
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{t.comparison[key]}</span>
                 </div>
               </ScrollReveal>
             ))}
@@ -525,11 +525,11 @@ function Pricing() {
       <div className="mx-auto max-w-6xl px-6">
         <ScrollReveal>
           <div className="text-center mb-6">
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-navy-700 mb-4">{p.title}</h2>
-            <p className="text-slate-500 max-w-xl mx-auto">{p.subtitle}</p>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-navy-700 dark:text-white mb-4">{p.title}</h2>
+            <p className="text-slate-500 dark:text-slate-400 max-w-xl mx-auto">{p.subtitle}</p>
           </div>
           <div className="text-center mb-14">
-            <span className="inline-block rounded-full bg-lime-100 px-5 py-2 text-sm font-bold text-lime-700">
+            <span className="inline-block rounded-full bg-lime-100 dark:bg-lime-900/50 px-5 py-2 text-sm font-bold text-lime-700 dark:text-lime-300">
               {p.trialBadge}
             </span>
           </div>
@@ -542,7 +542,7 @@ function Pricing() {
               <div className={`relative rounded-2xl bg-white p-5 sm:p-8 h-full flex flex-col transition-all duration-300 ${
                 plan.highlight
                   ? "pricing-card-highlight shadow-xl shadow-brand-500/10 ring-1 ring-brand-200"
-                  : "border border-slate-200 shadow-lg shadow-slate-200/50 hover:shadow-xl hover:border-brand-200"
+                  : "dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg shadow-slate-200/50 dark:shadow-black/20 hover:shadow-xl hover:border-brand-200 dark:hover:border-brand-600"
               }`}>
                 {/* Badge for highlighted plan */}
                 {plan.highlight && (
@@ -565,9 +565,9 @@ function Pricing() {
                 ) : (
                   <div className="text-center mb-6">
                     <h3 className="text-2xl font-extrabold text-brand-500 mb-1">{plan.name}</h3>
-                    <p className="text-slate-500 text-sm">{plan.desc}</p>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm">{plan.desc}</p>
                     <div className="mt-4">
-                      <span className="text-5xl font-extrabold text-navy-700">{plan.price}</span>
+                      <span className="text-5xl font-extrabold text-navy-700 dark:text-white">{plan.price}</span>
                       <span className="text-lg font-semibold text-slate-400">{p.perWeek}</span>
                     </div>
                     {plan.priceNote && <p className="text-sm text-slate-400 mt-2">{plan.priceNote}</p>}
@@ -582,7 +582,7 @@ function Pricing() {
                         ? <CheckCircle size={16} className="text-brand-500 flex-shrink-0" />
                         : <span className="w-4 h-4 flex-shrink-0 text-center text-slate-300">&mdash;</span>
                       }
-                      <span className={has ? "text-slate-700" : "text-slate-400"}>{p.features[key]}</span>
+                      <span className={has ? "text-slate-700 dark:text-slate-200" : "text-slate-400"}>{p.features[key]}</span>
                     </li>
                   ))}
                 </ul>
@@ -601,7 +601,7 @@ function Pricing() {
                   href="#download"
                   className={`flex items-center justify-center gap-2 rounded-lg px-6 py-3.5 font-semibold text-sm transition-all duration-300 ${
                     plan.highlight
-                      ? "bg-white text-brand-600 hover:bg-brand-50 shadow-[inset_0_-2px_rgba(0,0,0,0.08),0_2px_8px_rgba(43,187,151,0.15)]"
+                      ? "bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 hover:bg-brand-50 shadow-[inset_0_-2px_rgba(0,0,0,0.08),0_2px_8px_rgba(43,187,151,0.15)]"
                       : "bg-brand-500 text-white hover:bg-brand-600 shadow-[inset_0_-2px_rgba(0,0,0,0.08),inset_0_2px_rgba(255,255,255,0.08),0_2px_8px_rgba(43,187,151,0.2)]"
                   }`}
                 >
@@ -662,29 +662,29 @@ function HomeFaq() {
       <div className="mx-auto max-w-3xl px-6">
         <ScrollReveal>
           <div className="text-center mb-14">
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-navy-700 mb-4">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-navy-700 dark:text-white mb-4">
               {t.homeFaq.title}
             </h2>
-            <p className="text-slate-500 max-w-xl mx-auto">{t.homeFaq.subtitle}</p>
+            <p className="text-slate-500 dark:text-slate-400 max-w-xl mx-auto">{t.homeFaq.subtitle}</p>
           </div>
         </ScrollReveal>
 
         <div className="space-y-3">
           {faqKeys.map((key, i) => (
             <ScrollReveal key={key} delay={0.05 * i}>
-              <div className="border border-slate-200 rounded-2xl overflow-hidden hover:border-brand-200 transition">
+              <div className="border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden hover:border-brand-200 dark:hover:border-brand-700 transition">
                 <button
                   onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                  className="w-full flex items-center justify-between gap-4 px-6 py-5 text-left bg-white hover:bg-slate-50/50 transition"
+                  className="w-full flex items-center justify-between gap-4 px-6 py-5 text-left bg-white dark:bg-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-700/50 transition"
                 >
-                  <span className="font-semibold text-slate-900">{t.faq[key]}</span>
+                  <span className="font-semibold text-slate-900 dark:text-slate-100">{t.faq[key]}</span>
                   <ChevronDown
                     size={20}
                     className={`flex-shrink-0 text-slate-400 transition-transform duration-200 ${openIndex === i ? "rotate-180" : ""}`}
                   />
                 </button>
                 {openIndex === i && (
-                  <div className="px-6 pb-5 text-slate-600 leading-relaxed bg-white">
+                  <div className="px-6 pb-5 text-slate-600 dark:text-slate-300 leading-relaxed bg-white dark:bg-slate-800">
                     {t.faq[key.replace("q", "a")]}
                   </div>
                 )}
@@ -694,9 +694,9 @@ function HomeFaq() {
         </div>
 
         <ScrollReveal delay={0.3}>
-          <div className="mt-14 text-center rounded-2xl bg-slate-50 border border-slate-200 p-10">
-            <h3 className="text-2xl font-bold text-navy-700 mb-2">{t.homeFaq.stillQuestions}</h3>
-            <p className="text-slate-500 mb-8 max-w-md mx-auto">{t.homeFaq.stillQuestionsDesc}</p>
+          <div className="mt-14 text-center rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 p-10">
+            <h3 className="text-2xl font-bold text-navy-700 dark:text-white mb-2">{t.homeFaq.stillQuestions}</h3>
+            <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-md mx-auto">{t.homeFaq.stillQuestionsDesc}</p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <a
                 href="mailto:support@ozly.au"

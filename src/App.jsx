@@ -9,7 +9,7 @@ import TermsOfUse from "./pages/TermsOfUse";
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-[#F8FAFC] font-[Inter,system-ui,sans-serif] antialiased">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0c141b] font-[Inter,system-ui,sans-serif] antialiased dark:text-slate-100">
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />

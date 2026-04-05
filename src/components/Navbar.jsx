@@ -39,7 +39,7 @@ export default function Navbar() {
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "bg-white/90 backdrop-blur-xl shadow-sm border-b border-slate-200/60"
+          ? "bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-sm border-b border-slate-200/60 dark:border-slate-700/60"
           : "bg-transparent"
       }`}
     >
@@ -57,12 +57,12 @@ export default function Navbar() {
         </Link>
 
         {/* Mobile hamburger — moves to left when logo hidden */}
-        <button onClick={() => setOpen(!open)} className="md:hidden text-slate-700" aria-label="Menu">
+        <button onClick={() => setOpen(!open)} className="md:hidden text-slate-700 dark:text-slate-200" aria-label="Menu">
           {open ? <X size={24} /> : <Menu size={24} />}
         </button>
 
         {/* Desktop */}
-        <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
+        <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600 dark:text-slate-300">
           {navLink("#features", t.nav.features)}
           {navLink("#comparison", t.nav.comparison)}
           {navLink("#pricing", t.nav.pricing)}
@@ -72,22 +72,22 @@ export default function Navbar() {
           <div className="relative">
             <button
               onClick={(e) => { e.stopPropagation(); setLangOpen(!langOpen); }}
-              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-500 hover:border-brand-300 hover:text-brand-500 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:border-brand-300 hover:text-brand-500 transition-colors"
             >
               <Globe size={14} />
               {lang.toUpperCase()}
             </button>
             {langOpen && (
               <div
-                className="absolute right-0 mt-2 w-24 rounded-xl bg-white border border-slate-200 shadow-xl py-1 z-50"
+                className="absolute right-0 mt-2 w-24 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl py-1 z-50"
                 onClick={(e) => e.stopPropagation()}
               >
                 {supportedLangs.map(({ code, label }) => (
                   <button
                     key={code}
                     onClick={() => { setLang(code); setLangOpen(false); }}
-                    className={`block w-full text-left px-4 py-2 text-sm hover:bg-brand-50 transition-colors ${
-                      code === lang ? "text-brand-500 font-bold" : "text-slate-600"
+                    className={`block w-full text-left px-4 py-2 text-sm hover:bg-brand-50 dark:hover:bg-slate-700 transition-colors ${
+                      code === lang ? "text-brand-500 font-bold" : "text-slate-600 dark:text-slate-300"
                     }`}
                   >
                     {label}
@@ -108,7 +108,7 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {open && (
-        <div className="md:hidden bg-white/95 backdrop-blur-xl border-t border-slate-100 px-6 pb-5 space-y-3 text-sm font-medium text-slate-600">
+        <div className="md:hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-100 dark:border-slate-700 px-6 pb-5 space-y-3 text-sm font-medium text-slate-600 dark:text-slate-300">
           {isHome ? (
             <>
               <a href="#features" className="block py-2.5" onClick={() => setOpen(false)}>{t.nav.features}</a>
@@ -136,7 +136,7 @@ export default function Navbar() {
                 className={`rounded-full px-3 py-1.5 text-xs font-semibold border transition-colors ${
                   code === lang
                     ? "bg-brand-500 text-white border-brand-500"
-                    : "border-slate-200 text-slate-600 hover:border-brand-300"
+                    : "border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-brand-300"
                 }`}
               >
                 {label}
