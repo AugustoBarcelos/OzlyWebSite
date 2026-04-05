@@ -87,6 +87,7 @@
       "price": "$3.85",
       "priceNote": "$16.67/mo on annual plan*"
     },
+    "seeAll": "See all features",
     "annualNote": "* Annual plan: TFN/ABN $149.99/yr | MAX $199.99/yr. All plans include a 14-day free trial.",
     "monthlyNote": "** Monthly plan: TFN/ABN $14.99/mo | MAX $19.99/mo.",
     "calendarNote": "*** Currently integrates with Google Calendar. Compatible with apps that sync with Google Calendar.",

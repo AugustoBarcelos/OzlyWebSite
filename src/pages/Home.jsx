@@ -480,36 +480,38 @@ function Comparison() {
 }
 
 /* ═══════════════════════ PRICING ═══════════════════════ */
-const featureMatrix = [
-  //                                TFN    ABN    MAX
-  // ── Shared features ──
+// Features shown by default (key highlights per plan)
+const coreFeatures = [
   { key: "shifts",                  tfn: true,  abn: true,  max: true  },
   { key: "expensesOcr",             tfn: true,  abn: true,  max: true  },
-  { key: "quickExpense",            tfn: true,  abn: true,  max: true  },
   { key: "calendarSync",            tfn: true,  abn: true,  max: true  },
   { key: "taxAnalytics",            tfn: true,  abn: true,  max: true  },
+  { key: "penaltyRates",            tfn: true,  abn: false, max: true  },
+  { key: "netSalary",               tfn: true,  abn: false, max: true  },
+  { key: "invoices",                tfn: false, abn: true,  max: true  },
+  { key: "contractors",             tfn: false, abn: true,  max: true  },
+  { key: "toggleMode",              tfn: false, abn: false, max: true  },
+];
+
+// Extra features revealed on "See all"
+const extraFeatures = [
+  { key: "quickExpense",            tfn: true,  abn: true,  max: true  },
   { key: "bulkEdit",                tfn: true,  abn: true,  max: true  },
   { key: "timesheets",              tfn: true,  abn: true,  max: true  },
   { key: "levelUp",                 tfn: true,  abn: true,  max: true  },
   { key: "messageTemplates",        tfn: true,  abn: true,  max: true  },
-  // ── TFN exclusive ──
-  { key: "penaltyRates",            tfn: true,  abn: false, max: true  },
-  { key: "netSalary",               tfn: true,  abn: false, max: true  },
   { key: "salaryModes",             tfn: true,  abn: false, max: true  },
   { key: "visaShield",              tfn: true,  abn: false, max: true  },
   { key: "reimbursements",          tfn: true,  abn: false, max: true  },
-  // ── ABN exclusive ──
-  { key: "contractors",             tfn: false, abn: true,  max: true  },
-  { key: "invoices",                tfn: false, abn: true,  max: true  },
   { key: "hoursComparison",         tfn: false, abn: true,  max: true  },
   { key: "multiBusinesses",         tfn: false, abn: true,  max: true  },
-  // ── MAX exclusive ──
-  { key: "toggleMode",              tfn: false, abn: false, max: true  },
 ];
 
 function Pricing() {
   const { t } = useI18n();
   const p = t.pricing;
+  const [expanded, setExpanded] = useState(false);
+  const visibleFeatures = expanded ? [...coreFeatures, ...extraFeatures] : coreFeatures;
 
   const plans = [
     { id: "tfn", ...p.tfn, color: "brand",  highlight: false },
@@ -572,8 +574,8 @@ function Pricing() {
                 )}
 
                 {/* Feature list */}
-                <ul className="space-y-3 mb-8 flex-1">
-                  {featureMatrix.map(({ key, [plan.id]: has }) => (
+                <ul className="space-y-3 mb-4 flex-1">
+                  {visibleFeatures.map(({ key, [plan.id]: has }) => (
                     <li key={key} className="flex items-center gap-3 text-sm">
                       {has
                         ? <CheckCircle size={16} className="text-brand-500 flex-shrink-0" />
@@ -583,6 +585,15 @@ function Pricing() {
                     </li>
                   ))}
                 </ul>
+                {!expanded && (
+                  <button
+                    onClick={() => setExpanded(true)}
+                    className="text-brand-500 text-xs font-semibold hover:text-brand-600 transition mb-4 flex items-center gap-1"
+                  >
+                    <ChevronDown size={14} />
+                    {p.seeAll || "Ver todas as features"}
+                  </button>
+                )}
 
                 {/* CTA button (reviews.io 3D style) */}
                 <a
