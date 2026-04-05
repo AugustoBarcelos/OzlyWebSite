@@ -44,8 +44,8 @@ function Hero() {
       className="relative min-h-screen flex items-center"
     >
       {/* Blobs */}
-      <div className="pointer-events-none absolute -top-32 left-1/4 h-[500px] w-[500px] rounded-full bg-brand-100/50 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-0 right-1/4 h-[400px] w-[400px] rounded-full bg-lime-100/40 blur-3xl" />
+      <div className="pointer-events-none absolute -top-32 left-1/4 h-[250px] w-[250px] sm:h-[400px] sm:w-[400px] md:h-[500px] md:w-[500px] rounded-full bg-brand-100/50 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-0 right-1/4 h-[200px] w-[200px] sm:h-[300px] sm:w-[300px] md:h-[400px] md:w-[400px] rounded-full bg-lime-100/40 blur-3xl" />
 
       <div className="relative mx-auto max-w-7xl w-full px-6 pt-28 pb-16 md:pt-32 md:pb-24">
         <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
@@ -166,7 +166,7 @@ function AudienceBanner() {
         <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4">
           {audienceIcons.map(({ key, icon: Icon }, i) => (
             <ScrollReveal key={key} delay={0.1 * i}>
-              <span className="inline-flex items-center gap-2 text-slate-600 text-sm font-medium">
+              <span className="inline-flex items-center gap-1.5 text-slate-600 text-xs sm:text-sm font-medium">
                 <Icon size={16} className="text-brand-500" />
                 {t.audience[key]}
               </span>
@@ -385,9 +385,9 @@ function FeatureShowcase({ feature, index }) {
   return (
     <section className="py-24 md:py-32">
       <div className="mx-auto max-w-7xl px-6">
-        <div className={`flex flex-col ${isEven ? "lg:flex-row" : "lg:flex-row-reverse"} items-center gap-16 lg:gap-24`}>
+        <div className={`flex flex-col ${isEven ? "lg:flex-row" : "lg:flex-row-reverse"} items-center gap-10 sm:gap-16 lg:gap-24`}>
           {/* Text */}
-          <div className="flex-1 text-center lg:text-left max-w-lg">
+          <div className="flex-1 text-center lg:text-left max-w-full sm:max-w-md lg:max-w-lg">
             <ScrollReveal>
               <div className="flex items-center gap-3 mb-6 justify-center lg:justify-start">
                 <div className={`inline-flex items-center justify-center w-14 h-14 rounded-2xl ${cs.icon}`}>
@@ -539,7 +539,7 @@ function Pricing() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 mb-16">
           {plans.map((plan, pi) => (
             <ScrollReveal key={plan.id} delay={0.1 * pi}>
-              <div className={`relative rounded-2xl bg-white p-8 h-full flex flex-col transition-all duration-300 ${
+              <div className={`relative rounded-2xl bg-white p-5 sm:p-8 h-full flex flex-col transition-all duration-300 ${
                 plan.highlight
                   ? "pricing-card-highlight shadow-xl shadow-brand-500/10 ring-1 ring-brand-200"
                   : "border border-slate-200 shadow-lg shadow-slate-200/50 hover:shadow-xl hover:border-brand-200"

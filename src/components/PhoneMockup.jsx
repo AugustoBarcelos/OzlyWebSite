@@ -10,7 +10,7 @@ const gradients = {
 
 export default function PhoneMockup({ children, variant = "teal", className = "" }) {
   return (
-    <div className={`relative mx-auto w-[270px] sm:w-[290px] ${className}`}>
+    <div className={`relative mx-auto w-[230px] sm:w-[270px] md:w-[290px] ${className}`}>
       <div
         className={`rounded-[3rem] bg-gradient-to-br ${gradients[variant]} p-[3px] shadow-2xl shadow-brand-500/20`}
       >
