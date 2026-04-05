@@ -1,97 +1,25 @@
 @import "tailwindcss";
 
 body {
-  background-color: #ffffff;
+  background: linear-gradient(
+    180deg,
+    #e8f8f3 0%,       /* brand-50 — teal muito claro */
+    #c5ede2 8%,        /* brand-100 */
+    #e8f8f3 18%,       /* brand-50 */
+    #f4fbe8 30%,       /* lime-50 — tom levemente amarelado */
+    #ffffff 45%,       /* branco puro no meio */
+    #e8f8f3 60%,       /* brand-50 volta */
+    #c5ede2 72%,       /* brand-100 */
+    #e6f5cc 82%,       /* lime-100 */
+    #e8f8f3 92%,       /* brand-50 */
+    #c5ede2 100%       /* brand-100 */
+  );
+  background-attachment: fixed;
 }
 
-/* ── Mesh gradient background (reviews.io inspired) ── */
-.mesh-gradient {
+/* Remove classes de gradient que não são mais necessárias */
+.mesh-gradient, .gradient-section, .gradient-section-warm {
   position: relative;
-}
-
-.mesh-gradient::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background:
-    radial-gradient(200% 50% at 50% -10%, rgba(255,255,255,1) 0% 35%, rgba(255,255,255,0) 70%),
-    radial-gradient(60% 50% at 50% 45%, white 25%, rgba(255,255,255,0) 65%),
-    radial-gradient(80% 50% at 48% 40%, rgba(255, 251, 214, 0.7) 0% 25%, transparent 60%),
-    radial-gradient(70% 55% at 85% 15%, rgba(164, 236, 209, 0.35) 0% 30%, transparent 70%),
-    radial-gradient(50% 40% at 15% 60%, rgba(43, 187, 151, 0.08) 0%, transparent 70%),
-    #ffffff;
-  pointer-events: none;
-}
-
-/* Subtle teal/lime blobs for alternating sections */
-.gradient-section {
-  position: relative;
-  overflow: hidden;
-}
-
-.gradient-section::before {
-  content: '';
-  position: absolute;
-  top: -20%;
-  left: -15%;
-  width: 50%;
-  height: 70%;
-  background: radial-gradient(ellipse, rgba(43, 187, 151, 0.06) 0%, transparent 70%);
-  border-radius: 50%;
-  animation: blob-drift 20s ease-in-out infinite alternate;
-  pointer-events: none;
-}
-
-.gradient-section::after {
-  content: '';
-  position: absolute;
-  bottom: -15%;
-  right: -10%;
-  width: 45%;
-  height: 60%;
-  background: radial-gradient(ellipse, rgba(255, 251, 214, 0.5) 0%, transparent 70%);
-  border-radius: 50%;
-  animation: blob-drift 25s ease-in-out infinite alternate-reverse;
-  pointer-events: none;
-}
-
-.gradient-section-warm {
-  position: relative;
-  overflow: hidden;
-}
-
-.gradient-section-warm::before {
-  content: '';
-  position: absolute;
-  top: -20%;
-  right: -15%;
-  width: 50%;
-  height: 65%;
-  background: radial-gradient(ellipse, rgba(164, 236, 209, 0.15) 0%, transparent 70%);
-  border-radius: 50%;
-  animation: blob-drift 22s ease-in-out infinite alternate;
-  pointer-events: none;
-}
-
-.gradient-section-warm::after {
-  content: '';
-  position: absolute;
-  bottom: -20%;
-  left: -10%;
-  width: 45%;
-  height: 55%;
-  background: radial-gradient(ellipse, rgba(255, 251, 214, 0.4) 0%, transparent 70%);
-  border-radius: 50%;
-  animation: blob-drift 28s ease-in-out infinite alternate-reverse;
-  pointer-events: none;
-}
-
-@keyframes blob-drift {
-  0% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(5%, 8%) scale(1.05); }
-  66% { transform: translate(-3%, -5%) scale(0.95); }
-  100% { transform: translate(2%, -3%) scale(1.02); }
 }
 
 /* ── Pricing card highlight (reviews.io style) ── */

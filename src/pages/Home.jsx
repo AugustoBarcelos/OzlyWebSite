@@ -41,7 +41,7 @@ function Hero() {
     <section
       ref={ref}
       id="download"
-      className="mesh-gradient relative min-h-screen flex items-center"
+      className="relative min-h-screen flex items-center"
     >
       {/* Blobs */}
       <div className="pointer-events-none absolute -top-32 left-1/4 h-[500px] w-[500px] rounded-full bg-brand-100/50 blur-3xl" />
@@ -156,7 +156,7 @@ function AudienceBanner() {
   const { t } = useI18n();
 
   return (
-    <section className="bg-white py-14 border-y border-slate-100">
+    <section className="py-14 border-y border-brand-100/50">
       <div className="mx-auto max-w-4xl px-6 text-center">
         <ScrollReveal>
           <p className="text-slate-900 font-semibold text-sm uppercase tracking-[0.2em] mb-7">
@@ -383,7 +383,7 @@ function FeatureShowcase({ feature, index }) {
   const cs = colorStyles[color];
 
   return (
-    <section className="gradient-section bg-white py-24 md:py-32">
+    <section className="py-24 md:py-32">
       <div className="mx-auto max-w-7xl px-6">
         <div className={`flex flex-col ${isEven ? "lg:flex-row" : "lg:flex-row-reverse"} items-center gap-16 lg:gap-24`}>
           {/* Text */}
@@ -450,7 +450,7 @@ function Comparison() {
   const { t } = useI18n();
 
   return (
-    <section id="comparison" className="gradient-section-warm bg-white py-24 md:py-32">
+    <section id="comparison" className="py-24 md:py-32">
       <div className="mx-auto max-w-3xl px-6">
         <ScrollReveal>
           <div className="text-center mb-14">
@@ -520,7 +520,7 @@ function Pricing() {
   ];
 
   return (
-    <section id="pricing" className="mesh-gradient py-24 md:py-32">
+    <section id="pricing" className="py-24 md:py-32">
       <div className="mx-auto max-w-6xl px-6">
         <ScrollReveal>
           <div className="text-center mb-6">
@@ -657,7 +657,7 @@ function HomeFaq() {
   const faqKeys = ["q1", "q2", "q3", "q4", "q5", "q6"];
 
   return (
-    <section id="faq" className="gradient-section-warm bg-white py-24 md:py-32">
+    <section id="faq" className="py-24 md:py-32">
       <div className="mx-auto max-w-3xl px-6">
         <ScrollReveal>
           <div className="text-center mb-14">
