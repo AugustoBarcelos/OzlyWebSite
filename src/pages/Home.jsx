@@ -486,6 +486,7 @@ const coreFeatures = [
   { key: "expensesOcr",             tfn: true,  abn: true,  max: true  },
   { key: "calendarSync",            tfn: true,  abn: true,  max: true  },
   { key: "taxAnalytics",            tfn: true,  abn: true,  max: true  },
+  { key: "taxThermometer",          tfn: true,  abn: false, max: true  },
   { key: "penaltyRates",            tfn: true,  abn: false, max: true  },
   { key: "netSalary",               tfn: true,  abn: false, max: true  },
   { key: "invoices",                tfn: false, abn: true,  max: true  },
@@ -722,7 +723,7 @@ function HomeFaq() {
 /* ═══════════════════════ HOME ═══════════════════════ */
 export default function Home() {
   return (
-    <>
+    <div className="ozly-gradient">
       <Hero />
       <AudienceBanner />
       <FeaturesShowcase />
@@ -730,6 +731,6 @@ export default function Home() {
       <Pricing />
       <HomeFaq />
       <BottomCta />
-    </>
+    </div>
   );
 }

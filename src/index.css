@@ -1,25 +1,31 @@
 @import "tailwindcss";
 
 body {
-  background: linear-gradient(
-    180deg,
-    #e8f8f3 0%,       /* brand-50 — teal muito claro */
-    #c5ede2 8%,        /* brand-100 */
-    #e8f8f3 18%,       /* brand-50 */
-    #f4fbe8 30%,       /* lime-50 — tom levemente amarelado */
-    #ffffff 45%,       /* branco puro no meio */
-    #e8f8f3 60%,       /* brand-50 volta */
-    #c5ede2 72%,       /* brand-100 */
-    #e6f5cc 82%,       /* lime-100 */
-    #e8f8f3 92%,       /* brand-50 */
-    #c5ede2 100%       /* brand-100 */
-  );
-  background-attachment: fixed;
+  background-color: #ffffff;
 }
 
-/* Remove classes de gradient que não são mais necessárias */
-.mesh-gradient, .gradient-section, .gradient-section-warm {
-  position: relative;
+.ozly-gradient {
+  background: linear-gradient(
+    180deg,
+    #e8f8f3 0%,
+    #d4f1e8 3%,
+    #c5ede2 6%,
+    #d4f1e8 10%,
+    #e8f8f3 15%,
+    #f0f9f0 20%,
+    #f4fbe8 28%,
+    #f8fdf2 35%,
+    #ffffff 42%,
+    #f8fdf2 50%,
+    #e8f8f3 58%,
+    #d4f1e8 65%,
+    #c5ede2 72%,
+    #d4f1e8 78%,
+    #e6f5cc 84%,
+    #f4fbe8 90%,
+    #e8f8f3 95%,
+    #c5ede2 100%
+  );
 }
 
 /* ── Pricing card highlight (reviews.io style) ── */

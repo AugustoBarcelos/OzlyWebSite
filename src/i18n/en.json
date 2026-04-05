@@ -103,6 +103,7 @@
       "multiBusinesses": "Multiple Businesses",
       "toggleMode": "Toggle TFN ↔ ABN mode",
       "penaltyRates": "Penalty Rates (Sat/Sun/Holidays)",
+      "taxThermometer": "Tax Return Thermometer",
       "netSalary": "Net Salary Forecast (PAYG)",
       "bulkEdit": "Bulk Edit & Delete Jobs",
       "timesheets": "Timesheet PDF per Employer",
