@@ -535,7 +535,8 @@ function Pricing() {
                   <div className="mt-4">
                     <span className={`text-5xl font-extrabold ${plan.highlight ? "text-amber-500" : "text-brand-500"}`}>{plan.price}</span>
                     <span className="text-lg font-semibold text-slate-400">{p.perMonth}</span>
-                    {plan.weekly && <span className="block text-sm font-semibold text-slate-400 mt-1">{plan.weekly}{p.perWeek}</span>}
+                    {plan.priceNote && <span className="block text-xs font-medium text-slate-400 mt-1">{plan.priceNote}</span>}
+                    {plan.monthlyPrice && <span className="block text-xs text-slate-400 mt-0.5">{plan.monthlyPrice}</span>}
                     <span className="block text-xs text-slate-400 mt-1">{p.currency}</span>
                   </div>
                 </div>
@@ -584,7 +585,8 @@ function Pricing() {
                     <span className={`text-4xl font-extrabold ${plan.highlight ? "text-amber-500" : "text-brand-500"}`}>{plan.price}</span>
                     <span className="text-base font-semibold text-slate-400">{p.perMonth}</span>
                   </div>
-                  {plan.weekly && <span className="block text-xs font-semibold text-slate-400">{plan.weekly}{p.perWeek}</span>}
+                  {plan.priceNote && <span className="block text-[10px] font-medium text-slate-400">{plan.priceNote}</span>}
+                  {plan.monthlyPrice && <span className="block text-[10px] text-slate-400">{plan.monthlyPrice}</span>}
                   <span className="text-[10px] text-slate-400">{p.currency}</span>
                 </div>
               ))}
@@ -625,6 +627,12 @@ function Pricing() {
             </div>
           </div>
         </ScrollReveal>
+
+        {/* Footnotes */}
+        <div className="mt-8 text-center space-y-1">
+          {p.annualNote && <p className="text-xs text-slate-400">{p.annualNote}</p>}
+          {p.calendarNote && <p className="text-xs text-slate-400">{p.calendarNote}</p>}
+        </div>
       </div>
     </section>
   );

@@ -72,26 +72,34 @@
     "tfn": {
       "name": "TFN",
       "desc": "Para contractors individuales",
-      "price": "$9",
-      "weekly": "$2.10"
+      "price": "$6.75",
+      "priceNote": "en plan anual*",
+      "monthlyPrice": "$9/mes en plan mensual",
+      "weekly": "$1.56"
     },
     "abn": {
       "name": "ABN",
       "desc": "Para negocios con ABN",
-      "price": "$15",
-      "weekly": "$3.50"
+      "price": "$11.25",
+      "priceNote": "en plan anual*",
+      "monthlyPrice": "$15/mes en plan mensual",
+      "weekly": "$2.60"
     },
     "max": {
       "name": "MAX",
       "desc": "TFN + ABN combinados",
-      "price": "$19",
-      "weekly": "$4.40"
+      "price": "$14.25",
+      "priceNote": "en plan anual*",
+      "monthlyPrice": "$19/mes en plan mensual",
+      "weekly": "$3.29"
     },
+    "annualNote": "* Precio por mes en plan anual (cobrado anualmente). Plan mensual disponible.",
+    "calendarNote": "* Actualmente integra con Google Calendar. Compatible con apps que sincronizan con Google Calendar.",
     "features": {
       "shifts": "Shifts & Control de Jobs",
       "expensesOcr": "Gastos con IA OCR",
       "visaShield": "Visa Shield (monitor 48h)",
-      "calendarSync": "Google Calendar Sync",
+      "calendarSync": "Sincronización con tu app de turnos*",
       "taxAnalytics": "Análisis Avanzado de Impuestos",
       "contractors": "Gestión de Contractors",
       "invoices": "Invoices PDF Profesionales",
