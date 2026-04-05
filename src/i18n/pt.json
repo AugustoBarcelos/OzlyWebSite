@@ -72,28 +72,25 @@
     "tfn": {
       "name": "TFN",
       "desc": "Para contractors individuais",
-      "price": "$6.75",
-      "priceNote": "no plano anual*",
-      "monthlyPrice": "$9/mês no plano mensal",
-      "weekly": "$1.56"
+      "price": "$14.99",
+      "priceNote": "ou $149.99/ano ($2.88/sem)*",
+      "weekly": "$3.46"
     },
     "abn": {
       "name": "ABN",
       "desc": "Para negócios com ABN",
-      "price": "$11.25",
-      "priceNote": "no plano anual*",
-      "monthlyPrice": "$15/mês no plano mensal",
-      "weekly": "$2.60"
+      "price": "$14.99",
+      "priceNote": "ou $149.99/ano ($2.88/sem)*",
+      "weekly": "$3.46"
     },
     "max": {
       "name": "MAX",
       "desc": "TFN + ABN combinados",
-      "price": "$14.25",
-      "priceNote": "no plano anual*",
-      "monthlyPrice": "$19/mês no plano mensal",
+      "price": "$19.99",
+      "priceNote": "ou $199.99/ano ($3.85/sem)*",
       "weekly": "$3.29"
     },
-    "annualNote": "* Preço por mês no plano anual (cobrado anualmente). Plano mensal disponível.",
+    "annualNote": "* Economize com o plano anual. Todos os planos incluem 14 dias grátis.",
     "calendarNote": "* Atualmente integra com Google Calendar. Compatível com apps que sincronizam com o Google Calendar.",
     "features": {
       "shifts": "Shifts & Controle de Jobs",
