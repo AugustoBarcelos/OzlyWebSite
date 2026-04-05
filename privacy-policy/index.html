@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ozly — Privacy Policy</title>
+  <meta name="description" content="Ozly Privacy Policy — how we collect, use, disclose, and protect your personal information when you use the Ozly mobile application." />
+  <meta name="robots" content="index, follow" />
+  <link rel="icon" type="image/svg+xml" href="/OSLY.svg" />
+  <style>
+    body { font-family: Inter, system-ui, sans-serif; background: #F8FAFC; color: #334155; margin: 0; padding: 0; line-height: 1.6; }
+    .container { max-width: 720px; margin: 0 auto; padding: 80px 24px 60px; }
+    h1 { font-size: 1.875rem; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
+    h2 { font-size: 1.25rem; font-weight: 700; color: #1e293b; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin: 32px 0 16px; }
+    h3 { font-size: 1.125rem; font-weight: 600; color: #1e293b; margin: 24px 0 8px; }
+    p { margin: 12px 0; }
+    ul, ol { padding-left: 20px; margin: 8px 0; }
+    li { margin: 4px 0; }
+    a { color: #2563eb; text-decoration: underline; }
+    strong { color: #475569; }
+    .meta { font-size: 0.875rem; color: #64748b; margin-bottom: 32px; }
+    .summary { background: #eff6ff; border-left: 4px solid #3b82f6; border-radius: 0 8px 8px 0; padding: 20px; margin-bottom: 32px; font-size: 0.875rem; }
+    .deletion { background: #fef2f2; border-left: 4px solid #ef4444; border-radius: 0 8px 8px 0; padding: 20px; margin: 32px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.875rem; margin: 16px 0; }
+    th, td { border: 1px solid #e2e8f0; padding: 8px 12px; text-align: left; }
+    th { background: #f1f5f9; font-weight: 600; color: #1e293b; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Ozly &mdash; Privacy Policy</h1>
+    <p class="meta">Effective Date: 10 June 2025 &nbsp;|&nbsp; Last Updated: 10 June 2025</p>
+
+    <div class="summary">
+      <p><strong>Quick Summary:</strong> Ozly stores your data securely using encryption on your device and in the cloud. We never sell your data. You can delete your account and all data at any time.</p>
+    </div>
+
+    <h2>1. Who We Are</h2>
+    <p>Ozly ("we", "us", "our") is operated by Ozly Pty Ltd (ABN to be confirmed), based in Australia. This Privacy Policy explains how we collect, use, disclose, and protect your personal information when you use the Ozly mobile application (the "App") available on the Apple App Store and Google Play Store.</p>
+    <p>We are committed to complying with the <strong>Australian Privacy Act 1988 (Cth)</strong> and the <strong>Australian Privacy Principles (APPs)</strong>, as well as the privacy requirements of Apple and Google.</p>
+    <p>For any privacy-related enquiry, please contact us at: <strong>privacy@ozly.au</strong></p>
+
+    <h2>2. Information We Collect</h2>
+
+    <h3>2.1 Account &amp; Profile Information</h3>
+    <p>When you create an account, we collect:</p>
+    <ul>
+      <li><strong>Email address</strong> — provided directly or via Google/Apple Sign-In.</li>
+      <li><strong>Full name</strong> — provided by you or retrieved from your Google/Apple account.</li>
+      <li><strong>Phone number</strong> (optional) — if you choose to add it to your profile.</li>
+      <li><strong>Postal address, postal code, and country</strong> (optional) — for business invoicing.</li>
+      <li><strong>Profile photo</strong> (optional) — uploaded to our secure cloud storage.</li>
+    </ul>
+
+    <h3>2.2 Authentication Data</h3>
+    <p>We support three sign-in methods:</p>
+    <ul>
+      <li><strong>Email &amp; Password</strong> — your password is hashed by Supabase Auth and is never stored in plain text.</li>
+      <li><strong>Sign in with Google</strong> — we receive your email address and display name via OAuth 2.0. We request access to your Google Calendar if you choose to enable calendar sync.</li>
+      <li><strong>Sign in with Apple</strong> — we receive your email address and full name (if you choose to share them). Authentication uses PKCE with a cryptographic nonce for security.</li>
+    </ul>
+
+    <h3>2.3 Business &amp; Financial Data</h3>
+    <p>If you use the App for ABN-mode (business) features, you may provide:</p>
+    <ul>
+      <li>Australian Business Number (ABN) and company name.</li>
+      <li>Business category (e.g., cleaning, gardening, construction).</li>
+      <li>Default hourly rate.</li>
+      <li>Banking details: BSB, account number, and/or PayID — used solely for displaying on invoices you generate.</li>
+    </ul>
+
+    <h3>2.4 Work &amp; Expense Records</h3>
+    <p>As part of core App functionality, you create and store:</p>
+    <ul>
+      <li><strong>Jobs:</strong> title, dates, times, hourly rate, location (text only, not GPS), status, and notes.</li>
+      <li><strong>Contractors/Clients:</strong> name, email, phone, ABN, address, notes, and default rate.</li>
+      <li><strong>Invoices:</strong> invoice numbers, line items, dates, amounts, tax calculations.</li>
+      <li><strong>Work hours:</strong> date and hours worked per job.</li>
+      <li><strong>Expenses:</strong> amount, claimable amount, category, merchant name, description, date, and receipt photo.</li>
+    </ul>
+
+    <h3>2.5 Receipt Images &amp; OCR Processing</h3>
+    <p>When you scan a receipt:</p>
+    <ul>
+      <li>The image is captured via your device camera or selected from your photo library.</li>
+      <li><strong>Primary processing:</strong> The image is sent to <strong>Google Gemini</strong> (Google's generative AI service) for analysis. The image is transmitted as base64-encoded data to extract merchant name, date, amounts, line items, and tax-deductibility classification. Google processes this data under their <a href="https://policies.google.com/privacy">Privacy Policy</a>.</li>
+      <li><strong>Fallback processing:</strong> If the primary service is unavailable, <strong>Google ML Kit Text Recognition</strong> processes the image entirely on your device — no data leaves your phone.</li>
+      <li>Receipt images are uploaded to our secure cloud storage (Supabase Storage) with sanitised filenames (timestamp + random identifier) so you can access them across devices.</li>
+    </ul>
+
+    <h3>2.6 Google Calendar Data</h3>
+    <p>If you enable Google Calendar integration, we request:</p>
+    <ul>
+      <li><strong>Read access</strong> to your calendar events (to detect scheduling conflicts).</li>
+      <li><strong>Write access</strong> to create, update, or delete calendar events corresponding to your jobs.</li>
+    </ul>
+    <p>Calendar data is used exclusively to synchronise your Ozly jobs with your Google Calendar. We store only the Google Event ID on each job record; we do not store your broader calendar data.</p>
+
+    <h3>2.7 Contacts Data</h3>
+    <p>If you grant permission, we may access your device contacts to help you quickly populate contractor or client details (name, email, phone). Contact data is read on demand and is <strong>not</strong> uploaded to our servers or stored beyond what you choose to save as a contractor record.</p>
+
+    <h3>2.8 Device Permissions</h3>
+    <table>
+      <thead>
+        <tr><th>Permission</th><th>Platform</th><th>Purpose</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Camera</td><td>iOS, Android</td><td>Scan receipts and documents for expense tracking.</td></tr>
+        <tr><td>Photo Library / Gallery</td><td>iOS, Android</td><td>Select existing receipt photos; save generated invoices.</td></tr>
+        <tr><td>Contacts</td><td>iOS, Android</td><td>Quickly import client/contractor details.</td></tr>
+        <tr><td>Calendar</td><td>iOS, Android</td><td>Sync jobs with your device/Google Calendar.</td></tr>
+        <tr><td>Notifications</td><td>iOS, Android</td><td>Deliver local reminders (morning briefing, shift end, expense reminders). We do <strong>not</strong> use push notification services.</td></tr>
+        <tr><td>Internet</td><td>Android</td><td>Sync data with cloud backend and authenticate.</td></tr>
+      </tbody>
+    </table>
+    <p>All permissions are requested at the point of use and can be revoked at any time via your device settings.</p>
+
+    <h3>2.9 Usage Analytics</h3>
+    <p>We collect anonymised usage events (e.g., "job_created", "invoice_sent", "screen_view") to improve the App. These events are stored in our own database (Supabase) — <strong>not</strong> sent to any third-party analytics provider such as Google Analytics or Firebase.</p>
+    <p>Sensitive fields are automatically stripped from all analytics events. The following data is <strong>never</strong> included in analytics: passwords, tokens, secrets, Tax File Numbers (TFN), BSB numbers, account numbers, credit card details, CVV codes, access tokens, refresh tokens, or API keys.</p>
+
+    <h3>2.10 Information We Do NOT Collect</h3>
+    <ul>
+      <li>GPS or precise geolocation data.</li>
+      <li>Tax File Numbers (TFN).</li>
+      <li>Credit card or payment card details (subscriptions are processed entirely by Apple/Google via RevenueCat).</li>
+      <li>Biometric data.</li>
+      <li>Data from other apps on your device.</li>
+    </ul>
+
+    <h2>3. How We Store Your Data</h2>
+
+    <h3>3.1 On-Device (Offline-First Architecture)</h3>
+    <p>Your financial and work data is stored locally on your device using an encrypted SQLite database. We use <strong>SQLCipher</strong> (AES-256 encryption) to encrypt the local database at rest. This means your data remains accessible even without an internet connection and is protected if your device is lost or stolen.</p>
+
+    <h3>3.2 Cloud Backup (Supabase)</h3>
+    <p>When you are online, your data is synchronised with <strong>Supabase</strong>, a cloud backend hosted on secure infrastructure. Supabase provides:</p>
+    <ul>
+      <li>Row-Level Security (RLS) — ensuring you can only access your own data.</li>
+      <li>Encrypted connections (TLS) for all data in transit.</li>
+      <li>Authentication tokens stored in your device's secure storage (iOS Keychain / Android Keystore).</li>
+    </ul>
+
+    <h3>3.3 File Storage</h3>
+    <p>Uploaded files (receipt images, profile avatars) are stored in Supabase Storage with access restricted to the authenticated user who uploaded them.</p>
+
+    <h2>4. How We Use Your Information</h2>
+    <p>We use your personal information to:</p>
+    <ul>
+      <li>Provide and operate the App's core features (job tracking, invoicing, expense management).</li>
+      <li>Authenticate your identity and maintain your account security.</li>
+      <li>Synchronise your data across devices.</li>
+      <li>Process receipt images for expense data extraction.</li>
+      <li>Manage your subscription entitlements.</li>
+      <li>Send local on-device notifications and reminders.</li>
+      <li>Improve the App based on anonymised usage patterns.</li>
+      <li>Respond to support requests.</li>
+    </ul>
+
+    <h2>5. Third-Party Data Processors</h2>
+    <p>We share your data with the following third-party processors, solely as required to deliver our services:</p>
+    <table>
+      <thead>
+        <tr><th>Provider</th><th>Purpose</th><th>Data Shared</th><th>Privacy Policy</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Supabase</td><td>Authentication, database, file storage</td><td>Account data, work records, uploaded files</td><td><a href="https://supabase.com/privacy">supabase.com/privacy</a></td></tr>
+        <tr><td>RevenueCat</td><td>Subscription and entitlement management</td><td>User ID, subscription status</td><td><a href="https://www.revenuecat.com/privacy">revenuecat.com/privacy</a></td></tr>
+        <tr><td>Google (Sign-In &amp; Calendar)</td><td>OAuth authentication, calendar sync</td><td>Email, name, calendar events</td><td><a href="https://policies.google.com/privacy">policies.google.com/privacy</a></td></tr>
+        <tr><td>Google Gemini</td><td>Receipt image analysis (OCR)</td><td>Receipt images (base64-encoded)</td><td><a href="https://policies.google.com/privacy">policies.google.com/privacy</a></td></tr>
+        <tr><td>Google ML Kit</td><td>On-device text recognition (fallback)</td><td>None (processed locally)</td><td>N/A — no data transmitted</td></tr>
+        <tr><td>Apple</td><td>Sign in with Apple, App Store subscriptions</td><td>Email, name (as shared by user)</td><td><a href="https://www.apple.com/legal/privacy/">apple.com/legal/privacy</a></td></tr>
+      </tbody>
+    </table>
+    <p>We do <strong>not</strong> sell, rent, or trade your personal information to any third party for marketing or advertising purposes.</p>
+
+    <h2>6. Data Retention</h2>
+    <p>We retain your data for as long as your account is active. If you delete your account, all associated data is permanently removed (see Section 9 below).</p>
+    <p>Anonymised analytics data may be retained for up to 24 months after account deletion for the purpose of improving our services.</p>
+
+    <h2>7. Security Measures</h2>
+    <p>We implement the following security measures:</p>
+    <ul>
+      <li><strong>Encryption at rest:</strong> Local database encrypted with SQLCipher (AES-256).</li>
+      <li><strong>Encryption in transit:</strong> All network communication uses TLS/HTTPS.</li>
+      <li><strong>Secure token storage:</strong> Authentication tokens stored in iOS Keychain or Android Keystore.</li>
+      <li><strong>Row-Level Security:</strong> Supabase enforces strict data isolation per user.</li>
+      <li><strong>Input validation:</strong> All form fields enforce maximum length limits to prevent abuse.</li>
+      <li><strong>Sanitised file names:</strong> Uploaded files use timestamp-based names to prevent injection attacks.</li>
+      <li><strong>Analytics sanitisation:</strong> Sensitive fields are automatically stripped from all logged events.</li>
+    </ul>
+
+    <h2>8. Your Rights</h2>
+    <p>Under the Privacy Act 1988 and the Australian Privacy Principles, you have the right to:</p>
+    <ul>
+      <li><strong>Access</strong> the personal information we hold about you.</li>
+      <li><strong>Correct</strong> inaccurate or outdated information (you can do this directly in the App's Profile screen).</li>
+      <li><strong>Request deletion</strong> of your personal information (see Section 9).</li>
+      <li><strong>Withdraw consent</strong> for optional data processing (e.g., revoke camera or contacts access via device settings).</li>
+      <li><strong>Complain</strong> to the <a href="https://www.oaic.gov.au/">Office of the Australian Information Commissioner (OAIC)</a> if you believe your privacy has been breached.</li>
+    </ul>
+
+    <div id="data-deletion" class="deletion">
+      <h2 style="border:none;padding:0;margin:0 0 12px 0;">9. Account &amp; Data Deletion</h2>
+      <p><strong>You may request complete deletion of your account and all associated data at any time.</strong></p>
+
+      <h3>How to Delete Your Account:</h3>
+      <ol>
+        <li>Open the Ozly App.</li>
+        <li>Navigate to <strong>Settings</strong>.</li>
+        <li>Tap <strong>"Delete Account"</strong>.</li>
+        <li>Confirm by typing <strong>"DELETE"</strong> when prompted.</li>
+      </ol>
+
+      <h3>What Happens When You Delete:</h3>
+      <p>The following data is <strong>permanently and irreversibly</strong> deleted from our servers:</p>
+      <ul>
+        <li>Your user profile and authentication credentials.</li>
+        <li>All work hours, jobs, and associated calendar links.</li>
+        <li>All invoices and invoice line items.</li>
+        <li>All expenses and uploaded receipt images.</li>
+        <li>All contractor/client records.</li>
+        <li>All business records (ABN, banking details).</li>
+        <li>All analytics events associated with your account.</li>
+      </ul>
+      <p><strong>This action cannot be undone.</strong> Local data on your device is also cleared upon sign-out.</p>
+      <p>If you are unable to access the App, you may request account deletion by emailing <strong>privacy@ozly.au</strong> from the email address associated with your account. We will process your request within 30 days.</p>
+
+      <h3>Subscription Cancellation:</h3>
+      <p>Deleting your Ozly account does <strong>not</strong> automatically cancel your App Store or Google Play subscription. You must cancel your subscription separately through your device's subscription settings to avoid further charges.</p>
+    </div>
+
+    <h2>10. International Data Transfers</h2>
+    <p>Your data may be processed on servers located outside Australia (e.g., Supabase infrastructure, Google Cloud services). Where this occurs, we ensure that appropriate safeguards are in place in accordance with APP 8 (cross-border disclosure of personal information).</p>
+
+    <h2>11. Children's Privacy</h2>
+    <p>The App is not directed to children under the age of 16. We do not knowingly collect personal information from children. If we become aware that a child under 16 has provided us with personal information, we will take steps to delete such information promptly.</p>
+
+    <h2>12. Changes to This Policy</h2>
+    <p>We may update this Privacy Policy from time to time. We will notify you of material changes by:</p>
+    <ul>
+      <li>Posting the updated policy on our website with a revised "Last Updated" date.</li>
+      <li>Displaying a notice within the App.</li>
+    </ul>
+    <p>Your continued use of the App after any changes constitutes acceptance of the updated Privacy Policy.</p>
+
+    <h2>13. Contact Us</h2>
+    <p>If you have any questions, concerns, or requests regarding this Privacy Policy or your personal data, please contact us:</p>
+    <ul>
+      <li><strong>Email:</strong> <a href="mailto:contact@ozly.au">contact@ozly.au</a></li>
+      <li><strong>Website:</strong> <a href="https://ozly.au">ozly.au</a></li>
+    </ul>
+    <p>If you are not satisfied with our response, you may lodge a complaint with the <strong>Office of the Australian Information Commissioner (OAIC)</strong> at <a href="https://www.oaic.gov.au/">www.oaic.gov.au</a>.</p>
+  </div>
+</body>
+</html>

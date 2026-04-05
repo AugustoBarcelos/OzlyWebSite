@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Redirecting...</title>
+    <script>
+      // Single Page Apps for GitHub Pages
+      // https://github.com/rafgraph/spa-github-pages
+      var pathSegmentsToKeep = 0; // custom domain, no subpath
+      var l = window.location;
+      var repo = l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/');
+      var decoded = l.pathname.slice(repo.length);
+      if (decoded) {
+        sessionStorage.redirect = repo + decoded + l.search + l.hash;
+      }
+      l.replace(repo + '/');
+    </script>
+  </head>
+  <body></body>
+</html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ozly - Referral</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f0f9ff 100%); }
+    .card { background: white; border-radius: 20px; padding: 48px 40px; text-align: center; max-width: 420px; box-shadow: 0 8px 32px rgba(0,0,0,0.08); }
+    .logo { width: 64px; height: 64px; margin-bottom: 16px; border-radius: 14px; }
+    h1 { color: #1a1a1a; margin-bottom: 8px; font-size: 28px; }
+    p { color: #666; margin-bottom: 20px; line-height: 1.5; }
+    .code { font-size: 28px; font-weight: bold; color: #16a34a; letter-spacing: 3px; margin: 20px 0; padding: 12px 24px; background: #f0fdf4; border-radius: 12px; display: inline-block; }
+    .store-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 24px; }
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; border-radius: 12px; color: white; text-decoration: none; font-weight: 600; font-size: 15px; transition: transform 0.2s, box-shadow 0.2s; }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+    .btn-ios { background: #000; }
+    .btn-android { background: #16a34a; }
+    .btn-single { background: #16a34a; padding: 16px 36px; font-size: 17px; }
+    .note { margin-top: 20px; font-size: 13px; color: #999; }
+    .icon { width: 22px; height: 22px; }
+  </style>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code') || '';
+
+    // Update these when published to stores
+    const IOS_LINK = 'https://apps.apple.com/app/ozly/id6743189469';
+    const ANDROID_LINK = 'https://play.google.com/store/apps/details?id=com.augusto.ozly';
+
+    function detectOS() {
+      const ua = navigator.userAgent || navigator.vendor;
+      if (/iPad|iPhone|iPod/.test(ua)) return 'ios';
+      if (/android/i.test(ua)) return 'android';
+      return 'other';
+    }
+
+    window.onload = function() {
+      if (code) document.getElementById('code').textContent = code;
+
+      const os = detectOS();
+      const container = document.getElementById('store-buttons');
+
+      if (os === 'ios') {
+        container.innerHTML = '<a class="btn btn-single" href="' + IOS_LINK + '">Download on App Store</a>';
+      } else if (os === 'android') {
+        container.innerHTML = '<a class="btn btn-single" href="' + ANDROID_LINK + '">Download on Google Play</a>';
+      } else {
+        container.innerHTML =
+          '<a class="btn btn-ios" href="' + IOS_LINK + '">' +
+          '<svg class="icon" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>' +
+          ' App Store</a>' +
+          '<a class="btn btn-android" href="' + ANDROID_LINK + '">' +
+          '<svg class="icon" viewBox="0 0 24 24" fill="white"><path d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85-.29-.15-.65-.06-.83.22l-1.88 3.24c-2.86-1.21-6.08-1.21-8.94 0L5.65 5.67c-.19-.29-.58-.38-.87-.2-.28.18-.37.54-.22.83L6.4 9.48C3.3 11.25 1.28 14.44 1 18h22c-.28-3.56-2.3-6.75-5.4-8.52zM7 15.25a1.25 1.25 0 110-2.5 1.25 1.25 0 010 2.5zm10 0a1.25 1.25 0 110-2.5 1.25 1.25 0 010 2.5z"/></svg>' +
+          ' Google Play</a>';
+      }
+    };
+  </script>
+</head>
+<body>
+  <div class="card">
+    <img class="logo" src="/ozly-icon.png" alt="Ozly" onerror="this.style.display='none'">
+    <h1>Welcome to Ozly!</h1>
+    <p>You've been invited to join Ozly — the smart app for Australian workers.</p>
+    <div class="code" id="code">---</div>
+    <p>Download the app and enter the referral code when signing up:</p>
+    <div class="store-buttons" id="store-buttons">
+      <a class="btn btn-single" href="#">Loading...</a>
+    </div>
+    <p class="note">Your referral code will be applied automatically when you sign up.</p>
+  </div>
+</body>
+</html>
