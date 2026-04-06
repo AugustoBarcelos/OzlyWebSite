@@ -21,6 +21,12 @@ import {
   DollarSign,
   BookOpen,
   Mail,
+  Fuel,
+  Smartphone,
+  Car,
+  Shield,
+  Minus,
+  ArrowDown,
 } from "lucide-react";
 import { useI18n } from "../i18n";
 import ScrollReveal from "../components/ScrollReveal";
@@ -172,6 +178,109 @@ function AudienceBanner() {
               </span>
             </ScrollReveal>
           ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ═══════════════════ REAL EARNINGS BREAKDOWN ═══════════════════ */
+function RealEarnings() {
+  const { t } = useI18n();
+  const r = t.realEarnings;
+
+  const costs = [
+    { label: r.fuel, value: "-$3.20", icon: Fuel, color: "text-red-500" },
+    { label: r.phonePlan, value: "-$0.90", icon: Smartphone, color: "text-red-400" },
+    { label: r.carWear, value: "-$1.80", icon: Car, color: "text-red-400" },
+    { label: r.insurance, value: "-$0.60", icon: Shield, color: "text-red-300" },
+  ];
+
+  return (
+    <section className="py-24 md:py-32">
+      <div className="mx-auto max-w-5xl px-6">
+        <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+
+          {/* Receipt card */}
+          <ScrollReveal className="w-full max-w-sm flex-shrink-0">
+            <div className="rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-brand-500 to-lime-500 px-6 py-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-white/80 text-sm font-medium">{r.delivery}</span>
+                  <span className="text-white text-2xl font-extrabold">$12.00</span>
+                </div>
+              </div>
+
+              {/* Cost breakdown */}
+              <div className="px-6 py-5 space-y-3">
+                {costs.map(({ label, value, icon: Icon, color }) => (
+                  <div key={label} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+                        <Icon size={16} className={color} />
+                      </div>
+                      <span className="text-sm text-slate-600 dark:text-slate-300">{label}</span>
+                    </div>
+                    <span className="text-sm font-semibold text-red-500">{value}</span>
+                  </div>
+                ))}
+
+                {/* Divider */}
+                <div className="border-t-2 border-dashed border-slate-200 dark:border-slate-600 my-2" />
+
+                {/* Real total */}
+                <div className="flex items-center justify-between">
+                  <span className="text-base font-bold text-slate-900 dark:text-white">{r.realTotal}</span>
+                  <div className="text-right">
+                    <span className="text-2xl font-extrabold text-brand-500">$5.50</span>
+                    <p className="text-xs text-slate-400 mt-0.5">≈ $8.25{r.perHour}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Animated arrow hint */}
+              <div className="flex justify-center pb-4">
+                <motion.div
+                  animate={{ y: [0, 6, 0] }}
+                  transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+                >
+                  <ArrowDown size={20} className="text-brand-400" />
+                </motion.div>
+              </div>
+            </div>
+          </ScrollReveal>
+
+          {/* Text content */}
+          <div className="text-center lg:text-left">
+            <ScrollReveal delay={0.1}>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-navy-700 dark:text-white leading-tight">
+                {r.title}{" "}
+                <span className="text-brand-500">{r.titleHighlight}</span>
+              </h2>
+            </ScrollReveal>
+            <ScrollReveal delay={0.2}>
+              <p className="mt-5 text-lg text-slate-500 dark:text-slate-400 leading-relaxed max-w-lg">
+                {r.subtitle}
+              </p>
+            </ScrollReveal>
+            <ScrollReveal delay={0.3}>
+              <p className="mt-4 text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-lg">
+                {r.bottomLine}
+              </p>
+            </ScrollReveal>
+            <ScrollReveal delay={0.4}>
+              <div className="mt-8">
+                <a
+                  href="#download"
+                  className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-7 py-3.5 text-white font-semibold hover:bg-brand-600 transition shadow-lg shadow-brand-500/20"
+                >
+                  <DollarSign size={18} />
+                  {r.cta}
+                </a>
+              </div>
+            </ScrollReveal>
+          </div>
         </div>
       </div>
     </section>
@@ -755,6 +864,7 @@ export default function Home() {
     <div className="ozly-gradient">
       <Hero />
       <AudienceBanner />
+      <RealEarnings />
       <FeaturesShowcase />
       <Comparison />
       <Pricing />

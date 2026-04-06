@@ -27,6 +27,20 @@
     "petsitting": "Pet Sitting",
     "agedcare": "Aged & Child Care"
   },
+  "realEarnings": {
+    "title": "That $12 delivery…",
+    "titleHighlight": "how much did you really earn?",
+    "subtitle": "Most people only see the payment. Ozly shows you what's left after the real costs.",
+    "delivery": "Delivery payment",
+    "fuel": "Fuel",
+    "phonePlan": "Phone plan",
+    "carWear": "Vehicle wear & tear",
+    "insurance": "Insurance",
+    "realTotal": "Real earnings",
+    "perHour": "/hr after costs",
+    "bottomLine": "Whether it's a delivery, a cleaning job, or a weekend shift — Ozly tracks every expense so you always know your true hourly rate.",
+    "cta": "See your real numbers"
+  },
   "features": {
     "title": "Everything ABN & TFN workers need,",
     "titleHighlight": "in one app.",

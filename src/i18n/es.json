@@ -27,6 +27,20 @@
     "petsitting": "Cuidado de mascotas",
     "agedcare": "Cuidado de adultos mayores & niños"
   },
+  "realEarnings": {
+    "title": "Esa entrega de $12…",
+    "titleHighlight": "¿cuánto ganaste realmente?",
+    "subtitle": "La mayoría solo ve el pago. Ozly te muestra lo que queda después de los costos reales.",
+    "delivery": "Pago de la entrega",
+    "fuel": "Gasolina",
+    "phonePlan": "Plan de celular",
+    "carWear": "Desgaste del vehículo",
+    "insurance": "Seguro",
+    "realTotal": "Ganancia real",
+    "perHour": "/hr después de costos",
+    "bottomLine": "Ya sea una entrega, una limpieza o un turno de fin de semana — Ozly rastrea cada gasto para que siempre sepas tu valor real por hora.",
+    "cta": "Ve tus números reales"
+  },
   "features": {
     "title": "Todo lo que el trabajador ABN y TFN necesita,",
     "titleHighlight": "en una sola app.",
