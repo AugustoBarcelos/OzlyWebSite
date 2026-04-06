@@ -675,7 +675,7 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
             rows={[
               ["TFN", "$9/mo", "Employees — shifts, OCR expenses, Visa Shield, Calendar Sync, tax analytics"],
               ["ABN", "$15/mo", "ABN holders — everything in TFN + PDF invoices, hours comparison, multiple businesses"],
-              ["MAX", "$19/mo", "TFN + ABN combined — full access + toggle mode"],
+              ["PRO", "$19/mo", "TFN + ABN combined — full access + toggle mode"],
             ]}
           />
           <BulletList>
@@ -908,7 +908,7 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
 
         <SubSection title="Subscription">
           <div className="space-y-2">
-            <FaqItem q="What's the difference between TFN, ABN, and MAX?" a="TFN ($9/mo): for individual contractors — shifts, expenses, taxes, Visa Shield. ABN ($15/mo): everything in TFN + PDF invoices, multiple businesses, hours comparison. MAX ($19/mo): TFN + ABN combined with mode switching." />
+            <FaqItem q="What's the difference between TFN, ABN, and PRO?" a="TFN ($9/mo): for individual contractors — shifts, expenses, taxes, Visa Shield. ABN ($15/mo): everything in TFN + PDF invoices, multiple businesses, hours comparison. PRO ($19/mo): TFN + ABN combined with mode switching." />
             <FaqItem q="Is the trial really free?" a="Yes! 14 days of full access with no charge. Cancel anytime through the App Store or Google Play before the trial ends." />
             <FaqItem q="How do I cancel my subscription?" a="Go to the App Store (iOS) or Google Play (Android) → Subscriptions → Ozly → Cancel. You keep access until the current billing period ends." />
           </div>

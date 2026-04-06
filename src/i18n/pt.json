@@ -81,15 +81,15 @@
       "price": "$2.88",
       "priceNote": "$12.50/mês no plano anual*"
     },
-    "max": {
-      "name": "MAX",
+    "pro": {
+      "name": "PRO",
       "desc": "TFN + ABN combinados",
       "price": "$3.85",
       "priceNote": "$16.67/mês no plano anual*"
     },
     "seeAll": "Ver todas as features",
-    "annualNote": "* Plano anual: TFN/ABN $149.99/ano | MAX $199.99/ano. Todos incluem 14 dias grátis.",
-    "monthlyNote": "** Plano mensal: TFN/ABN $14.99/mês | MAX $19.99/mês.",
+    "annualNote": "* Plano anual: TFN/ABN $149.99/ano | PRO $199.99/ano. Todos incluem 14 dias grátis.",
+    "monthlyNote": "** Plano mensal: TFN/ABN $14.99/mês | PRO $19.99/mês.",
     "calendarNote": "*** Atualmente integra com Google Calendar. Compatível com apps que sincronizam com o Google Calendar.",
     "features": {
       "shifts": "Shifts & Controle de Jobs",
@@ -113,8 +113,8 @@
       "reimbursements": "Reembolsos com Exportação PDF",
       "messageTemplates": "Templates de Email Personalizáveis",
       "rateComparison": "Benchmark de Valor/Hora vs Mercado",
-      "maxAllTfn": "Todas as funções TFN incluídas",
-      "maxAllAbn": "Todas as funções ABN incluídas"
+      "proAllTfn": "Todas as funções TFN incluídas",
+      "proAllAbn": "Todas as funções ABN incluídas"
     }
   },
   "homeFaq": {
@@ -249,7 +249,7 @@
     "q11": "Como funciona o programa de indicação?",
     "a11": "Compartilhe seu código de referral com amigos. Quando se cadastrarem usando seu código e após um mês pagando o plano, vocês dois ganham 15 dias grátis. Você também ganha 500 XP por cada indicação convertida.",
     "q12": "Qual a diferença entre modo TFN e ABN?",
-    "a12": "O modo TFN é pra empregados (Tax File Number) — mostra salário líquido depois do PAYG, contribuição de super, e não precisa de invoices. O modo ABN é pra contractors com Australian Business Number — inclui invoices, gestão de contractors e controle de GST. O plano MAX te dá os dois.",
+    "a12": "O modo TFN é pra empregados (Tax File Number) — mostra salário líquido depois do PAYG, contribuição de super, e não precisa de invoices. O modo ABN é pra contractors com Australian Business Number — inclui invoices, gestão de contractors e controle de GST. O plano Pro te dá os dois.",
     "q13": "Como funcionam os penalty rates?",
     "a13": "O Ozly calcula automaticamente os penalty rates de acordo com a sua área de atuação (Cleaning, Hospitality, Retail, Construction, Transport, Healthcare, e mais). Turnos de fins de semana e feriados recebem multiplicadores automáticos sobre a sua taxa base. Ele também conhece todos os feriados australianos por estado.",
     "q14": "Posso inserir meu salário como anual ou quinzenal?",
@@ -261,7 +261,7 @@
     "q17": "Como funciona o timesheet?",
     "a17": "O Ozly gera timesheets PDF profissionais dos seus jobs concluídos. Você pode filtrar por empregador/contractor, e o timesheet inclui datas, horas, valores e totais. Compartilhe direto por email ou WhatsApp.",
     "q18": "Como funcionam os reembolsos?",
-    "a18": "Usuários TFN e MAX podem registrar despesas de trabalho para reembolso (combustível, lavanderia, ferramentas, produtos de limpeza, transporte, uniforme, celular, equipamento). Use o Modo Inteligente para escanear um recibo com IA ou o Modo Rápido para inserir manualmente. Selecione um período (semanal, quinzenal, mensal), escolha a categoria e salve. Depois, selecione vários reembolsos, gere um PDF profissional com seus dados bancários e envie pro empregador por email ou WhatsApp.",
+    "a18": "Usuários TFN e Pro podem registrar despesas de trabalho para reembolso (combustível, lavanderia, ferramentas, produtos de limpeza, transporte, uniforme, celular, equipamento). Use o Modo Inteligente para escanear um recibo com IA ou o Modo Rápido para inserir manualmente. Selecione um período (semanal, quinzenal, mensal), escolha a categoria e salve. Depois, selecione vários reembolsos, gere um PDF profissional com seus dados bancários e envie pro empregador por email ou WhatsApp.",
     "q19": "Como exportar PDFs de reembolso?",
     "a19": "Vá em Reembolsos, toque no ícone de checklist pra entrar no modo de seleção, escolha os itens e toque no ícone PDF. Revise seus dados pessoais, número do documento e dados bancários, e gere o PDF. Você pode enviar por Email (com fotos dos recibos anexadas), WhatsApp, ou salvar no dispositivo. Os itens são marcados automaticamente como 'emitidos' após gerar o PDF.",
     "q20": "Como funciona o link de indicação?",

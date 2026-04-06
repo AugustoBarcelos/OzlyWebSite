@@ -70,7 +70,7 @@ export default function TermsOfUse() {
               <tbody className="text-slate-700">
                 <tr><td className="border border-amber-200 px-3 py-2 font-medium">TFN Access</td><td className="border border-amber-200 px-3 py-2">Features designed for individual contractors operating under a Tax File Number.</td></tr>
                 <tr><td className="border border-amber-200 px-3 py-2 font-medium">ABN Access</td><td className="border border-amber-200 px-3 py-2">Features designed for contractors and businesses operating under an Australian Business Number.</td></tr>
-                <tr><td className="border border-amber-200 px-3 py-2 font-medium">Max Mode</td><td className="border border-amber-200 px-3 py-2">Full access to both TFN and ABN features for users who hold both entitlements.</td></tr>
+                <tr><td className="border border-amber-200 px-3 py-2 font-medium">Pro Mode</td><td className="border border-amber-200 px-3 py-2">Full access to both TFN and ABN features for users who hold both entitlements.</td></tr>
               </tbody>
             </table>
           </div>

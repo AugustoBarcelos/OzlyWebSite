@@ -682,7 +682,7 @@ export default function GuideContentEs({ SectionCard, SubSection, StepList, Bull
             rows={[
               ["TFN ($9/mes)", "Para contractors individuales", "Shifts, Gastos OCR, Visa Shield, Calendar Sync, Impuestos, Contractors"],
               ["ABN ($15/mes)", "Para negocios con ABN", "Todo de TFN + Invoices PDF, Comparación de Horas, Múltiples Negocios"],
-              ["MAX ($19/mes)", "TFN + ABN combinados", "Acceso completo a todos los recursos + alternar modo TFN ↔ ABN"],
+              ["PRO ($19/mes)", "TFN + ABN combinados", "Acceso completo a todos los recursos + alternar modo TFN ↔ ABN"],
             ]}
           />
           <BulletList>
@@ -922,7 +922,7 @@ export default function GuideContentEs({ SectionCard, SubSection, StepList, Bull
 
         <SubSection title="Suscripción">
           <div className="space-y-2">
-            <FaqItem q="¿Cuál es la diferencia entre TFN, ABN y MAX?" a="TFN ($9/mes): para contractors individuales — shifts, gastos, impuestos, Visa Shield. ABN ($15/mes): todo de TFN + invoices PDF, múltiples negocios, comparación de horas. MAX ($19/mes): TFN + ABN combinados con cambio de modo." />
+            <FaqItem q="¿Cuál es la diferencia entre TFN, ABN y PRO?" a="TFN ($9/mes): para contractors individuales — shifts, gastos, impuestos, Visa Shield. ABN ($15/mes): todo de TFN + invoices PDF, múltiples negocios, comparación de horas. PRO ($19/mes): TFN + ABN combinados con cambio de modo." />
             <FaqItem q="¿El trial es gratis de verdad?" a="¡Sí! 14 días de acceso completo sin cobro. Cancelá en cualquier momento a través de la App Store o Google Play antes de que termine el trial." />
             <FaqItem q="¿Cómo cancelo mi suscripción?" a="La suscripción se administra a través de la App Store (iOS) o Google Play (Android). Andá a Configuración del teléfono → Suscripciones → Ozly → Cancelar. Los datos se mantienen incluso después de cancelar." />
           </div>

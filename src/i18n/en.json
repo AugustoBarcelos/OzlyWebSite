@@ -81,15 +81,15 @@
       "price": "$2.88",
       "priceNote": "$12.50/mo on annual plan*"
     },
-    "max": {
-      "name": "MAX",
+    "pro": {
+      "name": "PRO",
       "desc": "TFN + ABN combined",
       "price": "$3.85",
       "priceNote": "$16.67/mo on annual plan*"
     },
     "seeAll": "See all features",
-    "annualNote": "* Annual plan: TFN/ABN $149.99/yr | MAX $199.99/yr. All plans include a 14-day free trial.",
-    "monthlyNote": "** Monthly plan: TFN/ABN $14.99/mo | MAX $19.99/mo.",
+    "annualNote": "* Annual plan: TFN/ABN $149.99/yr | PRO $199.99/yr. All plans include a 14-day free trial.",
+    "monthlyNote": "** Monthly plan: TFN/ABN $14.99/mo | PRO $19.99/mo.",
     "calendarNote": "*** Currently integrates with Google Calendar. Compatible with apps that sync with Google Calendar.",
     "features": {
       "shifts": "Shifts & Job Tracking",
@@ -113,8 +113,8 @@
       "reimbursements": "Reimbursement Claims with PDF Export",
       "messageTemplates": "Customisable Email Templates",
       "rateComparison": "Hourly Rate Benchmark vs Market",
-      "maxAllTfn": "All TFN features included",
-      "maxAllAbn": "All ABN features included"
+      "proAllTfn": "All TFN features included",
+      "proAllAbn": "All ABN features included"
     }
   },
   "homeFaq": {
@@ -249,7 +249,7 @@
     "q11": "How does the referral program work?",
     "a11": "Share your referral code with friends. When they sign up using your code and after one month on a paid plan, you both get 15 free days. You also earn 500 XP for each converted referral.",
     "q12": "What is the difference between TFN and ABN mode?",
-    "a12": "TFN mode is designed for employees (Tax File Number) — it shows net salary after PAYG withholding, super contributions, and doesn't require invoices. ABN mode is for contractors with an Australian Business Number — it includes invoicing, contractor management, and GST tracking. MAX plan gives you both.",
+    "a12": "TFN mode is designed for employees (Tax File Number) — it shows net salary after PAYG withholding, super contributions, and doesn't require invoices. ABN mode is for contractors with an Australian Business Number — it includes invoicing, contractor management, and GST tracking. Pro plan gives you both.",
     "q13": "How do penalty rates work?",
     "a13": "Ozly automatically calculates penalty rates based on your industry (Cleaning, Hospitality, Retail, Construction, Transport, Healthcare, and more). Weekend and public holiday shifts get automatic multipliers on your base rate. It also knows all Australian public holidays by state.",
     "q14": "Can I enter my salary as annual or fortnightly?",
@@ -261,7 +261,7 @@
     "q17": "How does the timesheet work?",
     "a17": "Ozly generates professional PDF timesheets from your completed jobs. You can filter by employer/contractor, and the timesheet includes dates, hours, rates, and totals. Share it directly via email or WhatsApp.",
     "q18": "How do reimbursements work?",
-    "a18": "TFN and MAX users can log work-related expenses for reimbursement (fuel, laundry, tools, cleaning supplies, transport, uniform, phone, equipment). Use Smart Mode to scan a receipt with AI or Quick Mode to enter details manually. Select a period (weekly, fortnightly, monthly), choose a category, and save. You can then select multiple reimbursements, generate a professional PDF with your bank details, and send it to your employer via email or WhatsApp.",
+    "a18": "TFN and Pro users can log work-related expenses for reimbursement (fuel, laundry, tools, cleaning supplies, transport, uniform, phone, equipment). Use Smart Mode to scan a receipt with AI or Quick Mode to enter details manually. Select a period (weekly, fortnightly, monthly), choose a category, and save. You can then select multiple reimbursements, generate a professional PDF with your bank details, and send it to your employer via email or WhatsApp.",
     "q19": "How do I export reimbursement PDFs?",
     "a19": "Go to Reimbursements, tap the checklist icon to enter select mode, pick the items you want, and tap the PDF icon. Review your personal details, invoice number and bank info, then generate the PDF. You can send it via Email (with receipt photos attached), WhatsApp, or save it to your device. Items are automatically marked as 'emitted' after generating the PDF.",
     "q20": "How does the referral program link work?",

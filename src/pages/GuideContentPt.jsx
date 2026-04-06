@@ -668,7 +668,7 @@ export default function GuideContentPt({ SectionCard, SubSection, StepList, Bull
             rows={[
               ["TFN", "$9/mês", "Employees — shifts, despesas OCR, Visa Shield, Calendar Sync, impostos"],
               ["ABN", "$15/mês", "ABN holders — tudo do TFN + invoices PDF, comparação horas, múltiplos negócios"],
-              ["MAX", "$19/mês", "TFN + ABN combinados — acesso completo + alternar modo"],
+              ["PRO", "$19/mês", "TFN + ABN combinados — acesso completo + alternar modo"],
             ]}
           />
           <BulletList>
@@ -907,7 +907,7 @@ export default function GuideContentPt({ SectionCard, SubSection, StepList, Bull
 
         <SubSection title="Assinatura">
           <div className="space-y-2">
-            <FaqItem q="Quais são os planos?" a="TFN ($9/mês) para employees, ABN ($15/mês) para ABN holders, e MAX ($19/mês) para ambos. Todos incluem 14 dias de trial grátis." />
+            <FaqItem q="Quais são os planos?" a="TFN ($9/mês) para employees, ABN ($15/mês) para ABN holders, e PRO ($19/mês) para ambos. Todos incluem 14 dias de trial grátis." />
             <FaqItem q="Como cancelar?" a="Cancele diretamente na App Store (iOS) ou Google Play (Android). Sem taxas de cancelamento." />
             <FaqItem q="Tem período de teste?" a="Sim, 14 dias grátis para todas as funcionalidades Pro." />
           </div>

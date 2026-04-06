@@ -504,15 +504,15 @@ const allFeatures = [
 ];
 
 // Features shown by default (first 9 — key highlights)
-const coreFeatures = allFeatures.slice(0, 9).map(f => ({ ...f, max: true }));
+const coreFeatures = allFeatures.slice(0, 9).map(f => ({ ...f, pro: true }));
 
 // Extra features revealed on "See all"
-const extraFeatures = allFeatures.slice(9).map(f => ({ ...f, max: true }));
+const extraFeatures = allFeatures.slice(9).map(f => ({ ...f, pro: true }));
 
-// MAX-exclusive features (shown instead of full list)
-const maxExclusiveFeatures = [
-  { key: "maxAllTfn" },
-  { key: "maxAllAbn" },
+// Pro-exclusive features (shown instead of full list)
+const proExclusiveFeatures = [
+  { key: "proAllTfn" },
+  { key: "proAllAbn" },
   { key: "toggleMode" },
   { key: "rateComparison" },
 ];
@@ -535,7 +535,7 @@ function Pricing() {
   const plans = [
     { id: "tfn", ...p.tfn, color: "brand",  highlight: false },
     { id: "abn", ...p.abn, color: "brand",  highlight: false },
-    { id: "max", ...p.max, color: "amber",  highlight: true  },
+    { id: "pro", ...p.pro, color: "amber",  highlight: true  },
   ];
 
   return (
@@ -594,9 +594,9 @@ function Pricing() {
 
                 {/* Feature list */}
                 <ul className="space-y-3 mb-4 flex-1">
-                  {plan.id === "max" ? (
-                    // MAX: simplified list — "All TFN + All ABN + exclusives"
-                    maxExclusiveFeatures.map(({ key }) => (
+                  {plan.id === "pro" ? (
+                    // Pro: simplified list — "All TFN + All ABN + exclusives"
+                    proExclusiveFeatures.map(({ key }) => (
                       <li key={key} className="flex items-center gap-3 text-sm">
                         <CheckCircle size={16} className="text-brand-500 flex-shrink-0" />
                         <span className="text-slate-700 dark:text-slate-200 font-medium">{p.features[key]}</span>
@@ -615,7 +615,7 @@ function Pricing() {
                     ))
                   )}
                 </ul>
-                {!expanded && plan.id !== "max" && (
+                {!expanded && plan.id !== "pro" && (
                   <button
                     onClick={() => setExpanded(true)}
                     className="text-brand-500 text-xs font-semibold hover:text-brand-600 transition mb-4 flex items-center gap-1"
