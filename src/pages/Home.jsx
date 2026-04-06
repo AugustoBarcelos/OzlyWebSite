@@ -673,7 +673,7 @@ function Pricing() {
               }`}>
                 {/* Badge for highlighted plan */}
                 {plan.highlight && (
-                  <div className="pricing-badge absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-brand-500 px-5 py-1.5 text-xs font-bold text-white shadow-lg shadow-brand-500/30 whitespace-nowrap z-10">
+                  <div className="pricing-badge absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-emerald-600 px-5 py-1.5 text-xs font-bold text-white shadow-lg shadow-emerald-600/30 whitespace-nowrap z-10">
                     {p.bestValue}
                   </div>
                 )}

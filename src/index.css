@@ -78,15 +78,15 @@ html, body {
 .pricing-card-highlight .pricing-header {
   background: linear-gradient(135deg, #2BBB97, #24a383);
   color: white;
-  border-radius: 1.25rem 1.25rem 0 0;
-  margin: -1.25rem -1.25rem 1.5rem -1.25rem;
-  padding: 1.25rem 1.25rem;
+  border-radius: calc(1rem - 2px) calc(1rem - 2px) 0 0;
+  margin: calc(-1.25rem - 2px) calc(-1.25rem - 2px) 1.5rem calc(-1.25rem - 2px);
+  padding: calc(1.25rem + 2px) calc(1.25rem + 2px) 1.25rem calc(1.25rem + 2px);
 }
 
 @media (min-width: 640px) {
   .pricing-card-highlight .pricing-header {
-    margin: -2rem -2rem 1.5rem -2rem;
-    padding: 1.5rem 2rem;
+    margin: calc(-2rem - 2px) calc(-2rem - 2px) 1.5rem calc(-2rem - 2px);
+    padding: calc(2rem + 2px) 2rem 1.5rem 2rem;
   }
 }
 
