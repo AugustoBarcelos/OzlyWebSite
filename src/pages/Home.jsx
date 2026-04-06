@@ -480,32 +480,41 @@ function Comparison() {
 }
 
 /* ═══════════════════════ PRICING ═══════════════════════ */
-// Features shown by default (key highlights per plan)
-const coreFeatures = [
-  { key: "shifts",                  tfn: true,  abn: true,  max: true  },
-  { key: "expensesOcr",             tfn: true,  abn: true,  max: true  },
-  { key: "calendarSync",            tfn: true,  abn: true,  max: true  },
-  { key: "taxAnalytics",            tfn: true,  abn: true,  max: true  },
-  { key: "taxThermometer",          tfn: true,  abn: false, max: true  },
-  { key: "penaltyRates",            tfn: true,  abn: false, max: true  },
-  { key: "netSalary",               tfn: true,  abn: false, max: true  },
-  { key: "invoices",                tfn: false, abn: true,  max: true  },
-  { key: "contractors",             tfn: false, abn: true,  max: true  },
-  { key: "toggleMode",              tfn: false, abn: false, max: true  },
+// All features for TFN and ABN columns (sorted: included first, excluded last)
+const allFeatures = [
+  { key: "shifts",                  tfn: true,  abn: true  },
+  { key: "expensesOcr",             tfn: true,  abn: true  },
+  { key: "calendarSync",            tfn: true,  abn: true  },
+  { key: "taxAnalytics",            tfn: true,  abn: true  },
+  { key: "quickExpense",            tfn: true,  abn: true  },
+  { key: "bulkEdit",                tfn: true,  abn: true  },
+  { key: "timesheets",              tfn: true,  abn: true  },
+  { key: "levelUp",                 tfn: true,  abn: true  },
+  { key: "messageTemplates",        tfn: true,  abn: true  },
+  { key: "taxThermometer",          tfn: true,  abn: false },
+  { key: "penaltyRates",            tfn: true,  abn: false },
+  { key: "netSalary",               tfn: true,  abn: false },
+  { key: "salaryModes",             tfn: true,  abn: false },
+  { key: "visaShield",              tfn: true,  abn: false },
+  { key: "reimbursements",          tfn: true,  abn: false },
+  { key: "invoices",                tfn: false, abn: true  },
+  { key: "contractors",             tfn: false, abn: true  },
+  { key: "hoursComparison",         tfn: false, abn: true  },
+  { key: "multiBusinesses",         tfn: false, abn: true  },
 ];
 
+// Features shown by default (first 9 — key highlights)
+const coreFeatures = allFeatures.slice(0, 9).map(f => ({ ...f, max: true }));
+
 // Extra features revealed on "See all"
-const extraFeatures = [
-  { key: "quickExpense",            tfn: true,  abn: true,  max: true  },
-  { key: "bulkEdit",                tfn: true,  abn: true,  max: true  },
-  { key: "timesheets",              tfn: true,  abn: true,  max: true  },
-  { key: "levelUp",                 tfn: true,  abn: true,  max: true  },
-  { key: "messageTemplates",        tfn: true,  abn: true,  max: true  },
-  { key: "salaryModes",             tfn: true,  abn: false, max: true  },
-  { key: "visaShield",              tfn: true,  abn: false, max: true  },
-  { key: "reimbursements",          tfn: true,  abn: false, max: true  },
-  { key: "hoursComparison",         tfn: false, abn: true,  max: true  },
-  { key: "multiBusinesses",         tfn: false, abn: true,  max: true  },
+const extraFeatures = allFeatures.slice(9).map(f => ({ ...f, max: true }));
+
+// MAX-exclusive features (shown instead of full list)
+const maxExclusiveFeatures = [
+  { key: "maxAllTfn" },
+  { key: "maxAllAbn" },
+  { key: "toggleMode" },
+  { key: "rateComparison" },
 ];
 
 function Pricing() {
@@ -513,6 +522,15 @@ function Pricing() {
   const p = t.pricing;
   const [expanded, setExpanded] = useState(false);
   const visibleFeatures = expanded ? [...coreFeatures, ...extraFeatures] : coreFeatures;
+
+  // Sort features per plan: included (✓) first, excluded (—) last
+  const sortedForPlan = (features, planId) => {
+    return [...features].sort((a, b) => {
+      const aHas = a[planId] ? 1 : 0;
+      const bHas = b[planId] ? 1 : 0;
+      return bHas - aHas;
+    });
+  };
 
   const plans = [
     { id: "tfn", ...p.tfn, color: "brand",  highlight: false },
@@ -539,10 +557,10 @@ function Pricing() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 mb-16">
           {plans.map((plan, pi) => (
             <ScrollReveal key={plan.id} delay={0.1 * pi}>
-              <div className={`relative rounded-2xl bg-white p-5 sm:p-8 h-full flex flex-col transition-all duration-300 ${
+              <div className={`relative rounded-2xl bg-white dark:bg-slate-800 p-5 sm:p-8 h-full flex flex-col transition-all duration-300 ${
                 plan.highlight
-                  ? "pricing-card-highlight shadow-xl shadow-brand-500/10 ring-1 ring-brand-200"
-                  : "dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg shadow-slate-200/50 dark:shadow-black/20 hover:shadow-xl hover:border-brand-200 dark:hover:border-brand-600"
+                  ? "pricing-card-highlight shadow-xl shadow-brand-500/10 ring-1 ring-brand-200 dark:ring-brand-700"
+                  : "border border-slate-200 dark:border-slate-700 shadow-lg shadow-slate-200/50 dark:shadow-black/20 hover:shadow-xl hover:border-brand-200 dark:hover:border-brand-600"
               }`}>
                 {/* Badge for highlighted plan */}
                 {plan.highlight && (
@@ -576,17 +594,28 @@ function Pricing() {
 
                 {/* Feature list */}
                 <ul className="space-y-3 mb-4 flex-1">
-                  {visibleFeatures.map(({ key, [plan.id]: has }) => (
-                    <li key={key} className="flex items-center gap-3 text-sm">
-                      {has
-                        ? <CheckCircle size={16} className="text-brand-500 flex-shrink-0" />
-                        : <span className="w-4 h-4 flex-shrink-0 text-center text-slate-300">&mdash;</span>
-                      }
-                      <span className={has ? "text-slate-700 dark:text-slate-200" : "text-slate-400"}>{p.features[key]}</span>
-                    </li>
-                  ))}
+                  {plan.id === "max" ? (
+                    // MAX: simplified list — "All TFN + All ABN + exclusives"
+                    maxExclusiveFeatures.map(({ key }) => (
+                      <li key={key} className="flex items-center gap-3 text-sm">
+                        <CheckCircle size={16} className="text-brand-500 flex-shrink-0" />
+                        <span className="text-slate-700 dark:text-slate-200 font-medium">{p.features[key]}</span>
+                      </li>
+                    ))
+                  ) : (
+                    // TFN / ABN: sorted (included first, excluded last)
+                    sortedForPlan(visibleFeatures, plan.id).map(({ key, [plan.id]: has }) => (
+                      <li key={key} className="flex items-center gap-3 text-sm">
+                        {has
+                          ? <CheckCircle size={16} className="text-brand-500 flex-shrink-0" />
+                          : <span className="w-4 h-4 flex-shrink-0 text-center text-slate-300 dark:text-slate-600">&mdash;</span>
+                        }
+                        <span className={has ? "text-slate-700 dark:text-slate-200" : "text-slate-400 dark:text-slate-500"}>{p.features[key]}</span>
+                      </li>
+                    ))
+                  )}
                 </ul>
-                {!expanded && (
+                {!expanded && plan.id !== "max" && (
                   <button
                     onClick={() => setExpanded(true)}
                     className="text-brand-500 text-xs font-semibold hover:text-brand-600 transition mb-4 flex items-center gap-1"

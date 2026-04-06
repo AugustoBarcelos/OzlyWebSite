@@ -101,7 +101,7 @@
       "invoices": "Invoices PDF Profissionais",
       "hoursComparison": "Comparação de Horas (ABN peers)",
       "multiBusinesses": "Múltiplos Negócios",
-      "toggleMode": "Alternar modo TFN ↔ ABN",
+      "toggleMode": "Alterne TFN ↔ ABN a qualquer hora",
       "penaltyRates": "Penalty Rates (Sáb/Dom/Feriados)",
       "taxThermometer": "Termômetro de Tax Return",
       "netSalary": "Previsão Salário Líquido (PAYG)",
@@ -111,7 +111,10 @@
       "quickExpense": "Despesa Rápida & Inteligente",
       "salaryModes": "Salário: Horário / Anual / Mensal / Quinzenal",
       "reimbursements": "Reembolsos com Exportação PDF",
-      "messageTemplates": "Templates de Email Personalizáveis"
+      "messageTemplates": "Templates de Email Personalizáveis",
+      "rateComparison": "Benchmark de Valor/Hora vs Mercado",
+      "maxAllTfn": "Todas as funções TFN incluídas",
+      "maxAllAbn": "Todas as funções ABN incluídas"
     }
   },
   "homeFaq": {
