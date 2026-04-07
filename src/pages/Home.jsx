@@ -272,7 +272,7 @@ function RealEarnings() {
             <ScrollReveal delay={0.4}>
               <div className="mt-8">
                 <a
-                  href="#download"
+                  href="#features"
                   className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-7 py-3.5 text-white font-semibold hover:bg-brand-600 transition shadow-lg shadow-brand-500/20"
                 >
                   <DollarSign size={18} />
@@ -519,6 +519,17 @@ function FeatureShowcase({ feature, index }) {
                 {t.features[descKey]}
               </p>
             </ScrollReveal>
+            <ScrollReveal delay={0.3}>
+              <div className="mt-7 flex justify-center lg:justify-start">
+                <a
+                  href="#pricing"
+                  className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-6 py-3 text-white text-sm font-semibold hover:bg-brand-600 transition shadow-lg shadow-brand-500/20"
+                >
+                  {t.features.ctaPlans}
+                  <ChevronRight size={16} />
+                </a>
+              </div>
+            </ScrollReveal>
           </div>
 
           {/* Phone */}
@@ -673,7 +684,7 @@ function Pricing() {
               }`}>
                 {/* Badge for highlighted plan */}
                 {plan.highlight && (
-                  <div className="pricing-badge absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-emerald-600 px-5 py-1.5 text-xs font-bold text-white shadow-lg shadow-emerald-600/30 whitespace-nowrap z-10">
+                  <div className="pricing-badge absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-emerald-900 px-5 py-1.5 text-xs font-bold text-white shadow-lg shadow-emerald-900/40 whitespace-nowrap z-10 ring-2 ring-white dark:ring-slate-800">
                     {p.bestValue}
                   </div>
                 )}
