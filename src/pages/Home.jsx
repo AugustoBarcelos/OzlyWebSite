@@ -272,7 +272,7 @@ function RealEarnings() {
             <ScrollReveal delay={0.4}>
               <div className="mt-8">
                 <a
-                  href="#features"
+                  href="#pricing"
                   className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-7 py-3.5 text-white font-semibold hover:bg-brand-600 transition shadow-lg shadow-brand-500/20"
                 >
                   <DollarSign size={18} />
