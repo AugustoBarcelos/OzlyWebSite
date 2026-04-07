@@ -864,8 +864,8 @@ export default function Home() {
     <div className="ozly-gradient">
       <Hero />
       <AudienceBanner />
-      <RealEarnings />
       <FeaturesShowcase />
+      <RealEarnings />
       <Comparison />
       <Pricing />
       <HomeFaq />
