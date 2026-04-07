@@ -150,7 +150,7 @@ function Hero() {
 const audienceIcons = [
   { key: "cleaners", icon: SprayCan },
   { key: "tradies", icon: Wrench },
-  { key: "delivery", icon: Bike },
+  // { key: "delivery", icon: Bike },
   { key: "kitchen", icon: ChefHat },
   { key: "waitstaff", icon: Coffee },
   { key: "hospitality", icon: Sparkles },
@@ -876,7 +876,7 @@ export default function Home() {
       <Hero />
       <AudienceBanner />
       <FeaturesShowcase />
-      <RealEarnings />
+      {/* <RealEarnings /> */}
       <Comparison />
       <Pricing />
       <HomeFaq />
