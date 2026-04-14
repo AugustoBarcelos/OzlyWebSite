@@ -1,6 +1,5 @@
 User-agent: *
 Allow: /
-Disallow: /refer
 Disallow: /404.html
 
 Sitemap: https://ozly.au/sitemap.xml

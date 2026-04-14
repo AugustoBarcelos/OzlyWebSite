@@ -1,15 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-AU">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ozly - Referral</title>
+  <title>Ozly Referral — Invite Friends & Earn Free Pro for Sole Traders</title>
+  <meta name="description" content="Join Ozly via a referral code and unlock rewards. Send friends to Ozly, the free invoicing and tax app for Australian sole traders, contractors, and tradies." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://ozly.au/refer" />
+  <link rel="icon" type="image/svg+xml" href="/OSLY.svg" />
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f0f9ff 100%); }
-    .card { background: white; border-radius: 20px; padding: 48px 40px; text-align: center; max-width: 420px; box-shadow: 0 8px 32px rgba(0,0,0,0.08); }
+    body { font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f0f9ff 100%); color: #334155; line-height: 1.6; }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 48px 24px 64px; }
+    .card { background: white; border-radius: 20px; padding: 40px 32px; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.08); margin-bottom: 32px; }
     .logo { width: 64px; height: 64px; margin-bottom: 16px; border-radius: 14px; }
-    h1 { color: #1a1a1a; margin-bottom: 8px; font-size: 28px; }
-    p { color: #666; margin-bottom: 20px; line-height: 1.5; }
+    h1 { color: #0f172a; margin: 0 0 12px; font-size: 1.875rem; font-weight: 800; }
+    h2 { color: #0f172a; margin: 28px 0 10px; font-size: 1.25rem; font-weight: 700; }
+    p { margin: 10px 0; }
     .code { font-size: 28px; font-weight: bold; color: #16a34a; letter-spacing: 3px; margin: 20px 0; padding: 12px 24px; background: #f0fdf4; border-radius: 12px; display: inline-block; }
     .store-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 24px; }
     .btn { display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; border-radius: 12px; color: white; text-decoration: none; font-weight: 600; font-size: 15px; transition: transform 0.2s, box-shadow 0.2s; }
@@ -19,12 +25,15 @@
     .btn-single { background: #16a34a; padding: 16px 36px; font-size: 17px; }
     .note { margin-top: 20px; font-size: 13px; color: #999; }
     .icon { width: 22px; height: 22px; }
+    .info { max-width: 640px; margin: 0 auto; text-align: left; color: #475569; font-size: 0.95rem; background: white; border-radius: 16px; padding: 28px 32px; box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
+    .info ul { padding-left: 20px; }
+    .info li { margin: 6px 0; }
+    .info a { color: #16a34a; text-decoration: underline; }
   </style>
   <script>
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code') || '';
 
-    // Update these when published to stores
     const IOS_LINK = 'https://apps.apple.com/app/ozly/id6760398649';
     const ANDROID_LINK = 'https://play.google.com/store/apps/details?id=com.augusto.ozly';
 
@@ -58,16 +67,37 @@
   </script>
 </head>
 <body>
-  <div class="card">
-    <img class="logo" src="/ozly-icon.png" alt="Ozly" onerror="this.style.display='none'">
-    <h1>Welcome to Ozly!</h1>
-    <p>You've been invited to join Ozly — the smart app for Australian workers.</p>
-    <div class="code" id="code">---</div>
-    <p>Download the app and enter the referral code when signing up:</p>
-    <div class="store-buttons" id="store-buttons">
-      <a class="btn btn-single" href="#">Loading...</a>
+  <div class="wrap">
+    <div class="card">
+      <img class="logo" src="/OSLY.svg" alt="Ozly logo">
+      <h1>Welcome to Ozly!</h1>
+      <p>You have been invited to join Ozly — the free invoicing and tax app built for Australian sole traders, contractors, tradies, and freelancers.</p>
+      <div class="code" id="code">---</div>
+      <p>Download the Ozly app on your phone and paste this referral code when signing up.</p>
+      <div class="store-buttons" id="store-buttons">
+        <a class="btn btn-single" href="#">Loading...</a>
+      </div>
+      <p class="note">Your referral code is applied automatically once you finish creating your account.</p>
     </div>
-    <p class="note">Your referral code will be applied automatically when you sign up.</p>
+
+    <div class="info">
+      <h2>How the Ozly referral program works</h2>
+      <p>Every Ozly user gets a unique referral code. Share it with sole traders, tradies, or fellow contractors, and when they sign up using your code, both of you unlock Ozly perks such as extended Pro trials, premium feature access, and priority support.</p>
+
+      <h2>Why Ozly?</h2>
+      <ul>
+        <li><strong>Unlimited invoices</strong> with GST, ABN details, PAYG withholding, and payment tracking.</li>
+        <li><strong>AI receipt scanner</strong> that reads totals, dates, GST, and categories automatically.</li>
+        <li><strong>Expense tracking</strong> aligned with ATO-deductible categories for sole traders.</li>
+        <li><strong>Tax dashboard</strong> with live GST, BAS, and PAYG estimates.</li>
+        <li><strong>Jobs, quotes, and contractors</strong> in one place — perfect for tradies and service pros.</li>
+        <li><strong>Secure cloud sync</strong> across iOS and Android with encrypted backups.</li>
+      </ul>
+
+      <h2>Getting started</h2>
+      <p>Install the app from the App Store or Google Play, create your account, and enter your referral code on the welcome screen. Need help? Visit <a href="/support">Ozly Support</a> or read the <a href="/guide">User Guide</a>.</p>
+      <p>By joining via a referral link, you agree to our <a href="/terms-of-use">Terms of Use</a> and <a href="/privacy-policy">Privacy Policy</a>.</p>
+    </div>
   </div>
 </body>
 </html>

@@ -1,17 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-AU">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ozly — Delete Account & Data</title>
-  <meta name="description" content="Request deletion of your Ozly account and all associated personal data." />
+  <title>Delete Your Ozly Account & Data — Permanent Data Removal Request</title>
+  <meta name="description" content="Permanently delete your Ozly account and all personal data — profile, jobs, invoices, expenses, receipts, and business records. Request processed within 30 days, as required by Australian privacy law." />
   <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://ozly.au/delete-account" />
   <link rel="icon" type="image/svg+xml" href="/OSLY.svg" />
   <style>
     body { font-family: Inter, system-ui, sans-serif; background: #F8FAFC; color: #334155; margin: 0; padding: 0; line-height: 1.6; }
     .container { max-width: 720px; margin: 0 auto; padding: 80px 24px 60px; }
-    h1 { font-size: 1.875rem; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
+    h1 { font-size: 1.875rem; font-weight: 800; color: #0f172a; margin-bottom: 4px; }
+    h2 { font-size: 1.25rem; font-weight: 700; color: #0f172a; margin: 32px 0 10px; }
     p { margin: 12px 0; }
+    ul { padding-left: 20px; margin: 10px 0; }
+    li { margin: 4px 0; }
     a { color: #2563eb; text-decoration: underline; }
     .meta { font-size: 0.875rem; color: #64748b; margin-bottom: 32px; }
     label { display: block; font-weight: 600; color: #1e293b; margin-bottom: 6px; font-size: 0.875rem; }
@@ -27,13 +31,31 @@
 </head>
 <body>
   <div class="container">
-    <h1>Delete Account &amp; Data</h1>
-    <p class="meta">Request the permanent deletion of your Ozly account and all associated data.</p>
+    <h1>Delete Your Ozly Account &amp; Data</h1>
+    <p class="meta">Request the permanent deletion of your Ozly account and every piece of personal data we hold about you.</p>
 
     <div class="info">
       <p style="margin:0;"><strong>Warning:</strong> Once your account is deleted, all your data (profile, jobs, invoices, expenses, receipts, and business records) will be <strong>permanently removed</strong> and cannot be recovered.</p>
     </div>
 
+    <h2>What gets deleted</h2>
+    <p>When we process your deletion request, the following is permanently erased from Ozly's servers and backups:</p>
+    <ul>
+      <li>Your profile details (name, email, phone number, ABN, and business information).</li>
+      <li>All jobs, quotes, and client records.</li>
+      <li>Every invoice, payment, and tax record you created inside Ozly.</li>
+      <li>All expense entries, categories, and receipt images.</li>
+      <li>Contractor records and any shared business data tied to your account.</li>
+      <li>Authentication tokens, device registrations, and push notification subscriptions.</li>
+    </ul>
+
+    <h2>How long it takes</h2>
+    <p>Ozly processes deletion requests within 30 days of receipt, in line with the Australian Privacy Act 1988 and the Australian Privacy Principles. A confirmation email is sent to the address you used to sign up once your account has been removed. Backups are purged on a rolling 90-day cycle.</p>
+
+    <h2>Before you go — alternatives</h2>
+    <p>If you no longer want to pay for Pro features, you can cancel your subscription from the App Store or Google Play without deleting your data. If you simply want a break, you can sign out and come back later. Deletion is permanent and irreversible, so make sure you have exported any invoices or receipts you may need for tax purposes.</p>
+
+    <h2>Submit your deletion request</h2>
     <form id="deleteForm" action="https://formsubmit.co/privacy@ozly.au" method="POST">
       <input type="hidden" name="_subject" value="Account Deletion Request" />
       <input type="hidden" name="_captcha" value="false" />
@@ -61,10 +83,9 @@
       <p style="margin:0;"><strong>Request received.</strong> We will process your account deletion within 30 days and send you a confirmation email.</p>
     </div>
 
-    <p style="margin-top:32px; font-size:0.85rem; color:#64748b;">
-      You can also delete your account directly from the app: <strong>Settings &rarr; Delete Account</strong>.<br />
-      For questions, email <a href="mailto:privacy@ozly.au">privacy@ozly.au</a> &nbsp;|&nbsp; <a href="/privacy-policy/">Privacy Policy</a>
-    </p>
+    <h2>Delete directly from the app</h2>
+    <p>You can also delete your Ozly account straight from the mobile app without filling in this form. Open the app, go to <strong>Settings &rarr; Account &rarr; Delete Account</strong>, and confirm the action. The in-app deletion flow uses the same 30-day processing window described above.</p>
+    <p>For privacy questions or to check on a pending request, email <a href="mailto:privacy@ozly.au">privacy@ozly.au</a>. See the full <a href="/privacy-policy">Ozly Privacy Policy</a> for details on how your data is stored and protected.</p>
   </div>
 
   <script>
