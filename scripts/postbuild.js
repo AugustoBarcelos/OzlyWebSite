@@ -166,13 +166,15 @@ function render(route) {
     prerender
   );
 
-  // Preload the CSS so HTTP/2 fetches it in parallel with the HTML parse
-  // without blocking render any longer than the stylesheet needs.
+  // Async-load the main stylesheet: preload (high priority, non-blocking),
+  // then promote to stylesheet on load. The prerender above the fold has
+  // all the CSS it needs inline in <style>, so React can hydrate after the
+  // real stylesheet arrives without blocking first paint.
   if (cssFile) {
     const cssPath = `/assets/${cssFile}`;
     html = html.replace(
       /<link rel="stylesheet"[^>]*href="\/assets\/[^"]+\.css"[^>]*>/,
-      `<link rel="preload" href="${cssPath}" as="style"><link rel="stylesheet" href="${cssPath}">`
+      `<link rel="preload" href="${cssPath}" as="style" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="${cssPath}"></noscript>`
     );
   }
 
