@@ -23,24 +23,36 @@ const routes = [
       "Ozly helps Australian sole traders, contractors, and tradies send unlimited invoices, scan receipts, track expenses, and stay on top of GST and PAYG tax. Free on iOS and Android.",
     h1: "Ozly — Free Invoicing & Tax Tracker for Australian Sole Traders",
     body: `
-      <p>Ozly is a free mobile app built for Australian sole traders, contractors, tradies, freelancers, and small business owners. Send unlimited professional invoices, scan receipts with your camera, track deductible expenses, and stay on top of GST and PAYG tax — all from your phone.</p>
+      <p>Ozly is the free, all-in-one mobile app built for Australian sole traders, independent contractors, tradies, freelancers, and small-business owners. From the moment you register an ABN, Ozly helps you run every financial side of your business: unlimited professional invoices, AI receipt scanning, ATO-aligned expense tracking, real-time GST estimates, PAYG income-tax projections, jobs and quotes, contractor payments, and end-of-financial-year reporting — all from your phone, on iOS or Android, with encrypted cloud sync across devices.</p>
 
-      <h2>Everything you need to run your ABN</h2>
-      <ul>
-        <li>Unlimited invoices with GST, PAYG withholding, and payment tracking.</li>
-        <li>Receipt scanning powered by AI — pull totals, dates, and categories automatically.</li>
-        <li>Expense categories aligned with ATO-deductible business categories.</li>
-        <li>GST and income-tax estimates that update in real time as you invoice and spend.</li>
-        <li>Jobs, quotes, and contractor management for tradies and service providers.</li>
-        <li>Secure cloud sync across iOS and Android, with encrypted backups.</li>
-      </ul>
+      <h2>Invoicing without limits</h2>
+      <p>Create and send professional invoices in under a minute. Add line items, GST (10%), PAYG withholding, due dates, purchase orders, and custom notes. Attach your logo and payment details. Track payment status in real time, send automatic reminders for overdue invoices, and keep a clean audit trail. There are no monthly invoice caps, no per-invoice fees, and no paywalls on the basics — unlimited invoicing is free for every Ozly user.</p>
 
-      <h2>Built for Australian sole traders</h2>
-      <p>Ozly understands Australian tax: ABN, GST thresholds, BAS cycles, PAYG instalments, and sole-trader deductions. Whether you are cleaning homes, fixing bikes, delivering food, styling hair, or running a cafe on the side, Ozly keeps your books tidy and tax-ready.</p>
+      <h2>AI-powered receipt scanning</h2>
+      <p>Scan any paper or digital receipt with your phone camera. Ozly's AI reads the total, date, supplier, GST amount, and product category automatically, so you never type an expense by hand. Matched receipts are saved to encrypted cloud storage and linked back to the right job or tax period. At tax time, everything is already sorted, categorised, and export-ready.</p>
 
-      <h2>Download Ozly free</h2>
-      <p><a href="https://apps.apple.com/app/ozly/id6760398649">Download on the App Store</a> · <a href="https://play.google.com/store/apps/details?id=com.augusto.ozly">Get it on Google Play</a></p>
-      <p><a href="/guide">Read the Ozly user guide</a> or visit <a href="/support">Support &amp; FAQ</a> for answers to common questions.</p>
+      <h2>Expense tracking aligned with the ATO</h2>
+      <p>Every expense category in Ozly maps to a deductible classification recognised by the Australian Taxation Office: motor vehicle, tools and equipment, phone and internet, home office, subscriptions, travel, uniforms, training, and more. Add mileage with the built-in logbook, split mixed-use purchases, and attach notes for audit evidence. Your deductions stay defensible, so at EOFY you pay what you owe — and not a dollar more.</p>
+
+      <h2>Live GST, BAS & PAYG estimates</h2>
+      <p>Ozly's tax dashboard updates every time you invoice or spend. See exactly what you owe in GST this quarter, how your BAS is shaping up, and your projected PAYG instalment for the year. Get alerts before you cross the $75,000 GST registration threshold. Export BAS-ready summaries directly to your accountant or straight into the ATO Business Portal.</p>
+
+      <h2>Jobs, quotes & contractor payments</h2>
+      <p>Quote jobs, schedule work, track materials, and convert accepted quotes to invoices with one tap. Manage subbies and contractors, capture their ABN details, track what you paid them across the year, and generate Taxable Payments Annual Report (TPAR) data when the ATO needs it. Ideal for cleaners, tradies, delivery drivers, bike mechanics, hair stylists, freelance consultants, and cafe owners with a second income.</p>
+
+      <h2>Built specifically for Australian sole traders</h2>
+      <p>Ozly is not a generic bookkeeping tool retrofitted for Australia. It is designed from day one around the Australian Taxation Office, the Australian Privacy Principles, and the realities of sole-trader life. The app ships in English, Portuguese, and Spanish so newcomers and migrant workers feel at home. Whether you are cleaning homes in Sydney, fixing bikes in Melbourne, delivering food in Brisbane, styling hair in Perth, or running a cafe on the side in Adelaide, Ozly keeps your books tidy, your GST tracked, and your tax reports ready for the ATO.</p>
+
+      <h2>Free forever on the basics</h2>
+      <p>Unlimited invoices, unlimited expenses, unlimited receipts, and live tax estimates are included at no cost. Ozly Pro unlocks advanced reports, multi-business support, contractor batch payments, and priority human support — for a flat, transparent monthly price. No lock-in contracts, no setup fees, no surprise charges, cancel anytime. Your data is always yours, always exportable.</p>
+
+      <h2>Private, secure, Australian-owned</h2>
+      <p>Your data is encrypted in transit and at rest. You decide what syncs to the cloud and what stays on-device. We never sell your data. Ozly is operated by Ozly Pty Ltd, based in Australia, and complies with the Privacy Act 1988 and the Australian Privacy Principles. Delete your account at any time and every byte of your data is permanently purged within 30 days.</p>
+
+      <h2>Get started with Ozly in 2 minutes</h2>
+      <p>Install Ozly on your phone, sign up with Apple, Google, or email, add your ABN, and send your first invoice before the kettle boils. No credit card required, no demo call, no trial timer.</p>
+      <p><a href="https://apps.apple.com/app/ozly/id6760398649">Download Ozly on the App Store</a> · <a href="https://play.google.com/store/apps/details?id=com.augusto.ozly">Get Ozly on Google Play</a></p>
+      <p>Need more detail? Read the full <a href="/guide">Ozly user guide</a>, browse the <a href="/support">Support &amp; FAQ</a>, or review our <a href="/privacy-policy">Privacy Policy</a> and <a href="/terms-of-use">Terms of Use</a>.</p>
     `,
   },
   {
@@ -63,7 +75,7 @@ const routes = [
       </ul>
 
       <h2>Need personal help?</h2>
-      <p>Email us at <a href="mailto:support@ozly.au">support@ozly.au</a> or check the full <a href="/guide">Ozly user guide</a> for step-by-step instructions.</p>
+      <p>Email us at <!--email_off--><a href="mailto:support@ozly.au">support@ozly.au</a><!--/email_off--> or check the full <a href="/guide">Ozly user guide</a> for step-by-step instructions.</p>
     `,
   },
   {
@@ -88,7 +100,7 @@ const routes = [
       </ul>
 
       <h2>Questions?</h2>
-      <p>Visit the <a href="/support">Support &amp; FAQ</a> page or email <a href="mailto:support@ozly.au">support@ozly.au</a>.</p>
+      <p>Visit the <a href="/support">Support &amp; FAQ</a> page or email <!--email_off--><a href="mailto:support@ozly.au">support@ozly.au</a><!--/email_off-->.</p>
     `,
   },
 ];
