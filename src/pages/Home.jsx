@@ -1,5 +1,4 @@
-import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   FileText,
@@ -35,17 +34,12 @@ import PhoneMockup from "../components/PhoneMockup";
 /* ═══════════════════════════ HERO ═══════════════════════════ */
 function Hero() {
   const { t } = useI18n();
-  const ref = useRef(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
-  const phoneY = useTransform(scrollYProgress, [0, 1], [0, 120]);
-  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
 
   const subtitle = t.hero.subtitle
     .replace("{price}", `<strong class="text-brand-500">${t.hero.price}</strong>`);
 
   return (
     <section
-      ref={ref}
       id="download"
       className="relative min-h-screen flex items-center"
     >
@@ -56,15 +50,13 @@ function Hero() {
       <div className="relative mx-auto max-w-7xl w-full px-6 pt-28 pb-16 md:pt-32 md:pb-24">
         <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
           {/* Copy */}
-          <motion.div className="flex-1 text-center lg:text-left" style={{ opacity }}>
-            <motion.span
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="inline-block mb-5 rounded-full bg-lime-100 dark:bg-lime-900/50 px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-lime-700 dark:text-lime-300"
+          <div className="flex-1 text-center lg:text-left">
+            <span
+              className="inline-block mb-5 rounded-full bg-lime-100 dark:bg-lime-900/50 px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-lime-700 dark:text-lime-300 anim-fade-in-up-sm"
+              style={{ animationDelay: "0.1s" }}
             >
               {t.hero.badge}
-            </motion.span>
+            </span>
 
             <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] xl:text-6xl font-extrabold leading-[1.1] text-navy-700 dark:text-white">
               {t.hero.title}
@@ -72,19 +64,15 @@ function Hero() {
               <span className="text-brand-500">{t.hero.titleHighlight}</span>
             </h1>
 
-            <motion.p
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.35 }}
-              className="mt-7 max-w-lg mx-auto lg:mx-0 text-lg text-slate-500 dark:text-slate-400 leading-relaxed"
+            <p
+              className="mt-7 max-w-lg mx-auto lg:mx-0 text-lg text-slate-500 dark:text-slate-400 leading-relaxed anim-fade-in-up"
+              style={{ animationDelay: "0.35s" }}
               dangerouslySetInnerHTML={{ __html: subtitle }}
             />
 
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.5 }}
-              className="mt-9 flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start"
+            <div
+              className="mt-9 flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start anim-fade-in-up"
+              style={{ animationDelay: "0.5s" }}
             >
               <a href="https://apps.apple.com/app/ozly/id6760398649" target="_blank" rel="noopener noreferrer" className="store-badge-link hover:opacity-80 transition">
                 <img src={`${import.meta.env.BASE_URL}app-store.svg`} alt="Download Ozly on the App Store" width="189" height="56" className="h-14" />
@@ -92,16 +80,13 @@ function Hero() {
               <a href="https://play.google.com/store/apps/details?id=com.augusto.ozly" target="_blank" rel="noopener noreferrer" className="store-badge-link hover:opacity-80 transition">
                 <img src={`${import.meta.env.BASE_URL}google-play.svg`} alt="Get Ozly on Google Play" width="189" height="56" className="h-14" />
               </a>
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
 
           {/* Phone */}
-          <motion.div
-            initial={{ opacity: 0, y: 50, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.9, delay: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-            style={{ y: phoneY }}
-            className="flex-shrink-0"
+          <div
+            className="flex-shrink-0 anim-fade-in-scale"
+            style={{ animationDelay: "0.3s" }}
           >
             <PhoneMockup>
               <div className="space-y-3">
@@ -117,26 +102,20 @@ function Hero() {
                 </div>
               </div>
             </PhoneMockup>
-          </motion.div>
+          </div>
         </div>
       </div>
 
       {/* Scroll indicator — clicks to below the fold */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.2, duration: 0.8 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 hidden md:block cursor-pointer"
+      <div
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 hidden md:block cursor-pointer anim-fade-in"
+        style={{ animationDelay: "1.2s" }}
         onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })}
       >
-        <motion.div
-          animate={{ y: [0, 10, 0] }}
-          transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-          className="w-6 h-10 rounded-full border-2 border-slate-300 flex justify-center pt-2"
-        >
+        <div className="w-6 h-10 rounded-full border-2 border-slate-300 flex justify-center pt-2 anim-bounce-soft">
           <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
     </section>
   );
 }
@@ -236,12 +215,9 @@ function RealEarnings() {
 
               {/* Animated arrow hint */}
               <div className="flex justify-center pb-4">
-                <motion.div
-                  animate={{ y: [0, 6, 0] }}
-                  transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
-                >
+                <div className="anim-bounce-arrow">
                   <ArrowDown size={20} className="text-brand-400" />
-                </motion.div>
+                </div>
               </div>
             </div>
           </ScrollReveal>

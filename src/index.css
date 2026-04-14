@@ -100,6 +100,57 @@ html, body {
   animation: badge-sway 1.25s ease-in-out infinite alternate;
 }
 
+/* ── Hero entry animations (replaces framer-motion) ── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeInUpSmall {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeInScale {
+  from { opacity: 0; transform: translateY(50px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes bounceSoft {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(10px); }
+}
+@keyframes bounceArrow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(6px); }
+}
+
+.anim-fade-in { animation: fadeIn 0.8s ease-out both; }
+.anim-fade-in-up { animation: fadeInUp 0.7s cubic-bezier(0.25,0.1,0.25,1) both; }
+.anim-fade-in-up-sm { animation: fadeInUpSmall 0.6s ease-out both; }
+.anim-fade-in-scale { animation: fadeInScale 0.9s cubic-bezier(0.25,0.1,0.25,1) both; }
+.anim-bounce-soft { animation: bounceSoft 2s ease-in-out infinite; }
+.anim-bounce-arrow { animation: bounceArrow 1.5s ease-in-out infinite; }
+
+/* ── Scroll-reveal (IntersectionObserver toggles .in-view) ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(60px);
+  transition: opacity 0.7s cubic-bezier(0.25,0.1,0.25,1),
+              transform 0.7s cubic-bezier(0.25,0.1,0.25,1);
+  will-change: opacity, transform;
+}
+.reveal.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .anim-fade-in, .anim-fade-in-up, .anim-fade-in-up-sm,
+  .anim-fade-in-scale, .anim-bounce-soft, .anim-bounce-arrow,
+  .reveal { animation: none; transition: none; opacity: 1; transform: none; }
+}
+
 /* ── Store badges: always visible on any bg ── */
 .store-badge-link {
   border-radius: 0.75rem;

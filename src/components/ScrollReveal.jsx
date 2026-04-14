@@ -1,19 +1,39 @@
-import { motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * Wraps children with a scroll-triggered fade + slide-up animation.
- * `delay` in seconds, `y` is the starting offset in px.
+ * `delay` in seconds.
+ *
+ * IntersectionObserver toggles the `.in-view` class once the element
+ * enters the viewport — CSS handles the actual animation.
  */
-export default function ScrollReveal({ children, delay = 0, y = 60, className = "", once = true }) {
+export default function ScrollReveal({ children, delay = 0, className = "" }) {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin: "-80px" }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once, margin: "-80px" }}
-      transition={{ duration: 0.7, delay, ease: [0.25, 0.1, 0.25, 1] }}
-      className={className}
+    <div
+      ref={ref}
+      className={`reveal ${visible ? "in-view" : ""} ${className}`}
+      style={delay ? { transitionDelay: `${delay}s` } : undefined}
     >
       {children}
-    </motion.div>
+    </div>
   );
 }
