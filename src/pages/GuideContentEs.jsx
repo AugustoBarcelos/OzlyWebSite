@@ -3,6 +3,12 @@ export default function GuideContentEs({ SectionCard, SubSection, StepList, Bull
     <>
       {/* ─── 1. PRIMEIROS PASSOS ─── */}
       <SectionCard id="primeiros-passos" title="1. Primeros Pasos (Login y Registro)">
+        <InfoBox>
+          <B>Video:</B>{" "}
+          <a href="https://youtube.com/shorts/Y-ftNz2fGDw?feature=share" target="_blank" rel="noopener noreferrer" className="underline font-semibold">
+            Cómo crear una cuenta (YouTube)
+          </a>
+        </InfoBox>
         <SubSection title="Crear cuenta con Email">
           <StepList>
             <li>Abrí Ozly</li>
@@ -224,6 +230,12 @@ export default function GuideContentEs({ SectionCard, SubSection, StepList, Bull
 
       {/* ─── 6. CONTRACTORS ─── */}
       <SectionCard id="contractors" title="6. Contractors (Contratantes)">
+        <InfoBox>
+          <B>Video:</B>{" "}
+          <a href="https://youtube.com/shorts/fBN6d0GEeNs?feature=share" target="_blank" rel="noopener noreferrer" className="underline font-semibold">
+            Cómo crear un contractor (YouTube)
+          </a>
+        </InfoBox>
         <P>Menú lateral → <B>"Contractors"</B>. Dos pestañas: <B>Agencies</B> y <B>Direct Clients</B>.</P>
 
         <SubSection title="Crear nuevo Contractor">
@@ -303,6 +315,12 @@ export default function GuideContentEs({ SectionCard, SubSection, StepList, Bull
 
       {/* ─── 8. EXPENSES ─── */}
       <SectionCard id="expenses" title="8. Expenses (Gastos)">
+        <InfoBox>
+          <B>Video:</B>{" "}
+          <a href="https://youtube.com/shorts/oTwY3_WD_H8?feature=share" target="_blank" rel="noopener noreferrer" className="underline font-semibold">
+            Cómo agregar un gasto (YouTube)
+          </a>
+        </InfoBox>
         <SubSection title="Agregar un Gasto">
           <StepList>
             <li><B>Sacar Foto del Recibo</B> — Cámara o Galería. El OCR extrae monto, fecha y nombre automáticamente.</li>
