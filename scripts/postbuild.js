@@ -21,8 +21,9 @@ const routes = [
     title: "Ozly — Free Invoicing & Tax Tracker for Australian Sole Traders",
     description:
       "Ozly helps Australian sole traders, contractors, and tradies send unlimited invoices, scan receipts, track expenses, and stay on top of GST and PAYG tax. Free on iOS and Android.",
-    h1: "Ozly — Free Invoicing & Tax Tracker for Australian Sole Traders",
+    h1: 'Free Invoicing &amp; Tax Tracker<span class="accent">for Australian Sole Traders</span>',
     body: `
+      <p class="sub">Send unlimited invoices, scan receipts, and stay on top of GST and PAYG tax — free on iOS and Android.</p>
       <p>Ozly is the free, all-in-one mobile app built for Australian sole traders, independent contractors, tradies, freelancers, and small-business owners. From the moment you register an ABN, Ozly helps you run every financial side of your business: unlimited professional invoices, AI receipt scanning, ATO-aligned expense tracking, real-time GST estimates, PAYG income-tax projections, jobs and quotes, contractor payments, and end-of-financial-year reporting — all from your phone, on iOS or Android, with encrypted cloud sync across devices.</p>
 
       <h2>Invoicing without limits</h2>

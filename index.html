@@ -47,12 +47,18 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Montserrat:wght@800&display=swap" rel="stylesheet" />
     <style>
-      .seo-prerender{max-width:820px;margin:0 auto;padding:96px 24px 48px;font-family:Inter,system-ui,sans-serif;color:#334155;line-height:1.6}
-      .seo-prerender h1{font-size:2.25rem;font-weight:800;color:#0f172a;margin:0 0 16px}
-      .seo-prerender h2{font-size:1.25rem;font-weight:700;color:#0f172a;margin:28px 0 8px}
+      body{margin:0;background:#F8FAFC}
+      .seo-prerender{max-width:900px;margin:0 auto;padding:112px 24px 48px;font-family:Inter,system-ui,sans-serif;color:#334155;line-height:1.5;text-align:center}
+      .seo-prerender h1{font-size:2.25rem;font-weight:800;color:#0f2540;margin:0 0 20px;line-height:1.1;letter-spacing:-0.02em}
+      .seo-prerender h1 .accent{color:#2BBB97;display:block}
+      .seo-prerender .sub{font-size:1.125rem;color:#64748b;margin:20px auto 28px;max-width:32rem}
+      .seo-prerender h2{font-size:1.25rem;font-weight:700;color:#0f172a;margin:28px 0 8px;text-align:left}
+      .seo-prerender p,.seo-prerender ul{text-align:left}
       .seo-prerender p{margin:10px 0}
       .seo-prerender ul{margin:10px 0;padding-left:20px}
       .seo-prerender a{color:#2BBB97;text-decoration:underline}
+      @media(min-width:640px){.seo-prerender h1{font-size:3rem}}
+      @media(min-width:1024px){.seo-prerender h1{font-size:3.5rem}}
     </style>
   </head>
   <body>
@@ -68,7 +74,8 @@
     </script>
     <div id="root">
       <div class="seo-prerender">
-        <h1>Ozly — Free Invoicing &amp; Tax Tracker for Australian Sole Traders</h1>
+        <h1>Free Invoicing &amp; Tax Tracker<span class="accent">for Australian Sole Traders</span></h1>
+        <p class="sub">Send unlimited invoices, scan receipts, and stay on top of GST and PAYG tax — free on iOS and Android.</p>
         <p>Ozly is a free mobile app built for Australian sole traders, contractors, tradies, freelancers, and small business owners. Send unlimited professional invoices, scan receipts with your camera, track deductible expenses, and stay on top of GST and PAYG tax — all from your phone.</p>
 
         <h2>Everything you need to run your ABN</h2>
