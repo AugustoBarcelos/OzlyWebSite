@@ -268,7 +268,7 @@ function RealEarnings() {
               <div className="mt-8">
                 <a
                   href="#pricing"
-                  className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-7 py-3.5 text-white font-semibold hover:bg-brand-600 transition shadow-lg shadow-brand-500/20"
+                  className="inline-flex items-center gap-2 rounded-full bg-brand-800 px-7 py-3.5 text-white font-semibold hover:bg-brand-900 transition shadow-lg shadow-brand-500/20"
                 >
                   <DollarSign size={18} />
                   {r.cta}
@@ -518,7 +518,7 @@ function FeatureShowcase({ feature, index }) {
               <div className="mt-7 flex justify-center lg:justify-start">
                 <a
                   href="#pricing"
-                  className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-6 py-3 text-white text-sm font-semibold hover:bg-brand-600 transition shadow-lg shadow-brand-500/20"
+                  className="inline-flex items-center gap-2 rounded-full bg-brand-800 px-6 py-3 text-white text-sm font-semibold hover:bg-brand-900 transition shadow-lg shadow-brand-500/20"
                 >
                   {t.features.ctaPlans}
                   <ChevronRight size={16} />
@@ -746,7 +746,7 @@ function Pricing() {
                   className={`flex items-center justify-center gap-2 rounded-lg px-6 py-3.5 font-semibold text-sm transition-all duration-300 ${
                     plan.highlight
                       ? "bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 hover:bg-brand-50 shadow-[inset_0_-2px_rgba(0,0,0,0.08),0_2px_8px_rgba(43,187,151,0.15)]"
-                      : "bg-brand-500 text-white hover:bg-brand-600 shadow-[inset_0_-2px_rgba(0,0,0,0.08),inset_0_2px_rgba(255,255,255,0.08),0_2px_8px_rgba(43,187,151,0.2)]"
+                      : "bg-brand-800 text-white hover:bg-brand-900 shadow-[inset_0_-2px_rgba(0,0,0,0.08),inset_0_2px_rgba(255,255,255,0.08),0_2px_8px_rgba(43,187,151,0.2)]"
                   }`}
                 >
                   {p.cta} <ChevronRight size={16} />
@@ -844,7 +844,7 @@ function HomeFaq() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <a
                 href="mailto:support@ozly.au"
-                className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-6 py-3.5 text-white font-semibold hover:bg-brand-600 transition shadow-lg shadow-brand-500/20"
+                className="inline-flex items-center gap-2 rounded-full bg-brand-800 px-6 py-3.5 text-white font-semibold hover:bg-brand-900 transition shadow-lg shadow-brand-500/20"
               >
                 <Mail size={18} />
                 {t.homeFaq.contact}

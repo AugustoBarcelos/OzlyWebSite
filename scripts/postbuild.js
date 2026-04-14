@@ -6,18 +6,18 @@
  * Static HTML files already shipped in public/ (privacy-policy, terms-of-use,
  * delete-account, refer) are preserved.
  */
-import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, unlinkSync } from "fs";
+import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const dist = join(__dirname, "..", "dist");
 
-// Read the built CSS file so we can inline it (eliminates render-blocking
-// stylesheet request, saves one round-trip on first paint).
+// Discover the hashed CSS asset so we can preload it (HTTP/2 fetches the
+// stylesheet in parallel with HTML parse, minus the round-trip penalty of
+// waiting for the <link rel="stylesheet"> tag to be discovered).
 const assetsDir = join(dist, "assets");
 const cssFile = readdirSync(assetsDir).find((f) => f.endsWith(".css"));
-const cssContent = cssFile ? readFileSync(join(assetsDir, cssFile), "utf8") : "";
 
 const ORIGIN = "https://ozly.au";
 
@@ -166,12 +166,13 @@ function render(route) {
     prerender
   );
 
-  // Inline the built CSS and strip the <link rel="stylesheet"> reference so
-  // the first paint doesn't block on a CSS round-trip.
-  if (cssContent) {
+  // Preload the CSS so HTTP/2 fetches it in parallel with the HTML parse
+  // without blocking render any longer than the stylesheet needs.
+  if (cssFile) {
+    const cssPath = `/assets/${cssFile}`;
     html = html.replace(
       /<link rel="stylesheet"[^>]*href="\/assets\/[^"]+\.css"[^>]*>/,
-      `<style>${cssContent}</style>`
+      `<link rel="preload" href="${cssPath}" as="style"><link rel="stylesheet" href="${cssPath}">`
     );
   }
 
@@ -193,12 +194,6 @@ for (const route of routes.slice(1)) {
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
   writeFileSync(target, render(route), "utf8");
   console.log(`  ✓ ${route.path}/index.html`);
-}
-
-// Delete the now-inlined CSS file from dist so it isn't served as orphaned asset.
-if (cssFile) {
-  unlinkSync(join(assetsDir, cssFile));
-  console.log(`  ✓ removed ${cssFile} (inlined)`);
 }
 
 console.log("Post-build: done.");

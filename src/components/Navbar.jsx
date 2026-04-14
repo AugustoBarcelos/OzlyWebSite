@@ -99,7 +99,7 @@ export default function Navbar() {
 
           <a
             href="#download"
-            className="ml-2 inline-flex items-center gap-2 rounded-full bg-brand-500 px-5 py-2.5 text-white text-sm font-semibold hover:bg-brand-600 transition-colors shadow-lg shadow-brand-500/20"
+            className="ml-2 inline-flex items-center gap-2 rounded-full bg-brand-800 px-5 py-2.5 text-white text-sm font-semibold hover:bg-brand-900 transition-colors shadow-lg shadow-brand-500/20"
           >
             {t.nav.download}
           </a>
@@ -135,7 +135,7 @@ export default function Navbar() {
                 onClick={() => setLang(code)}
                 className={`rounded-full px-3 py-1.5 text-xs font-semibold border transition-colors ${
                   code === lang
-                    ? "bg-brand-500 text-white border-brand-500"
+                    ? "bg-brand-800 text-white border-brand-800"
                     : "border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-brand-300"
                 }`}
               >
@@ -146,7 +146,7 @@ export default function Navbar() {
 
           <a
             href="#download"
-            className="block rounded-full bg-brand-500 px-5 py-2.5 text-center text-white font-semibold"
+            className="block rounded-full bg-brand-800 px-5 py-2.5 text-center text-white font-semibold"
             onClick={() => setOpen(false)}
           >
             {t.nav.download}

@@ -209,7 +209,7 @@ export default function Guide() {
               <p className="text-slate-500 mb-6">{t.guide.contactSubtitle}</p>
               <a
                 href="mailto:support@ozly.au"
-                className="inline-flex items-center gap-2.5 rounded-full bg-brand-500 px-6 py-3.5 text-white font-semibold hover:bg-brand-600 transition shadow-lg shadow-brand-500/30"
+                className="inline-flex items-center gap-2.5 rounded-full bg-brand-800 px-6 py-3.5 text-white font-semibold hover:bg-brand-900 transition shadow-lg shadow-brand-500/30"
               >
                 <Mail size={18} />
                 {t.guide.contactButton}
