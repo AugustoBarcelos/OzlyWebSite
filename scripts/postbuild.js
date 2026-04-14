@@ -6,12 +6,18 @@
  * Static HTML files already shipped in public/ (privacy-policy, terms-of-use,
  * delete-account, refer) are preserved.
  */
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from "fs";
+import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, unlinkSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const dist = join(__dirname, "..", "dist");
+
+// Read the built CSS file so we can inline it (eliminates render-blocking
+// stylesheet request, saves one round-trip on first paint).
+const assetsDir = join(dist, "assets");
+const cssFile = readdirSync(assetsDir).find((f) => f.endsWith(".css"));
+const cssContent = cssFile ? readFileSync(join(assetsDir, cssFile), "utf8") : "";
 
 const ORIGIN = "https://ozly.au";
 
@@ -76,7 +82,7 @@ const routes = [
       </ul>
 
       <h2>Need personal help?</h2>
-      <p>Email us at <!--email_off--><a href="mailto:support@ozly.au">support@ozly.au</a><!--/email_off--> or check the full <a href="/guide">Ozly user guide</a> for step-by-step instructions.</p>
+      <p>Email us at <a href="mailto:support@ozly.au">support@ozly.au</a> or check the full <a href="/guide">Ozly user guide</a> for step-by-step instructions.</p>
     `,
   },
   {
@@ -101,7 +107,7 @@ const routes = [
       </ul>
 
       <h2>Questions?</h2>
-      <p>Visit the <a href="/support">Support &amp; FAQ</a> page or email <!--email_off--><a href="mailto:support@ozly.au">support@ozly.au</a><!--/email_off-->.</p>
+      <p>Visit the <a href="/support">Support &amp; FAQ</a> page or email <a href="mailto:support@ozly.au">support@ozly.au</a>.</p>
     `,
   },
 ];
@@ -160,6 +166,15 @@ function render(route) {
     prerender
   );
 
+  // Inline the built CSS and strip the <link rel="stylesheet"> reference so
+  // the first paint doesn't block on a CSS round-trip.
+  if (cssContent) {
+    html = html.replace(
+      /<link rel="stylesheet"[^>]*href="\/assets\/[^"]+\.css"[^>]*>/,
+      `<style>${cssContent}</style>`
+    );
+  }
+
   return html;
 }
 
@@ -178,6 +193,12 @@ for (const route of routes.slice(1)) {
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
   writeFileSync(target, render(route), "utf8");
   console.log(`  ✓ ${route.path}/index.html`);
+}
+
+// Delete the now-inlined CSS file from dist so it isn't served as orphaned asset.
+if (cssFile) {
+  unlinkSync(join(assetsDir, cssFile));
+  console.log(`  ✓ removed ${cssFile} (inlined)`);
 }
 
 console.log("Post-build: done.");
