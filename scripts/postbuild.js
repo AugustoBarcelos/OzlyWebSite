@@ -1,31 +1,170 @@
 /**
- * Post-build script: copies index.html into SPA route directories
- * that don't already have a static HTML file (from public/).
+ * Post-build: emit per-route index.html files with unique SEO metadata
+ * (title, description, canonical, Open Graph) and pre-rendered H1 + body
+ * content. React replaces #root on mount; crawlers see the static content.
+ *
+ * Static HTML files already shipped in public/ (privacy-policy, terms-of-use,
+ * delete-account, refer) are preserved.
  */
-import { mkdirSync, copyFileSync, existsSync } from "fs";
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const dist = join(__dirname, "..", "dist");
 
+const ORIGIN = "https://ozly.au";
+
 const routes = [
-  "/support",
-  "/guide",
+  {
+    path: "/",
+    title: "Ozly — Free Invoicing & Tax Tracker for Australian Sole Traders",
+    description:
+      "Ozly helps Australian sole traders, contractors, and tradies send unlimited invoices, scan receipts, track expenses, and stay on top of GST and PAYG tax. Free on iOS and Android.",
+    h1: "Ozly — Free Invoicing & Tax Tracker for Australian Sole Traders",
+    body: `
+      <p>Ozly is a free mobile app built for Australian sole traders, contractors, tradies, freelancers, and small business owners. Send unlimited professional invoices, scan receipts with your camera, track deductible expenses, and stay on top of GST and PAYG tax — all from your phone.</p>
+
+      <h2>Everything you need to run your ABN</h2>
+      <ul>
+        <li>Unlimited invoices with GST, PAYG withholding, and payment tracking.</li>
+        <li>Receipt scanning powered by AI — pull totals, dates, and categories automatically.</li>
+        <li>Expense categories aligned with ATO-deductible business categories.</li>
+        <li>GST and income-tax estimates that update in real time as you invoice and spend.</li>
+        <li>Jobs, quotes, and contractor management for tradies and service providers.</li>
+        <li>Secure cloud sync across iOS and Android, with encrypted backups.</li>
+      </ul>
+
+      <h2>Built for Australian sole traders</h2>
+      <p>Ozly understands Australian tax: ABN, GST thresholds, BAS cycles, PAYG instalments, and sole-trader deductions. Whether you are cleaning homes, fixing bikes, delivering food, styling hair, or running a cafe on the side, Ozly keeps your books tidy and tax-ready.</p>
+
+      <h2>Download Ozly free</h2>
+      <p><a href="https://apps.apple.com/app/ozly/id6760398649">Download on the App Store</a> · <a href="https://play.google.com/store/apps/details?id=com.augusto.ozly">Get it on Google Play</a></p>
+      <p><a href="/guide">Read the Ozly user guide</a> or visit <a href="/support">Support &amp; FAQ</a> for answers to common questions.</p>
+    `,
+  },
+  {
+    path: "/support",
+    title: "Ozly Support & FAQ — Help for Australian Sole Traders",
+    description:
+      "Answers to common questions about Ozly: invoicing, expenses, GST, PAYG tax, receipt scanning, subscriptions, and account management for Australian sole traders and contractors.",
+    h1: "Ozly Support & Frequently Asked Questions",
+    body: `
+      <p>Find answers to the most common questions about using Ozly — the free invoicing and tax app for Australian sole traders. Our FAQ covers account setup, invoicing, expenses, GST, PAYG tax, receipts, subscriptions, and more.</p>
+
+      <h2>Popular topics</h2>
+      <ul>
+        <li><strong>Getting started:</strong> Create your account, set up your ABN, and send your first invoice in minutes.</li>
+        <li><strong>Invoicing:</strong> Add line items, GST, PAYG withholding, due dates, and track payments.</li>
+        <li><strong>Expenses &amp; receipts:</strong> Scan receipts with your camera and categorise deductible expenses.</li>
+        <li><strong>Tax:</strong> Understand GST thresholds, BAS, PAYG instalments, and end-of-financial-year reports.</li>
+        <li><strong>Jobs &amp; contractors:</strong> Manage clients, quotes, recurring jobs, and contractor payments.</li>
+        <li><strong>Subscriptions:</strong> Free vs. Pro, cancellations, refunds, and App Store / Play Store billing.</li>
+      </ul>
+
+      <h2>Need personal help?</h2>
+      <p>Email us at <a href="mailto:support@ozly.au">support@ozly.au</a> or check the full <a href="/guide">Ozly user guide</a> for step-by-step instructions.</p>
+    `,
+  },
+  {
+    path: "/guide",
+    title: "Ozly User Guide — How to Invoice, Track Expenses & Manage Tax",
+    description:
+      "Step-by-step Ozly user guide for Australian sole traders: create invoices, scan receipts, manage jobs and contractors, track GST and PAYG tax, and close out the financial year.",
+    h1: "Ozly User Guide",
+    body: `
+      <p>The Ozly user guide walks you through every feature of the app, with screenshots and step-by-step instructions written for Australian sole traders, contractors, and tradies.</p>
+
+      <h2>What is covered</h2>
+      <ul>
+        <li><strong>Getting started:</strong> Creating an account, setting up your ABN, and choosing your plan.</li>
+        <li><strong>Dashboard:</strong> Reading your income, expense, GST, and tax estimates at a glance.</li>
+        <li><strong>Invoicing:</strong> Creating and sending invoices, adding GST and PAYG withholding, tracking payments.</li>
+        <li><strong>Expenses:</strong> Capturing receipts, matching categories, and claiming ATO-deductible expenses.</li>
+        <li><strong>Jobs:</strong> Quoting, scheduling, completing, and invoicing jobs for clients.</li>
+        <li><strong>Contractors:</strong> Paying subbies, tracking contractor totals, and preparing TPAR data.</li>
+        <li><strong>Tax reports:</strong> GST, BAS, PAYG instalments, and end-of-financial-year summaries.</li>
+        <li><strong>Settings:</strong> Business details, invoice branding, notifications, language, and sync.</li>
+      </ul>
+
+      <h2>Questions?</h2>
+      <p>Visit the <a href="/support">Support &amp; FAQ</a> page or email <a href="mailto:support@ozly.au">support@ozly.au</a>.</p>
+    `,
+  },
 ];
 
-const src = join(dist, "index.html");
+const srcHtml = readFileSync(join(dist, "index.html"), "utf8");
 
-for (const route of routes) {
-  const dir = join(dist, route);
+function escapeAttr(s) {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function render(route) {
+  const canonical = `${ORIGIN}${route.path === "/" ? "/" : route.path}`;
+  const titleAttr = escapeAttr(route.title);
+  const descAttr = escapeAttr(route.description);
+
+  let html = srcHtml;
+
+  html = html.replace(/<title>[\s\S]*?<\/title>/, `<title>${route.title}</title>`);
+  html = html.replace(
+    /<meta name="description"[^>]*>/,
+    `<meta name="description" content="${descAttr}" />`
+  );
+  html = html.replace(
+    /<link rel="canonical"[^>]*>/,
+    `<link rel="canonical" href="${canonical}" />`
+  );
+  html = html.replace(
+    /<meta property="og:title"[^>]*>/,
+    `<meta property="og:title" content="${titleAttr}" />`
+  );
+  html = html.replace(
+    /<meta property="og:description"[^>]*>/,
+    `<meta property="og:description" content="${descAttr}" />`
+  );
+  html = html.replace(
+    /<meta property="og:url"[^>]*>/,
+    `<meta property="og:url" content="${canonical}" />`
+  );
+  html = html.replace(
+    /<meta name="twitter:title"[^>]*>/,
+    `<meta name="twitter:title" content="${titleAttr}" />`
+  );
+  html = html.replace(
+    /<meta name="twitter:description"[^>]*>/,
+    `<meta name="twitter:description" content="${descAttr}" />`
+  );
+
+  // Rewrite the prerender block with this route's H1 + body
+  const prerender = `<div class="seo-prerender"><h1>${route.h1}</h1>${route.body}<noscript>Ozly requires JavaScript. Please enable JavaScript or download the app on iOS or Android.</noscript></div>`;
+  html = html.replace(
+    /<div class="seo-prerender">[\s\S]*?<\/div>/,
+    prerender
+  );
+
+  return html;
+}
+
+// Root index.html — rewrite in place with route[0]
+writeFileSync(join(dist, "index.html"), render(routes[0]), "utf8");
+console.log(`  ✓ /index.html`);
+
+// Non-root routes
+for (const route of routes.slice(1)) {
+  const dir = join(dist, route.path);
   const target = join(dir, "index.html");
   if (existsSync(target)) {
-    console.log(`  ⏭ ${route}/index.html (static file exists)`);
+    console.log(`  ⏭ ${route.path}/index.html (static file exists)`);
     continue;
   }
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
-  copyFileSync(src, target);
-  console.log(`  ✓ ${route}/index.html`);
+  writeFileSync(target, render(route), "utf8");
+  console.log(`  ✓ ${route.path}/index.html`);
 }
 
 console.log("Post-build: done.");
