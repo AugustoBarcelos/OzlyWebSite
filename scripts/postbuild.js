@@ -160,9 +160,9 @@ function render(route) {
   );
 
   // Rewrite the prerender block with this route's H1 + body
-  const prerender = `<div class="seo-prerender"><h1>${route.h1}</h1>${route.body}<noscript>Ozly requires JavaScript. Please enable JavaScript or download the app on iOS or Android.</noscript></div>`;
+  const prerender = `<main class="seo-prerender"><h1>${route.h1}</h1>${route.body}<noscript>Ozly requires JavaScript. Please enable JavaScript or download the app on iOS or Android.</noscript></main>`;
   html = html.replace(
-    /<div class="seo-prerender">[\s\S]*?<\/div>/,
+    /<main class="seo-prerender">[\s\S]*?<\/main>/,
     prerender
   );
 
