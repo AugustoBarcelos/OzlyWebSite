@@ -12,7 +12,7 @@
     "title": "Basta de desorden. Shifts, Invoices e Impuestos en un solo lugar.",
     "titleHighlight": "Hecho para los que trabajan con ABN y/o TFN en Australia.",
     "subtitle": "Agenda tus Jobs, emite y gestiona tus invoices, prevé tus ingresos, registra y organiza gastos deducibles de tu tax return, estima cuánto impuesto tendrás que pagar en el año, verifica el cumplimiento del límite de horas trabajadas, y mucho más, ¡todo en una sola app! Desde {price}.",
-    "price": "$9/mes ($2.10/semana)",
+    "price": "$12.50/mes ($2.88/semana)",
     "ctaAppStore": "Descargar en App Store",
     "ctaGooglePlay": "Descargar en Google Play"
   },
@@ -73,7 +73,7 @@
     "paymentTracking": "Control de pagos",
     "profitForecast": "Previsión de ganancia neta",
     "offline": "Funciona 100% Offline",
-    "fixedPrice": "Desde $2.10/semana ($9/mes)"
+    "fixedPrice": "Desde $2.88/semana ($12.50/mes)"
   },
   "pricing": {
     "title": "Elige Tu Plan",
@@ -423,7 +423,7 @@
     "q80": "No estoy recibiendo notificaciones. ¿Qué hago?",
     "a80": "Verifica tres cosas: (1) Configuraciones → Notificaciones dentro de Ozly — confirma que están activas; (2) Configuraciones del iOS/Android → Ozly → Notificaciones activas; (3) optimización de batería — desactiva el modo ahorro para Ozly para que las notificaciones en background puedan dispararse.",
     "q81": "¿Cuánto cuesta cada plan?",
-    "a81": "TFN: AUD $9/mes — para empleados, incluye Net Salary Forecast, Tax Thermometer, Visa Shield, Reembolsos. ABN: AUD $15/mes — para contractors, incluye Invoices, Contractors, Reportes Fiscales, OCR de gastos. Pro: AUD $19/mes — todo de TFN + ABN, más toggle 3 estados, Dashboard Consolidado y Rate Comparison. Todos incluyen 14 días de trial gratis sin tarjeta.",
+    "a81": "TFN: AUD $12.50/mes en plan anual ($14.99/mes mensual) — para empleados, incluye Net Salary Forecast, Tax Thermometer, Visa Shield, Reembolsos. ABN: AUD $12.50/mes en plan anual ($14.99/mes mensual) — para contractors, incluye Invoices, Contractors, Reportes Fiscales, OCR de gastos. Pro: AUD $16.67/mes en plan anual ($19.99/mes mensual) — todo de TFN + ABN, más toggle 3 estados, Dashboard Consolidado y Rate Comparison. Todos incluyen 14 días de trial gratis sin tarjeta.",
     "q82": "¿Cómo restauro mis compras en un celular nuevo?",
     "a82": "Abre Ozly y ve a Paywall → Restore Purchases (o Configuraciones → Subscription → Restore). Inicia sesión con la misma Apple ID o Google Account que usaste para suscribirte y tu plan se reactiva automáticamente.",
     "q83": "¿Cómo hago upgrade o downgrade del plan?",

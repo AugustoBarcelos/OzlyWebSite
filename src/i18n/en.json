@@ -12,7 +12,7 @@
     "title": "No more mess. Shifts, Invoices & Taxes in one place.",
     "titleHighlight": "Built for ABN and/or TFN workers in Australia.",
     "subtitle": "Schedule Jobs, issue and manage your invoices, forecast your revenue, track and organise tax-deductible expenses, estimate how much tax you'll owe this year, check your working hours compliance, and much more — all in one app! Starting from {price}.",
-    "price": "$9/mo ($2.10/week)",
+    "price": "$12.50/mo ($2.88/week)",
     "ctaAppStore": "Download on App Store",
     "ctaGooglePlay": "Get it on Google Play"
   },
@@ -73,7 +73,7 @@
     "paymentTracking": "Payment tracking",
     "profitForecast": "Net profit forecast",
     "offline": "Works 100% Offline",
-    "fixedPrice": "Starting from $2.10/week ($9/month)"
+    "fixedPrice": "Starting from $2.88/week ($12.50/month)"
   },
   "pricing": {
     "title": "Choose Your Plan",
@@ -423,7 +423,7 @@
     "q80": "I'm not getting notifications. What can I do?",
     "a80": "Check three things: (1) Settings → Notifications inside Ozly — make sure they're enabled; (2) iOS/Android system settings → Ozly → Notifications enabled; (3) battery optimisation — disable battery saver for Ozly so background notifications can fire.",
     "q81": "How much does each plan cost?",
-    "a81": "TFN: AUD $9/month — for employees, includes Net Salary Forecast, Tax Thermometer, Visa Shield, Reimbursements. ABN: AUD $15/month — for contractors, includes Invoices, Contractors, Tax Reports, Expense OCR. Pro: AUD $19/month — everything from TFN + ABN, plus 3-way Toggle, Consolidated Dashboard and Rate Comparison. All include a 14-day free trial with no card required.",
+    "a81": "TFN: AUD $12.50/month on annual plan ($14.99/month monthly) — for employees, includes Net Salary Forecast, Tax Thermometer, Visa Shield, Reimbursements. ABN: AUD $12.50/month on annual plan ($14.99/month monthly) — for contractors, includes Invoices, Contractors, Tax Reports, Expense OCR. Pro: AUD $16.67/month on annual plan ($19.99/month monthly) — everything from TFN + ABN, plus 3-way Toggle, Consolidated Dashboard and Rate Comparison. All include a 14-day free trial with no card required.",
     "q82": "How do I restore my purchases on a new phone?",
     "a82": "Open Ozly and go to Paywall → Restore Purchases (or Settings → Subscription → Restore). Sign in with the same Apple ID or Google Account you used to subscribe and your plan reactivates automatically.",
     "q83": "How do I upgrade or downgrade my plan?",
