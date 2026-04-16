@@ -1,17 +1,81 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en-AU">
   <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-92YTLTRQ5V"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-92YTLTRQ5V');
+    </script>
+
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/OSLY.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ozly - Invoices Ilimitados e Imposto sob Controle</title>
-    <meta name="description" content="Ozly helps Australian sole traders and contractors manage invoices, track expenses, and stay on top of tax obligations. Available on iOS and Android." />
-    <meta name="robots" content="index, follow" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet" />
-    <script type="module" crossorigin src="/assets/index-s7U_81Pz.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-BJmIDWIa.css">
+    <title>Ozly — Free Invoicing & Tax Tracker for Australian Sole Traders</title>
+    <meta name="description" content="Ozly helps Australian sole traders, contractors, and tradies send unlimited invoices, scan receipts, track expenses, and stay on top of GST and PAYG tax. Free on iOS and Android." />
+    <meta name="keywords" content="invoicing app Australia, sole trader app, ABN invoicing, GST tracker, PAYG tax calculator, expense tracker, tradie app, contractor app, receipt scanner, free invoice app" />
+    <meta name="author" content="Ozly Pty Ltd" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="theme-color" content="#2BBB97" />
+    <link rel="canonical" href="https://ozly.au/" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Ozly" />
+    <meta property="og:title" content="Ozly — Free Invoicing &amp; Tax Tracker for Australian Sole Traders" />
+    <meta property="og:description" content="Ozly helps Australian sole traders, contractors, and tradies send unlimited invoices, scan receipts, track expenses, and stay on top of GST and PAYG tax. Free on iOS and Android." />
+    <meta property="og:url" content="https://ozly.au/" />
+    <meta property="og:locale" content="en_AU" />
+    <meta property="og:image" content="https://ozly.au/OSLY.svg" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Ozly — Free Invoicing &amp; Tax Tracker for Australian Sole Traders" />
+    <meta name="twitter:description" content="Ozly helps Australian sole traders, contractors, and tradies send unlimited invoices, scan receipts, track expenses, and stay on top of GST and PAYG tax. Free on iOS and Android." />
+    <meta name="twitter:image" content="https://ozly.au/OSLY.svg" />
+
+    <!-- Structured data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "MobileApplication",
+      "name": "Ozly",
+      "operatingSystem": "iOS, Android",
+      "applicationCategory": "BusinessApplication",
+      "description": "Free invoicing, expense tracking, and tax management app for Australian sole traders and contractors.",
+      "url": "https://ozly.au/",
+      "image": "https://ozly.au/OSLY.svg",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "AUD" },
+      "publisher": { "@type": "Organization", "name": "Ozly Pty Ltd", "url": "https://ozly.au/" }
+    }
+    </script>
+
+    <link rel="preload" href="/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/inter-800.woff2" as="font" type="font/woff2" crossorigin />
+    <style>
+      @font-face{font-family:Inter;font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/inter-400.woff2) format('woff2')}
+      @font-face{font-family:Inter;font-style:normal;font-weight:600;font-display:swap;src:url(/fonts/inter-600.woff2) format('woff2')}
+      @font-face{font-family:Inter;font-style:normal;font-weight:800;font-display:swap;src:url(/fonts/inter-800.woff2) format('woff2')}
+      @font-face{font-family:Montserrat;font-style:normal;font-weight:800;font-display:swap;src:url(/fonts/montserrat-800.woff2) format('woff2')}
+      body{margin:0;background:#F8FAFC}
+      .seo-prerender{max-width:900px;margin:0 auto;padding:112px 24px 48px;font-family:Inter,system-ui,sans-serif;color:#334155;line-height:1.5;text-align:center}
+      .seo-prerender h1{font-size:2.25rem;font-weight:800;color:#0f2540;margin:0 0 20px;line-height:1.1;letter-spacing:-0.02em}
+      .seo-prerender h1 .accent{color:#2BBB97;display:block}
+      .seo-prerender .sub{font-size:1.125rem;color:#64748b;margin:20px auto 28px;max-width:32rem}
+      .seo-prerender h2{font-size:1.25rem;font-weight:700;color:#0f172a;margin:28px 0 8px;text-align:left}
+      .seo-prerender p,.seo-prerender ul{text-align:left}
+      .seo-prerender p{margin:10px 0}
+      .seo-prerender ul{margin:10px 0;padding-left:20px}
+      .seo-prerender a{color:#2BBB97;text-decoration:underline}
+      @media(min-width:640px){.seo-prerender h1{font-size:3rem}}
+      @media(min-width:1024px){.seo-prerender h1{font-size:3.5rem}}
+    </style>
+    <script type="module" crossorigin src="/assets/index-DQXKRgTT.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/react-vendor-DSQNl_qC.js">
+    <link rel="modulepreload" crossorigin href="/assets/icons-C0_Ycvk3.js">
+    <link rel="preload" href="/assets/index-CDu7CNWR.css" as="style" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="/assets/index-CDu7CNWR.css"></noscript>
   </head>
   <body>
     <!-- Handle SPA redirect from 404.html on GitHub Pages -->
@@ -24,6 +88,40 @@
         }
       })();
     </script>
-    <div id="root"></div>
+    <div id="root">
+      <main class="seo-prerender"><h1>Free Invoicing &amp; Tax Tracker<span class="accent">for Australian Sole Traders</span></h1>
+      <p class="sub">Send unlimited invoices, scan receipts, and stay on top of GST and PAYG tax — free on iOS and Android.</p>
+      <p>Ozly is the free, all-in-one mobile app built for Australian sole traders, independent contractors, tradies, freelancers, and small-business owners. From the moment you register an ABN, Ozly helps you run every financial side of your business: unlimited professional invoices, AI receipt scanning, ATO-aligned expense tracking, real-time GST estimates, PAYG income-tax projections, jobs and quotes, contractor payments, and end-of-financial-year reporting — all from your phone, on iOS or Android, with encrypted cloud sync across devices.</p>
+
+      <h2>Invoicing without limits</h2>
+      <p>Create and send professional invoices in under a minute. Add line items, GST (10%), PAYG withholding, due dates, purchase orders, and custom notes. Attach your logo and payment details. Track payment status in real time, send automatic reminders for overdue invoices, and keep a clean audit trail. There are no monthly invoice caps, no per-invoice fees, and no paywalls on the basics — unlimited invoicing is free for every Ozly user.</p>
+
+      <h2>AI-powered receipt scanning</h2>
+      <p>Scan any paper or digital receipt with your phone camera. Ozly's AI reads the total, date, supplier, GST amount, and product category automatically, so you never type an expense by hand. Matched receipts are saved to encrypted cloud storage and linked back to the right job or tax period. At tax time, everything is already sorted, categorised, and export-ready.</p>
+
+      <h2>Expense tracking aligned with the ATO</h2>
+      <p>Every expense category in Ozly maps to a deductible classification recognised by the Australian Taxation Office: motor vehicle, tools and equipment, phone and internet, home office, subscriptions, travel, uniforms, training, and more. Add mileage with the built-in logbook, split mixed-use purchases, and attach notes for audit evidence. Your deductions stay defensible, so at EOFY you pay what you owe — and not a dollar more.</p>
+
+      <h2>Live GST, BAS & PAYG estimates</h2>
+      <p>Ozly's tax dashboard updates every time you invoice or spend. See exactly what you owe in GST this quarter, how your BAS is shaping up, and your projected PAYG instalment for the year. Get alerts before you cross the $75,000 GST registration threshold. Export BAS-ready summaries directly to your accountant or straight into the ATO Business Portal.</p>
+
+      <h2>Jobs, quotes & contractor payments</h2>
+      <p>Quote jobs, schedule work, track materials, and convert accepted quotes to invoices with one tap. Manage subbies and contractors, capture their ABN details, track what you paid them across the year, and generate Taxable Payments Annual Report (TPAR) data when the ATO needs it. Ideal for cleaners, tradies, delivery drivers, bike mechanics, hair stylists, freelance consultants, and cafe owners with a second income.</p>
+
+      <h2>Built specifically for Australian sole traders</h2>
+      <p>Ozly is not a generic bookkeeping tool retrofitted for Australia. It is designed from day one around the Australian Taxation Office, the Australian Privacy Principles, and the realities of sole-trader life. The app ships in English, Portuguese, and Spanish so newcomers and migrant workers feel at home. Whether you are cleaning homes in Sydney, fixing bikes in Melbourne, delivering food in Brisbane, styling hair in Perth, or running a cafe on the side in Adelaide, Ozly keeps your books tidy, your GST tracked, and your tax reports ready for the ATO.</p>
+
+      <h2>Free forever on the basics</h2>
+      <p>Unlimited invoices, unlimited expenses, unlimited receipts, and live tax estimates are included at no cost. Ozly Pro unlocks advanced reports, multi-business support, contractor batch payments, and priority human support — for a flat, transparent monthly price. No lock-in contracts, no setup fees, no surprise charges, cancel anytime. Your data is always yours, always exportable.</p>
+
+      <h2>Private, secure, Australian-owned</h2>
+      <p>Your data is encrypted in transit and at rest. You decide what syncs to the cloud and what stays on-device. We never sell your data. Ozly is operated by Ozly Pty Ltd, based in Australia, and complies with the Privacy Act 1988 and the Australian Privacy Principles. Delete your account at any time and every byte of your data is permanently purged within 30 days.</p>
+
+      <h2>Get started with Ozly in 2 minutes</h2>
+      <p>Install Ozly on your phone, sign up with Apple, Google, or email, add your ABN, and send your first invoice before the kettle boils. No credit card required, no demo call, no trial timer.</p>
+      <p><a href="https://apps.apple.com/app/ozly/id6760398649">Download Ozly on the App Store</a> · <a href="https://play.google.com/store/apps/details?id=com.augusto.ozly">Get Ozly on Google Play</a></p>
+      <p>Need more detail? Read the full <a href="/guide">Ozly user guide</a>, browse the <a href="/support">Support &amp; FAQ</a>, or review our <a href="/privacy-policy">Privacy Policy</a> and <a href="/terms-of-use">Terms of Use</a>.</p>
+    <noscript>Ozly requires JavaScript. Please enable JavaScript or download the app on iOS or Android.</noscript></main>
+    </div>
   </body>
 </html>
