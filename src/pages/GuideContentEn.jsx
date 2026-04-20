@@ -60,6 +60,12 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
 
       {/* ─── 2. SETUP ─── */}
       <SectionCard id="setup" title="2. Initial Setup">
+        <InfoBox>
+          <B>Video:</B>{" "}
+          <a href="https://youtube.com/shorts/Y-ftNz2fGDw?feature=share" target="_blank" rel="noopener noreferrer" className="underline font-semibold">
+            Initial setup walkthrough (YouTube)
+          </a>
+        </InfoBox>
         <P>After creating your account, the Setup only asks for the essentials to get you started.</P>
 
         <SubSection title="Required Fields">
@@ -93,12 +99,50 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
         </SubSection>
 
         <SubSection title="Finalize">
-          <P>Tap <B>"Get Started"</B> (big green button). Ozly saves everything and takes you to the Dashboard.</P>
+          <P>Tap <B>"Get Started"</B> (big green button). Ozly saves everything and takes you to the Welcome screen.</P>
         </SubSection>
       </SectionCard>
 
-      {/* ─── 3. DASHBOARD ─── */}
-      <SectionCard id="dashboard" title="3. Dashboard — Main Screen">
+      {/* ─── 3. WELCOME TRIAL ─── */}
+      <SectionCard id="welcome-trial" title="3. Welcome and Trial Plan Selection">
+        <P>After Setup, you'll see a welcome screen with the 3 available plans. Your <B>14-day free trial</B> starts here.</P>
+
+        <SubSection title="The 3 Plans">
+          <SimpleTable
+            headers={["Card", "Who it's for"]}
+            rows={[
+              ["TFN", "Employees — paid under TFN"],
+              ["ABN", "Contractors / freelancers — issue invoices"],
+              ["PRO", "Both — switch between modes"],
+            ]}
+          />
+        </SubSection>
+
+        <SubSection title="Automatic Pre-selection">
+          <P>Ozly pre-selects a plan based on what you picked as <B>Work Type</B> in Setup:</P>
+          <BulletList>
+            <li>Chose "TFN" → TFN plan pre-selected</li>
+            <li>Chose "ABN" → ABN plan pre-selected</li>
+            <li>Chose "Both" → PRO plan pre-selected</li>
+          </BulletList>
+          <P>You can tap any other card to switch.</P>
+        </SubSection>
+
+        <SubSection title="Continue">
+          <P>Tap <B>"Get Started"</B>. You land on the Dashboard with 14 days of full access to every Pro feature.</P>
+        </SubSection>
+
+        <Tip>The trial starts right away and nothing is charged. You can cancel before it ends through the App Store / Google Play with no charge.</Tip>
+      </SectionCard>
+
+      {/* ─── 4. DASHBOARD ─── */}
+      <SectionCard id="dashboard" title="4. Dashboard — Main Screen">
+        <InfoBox>
+          <B>Video:</B>{" "}
+          <a href="https://youtube.com/shorts/U0kqn1DQ80M?feature=share" target="_blank" rel="noopener noreferrer" className="underline font-semibold">
+            How to use the Dashboard (YouTube)
+          </a>
+        </InfoBox>
         <P>The Dashboard is Ozly's control center. Everything you need on one screen.</P>
 
         <SubSection title="Top Bar (App Bar)">
@@ -131,7 +175,13 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
       </SectionCard>
 
       {/* ─── 4. MENU LATERAL ─── */}
-      <SectionCard id="menu-lateral" title="4. Side Menu (Drawer)">
+      <SectionCard id="menu-lateral" title="5. Side Menu (Drawer)">
+        <InfoBox>
+          <B>Video:</B>{" "}
+          <a href="https://youtube.com/shorts/3uOvNdymxec?feature=share" target="_blank" rel="noopener noreferrer" className="underline font-semibold">
+            How to navigate the side menu (YouTube)
+          </a>
+        </InfoBox>
         <P>Access by swiping from left to right or tapping the hamburger menu.</P>
 
         <SubSection title="Navigation">
@@ -164,7 +214,13 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
       </SectionCard>
 
       {/* ─── 5. JOBS ─── */}
-      <SectionCard id="jobs" title="5. Jobs">
+      <SectionCard id="jobs" title="6. Jobs">
+        <InfoBox>
+          <B>Video:</B>{" "}
+          <a href="https://youtube.com/shorts/2ef45Y-oCCo?feature=share" target="_blank" rel="noopener noreferrer" className="underline font-semibold">
+            How to create a new job (YouTube)
+          </a>
+        </InfoBox>
         <SubSection title="How to get there">
           <SimpleTable
             headers={["Path", "How"]}
@@ -180,7 +236,7 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
         <SubSection title="Views">
           <BulletList>
             <li><B>List</B> — All jobs with filters and text search</li>
-            <li><B>Calendar</B> — Monthly/weekly view of jobs on the calendar</li>
+            <li><B>Calendar</B> — Monthly/weekly view of jobs on the calendar. Tap a <B>day</B> to see that day's jobs; tap a <B>job inside the calendar</B> to open its details. Use the FAB "+" to create a job with the selected day's date pre-filled.</li>
           </BulletList>
           <P><B>Available filters:</B> Status (confirmed, pending, completed, cancelled), Period (today, tomorrow, in N days, overdue), and Business/ABN.</P>
         </SubSection>
@@ -224,12 +280,62 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
             <li>Dashboard → "Pending Jobs" card → green button (check)</li>
             <li>Dashboard → "Next Shift" card → Tap → "Complete Job"</li>
           </BulletList>
-          <InfoBox>After completing, the system automatically logs hours, starts the Golden Hour timer (60 min to create an invoice = 2x XP), and offers "Generate Invoice".</InfoBox>
+          <InfoBox>After completing, a <B>celebration bottom sheet</B> appears showing: hours worked, revenue generated, XP earned, and a <B>visual Golden Hour timer</B> (60 minutes to create an invoice = 2x XP). From that sheet you can tap <B>"Generate Invoice"</B> to invoice immediately.</InfoBox>
         </SubSection>
       </SectionCard>
 
-      {/* ─── 6. CONTRACTORS ─── */}
-      <SectionCard id="contractors" title="6. Contractors">
+      {/* ─── 7. TIMESHEETS ─── */}
+      <SectionCard id="timesheets" title="7. Timesheets and Daily Earnings Logging (TFN)">
+        <InfoBox>
+          <B>Video:</B>{" "}
+          <a href="https://youtube.com/shorts/b-8qKewF3A8?feature=share" target="_blank" rel="noopener noreferrer" className="underline font-semibold">
+            How to create a Timesheet (YouTube)
+          </a>
+        </InfoBox>
+        <P>For those paid as <B>employees (TFN)</B>, Ozly has timesheet tools to log hours and earnings without creating an invoice.</P>
+
+        <SubSection title="Timesheets Hub">
+          <P>Side menu → <B>"Timesheets"</B>. Central place to view every timesheet you've saved (current week, previous, and drafts).</P>
+          <BulletList>
+            <li><B>Current Week</B> — timesheet for the week in progress</li>
+            <li><B>Previous Weeks</B> — rolling history</li>
+            <li><B>Saved</B> — finalized timesheets with generated PDF</li>
+          </BulletList>
+        </SubSection>
+
+        <SubSection title="Fill a Weekly Timesheet">
+          <StepList>
+            <li>Pick the week (period selector at the top)</li>
+            <li>For each day: tap and fill start time, end time, and unpaid break</li>
+            <li>Day and week totals calculate automatically</li>
+            <li>Add <B>break minutes</B> (unpaid) if applicable</li>
+            <li>Tap <B>"Save"</B> to keep it, or <B>"Generate PDF"</B> to produce a record</li>
+          </StepList>
+        </SubSection>
+
+        <SubSection title="Log Daily Earnings">
+          <P>Quick shortcut on the Dashboard — <B>"Log Earnings"</B> button. Use it when you already received the payment and just need to log it.</P>
+          <StepList>
+            <li>Pick the date</li>
+            <li>Type the total received (big field with "$")</li>
+            <li>Pick the platform/employer from the dropdown</li>
+            <li>Tap <B>"Log Earnings"</B></li>
+          </StepList>
+          <P>The amount is recorded as income without going through the invoice flow.</P>
+        </SubSection>
+
+        <SubSection title="Share Timesheet">
+          <P>Once the PDF is generated, you get the same options as invoices:</P>
+          <BulletList>
+            <li>WhatsApp, Email, SMS, Share PDF, Download, Print</li>
+          </BulletList>
+        </SubSection>
+
+        <Tip>If you have hybrid contracts (TFN + ABN), use Timesheets for TFN jobs and Invoices for ABN jobs — totals show up separately in Financial.</Tip>
+      </SectionCard>
+
+      {/* ─── 8. CONTRACTORS ─── */}
+      <SectionCard id="contractors" title="8. Contractors">
         <InfoBox>
           <B>Video:</B>{" "}
           <a href="https://youtube.com/shorts/fBN6d0GEeNs?feature=share" target="_blank" rel="noopener noreferrer" className="underline font-semibold">
@@ -242,7 +348,7 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
           <P>Button <B>"+ Add Contractor"</B> or during Job/Invoice creation → <B>"New Client"</B>.</P>
           <StepList>
             <li><B>Type</B>: "Agency" or "Direct Client"</li>
-            <li><B>"Import from Contacts"</B> — fills in data from your phone</li>
+            <li><B>"Import from Contacts"</B> — opens your phone's address book. Automatically imports: <B>name, phone and email</B>. ABN, address and hourly rate you fill in manually.</li>
             <li><B>Name</B> (required), <B>Email</B>, <B>Phone</B>, <B>ABN</B>, <B>Address</B>, <B>Hourly Rate</B> (default), <B>Notes</B></li>
             <li>Tap <B>"Save"</B></li>
           </StepList>
@@ -266,7 +372,13 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
       </SectionCard>
 
       {/* ─── 7. INVOICES ─── */}
-      <SectionCard id="invoices" title="7. Invoices">
+      <SectionCard id="invoices" title="9. Invoices">
+        <InfoBox>
+          <B>Video:</B>{" "}
+          <a href="https://youtube.com/shorts/4PrnOG9wh50?feature=share" target="_blank" rel="noopener noreferrer" className="underline font-semibold">
+            How to create an invoice (YouTube)
+          </a>
+        </InfoBox>
         <SubSection title="6 paths to create an Invoice">
           <SimpleTable
             headers={["#", "Path", "Pre-filled data"]}
@@ -314,7 +426,7 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
       </SectionCard>
 
       {/* ─── 8. EXPENSES ─── */}
-      <SectionCard id="expenses" title="8. Expenses">
+      <SectionCard id="expenses" title="10. Expenses">
         <InfoBox>
           <B>Video:</B>{" "}
           <a href="https://youtube.com/shorts/oTwY3_WD_H8?feature=share" target="_blank" rel="noopener noreferrer" className="underline font-semibold">
@@ -357,8 +469,47 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
         </SubSection>
       </SectionCard>
 
-      {/* ─── 9. FINANCIAL ─── */}
-      <SectionCard id="financial" title="9. Financial">
+      {/* ─── 11. REIMBURSEMENTS ─── */}
+      <SectionCard id="reimbursements" title="11. Reimbursements">
+        <P>Reimbursements are <B>amounts you paid on behalf of a client/contractor</B> and need to recover — separate from tax-deductible expenses.</P>
+
+        <SubSection title="Difference between Expense and Reimbursement">
+          <SimpleTable
+            headers={["Type", "Who pays", "Use"]}
+            rows={[
+              ["Expense", "You pay out of pocket", "Tax deduction (ATO)"],
+              ["Reimbursement", "You front, client pays back", "Extra line on invoice"],
+            ]}
+          />
+        </SubSection>
+
+        <SubSection title="Add a Reimbursement">
+          <StepList>
+            <li>Side menu → <B>"Reimbursements"</B> → FAB <B>"+"</B></li>
+            <li>Pick the <B>Contractor</B> this relates to</li>
+            <li>Fill <B>Date</B>, <B>Amount</B>, <B>Description</B>, <B>Category</B></li>
+            <li>(Optional) Take a photo of the receipt</li>
+            <li>Tap <B>"Save"</B></li>
+          </StepList>
+        </SubSection>
+
+        <SubSection title="Add Reimbursements to an Invoice">
+          <P>When you create an invoice for the contractor, pending reimbursements appear automatically as an option to include. Tick the ones you want to bill and they turn into separate line items on the invoice.</P>
+        </SubSection>
+
+        <SubSection title="List and Filter">
+          <BulletList>
+            <li>By contractor</li>
+            <li>By status: Pending / Reimbursed</li>
+            <li>By period</li>
+          </BulletList>
+        </SubSection>
+
+        <Tip>Reimbursements are <B>not deductible</B> — after all the money comes back to you. Use Expenses for costs that will be deducted at tax time.</Tip>
+      </SectionCard>
+
+      {/* ─── 12. FINANCIAL ─── */}
+      <SectionCard id="financial" title="12. Financial">
         <P>Side menu → <B>"Financial"</B>.</P>
 
         <SubSection title="Summary Cards">
@@ -393,7 +544,7 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
       </SectionCard>
 
       {/* ─── 10. FISCAL ─── */}
-      <SectionCard id="fiscal" title="10. Fiscal (Taxes)">
+      <SectionCard id="fiscal" title="13. Fiscal (Taxes)">
         <P>Side menu → <B>"Fiscal"</B> (requires Pro).</P>
 
         <SubSection title="Tax Tables (ATO 2024-26)">
@@ -463,7 +614,7 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
       </SectionCard>
 
       {/* ─── 11. VISA SHIELD ─── */}
-      <SectionCard id="visa-shield" title="11. Visa Shield (Hours Control)">
+      <SectionCard id="visa-shield" title="14. Visa Shield (Hours Control)">
         <P>Side menu → <B>"Visa Shield"</B> (Pro, work/student visa only).</P>
 
         <SubSection title="Main Screen">
@@ -484,7 +635,7 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
       </SectionCard>
 
       {/* ─── 12. HUSTLE SCORE ─── */}
-      <SectionCard id="hustle-score" title="12. Hustle Score (Gamification)">
+      <SectionCard id="hustle-score" title="15. Hustle Score (Gamification)">
         <P>Side menu → <B>"Hustle"</B>.</P>
 
         <SubSection title="How to earn XP">
@@ -565,7 +716,7 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
       </SectionCard>
 
       {/* ─── 13. GOOGLE CALENDAR ─── */}
-      <SectionCard id="google-calendar" title="13. Google Calendar">
+      <SectionCard id="google-calendar" title="16. Google Calendar">
         <SubSection title="Connect">
           <StepList>
             <li>Go to <B>Settings → Integrations</B></li>
@@ -591,7 +742,7 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
       </SectionCard>
 
       {/* ─── 14. PERFIL ─── */}
-      <SectionCard id="perfil" title="14. Profile">
+      <SectionCard id="perfil" title="17. Profile">
         <SubSection title="How to get there">
           <BulletList>
             <li>Side menu → Tap the avatar or name</li>
@@ -638,7 +789,7 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
       </SectionCard>
 
       {/* ─── 15. CONFIGURAÇÕES ─── */}
-      <SectionCard id="settings" title="15. Settings">
+      <SectionCard id="settings" title="18. Settings">
         <P>Side menu → <B>"Settings"</B>.</P>
 
         <SubSection title="General">
@@ -647,8 +798,19 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
             <li><B>Theme</B> — Personalized (changes with Hustle level), Light, Dark, System</li>
             <li><B>Juice (Effects)</B> — Toggle on/off (vibrations, animations, sounds)</li>
             <li><B>Week Start Day</B> — Monday to Sunday</li>
-            <li><B>Invoice Messages</B> — Editable templates for sending and reminders. Placeholders: {"{name}"}, {"{number}"}, {"{amount}"}, {"{date}"}</li>
+            <li><B>Invoice Messages</B> — Editable templates for sending and reminders (see below)</li>
           </BulletList>
+        </SubSection>
+
+        <SubSection title="Customize Invoice Messages">
+          <P>In <B>Settings → Invoice Messages</B> you edit two ready-made templates:</P>
+          <BulletList>
+            <li><B>Send Invoice</B> — first message when you send a new invoice (WhatsApp, SMS, Email)</li>
+            <li><B>Payment Reminder</B> — reminder for overdue invoices</li>
+          </BulletList>
+          <P><B>Available placeholders:</B> <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded">{"{name}"}</code> (contractor name), <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded">{"{number}"}</code> (invoice number), <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded">{"{amount}"}</code> (amount), <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded">{"{date}"}</code> (due date)</P>
+          <P><B>Example:</B> "Hi {"{name}"}, here's invoice {"{number}"} for {"{amount}"} due {"{date}"}. Thanks!"</P>
+          <Tip>Tap <B>"Reset to Default"</B> to get the original texts back if you mess up a template.</Tip>
         </SubSection>
 
         <SubSection title="Language">
@@ -667,7 +829,7 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
         </SubSection>
 
         <SubSection title="Integrations">
-          <P>Google Calendar — see section 13.</P>
+          <P>Google Calendar — see section 16.</P>
         </SubSection>
 
         <SubSection title="Help">
@@ -684,7 +846,7 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
       </SectionCard>
 
       {/* ─── 16. ASSINATURA PRO ─── */}
-      <SectionCard id="assinatura-pro" title="16. Pro Subscription">
+      <SectionCard id="assinatura-pro" title="19. Pro Subscription">
         <P>Settings → <B>"Upgrade to Pro"</B> or tap any item that requires Pro.</P>
 
         <SubSection title="Available Plans">
@@ -703,21 +865,57 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
           </BulletList>
         </SubSection>
 
-        <SubSection title="Actions">
+        <SubSection title="Actions on the Subscription Screen">
           <SimpleTable
             headers={["Action", "What it does"]}
             rows={[
-              ["Subscribe", "Starts native purchase (App Store / Google Play)"],
-              ["Restore Purchases", "Recovers a previous subscription"],
-              ["Terms / Privacy", "Opens links"],
+              ["Subscribe / Start Trial", "Starts native purchase (App Store / Google Play) with 14-day free trial"],
+              ["Restore Purchases", "Recovers a subscription you already bought (see below)"],
+              ["Monthly ↔ Annual", "Switches between monthly and annual (annual shows % savings)"],
+              ["Terms / Privacy", "Opens legal links"],
               ["X (close)", "Returns without subscribing"],
             ]}
           />
         </SubSection>
+
+        <SubSection title="Restore Purchases">
+          <P>Use this when you <B>already subscribed before</B> and need to reactivate — for example:</P>
+          <BulletList>
+            <li>Switched phones and reinstalled Ozly</li>
+            <li>Logged out and lost Pro status</li>
+            <li>Your subscription disappeared due to a bug</li>
+          </BulletList>
+          <StepList>
+            <li>Open the subscription screen (Settings → Upgrade or any Pro feature)</li>
+            <li>Tap <B>"Restore Purchases"</B></li>
+            <li>Sign in with the same App Store / Google Play account you used to buy</li>
+            <li>Ozly checks and restores Pro access instantly</li>
+          </StepList>
+          <Tip>If nothing is found, you'll see "No active subscription" — meaning you really don't have one, or you're signed in with a different account from the one that bought it.</Tip>
+        </SubSection>
+
+        <SubSection title="When the Trial Ends">
+          <P>After the 14-day trial, if you <B>didn't subscribe</B>:</P>
+          <BulletList>
+            <li>Pro features (Fiscal, advanced Expenses, Visa Shield, comparisons) are locked</li>
+            <li>The Dashboard still works so you can view the data you already saved</li>
+            <li>Tapping any Pro item takes you straight to the subscription screen</li>
+            <li>In some cases (iOS), the subscription screen appears right when you open the app — just <B>tap "Restore Purchases"</B> (if you already subscribed), <B>pick a plan</B>, or <B>sign out</B> if you prefer to use another account</li>
+          </BulletList>
+        </SubSection>
+
+        <SubSection title="Cancel Subscription">
+          <P>Ozly <B>does not cancel from inside the app</B> — cancellation goes through the store:</P>
+          <BulletList>
+            <li><B>iOS:</B> App Store → your profile → Subscriptions → Ozly → Cancel</li>
+            <li><B>Android:</B> Google Play → menu → Payments {"&"} subscriptions → Ozly → Cancel</li>
+          </BulletList>
+          <P>No fees. You keep Pro access until the end of the period already paid.</P>
+        </SubSection>
       </SectionCard>
 
-      {/* ─── 17. MODO OFFLINE ─── */}
-      <SectionCard id="modo-offline" title="17. Offline Mode and Sync">
+      {/* ─── 20. MODO OFFLINE ─── */}
+      <SectionCard id="modo-offline" title="20. Offline Mode and Sync">
         <P>Ozly is <B>offline-first</B> — all data is stored on your phone in an encrypted database (SQLCipher).</P>
 
         <SimpleTable
@@ -750,7 +948,7 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
       </SectionCard>
 
       {/* ─── 18. INDICAÇÃO ─── */}
-      <SectionCard id="indicacao" title="18. Referral">
+      <SectionCard id="indicacao" title="21. Referral">
         <StepList>
           <li>On the Dashboard, find the green <B>"Earn 1 Free Month"</B> card</li>
           <li>Tap the card</li>
@@ -761,7 +959,7 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
       </SectionCard>
 
       {/* ─── 19. NOTIFICAÇÕES ─── */}
-      <SectionCard id="notificacoes" title="19. Automatic Notifications">
+      <SectionCard id="notificacoes" title="22. Automatic Notifications">
         <P>Ozly sends smart local notifications:</P>
         <SimpleTable
           headers={["Notification", "When", "What it shows"]}
@@ -777,7 +975,7 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
       </SectionCard>
 
       {/* ─── 20. SEGURANÇA ─── */}
-      <SectionCard id="seguranca" title="20. Security and Privacy">
+      <SectionCard id="seguranca" title="23. Security and Privacy">
         <SimpleTable
           headers={["Layer", "Protection"]}
           rows={[
@@ -797,7 +995,7 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
       </SectionCard>
 
       {/* ─── 21. CAMINHOS ALTERNATIVOS ─── */}
-      <SectionCard id="caminhos-alternativos" title="21. All Alternative Paths">
+      <SectionCard id="caminhos-alternativos" title="24. All Alternative Paths">
         <SubSection title="Create Invoice (6 paths)">
           <StepList>
             <li>Financial → "+" or FAB</li>
@@ -859,7 +1057,7 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
       </SectionCard>
 
       {/* ─── 22. FAQ ─── */}
-      <SectionCard id="faq" title="22. Frequently Asked Questions (FAQ)">
+      <SectionCard id="faq" title="25. Frequently Asked Questions (FAQ)">
         <SubSection title="Account">
           <div className="space-y-2">
             <FaqItem q="Can I use it without an ABN?" a="Yes! ABN is optional during sign-up. Complete it when you create your first invoice." />
