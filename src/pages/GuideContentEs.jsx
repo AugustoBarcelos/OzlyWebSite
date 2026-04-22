@@ -271,7 +271,17 @@ export default function GuideContentEs({ SectionCard, SubSection, StepList, Bull
               ["Delete", "Elimina permanentemente"],
             ]}
           />
-          <P>Deslizá el job hacia la izquierda para eliminar. El indicador "In Progress" aparece durante el horario del job.</P>
+          <P>Deslizá el job hacia la izquierda para eliminar. El indicador "In Progress" aparece durante el horario del job. Tirá la lista hacia abajo (<B>pull-to-refresh</B>) para actualizarla con lo que hay en el servidor.</P>
+        </SubSection>
+
+        <SubSection title="Acciones en Lote (Multi-select)">
+          <P>Útil cuando importaste varios jobs del Google Calendar y necesitás corregir el rate de muchos a la vez, o borrar jobs viejos.</P>
+          <StepList>
+            <li><B>Mantené presionado</B> cualquier card → se activa el modo multi-select (aparecen checkboxes).</li>
+            <li>Tocá otros cards para agregarlos o sacarlos de la selección.</li>
+            <li>En la barra superior aparecen dos íconos: <B>lápiz</B> (cambia el valor/hora en todos los seleccionados) y <B>papelera</B> (elimina todos con confirmación).</li>
+            <li>Tocá la <B>X</B> arriba a la izquierda para salir del modo.</li>
+          </StepList>
         </SubSection>
 
         <SubSection title="Marcar Job como Completo (3 caminos)">
@@ -727,11 +737,13 @@ export default function GuideContentEs({ SectionCard, SubSection, StepList, Bull
 
         <SubSection title="Importar Turnos">
           <StepList>
-            <li>En la pantalla de <B>Jobs</B>, tocá el ícono de <B>Sync</B></li>
-            <li>Un modal muestra los eventos encontrados. Ozly filtra usando palabras clave inteligentes (reconoce: shift, cleaning, bond clean, turno, trabalho, etc.)</li>
-            <li>Seleccioná cuáles importar con checkboxes</li>
-            <li>Tocá <B>"Review"</B> → configurá contractor, business y tarifa para cada item</li>
-            <li>Tocá <B>"Import"</B></li>
+            <li>En la pantalla de <B>Jobs</B>, tocá el ícono de <B>Sync</B>.</li>
+            <li><B>Diálogo "¿Importar eventos pasados?"</B> aparece: elegí entre <B>"Solo futuros"</B> (por defecto) o <B>"Elegir desde cuándo"</B> (date picker, hasta 2 años atrás). Los eventos pasados entran como <B>Completados</B> directo, con horas registradas — no ensucian la lista de pendientes.</li>
+            <li>Ozly filtra con palabras clave inteligentes (reconoce: shift, cleaning, bond clean, turno, trabalho, etc.).</li>
+            <li>Si hay <B>conflicto</B> de horario con un job existente, aparece una hoja con 3 opciones: <B>Mantener Ozly</B>, <B>Mantener Google</B> o <B>Mantener ambos</B> (crea un job nuevo al lado).</li>
+            <li>Seleccioná los eventos a importar con los checkboxes.</li>
+            <li>En la pantalla de Review, seleccioná items y elegí <B>Contractor</B>, <B>ABN</B>, <B>ABN/TFN</B> y <B>valor/hora</B> en el panel de arriba — se aplica al instante a todos los seleccionados (sin botón "Aplicar"). Tocá un item específico para ajustarlo individualmente.</li>
+            <li>Tocá <B>"Import"</B>.</li>
           </StepList>
         </SubSection>
 

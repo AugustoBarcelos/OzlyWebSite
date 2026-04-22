@@ -271,7 +271,17 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
               ["Delete", "Permanently removes"],
             ]}
           />
-          <P>Swipe the job to the left to delete. An "In Progress" indicator appears during the job's scheduled time.</P>
+          <P>Swipe the job to the left to delete. An "In Progress" indicator appears during the job's scheduled time. Pull the list down (<B>pull-to-refresh</B>) to sync the latest jobs from the server.</P>
+        </SubSection>
+
+        <SubSection title="Bulk Actions (Multi-select)">
+          <P>Handy when you've imported many jobs from Google Calendar and need to fix the rate on several at once, or clean up old ones.</P>
+          <StepList>
+            <li><B>Press and hold</B> any card → multi-select mode turns on (checkboxes appear).</li>
+            <li>Tap other cards to add or remove from the selection.</li>
+            <li>Two icons show up on the top bar: <B>pencil</B> (change hourly rate across all selected) and <B>trash</B> (delete all, with confirmation).</li>
+            <li>Tap the <B>X</B> in the top-left to exit multi-select.</li>
+          </StepList>
         </SubSection>
 
         <SubSection title="Mark Job as Complete (3 paths)">
@@ -728,11 +738,13 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
 
         <SubSection title="Import Shifts">
           <StepList>
-            <li>On the <B>Jobs</B> screen, tap the <B>Sync</B> icon</li>
-            <li>A modal shows found events. Ozly filters using smart keywords (recognizes: shift, cleaning, bond clean, turno, trabalho, etc.)</li>
-            <li>Select which ones to import with checkboxes</li>
-            <li>Tap <B>"Review"</B> → configure contractor, business, and rate for each item</li>
-            <li>Tap <B>"Import"</B></li>
+            <li>On the <B>Jobs</B> screen, tap the <B>Sync</B> icon.</li>
+            <li><B>"Import past events?" dialog</B> appears: choose between <B>"Future only"</B> (default) or <B>"Pick start date"</B> (date picker up to 2 years back). Past events land as <B>Completed</B> directly with hours logged — they don't clutter the pending list.</li>
+            <li>Ozly filters with smart keywords (recognizes: shift, cleaning, bond clean, turno, trabalho, etc.).</li>
+            <li>If any event <B>conflicts</B> with an existing job, a sheet appears with 3 options: <B>Keep Ozly</B>, <B>Keep Google</B>, or <B>Keep both</B> (creates a new job alongside).</li>
+            <li>Select events to import with checkboxes.</li>
+            <li>On the Review screen, select items and choose <B>Contractor</B>, <B>ABN</B>, <B>ABN/TFN</B> and <B>hourly rate</B> from the top panel — it applies instantly to all selected (no "Apply" button). Tap a specific item to override individually.</li>
+            <li>Tap <B>"Import"</B>.</li>
           </StepList>
         </SubSection>
 
