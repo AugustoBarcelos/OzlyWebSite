@@ -8,6 +8,7 @@ const Support = lazy(() => import("./pages/Support"));
 const Guide = lazy(() => import("./pages/Guide"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfUse = lazy(() => import("./pages/TermsOfUse"));
+const ReferralLanding = lazy(() => import("./pages/ReferralLanding"));
 
 function RouteFallback() {
   return (
@@ -29,6 +30,8 @@ export default function App() {
             <Route path="/guide" element={<Guide />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms-of-use" element={<TermsOfUse />} />
+            {/* Landing pública do programa de afiliados — entrada do QR code */}
+            <Route path="/r/:code" element={<ReferralLanding />} />
           </Routes>
         </Suspense>
       </main>
