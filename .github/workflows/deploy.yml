@@ -31,6 +31,15 @@ jobs:
           npm i
 
       - name: Build
+        # VITE_* são lidas em build time pelo Vite (import.meta.env).
+        # A landing /r/:code precisa delas pra chamar o Supabase e abrir
+        # as stores certas. Sem os secrets configurados no repo, a página
+        # mostra "Código inválido" em todo request.
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_APP_STORE_URL: ${{ secrets.VITE_APP_STORE_URL }}
+          VITE_PLAY_STORE_URL: ${{ secrets.VITE_PLAY_STORE_URL }}
         run: npm run build
 
       - name: Setup Pages
