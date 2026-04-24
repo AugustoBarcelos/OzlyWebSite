@@ -30,8 +30,10 @@ export default function App() {
             <Route path="/guide" element={<Guide />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms-of-use" element={<TermsOfUse />} />
-            {/* Landing pública do programa de afiliados — entrada do QR code */}
-            <Route path="/r/:code" element={<ReferralLanding />} />
+            {/* Landing pública do programa de afiliados — entrada do QR code.
+                `/v/` = vendedor. `/refer` (estático, em public/) fica
+                para o marketing antigo genérico e é intocado. */}
+            <Route path="/v/:code" element={<ReferralLanding />} />
           </Routes>
         </Suspense>
       </main>
