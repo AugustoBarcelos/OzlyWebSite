@@ -442,5 +442,29 @@
     "a88": "O Ozly é desenhado especificamente pro sistema fiscal e de vistos australiano (ATO, Department of Home Affairs). Você pode instalar e usar fora, mas os cálculos de imposto, regras de GST, penalty rates e Visa Shield são todos específicos da Austrália. Não há planos de localização pra outros países no momento.",
     "q89": "Como exporto todos os meus dados (backup)?",
     "a89": "Vá em Configurações → Conta → Exportar Meus Dados. Você vai receber um email com um arquivo ZIP contendo todos os seus jobs, invoices, despesas, contractors, reembolsos e dados de perfil em formato CSV e JSON — útil pra backup pessoal ou como pedido de portabilidade de dados pela LGPD/GDPR."
+  },
+  "referralLanding": {
+    "invalidTitle": "Código inválido",
+    "invalidDescription": "Esse link de indicação não funciona mais. Baixe o Ozly direto pela sua loja favorita.",
+    "appStore": "App Store",
+    "playStore": "Google Play",
+    "invitedBy": "Indicado por {name}",
+    "defaultOwner": "seu contato Ozly",
+    "title": "Baixe o Ozly com este código",
+    "subtitle": "O Ozly organiza seus jobs, invoices, despesas e imposto em um só lugar.",
+    "codeLabel": "Seu código de indicação",
+    "copy": "Copiar código",
+    "copied": "✓ Código copiado",
+    "iosPrimary": "Baixar na App Store",
+    "iosSecondary": "Play Store",
+    "androidPrimary": "Baixar no Google Play",
+    "androidSecondary": "App Store",
+    "desktopHint": "Aponte a câmera do celular para baixar:",
+    "qrAlt": "QR Code para {url}",
+    "howToTitle": "Como usar:",
+    "step1": "Instale o Ozly pela loja do seu celular.",
+    "step2": "Crie sua conta.",
+    "step3Copied": "Na tela inicial, o campo \"Código de indicação\" deve preencher sozinho.",
+    "step3Manual": "Na tela inicial, digite {code} no campo \"Código de indicação\"."
   }
 }

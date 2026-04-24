@@ -442,5 +442,29 @@
     "a88": "Ozly is designed specifically for the Australian tax and visa system (ATO, Department of Home Affairs). You can install and use it abroad, but the tax calculations, GST rules, penalty rates and Visa Shield are all Australia-specific. There are no plans to localise it to other countries at the moment.",
     "q89": "How do I export all my data (backup)?",
     "a89": "Go to Settings → Account → Export My Data. You'll receive an email with a ZIP file containing all your jobs, invoices, expenses, contractors, reimbursements and profile data in CSV and JSON formats — useful for personal backup or as a GDPR/LGPD data portability request."
+  },
+  "referralLanding": {
+    "invalidTitle": "Invalid code",
+    "invalidDescription": "This referral link no longer works. Download Ozly directly from your favourite store.",
+    "appStore": "App Store",
+    "playStore": "Google Play",
+    "invitedBy": "Invited by {name}",
+    "defaultOwner": "your Ozly contact",
+    "title": "Download Ozly with this code",
+    "subtitle": "Ozly organises your jobs, invoices, expenses and tax in one place.",
+    "codeLabel": "Your referral code",
+    "copy": "Copy code",
+    "copied": "✓ Code copied",
+    "iosPrimary": "Download on the App Store",
+    "iosSecondary": "Play Store",
+    "androidPrimary": "Get it on Google Play",
+    "androidSecondary": "App Store",
+    "desktopHint": "Point your phone camera to download:",
+    "qrAlt": "QR Code for {url}",
+    "howToTitle": "How to use:",
+    "step1": "Install Ozly from your phone's store.",
+    "step2": "Create your account.",
+    "step3Copied": "On the home screen, the \"Referral code\" field should fill in automatically.",
+    "step3Manual": "On the home screen, type {code} in the \"Referral code\" field."
   }
 }

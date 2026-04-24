@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
+import { useI18n } from "../i18n";
 
-// Landing pública acessada pelo QR code do vendedor (/r/:code).
+// Landing pública acessada pelo QR code do vendedor (/v/:code).
 //
 // Fluxo:
 //  1. Valida o código via RPC `validate_referral_code` do Supabase.
@@ -68,6 +69,8 @@ function qrImageUrl(text) {
 }
 
 export default function ReferralLanding() {
+  const { t } = useI18n();
+  const r = t.referralLanding;
   const { code: rawCode } = useParams();
   const code = useMemo(() => (rawCode ?? "").toUpperCase().trim(), [rawCode]);
   // Começa como `loading` apenas se realmente vamos consultar; sem código,
@@ -85,13 +88,13 @@ export default function ReferralLanding() {
   useEffect(() => {
     if (!code) return;
     let cancelled = false;
-    validateCode(code).then((r) => {
+    validateCode(code).then((res) => {
       if (cancelled) return;
-      if (r.valid) {
+      if (res.valid) {
         setValidation({
           state: "valid",
-          ownerName: r.owner_name,
-          kind: r.kind,
+          ownerName: res.owner_name,
+          kind: res.kind,
         });
       } else {
         setValidation({ state: "invalid" });
@@ -125,7 +128,7 @@ export default function ReferralLanding() {
 
   if (validation.state === "loading") {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="min-h-[60vh] flex items-center justify-center pt-28">
         <div className="h-10 w-10 rounded-full border-4 border-brand-500 border-t-transparent animate-spin" />
       </div>
     );
@@ -133,24 +136,23 @@ export default function ReferralLanding() {
 
   if (validation.state === "invalid") {
     return (
-      <section className="max-w-xl mx-auto px-6 py-20 text-center">
-        <h1 className="text-2xl font-bold mb-2">Código inválido</h1>
+      <section className="max-w-xl mx-auto px-6 pt-32 pb-20 text-center">
+        <h1 className="text-2xl font-bold mb-2">{r.invalidTitle}</h1>
         <p className="text-slate-500 dark:text-slate-400 mb-6">
-          Esse link de indicação não funciona mais. Baixe o Ozly direto pela
-          sua loja favorita.
+          {r.invalidDescription}
         </p>
         <div className="flex gap-3 justify-center">
           <a
             href={APP_STORE_URL}
             className="px-5 py-3 rounded-xl bg-slate-900 text-white font-semibold"
           >
-            App Store
+            {r.appStore}
           </a>
           <a
             href={PLAY_STORE_URL}
             className="px-5 py-3 rounded-xl bg-slate-900 text-white font-semibold"
           >
-            Google Play
+            {r.playStore}
           </a>
         </div>
       </section>
@@ -158,26 +160,23 @@ export default function ReferralLanding() {
   }
 
   const { ownerName } = validation;
+  const displayOwner = ownerName ?? r.defaultOwner;
+  const step3 = (copied ? r.step3Copied : r.step3Manual).replace("{code}", code);
 
   return (
-    <section className="max-w-xl mx-auto px-6 py-12">
+    <section className="max-w-xl mx-auto px-6 pt-32 pb-12">
       <div className="text-center mb-8">
         <p className="text-sm uppercase tracking-wider text-brand-500 font-semibold mb-2">
-          Indicado por {ownerName ?? "seu contato Ozly"}
+          {r.invitedBy.replace("{name}", displayOwner)}
         </p>
-        <h1 className="text-3xl sm:text-4xl font-bold mb-3">
-          Baixe o Ozly com este código
-        </h1>
-        <p className="text-slate-500 dark:text-slate-400">
-          O Ozly organiza seus jobs, invoices, despesas e imposto em um só
-          lugar.
-        </p>
+        <h1 className="text-3xl sm:text-4xl font-bold mb-3">{r.title}</h1>
+        <p className="text-slate-500 dark:text-slate-400">{r.subtitle}</p>
       </div>
 
       {/* Código em destaque */}
       <div className="rounded-2xl border-2 border-dashed border-brand-500/60 bg-brand-500/5 p-6 text-center mb-8">
         <p className="text-xs uppercase tracking-wider text-slate-500 mb-2">
-          Seu código de indicação
+          {r.codeLabel}
         </p>
         <p className="text-4xl sm:text-5xl font-black tracking-widest text-brand-600 dark:text-brand-400 mb-3">
           {code}
@@ -186,31 +185,31 @@ export default function ReferralLanding() {
           onClick={copyManually}
           className="text-sm font-semibold text-brand-600 dark:text-brand-400 hover:underline"
         >
-          {copied ? "✓ Código copiado" : "Copiar código"}
+          {copied ? r.copied : r.copy}
         </button>
       </div>
 
       {/* Botões de download contextuais ao OS */}
       {os === "ios" && (
         <DownloadBlock
-          primary={{ url: APP_STORE_URL, label: "Baixar na App Store" }}
-          secondary={{ url: PLAY_STORE_URL, label: "Play Store" }}
+          primary={{ url: APP_STORE_URL, label: r.iosPrimary }}
+          secondary={{ url: PLAY_STORE_URL, label: r.iosSecondary }}
         />
       )}
       {os === "android" && (
         <DownloadBlock
-          primary={{ url: PLAY_STORE_URL, label: "Baixar no Google Play" }}
-          secondary={{ url: APP_STORE_URL, label: "App Store" }}
+          primary={{ url: PLAY_STORE_URL, label: r.androidPrimary }}
+          secondary={{ url: APP_STORE_URL, label: r.androidSecondary }}
         />
       )}
       {os === "desktop" && (
         <div className="rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 text-center">
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-            Aponte a câmera do celular para baixar:
+            {r.desktopHint}
           </p>
           <img
             src={qrImageUrl(pageUrl)}
-            alt={`QR Code para ${pageUrl}`}
+            alt={r.qrAlt.replace("{url}", pageUrl)}
             width={280}
             height={280}
             className="mx-auto rounded-lg"
@@ -220,13 +219,13 @@ export default function ReferralLanding() {
               href={APP_STORE_URL}
               className="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-semibold"
             >
-              App Store
+              {r.appStore}
             </a>
             <a
               href={PLAY_STORE_URL}
               className="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-semibold"
             >
-              Google Play
+              {r.playStore}
             </a>
           </div>
         </div>
@@ -234,16 +233,11 @@ export default function ReferralLanding() {
 
       {/* Instruções */}
       <div className="mt-10 bg-slate-50 dark:bg-slate-800/50 rounded-xl p-5 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-        <p className="font-semibold mb-2">Como usar:</p>
+        <p className="font-semibold mb-2">{r.howToTitle}</p>
         <ol className="list-decimal pl-5 space-y-1">
-          <li>Instale o Ozly pela loja do seu celular.</li>
-          <li>Crie sua conta.</li>
-          <li>
-            Na tela inicial vai ter o campo <strong>"Código de indicação"</strong>
-            {copied
-              ? " — ele deve preencher sozinho."
-              : ` — digite ${code}.`}
-          </li>
+          <li>{r.step1}</li>
+          <li>{r.step2}</li>
+          <li>{step3}</li>
         </ol>
       </div>
     </section>
