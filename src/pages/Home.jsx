@@ -74,7 +74,7 @@ function Hero() {
               className="mt-9 flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start anim-fade-in-up"
               style={{ animationDelay: "0.5s" }}
             >
-              <a href="https://apps.apple.com/app/ozly/id6760398649" target="_blank" rel="noopener noreferrer" className="store-badge-link hover:opacity-80 transition">
+              <a href="https://apps.apple.com/au/app/ozly/id6760398649" target="_blank" rel="noopener noreferrer" className="store-badge-link hover:opacity-80 transition">
                 <img src={`${import.meta.env.BASE_URL}app-store.svg`} alt="Download Ozly on the App Store" width="189" height="56" className="h-14" />
               </a>
               <a href="https://play.google.com/store/apps/details?id=com.augusto.ozly" target="_blank" rel="noopener noreferrer" className="store-badge-link hover:opacity-80 transition">
@@ -758,7 +758,7 @@ function BottomCta() {
             {t.bottomCta.subtitle}
           </p>
           <div className="flex flex-col sm:flex-row items-center gap-4 justify-center">
-            <a href="https://apps.apple.com/app/ozly/id6760398649" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center hover:opacity-80 transition">
+            <a href="https://apps.apple.com/au/app/ozly/id6760398649" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center hover:opacity-80 transition">
               <img src={`${import.meta.env.BASE_URL}app-store.svg`} alt="Download Ozly on the App Store" width="189" height="56" className="h-14" />
             </a>
             <a href="https://play.google.com/store/apps/details?id=com.augusto.ozly" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center hover:opacity-80 transition">
