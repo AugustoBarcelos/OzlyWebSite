@@ -32,9 +32,10 @@ jobs:
   security:
     name: Security & build gates
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: admin-portal
+    # No job-level working-directory: leaks into actions like trufflehog that
+    # mount $PWD as their docker volume — pointing them at admin-portal/ which
+    # has no .git/ caused "could not clone repo" failures. Each `run:` step
+    # below sets working-directory explicitly when it needs to be in admin-portal/.
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -50,20 +51,22 @@ jobs:
           cache-dependency-path: admin-portal/package-lock.json
 
       # ── Gate A: secret scanning ──────────────────────────────────────────
+      # Runs from repo root (default) so the docker mount sees .git/. The
+      # `path:` keyword is dropped so we scan everything — `--only-verified`
+      # keeps the noise tight without limiting where we look.
       - name: Secret scanning (TruffleHog)
         uses: trufflesecurity/trufflehog@main
         with:
-          path: ./admin-portal
-          base: ${{ github.event.repository.default_branch }}
-          head: HEAD
           extra_args: --only-verified
 
       # ── Install ──────────────────────────────────────────────────────────
       - name: Install dependencies
+        working-directory: admin-portal
         run: npm ci
 
       # ── Gate B: dependency vulnerabilities ───────────────────────────────
       - name: Dependency audit (high+)
+        working-directory: admin-portal
         run: npm audit --audit-level=high
 
       # ── Gate C: SAST ─────────────────────────────────────────────────────
@@ -74,12 +77,15 @@ jobs:
 
       # ── Gate D: code quality ─────────────────────────────────────────────
       - name: Lint
+        working-directory: admin-portal
         run: npm run lint
 
       - name: Type check
+        working-directory: admin-portal
         run: npx tsc --noEmit
 
       - name: Test (vitest if configured)
+        working-directory: admin-portal
         run: |
           if node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts.test ? 0 : 1)"; then
             npm test --if-present -- --run || npm test --if-present
@@ -89,6 +95,7 @@ jobs:
 
       # ── Gate 1: no service_role in source ────────────────────────────────
       - name: Verify no service_role in source
+        working-directory: admin-portal
         run: |
           if grep -rE "service_role|SUPABASE_SERVICE" src/; then
             echo "::error::service_role / SUPABASE_SERVICE reference found in admin-portal/src/. Service role must NEVER ship to the client."
@@ -99,6 +106,7 @@ jobs:
       # ── Gate 5: CSP header present in _headers ───────────────────────────
       # (Checked before build so a misconfigured _headers fails fast.)
       - name: Verify CSP header in public/_headers
+        working-directory: admin-portal
         run: |
           if [ ! -f public/_headers ]; then
             echo "::error::admin-portal/public/_headers is missing."
@@ -112,6 +120,7 @@ jobs:
 
       # ── Build ────────────────────────────────────────────────────────────
       - name: Build
+        working-directory: admin-portal
         run: npm run build
         env:
           # Build-time env vars come from repo secrets; never write real values to disk.
@@ -125,6 +134,7 @@ jobs:
       # (Supabase JS, PostHog) contain legitimate internal console.log calls
       # we can't strip without breaking SDK behaviour.
       - name: Verify no console.log in admin-portal/src
+        working-directory: admin-portal
         run: |
           if grep -rE "console\.log" src/ --include="*.ts" --include="*.tsx"; then
             echo "::error::console.log present in admin-portal/src/. Use debugPrint or remove."
@@ -134,6 +144,7 @@ jobs:
 
       # ── Gate 3: no source maps in dist ───────────────────────────────────
       - name: Verify no source maps in dist
+        working-directory: admin-portal
         run: |
           if find dist -type f -name "*.map" | grep -q .; then
             echo "::error::Source maps published in admin-portal/dist/. Set vite build.sourcemap=false (Sentry uploads server-side)."
