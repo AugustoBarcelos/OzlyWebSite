@@ -16,6 +16,9 @@ import { Spinner } from '@/components/Spinner';
 import { useToast } from '@/components/Toast';
 import { formatNumber, formatRelativeTime } from '@/lib/format';
 import { CreateAffiliateModal } from './CreateAffiliateModal';
+import { AffiliateDetailPanel } from './AffiliateDetailPanel';
+import { PendingPayoutsCard } from './PendingPayoutsCard';
+import type { BonusTier, BonusPeriod } from './tierMath';
 
 /**
  * /ops/affiliates — vendor / sales partner management.
@@ -46,6 +49,8 @@ interface AffiliateRow {
   currency: string;
   active: boolean;
   notes: string | null;
+  bonus_tiers: BonusTier[];
+  bonus_period: BonusPeriod;
   signups: number;
   signups_30d: number;
   purchases: number;
@@ -58,6 +63,7 @@ interface AffiliateRow {
   total_paid_cents: number;
   last_signup_at: string | null;
   last_paid_at: string | null;
+  current_period_count: number;
   created_at: string;
 }
 
@@ -99,8 +105,10 @@ export function AffiliatesPage() {
   const [error, setError] = useState<string | null>(null);
   const [marking, setMarking] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  const [editing, setEditing] = useState<AffiliateRow | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'active' | 'pending_payout'>('all');
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const loadAffiliates = useCallback(async () => {
     setLoading(true);
@@ -190,9 +198,10 @@ export function AffiliatesPage() {
         p_note: 'Marked paid via portal',
       });
       toast({ variant: 'success', title: 'Conversion marked as paid' });
-      // Refresh both tables
+      // Refresh both tables + payout planning
       void loadAffiliates();
       if (selected) void loadConversions(selected.id);
+      setRefreshKey((k) => k + 1);
     } catch (e) {
       toast({
         variant: 'error',
@@ -229,10 +238,24 @@ export function AffiliatesPage() {
       </div>
 
       <CreateAffiliateModal
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        onCreated={() => {
+        open={createOpen || !!editing}
+        editing={editing}
+        onClose={() => {
+          setCreateOpen(false);
+          setEditing(null);
+        }}
+        onSaved={() => {
           void loadAffiliates();
+          setRefreshKey((k) => k + 1);
+        }}
+      />
+
+      {/* Card de gestão de payouts (pagar agora + histórico 12m) */}
+      <PendingPayoutsCard
+        refreshKey={refreshKey}
+        onSelectAffiliate={(id) => {
+          const found = affiliates.find((a) => a.id === id);
+          if (found) setSelected(found);
         }}
       />
 
@@ -365,6 +388,15 @@ export function AffiliatesPage() {
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           type="button"
+                          onClick={() => setEditing(a)}
+                          aria-label={`Editar ${a.code}`}
+                          title="Editar afiliado"
+                          className="rounded-md border border-navy-100 bg-white px-2 py-1 text-xs font-medium text-navy-600 hover:border-brand-300 hover:text-brand-700"
+                        >
+                          ✎
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => {
                             void deleteAffiliate(a);
                           }}
@@ -395,88 +427,92 @@ export function AffiliatesPage() {
       </Card>
 
       {selected && (
-        <Card>
-          <div className="flex items-center justify-between">
-            <div>
-              <Text className="font-medium text-navy-700">
-                Conversions for{' '}
-                <span className="font-mono text-xs">{selected.code}</span>
-              </Text>
-              <Text className="text-xs text-navy-300">
-                {selected.name ?? '—'} · {selected.email ?? '—'}
-              </Text>
-            </div>
-            {convLoading && <Spinner size="sm" />}
-          </div>
-
-          {!convLoading && conversions.length === 0 ? (
-            <div className="py-10 text-center text-sm text-navy-400">
-              No conversions yet for this affiliate
-            </div>
-          ) : (
-            <div className="mt-3 overflow-x-auto">
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableHeaderCell>Status</TableHeaderCell>
-                    <TableHeaderCell>Referred user</TableHeaderCell>
-                    <TableHeaderCell>Signed up</TableHeaderCell>
-                    <TableHeaderCell>First purchase</TableHeaderCell>
-                    <TableHeaderCell>First renewal</TableHeaderCell>
-                    <TableHeaderCell className="text-right">Commission</TableHeaderCell>
-                    <TableHeaderCell></TableHeaderCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {conversions.map((c) => (
-                    <TableRow key={c.id}>
-                      <TableCell>
-                        <Badge color={STATUS_TONE[c.status] ?? 'slate'} size="xs">
-                          {c.status.replace(/_/g, ' ')}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-mono text-xs">
-                        {c.referred_user_id.slice(0, 8)}…
-                      </TableCell>
-                      <TableCell>
-                        {formatRelativeTime(c.signup_at)}
-                      </TableCell>
-                      <TableCell>
-                        {c.first_purchase_at ? formatRelativeTime(c.first_purchase_at) : '—'}
-                      </TableCell>
-                      <TableCell>
-                        {c.first_renewal_at ? formatRelativeTime(c.first_renewal_at) : '—'}
-                      </TableCell>
-                      <TableCell className="text-right font-medium tabular-nums">
-                        {c.commission_cents && c.currency
-                          ? formatMoney(c.commission_cents, c.currency)
-                          : '—'}
-                      </TableCell>
-                      <TableCell>
-                        {c.status === 'commission_ready' ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              void markPaid(c.id);
-                            }}
-                            disabled={marking === c.id}
-                            className="rounded-md bg-brand-600 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            {marking === c.id ? 'Marking…' : 'Mark paid'}
-                          </button>
-                        ) : c.status === 'paid' ? (
-                          <span className="text-[11px] text-navy-300">paid</span>
-                        ) : (
-                          <span className="text-[11px] text-navy-300">—</span>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </Card>
+        <AffiliateDetailPanel
+          affiliateId={selected.id}
+          code={selected.code}
+          name={selected.name}
+          email={selected.email}
+          pay_id={selected.pay_id}
+          currency={selected.currency}
+          baseCents={selected.commission_cents ?? 500}
+          bonusTiers={selected.bonus_tiers}
+          bonusPeriod={selected.bonus_period}
+          currentPeriodCount={selected.current_period_count}
+          onEdit={() => setEditing(selected)}
+          conversionsTable={
+            <Card>
+              <div className="flex items-center justify-between">
+                <Text className="font-medium text-navy-700">Conversions</Text>
+                {convLoading && <Spinner size="sm" />}
+              </div>
+              {!convLoading && conversions.length === 0 ? (
+                <div className="py-10 text-center text-sm text-navy-400">
+                  Nenhuma conversion ainda pra esse afiliado.
+                </div>
+              ) : (
+                <div className="mt-3 overflow-x-auto">
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableHeaderCell>Status</TableHeaderCell>
+                        <TableHeaderCell>Referred user</TableHeaderCell>
+                        <TableHeaderCell>Signed up</TableHeaderCell>
+                        <TableHeaderCell>First purchase</TableHeaderCell>
+                        <TableHeaderCell>First renewal</TableHeaderCell>
+                        <TableHeaderCell className="text-right">Commission</TableHeaderCell>
+                        <TableHeaderCell></TableHeaderCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {conversions.map((c) => (
+                        <TableRow key={c.id}>
+                          <TableCell>
+                            <Badge color={STATUS_TONE[c.status] ?? 'slate'} size="xs">
+                              {c.status.replace(/_/g, ' ')}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="font-mono text-xs">
+                            {c.referred_user_id.slice(0, 8)}…
+                          </TableCell>
+                          <TableCell>{formatRelativeTime(c.signup_at)}</TableCell>
+                          <TableCell>
+                            {c.first_purchase_at ? formatRelativeTime(c.first_purchase_at) : '—'}
+                          </TableCell>
+                          <TableCell>
+                            {c.first_renewal_at ? formatRelativeTime(c.first_renewal_at) : '—'}
+                          </TableCell>
+                          <TableCell className="text-right font-medium tabular-nums">
+                            {c.commission_cents && c.currency
+                              ? formatMoney(c.commission_cents, c.currency)
+                              : '—'}
+                          </TableCell>
+                          <TableCell>
+                            {c.status === 'commission_ready' ? (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  void markPaid(c.id);
+                                }}
+                                disabled={marking === c.id}
+                                className="rounded-md bg-brand-600 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {marking === c.id ? 'Marking…' : 'Mark paid'}
+                              </button>
+                            ) : c.status === 'paid' ? (
+                              <span className="text-[11px] text-navy-300">paid</span>
+                            ) : (
+                              <span className="text-[11px] text-navy-300">—</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </Card>
+          }
+        />
       )}
     </div>
   );
