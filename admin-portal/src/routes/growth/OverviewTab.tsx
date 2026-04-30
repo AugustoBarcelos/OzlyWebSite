@@ -41,7 +41,12 @@ interface Ga4Response {
   ga4?: { sessions?: number; users?: number };
 }
 
-export function OverviewTab() {
+interface Props {
+  /** Period in days, comes from /growth global picker. */
+  period: number;
+}
+
+export function OverviewTab({ period }: Props) {
   const [data, setData] = useState<KpiData>({
     ga4_sessions: null,
     ga4_users: null,
@@ -59,9 +64,11 @@ export function OverviewTab() {
       setError(null);
 
       // Fire all 3 in parallel; degrade gracefully if any fails.
+      // GA4 edge fn currently always returns last 30d — when we add period
+      // support there, also pass `period_days` here.
       const [kpiRes, revRes, ga4Res] = await Promise.allSettled([
-        callRpc<KpiResponse | null>('admin_kpi_dashboard', { p_period_days: 30 }),
-        callRpc<RevenueResponse | null>('admin_revenue_summary', { p_period_days: 30 }),
+        callRpc<KpiResponse | null>('admin_kpi_dashboard', { p_period_days: period }),
+        callRpc<RevenueResponse | null>('admin_revenue_summary', { p_period_days: period }),
         callEdge<Ga4Response>('ga4-stats', { query: { op: 'summary' } }),
       ]);
 
@@ -95,7 +102,7 @@ export function OverviewTab() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [period]);
 
   // Site → signup conversion: signups / sessions × 100
   const siteConv =
@@ -125,7 +132,7 @@ export function OverviewTab() {
       <Grid numItemsSm={2} numItemsLg={4} className="gap-4">
         <KpiCard
           icon="🌐"
-          label="Site sessions · 30d"
+          label="Site sessions · 30d (GA4)"
           value={data.ga4_sessions}
           loading={loading && data.ga4_sessions === null}
           formatter={formatNumber}
@@ -137,13 +144,13 @@ export function OverviewTab() {
         />
         <KpiCard
           icon="✨"
-          label="Signups · 30d"
+          label={`Signups · ${period}d`}
           value={data.signups_30d}
           loading={loading && data.signups_30d === null}
           formatter={formatNumber}
           hint={
             siteConv != null
-              ? `${siteConv.toFixed(2)}% de site → app`
+              ? `${siteConv.toFixed(2)}% de site → app (GA4 fixo 30d)`
               : 'Novos cadastros no app'
           }
         />
@@ -155,7 +162,7 @@ export function OverviewTab() {
           formatter={formatNumber}
           hint={
             signupToPaying != null
-              ? `${signupToPaying.toFixed(1)}% signup → paying (30d)`
+              ? `${signupToPaying.toFixed(1)}% signup → paying (${period}d)`
               : 'TFN + ABN + PRO'
           }
         />

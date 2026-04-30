@@ -15,6 +15,7 @@ import { callRpc, RpcError } from '@/lib/rpc';
 import { Spinner } from '@/components/Spinner';
 import { useToast } from '@/components/Toast';
 import { formatNumber, formatRelativeTime } from '@/lib/format';
+import { CreateAffiliateModal } from './CreateAffiliateModal';
 
 /**
  * /ops/affiliates — vendor / sales partner management.
@@ -40,15 +41,23 @@ interface AffiliateRow {
   code: string;
   name: string | null;
   email: string | null;
-  commission_cents: number;
+  pay_id: string | null;
+  commission_cents: number | null;
   currency: string;
   active: boolean;
+  notes: string | null;
   signups: number;
+  signups_30d: number;
   purchases: number;
   renewals: number;
   commission_ready: number;
   paid_count: number;
+  pending_count: number;
   payable_cents: number;
+  has_pending_payout: boolean;
+  total_paid_cents: number;
+  last_signup_at: string | null;
+  last_paid_at: string | null;
   created_at: string;
 }
 
@@ -89,6 +98,9 @@ export function AffiliatesPage() {
   const [convLoading, setConvLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [marking, setMarking] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [filter, setFilter] = useState<'all' | 'active' | 'pending_payout'>('all');
 
   const loadAffiliates = useCallback(async () => {
     setLoading(true);
@@ -137,6 +149,39 @@ export function AffiliatesPage() {
     }
   }, [selected, loadConversions]);
 
+  async function deleteAffiliate(row: AffiliateRow) {
+    const msg =
+      row.signups > 0
+        ? `Afiliado "${row.code}" tem ${row.signups} conversão(ões). Vai ser DESATIVADO (soft-delete) — histórico preservado pra payouts. Confirma?`
+        : `Afiliado "${row.code}" sem conversões. Vai ser REMOVIDO permanentemente. Confirma?`;
+    if (!window.confirm(msg)) return;
+    setDeleting(row.id);
+    try {
+      const r = await callRpc<{ success: boolean; mode: 'hard' | 'soft' }>(
+        'admin_delete_affiliate',
+        { p_id: row.id },
+      );
+      toast({
+        variant: 'success',
+        title: r.mode === 'hard' ? 'Afiliado removido' : 'Afiliado desativado',
+        description:
+          r.mode === 'hard'
+            ? `${row.code} excluído (sem histórico).`
+            : `${row.code} marcado inativo. Histórico preservado.`,
+      });
+      if (selected?.id === row.id) setSelected(null);
+      void loadAffiliates();
+    } catch (e) {
+      toast({
+        variant: 'error',
+        title: 'Falha ao deletar',
+        description: e instanceof RpcError ? e.message : 'Unknown error',
+      });
+    } finally {
+      setDeleting(null);
+    }
+  }
+
   async function markPaid(conversionId: string) {
     setMarking(conversionId);
     try {
@@ -159,28 +204,79 @@ export function AffiliatesPage() {
     }
   }
 
+  const filteredAffiliates = affiliates.filter((a) => {
+    if (filter === 'active') return a.active;
+    if (filter === 'pending_payout') return a.has_pending_payout;
+    return true;
+  });
+
   return (
     <div className="space-y-6">
-      <div>
-        <Title>Affiliates</Title>
-        <Text className="mt-0.5 text-xs text-navy-300">
-          Vendor / partner program · payouts are manual (PIX or transfer)
-        </Text>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <Title>Affiliates</Title>
+          <Text className="mt-0.5 text-xs text-navy-300">
+            Vendor / partner program · payouts are manual (PIX or transfer)
+          </Text>
+        </div>
+        <button
+          type="button"
+          onClick={() => setCreateOpen(true)}
+          className="inline-flex items-center gap-1.5 rounded-md bg-brand-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-brand-600"
+        >
+          + Novo afiliado
+        </button>
       </div>
 
+      <CreateAffiliateModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreated={() => {
+          void loadAffiliates();
+        }}
+      />
+
       <Card>
-        <div className="flex items-center justify-between">
-          <Text className="font-medium text-navy-700">All affiliates</Text>
-          {loading && <Spinner size="sm" />}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-3">
+            <Text className="font-medium text-navy-700">Affiliates</Text>
+            {loading && <Spinner size="sm" />}
+            <span className="text-xs text-navy-400">
+              ({filteredAffiliates.length} de {affiliates.length})
+            </span>
+          </div>
+          {/* Filter */}
+          <div className="inline-flex rounded-md border border-navy-100 bg-white p-0.5 text-xs">
+            {(
+              [
+                { v: 'all', label: 'Todos' },
+                { v: 'active', label: 'Ativos' },
+                { v: 'pending_payout', label: '$ pendente' },
+              ] as const
+            ).map((f) => (
+              <button
+                key={f.v}
+                type="button"
+                onClick={() => setFilter(f.v)}
+                className={
+                  filter === f.v
+                    ? 'rounded bg-brand-500 px-2.5 py-1 font-semibold text-white'
+                    : 'rounded px-2.5 py-1 text-navy-500 hover:bg-navy-50'
+                }
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
         </div>
         {error && (
           <div className="mt-2 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-900">
             {error}
           </div>
         )}
-        {!loading && affiliates.length === 0 ? (
+        {!loading && filteredAffiliates.length === 0 ? (
           <div className="py-10 text-center text-sm text-navy-400">
-            No affiliates yet
+            {affiliates.length === 0 ? 'Nenhum afiliado ainda — clique em "+ Novo afiliado".' : 'Nenhum afiliado bate com o filtro atual.'}
           </div>
         ) : (
           <div className="mt-3 overflow-x-auto">
@@ -189,17 +285,17 @@ export function AffiliatesPage() {
                 <TableRow>
                   <TableHeaderCell>Code</TableHeaderCell>
                   <TableHeaderCell>Name</TableHeaderCell>
-                  <TableHeaderCell>Active</TableHeaderCell>
-                  <TableHeaderCell className="text-right">Signups</TableHeaderCell>
-                  <TableHeaderCell className="text-right">Purchases</TableHeaderCell>
-                  <TableHeaderCell className="text-right">Renewals</TableHeaderCell>
-                  <TableHeaderCell className="text-right">Ready to pay</TableHeaderCell>
-                  <TableHeaderCell className="text-right">Payable</TableHeaderCell>
+                  <TableHeaderCell>Status</TableHeaderCell>
+                  <TableHeaderCell className="text-right">Signups (30d)</TableHeaderCell>
+                  <TableHeaderCell className="text-right">Pipeline</TableHeaderCell>
+                  <TableHeaderCell className="text-right">Pagar agora</TableHeaderCell>
+                  <TableHeaderCell className="text-right">Pago lifetime</TableHeaderCell>
+                  <TableHeaderCell>Última atividade</TableHeaderCell>
                   <TableHeaderCell></TableHeaderCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {affiliates.map((a) => (
+                {filteredAffiliates.map((a) => (
                   <TableRow
                     key={a.id}
                     className={
@@ -213,7 +309,7 @@ export function AffiliatesPage() {
                     </TableCell>
                     <TableCell>
                       <div className="text-sm text-navy-700">{a.name ?? '—'}</div>
-                      <div className="text-[11px] text-navy-300">{a.email ?? ''}</div>
+                      <div className="text-[11px] text-navy-300">{a.email ?? a.pay_id ?? ''}</div>
                     </TableCell>
                     <TableCell>
                       {a.active ? (
@@ -223,38 +319,72 @@ export function AffiliatesPage() {
                       )}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {formatNumber(a.signups)}
+                      <div className="text-navy-700">{formatNumber(a.signups)}</div>
+                      <div className="text-[10px] text-navy-300">
+                        {a.signups_30d > 0 ? `+${a.signups_30d} em 30d` : 'sem 30d'}
+                      </div>
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {formatNumber(a.purchases)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatNumber(a.renewals)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {a.commission_ready > 0 ? (
-                        <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800">
-                          {a.commission_ready}
+                      {a.pending_count > 0 ? (
+                        <span className="rounded bg-sky-100 px-1.5 py-0.5 text-xs font-medium text-sky-800">
+                          {a.pending_count}
                         </span>
                       ) : (
-                        formatNumber(a.commission_ready)
+                        <span className="text-navy-300">0</span>
                       )}
                     </TableCell>
                     <TableCell className="text-right font-medium tabular-nums">
-                      {a.payable_cents > 0
-                        ? formatMoney(a.payable_cents, a.currency)
-                        : '—'}
+                      {a.payable_cents > 0 ? (
+                        <span className="rounded bg-amber-100 px-1.5 py-0.5 font-medium text-amber-800">
+                          {formatMoney(a.payable_cents, a.currency)}
+                        </span>
+                      ) : (
+                        <span className="text-navy-300">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {a.total_paid_cents > 0
+                        ? formatMoney(a.total_paid_cents, a.currency)
+                        : <span className="text-navy-300">—</span>}
+                    </TableCell>
+                    <TableCell className="text-xs text-navy-500">
+                      {a.last_signup_at ? (
+                        <>
+                          <div>signup {formatRelativeTime(a.last_signup_at)}</div>
+                          {a.last_paid_at && (
+                            <div className="text-[10px] text-navy-300">
+                              pago {formatRelativeTime(a.last_paid_at)}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-navy-300">sem signups</span>
+                      )}
                     </TableCell>
                     <TableCell>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelected(selected?.id === a.id ? null : a);
-                        }}
-                        className="rounded-md border border-navy-100 bg-white px-2.5 py-1 text-xs font-medium text-navy-600 transition-colors hover:border-brand-300 hover:text-brand-700"
-                      >
-                        {selected?.id === a.id ? 'Hide' : 'View'}
-                      </button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            void deleteAffiliate(a);
+                          }}
+                          disabled={deleting === a.id}
+                          aria-label={`Deletar ${a.code}`}
+                          title="Deletar afiliado"
+                          className="rounded-md border border-navy-100 bg-white px-2 py-1 text-xs font-medium text-rose-600 hover:border-rose-300 hover:bg-rose-50 disabled:opacity-50"
+                        >
+                          {deleting === a.id ? '…' : '🗑'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelected(selected?.id === a.id ? null : a);
+                          }}
+                          className="rounded-md border border-navy-100 bg-white px-2.5 py-1 text-xs font-medium text-navy-600 transition-colors hover:border-brand-300 hover:text-brand-700"
+                        >
+                          {selected?.id === a.id ? 'Hide' : 'View'}
+                        </button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
