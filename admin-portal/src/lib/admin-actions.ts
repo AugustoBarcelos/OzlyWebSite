@@ -1,4 +1,5 @@
 import { callRpc, RpcError } from './rpc';
+import { callEdge } from './edge';
 
 /**
  * Pure async wrappers around the four operational admin RPCs.
@@ -125,6 +126,42 @@ export async function softDeleteUser(
   } catch (err) {
     return { success: false, error: toErrorMessage(err) };
   }
+}
+
+/**
+ * GDPR / Privacy Act 1988 (AU APP 12) export. Returns a complete bundle of
+ * everything Ozly stores about the target user. The browser saves it to a
+ * local file; the server records the export in admin_audit_log.
+ *
+ * Uses callEdge so the response (which can be large) streams straight into
+ * a Blob without going through the RPC layer.
+ */
+export async function exportUserData(
+  targetUserId: string
+): Promise<{ success: true; bundle: unknown } | { success: false; error: string }> {
+  if (!targetUserId) return { success: false, error: 'Missing user id' };
+  const r = await callEdge<unknown>('admin-export-user-data', {
+    method: 'POST',
+    body: { target_user_id: targetUserId },
+  });
+  if (!r.ok) return { success: false, error: r.error };
+  return { success: true, bundle: r.data };
+}
+
+/**
+ * Trigger a JSON file download in the browser for a given object. Pure
+ * client-side; never touches the network. Used by the Export Data button.
+ */
+export function downloadJson(filename: string, payload: unknown): void {
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 /**

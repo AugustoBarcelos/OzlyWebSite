@@ -46,6 +46,8 @@ import {
   forceResync,
   softDeleteUser,
   banUser,
+  exportUserData,
+  downloadJson,
   type Entitlement,
 } from '@/lib/admin-actions';
 import {
@@ -279,6 +281,7 @@ function ActionPanel({
   const [grantDays, setGrantDays] = useState(30);
   const [grantSubmitting, setGrantSubmitting] = useState(false);
   const [resyncSubmitting, setResyncSubmitting] = useState(false);
+  const [exportSubmitting, setExportSubmitting] = useState(false);
 
   const targetId = profile?.id ?? '';
   const confirmPhrase = profile?.email ?? profile?.id ?? 'CONFIRM';
@@ -300,6 +303,29 @@ function ActionPanel({
       toast({
         variant: 'error',
         title: 'Failed to grant promo',
+        description: result.error ?? 'Request failed',
+      });
+    }
+  }
+
+  async function handleExport() {
+    if (!targetId) return;
+    setExportSubmitting(true);
+    const result = await exportUserData(targetId);
+    setExportSubmitting(false);
+    if (result.success) {
+      const stamp = new Date().toISOString().slice(0, 10);
+      downloadJson(`ozly-user-${targetId}-${stamp}.json`, result.bundle);
+      toast({
+        variant: 'success',
+        title: 'Export ready',
+        description: 'Bundle saved to your Downloads. The export is logged in the audit trail.',
+      });
+      onAfterAction();
+    } else {
+      toast({
+        variant: 'error',
+        title: 'Export failed',
         description: result.error ?? 'Request failed',
       });
     }
@@ -418,6 +444,17 @@ function ActionPanel({
             onClick={handleForceResync}
           >
             {resyncSubmitting ? 'Queuing…' : 'Force resync'}
+          </Button>
+
+          {/* Export user data (GDPR / APP 12) */}
+          <Button
+            variant="secondary"
+            className="w-full justify-start"
+            disabled={!targetId || exportSubmitting}
+            onClick={handleExport}
+            title="Download a JSON bundle of everything Ozly stores about this user. The export is logged."
+          >
+            {exportSubmitting ? 'Exporting…' : 'Export data (GDPR)'}
           </Button>
         </div>
 
