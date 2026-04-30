@@ -1,6 +1,8 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-// BRIEFING § 7-L7: anon key only. service_role JAMAIS aqui.
+// BRIEFING § 7-L7: anon key only. Service-role keys MUST NEVER ship to
+// the browser — they bypass RLS. Use callEdge for anything that needs
+// elevated DB access; the elevation lives server-side.
 const url = import.meta.env.VITE_SUPABASE_URL;
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
