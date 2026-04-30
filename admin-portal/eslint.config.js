@@ -7,7 +7,17 @@ import reactHooks from 'eslint-plugin-react-hooks';
 
 export default [
   {
-    ignores: ['dist/**', 'node_modules/**', '*.config.js', '*.config.ts'],
+    // dist-node-types/ holds TS-emitted .d.ts files for vite.config etc — they
+    // use `const` outside the parser's module-source scope and the rule fires
+    // a false-positive "Unexpected token const" parsing error. They're build
+    // artifacts; lint them when we lint the source they're emitted from.
+    ignores: [
+      'dist/**',
+      'dist-node-types/**',
+      'node_modules/**',
+      '*.config.js',
+      '*.config.ts',
+    ],
   },
   js.configs.recommended,
   {
@@ -32,6 +42,10 @@ export default [
         clearTimeout: 'readonly',
         setInterval: 'readonly',
         clearInterval: 'readonly',
+        // React types (React.ChangeEvent, etc) — the new JSX transform skips
+        // the runtime import but referencing the namespace still needs the
+        // identifier known to no-undef.
+        React: 'readonly',
       },
     },
     plugins: {
@@ -72,9 +86,16 @@ export default [
 
       'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'off',
+      // `'` and `"` inside copy render fine — escaping them is a style quirk.
+      // Saves us peppering JSX with &apos; / &quot; for legitimate prose.
+      'react/no-unescaped-entities': 'off',
       '@typescript-eslint/no-unused-vars': [
         'error',
-        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
       ],
       '@typescript-eslint/no-explicit-any': 'warn',
     },

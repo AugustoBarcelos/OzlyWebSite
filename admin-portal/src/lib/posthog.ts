@@ -29,7 +29,6 @@ function sanitizeProps(
 export function initPostHog(): void {
   if (initialized) return;
   if (!apiKey) {
-    // eslint-disable-next-line no-console
     console.warn('[posthog] VITE_POSTHOG_API_KEY not set; analytics disabled.');
     return;
   }

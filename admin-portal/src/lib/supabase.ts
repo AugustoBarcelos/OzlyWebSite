@@ -14,7 +14,6 @@ if (!url || !anonKey) {
   } else {
     // Production: warn but don't break boot — CF Pages may have different envs.
     // The first auth call will surface a real error to the user.
-    // eslint-disable-next-line no-console
     console.warn(msg);
   }
 }

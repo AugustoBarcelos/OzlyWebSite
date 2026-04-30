@@ -149,7 +149,12 @@ function ResendCardContent() {
       : null;
 
   const domains = data?.domains?.ok ? data.domains.body?.data ?? [] : [];
-  const emails = data?.emails?.ok ? data.emails.body?.data ?? [] : [];
+  // Memo so the array identity is stable across renders — useMemo deps below
+  // depend on `emails` and would otherwise re-fire every render.
+  const emails = useMemo(
+    () => (data?.emails?.ok ? data.emails.body?.data ?? [] : []),
+    [data],
+  );
   const broadcasts = data?.broadcasts?.ok ? data.broadcasts.body?.data ?? [] : [];
 
   // Tag breakdown — counts per tag across all emails.

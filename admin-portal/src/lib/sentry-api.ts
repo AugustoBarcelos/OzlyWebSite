@@ -125,7 +125,6 @@ async function fetchSentry<T>(
         : `Sentry API ${res.status} ${res.statusText}`;
       setLastError(msg);
       // Helpful for paste-in-bug-reports: keep one line in the console too.
-      // eslint-disable-next-line no-console
       console.warn('[sentry-api]', path, msg);
       return null;
     }
