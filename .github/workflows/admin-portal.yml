@@ -165,7 +165,15 @@ jobs:
   deploy:
     name: Deploy to Cloudflare Pages
     needs: security
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Deploy is intentionally gated behind a repo variable that the operator
+    # flips ON when Cloudflare creds are set (CF_API_TOKEN + CF_ACCOUNT_ID).
+    # Until then we still build + run all security gates on every push, but
+    # we skip the publish step. Toggle: Settings → Variables → Actions →
+    # set ENABLE_ADMIN_PORTAL_DEPLOY=true.
+    if: |
+      github.event_name == 'push'
+      && github.ref == 'refs/heads/main'
+      && vars.ENABLE_ADMIN_PORTAL_DEPLOY == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
