@@ -1,0 +1,162 @@
+@import 'tailwindcss';
+
+/* ── Ozly brand tokens (mirrors OzlyWebSite/src/index.css). ───────────────── */
+@theme {
+  --color-brand-50: #e8f8f3;
+  --color-brand-100: #c5ede2;
+  --color-brand-200: #8edbc5;
+  --color-brand-300: #57c9a8;
+  --color-brand-400: #33c19e;
+  --color-brand-500: #2bbb97;
+  --color-brand-600: #24a383;
+  --color-brand-700: #1d8a6e;
+  --color-brand-800: #166d57;
+  --color-brand-900: #0f5443;
+
+  --color-lime-50: #f4fbe8;
+  --color-lime-100: #e6f5cc;
+  --color-lime-200: #cdeb99;
+  --color-lime-300: #b4e166;
+  --color-lime-400: #9dd760;
+  --color-lime-500: #89c94e;
+  --color-lime-600: #6fa83d;
+  --color-lime-700: #55872c;
+
+  --color-navy-50: #e8ecf0;
+  --color-navy-100: #c5cdd6;
+  --color-navy-200: #8b9bac;
+  --color-navy-300: #526982;
+  --color-navy-400: #2d4a63;
+  --color-navy-500: #1f2e3e;
+  --color-navy-600: #1b2936;
+  --color-navy-700: #162431;
+  --color-navy-800: #111c26;
+  --color-navy-900: #0c141b;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: #f7faf8;
+  color: var(--color-navy-700);
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Subtle page gradient for dashboard pages — not on auth screens. */
+.ozly-bg {
+  background:
+    radial-gradient(80rem 40rem at 100% -10%, rgba(43, 187, 151, 0.06), transparent 60%),
+    radial-gradient(60rem 40rem at -10% 110%, rgba(157, 215, 96, 0.05), transparent 60%),
+    #f7faf8;
+}
+
+/* Card surface used by KpiHero & section cards. */
+.ozly-card {
+  background: #ffffff;
+  border: 1px solid var(--color-navy-50);
+  border-radius: 14px;
+  box-shadow:
+    0 1px 2px rgba(15, 84, 67, 0.04),
+    0 1px 0 rgba(15, 84, 67, 0.02);
+}
+
+/* Hero card — used for headline KPIs at the top of each tab. */
+.ozly-card-hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.ozly-card-hero::after {
+  content: '';
+  position: absolute;
+  inset: auto -20% -60% auto;
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, rgba(43, 187, 151, 0.18), transparent 65%);
+  pointer-events: none;
+}
+
+/* Tremor v3 surfaces use slate-* by default; nudge their borders to navy-50
+   so card edges match our token. Card bg stays white. */
+.tremor-Card-root {
+  border-color: var(--color-navy-50) !important;
+  border-radius: 14px !important;
+  box-shadow:
+    0 1px 2px rgba(15, 84, 67, 0.04),
+    0 1px 0 rgba(15, 84, 67, 0.02) !important;
+}
+
+/* Tremor v3 Tabs — the library expects `text-tremor-brand` /
+   `border-tremor-brand` / `bg-tremor-background-subtle`, which are not
+   defined under Tailwind v4 + our @theme. Without these, the active tab
+   has zero visual indicator. Restyle with our brand tokens. */
+.tremor-Tab-root {
+  cursor: pointer;
+  color: var(--color-navy-300);
+}
+.tremor-Tab-root:not([data-selected]):hover {
+  color: var(--color-brand-700) !important;
+}
+.tremor-Tab-root[data-selected] {
+  color: var(--color-brand-700) !important;
+  font-weight: 600;
+}
+
+/* Line variant: TabList renders as `flex border-b space-x-4`. Active tab
+   gets a thick brand-colored bottom border. */
+.tremor-TabList-root .tremor-Tab-root[data-selected] {
+  border-bottom-color: var(--color-brand-500) !important;
+  border-bottom-width: 2px !important;
+  border-bottom-style: solid !important;
+}
+
+/* Solid variant: TabList renders as `inline-flex p-0.5 rounded-...
+   space-x-1.5 bg-tremor-background-subtle`. Re-tint the track and give
+   the active pill a white background + brand text + soft shadow. */
+.tremor-TabList-root.inline-flex {
+  background-color: var(--color-navy-50) !important;
+}
+.tremor-TabList-root.inline-flex .tremor-Tab-root[data-selected] {
+  background-color: #ffffff !important;
+  border-color: var(--color-navy-100) !important;
+  box-shadow:
+    0 1px 2px rgba(15, 84, 67, 0.08),
+    0 1px 0 rgba(15, 84, 67, 0.04);
+  color: var(--color-brand-700) !important;
+}
+
+/* Focus ring kept subtle but visible for keyboard nav. */
+.tremor-Tab-root:focus-visible {
+  outline: 2px solid var(--color-brand-400);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-navy-100);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-navy-200);
+}

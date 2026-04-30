@@ -1,0 +1,85 @@
+# Dependabot configuration for OzlyWebSite.
+#
+# - Public site lives at /  (root package.json)
+# - Admin portal lives at /admin-portal  (separate package.json, separate deploy)
+# - GitHub Actions are scanned for outdated/vulnerable action pins.
+#
+# Security PRs (any ecosystem) are always opened immediately, regardless of
+# the weekly schedule below.
+
+version: 2
+updates:
+  # ── Admin portal (sensitive surface — review every PR carefully) ───────
+  - package-ecosystem: "npm"
+    directory: "/admin-portal"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Australia/Sydney"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "admin-portal"
+      - "security-review"
+    commit-message:
+      prefix: "deps(admin-portal)"
+      prefix-development: "deps-dev(admin-portal)"
+      include: "scope"
+    rebase-strategy: "auto"
+    groups:
+      admin-portal-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+      admin-portal-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    # Major updates land as individual PRs (default behaviour when not in a group).
+    ignore: []
+
+  # ── Public site (kept separate to avoid mixing dep trees) ──────────────
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Australia/Sydney"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "site"
+    commit-message:
+      prefix: "deps(site)"
+      prefix-development: "deps-dev(site)"
+      include: "scope"
+    rebase-strategy: "auto"
+    groups:
+      site-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+      site-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+
+  # ── GitHub Actions ─────────────────────────────────────────────────────
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Australia/Sydney"
+    labels:
+      - "dependencies"
+      - "ci"
+    commit-message:
+      prefix: "ci(actions)"
+      include: "scope"
+    rebase-strategy: "auto"

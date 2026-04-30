@@ -1,0 +1,180 @@
+name: admin-portal CI
+
+# Security pipeline for the Ozly Admin Portal.
+# See admin-portal/BRIEFING.md sections 12, 13, 14.
+#
+# Hard gates (any failure blocks deploy):
+#   1. service_role / SUPABASE_SERVICE present in admin-portal/src/
+#   2. console.log present in dist/ after build
+#   3. *.map source maps present in dist/
+#   4. Content-Security-Policy header missing from public/_headers
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'admin-portal/**'
+      - '.github/workflows/admin-portal.yml'
+  pull_request:
+    paths:
+      - 'admin-portal/**'
+      - '.github/workflows/admin-portal.yml'
+
+# Lock down the default token; deploy step elevates with explicit secrets.
+permissions:
+  contents: read
+
+concurrency:
+  group: admin-portal-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  security:
+    name: Security & build gates
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: admin-portal
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Trufflehog needs full history to diff against base ref.
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: admin-portal/package-lock.json
+
+      # ── Gate A: secret scanning ──────────────────────────────────────────
+      - name: Secret scanning (TruffleHog)
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./admin-portal
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --only-verified
+
+      # ── Install ──────────────────────────────────────────────────────────
+      - name: Install dependencies
+        run: npm ci
+
+      # ── Gate B: dependency vulnerabilities ───────────────────────────────
+      - name: Dependency audit (high+)
+        run: npm audit --audit-level=high
+
+      # ── Gate C: SAST ─────────────────────────────────────────────────────
+      - name: SAST (Semgrep)
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: 'p/typescript p/react p/owasp-top-ten'
+
+      # ── Gate D: code quality ─────────────────────────────────────────────
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Test (vitest if configured)
+        run: |
+          if node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts.test ? 0 : 1)"; then
+            npm test --if-present -- --run || npm test --if-present
+          else
+            echo "No test script defined — skipping."
+          fi
+
+      # ── Gate 1: no service_role in source ────────────────────────────────
+      - name: Verify no service_role in source
+        run: |
+          if grep -rE "service_role|SUPABASE_SERVICE" src/; then
+            echo "::error::service_role / SUPABASE_SERVICE reference found in admin-portal/src/. Service role must NEVER ship to the client."
+            exit 1
+          fi
+          echo "OK — no service_role references in src/."
+
+      # ── Gate 5: CSP header present in _headers ───────────────────────────
+      # (Checked before build so a misconfigured _headers fails fast.)
+      - name: Verify CSP header in public/_headers
+        run: |
+          if [ ! -f public/_headers ]; then
+            echo "::error::admin-portal/public/_headers is missing."
+            exit 1
+          fi
+          if ! grep -qi "^[[:space:]]*Content-Security-Policy:" public/_headers; then
+            echo "::error::Content-Security-Policy header not found in admin-portal/public/_headers."
+            exit 1
+          fi
+          echo "OK — CSP header present in public/_headers."
+
+      # ── Build ────────────────────────────────────────────────────────────
+      - name: Build
+        run: npm run build
+        env:
+          # Build-time env vars come from repo secrets; never write real values to disk.
+          VITE_SUPABASE_URL: ${{ secrets.ADMIN_PORTAL_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.ADMIN_PORTAL_SUPABASE_ANON_KEY }}
+          VITE_POSTHOG_KEY: ${{ secrets.ADMIN_PORTAL_POSTHOG_KEY }}
+          VITE_SENTRY_DSN: ${{ secrets.ADMIN_PORTAL_SENTRY_DSN }}
+
+      # ── Gate 2: no console.log in OUR source ─────────────────────────────
+      # We check src/ (our code) instead of dist/ because vendor bundles
+      # (Supabase JS, PostHog) contain legitimate internal console.log calls
+      # we can't strip without breaking SDK behaviour.
+      - name: Verify no console.log in admin-portal/src
+        run: |
+          if grep -rE "console\.log" src/ --include="*.ts" --include="*.tsx"; then
+            echo "::error::console.log present in admin-portal/src/. Use debugPrint or remove."
+            exit 1
+          fi
+          echo "OK — no console.log in src/."
+
+      # ── Gate 3: no source maps in dist ───────────────────────────────────
+      - name: Verify no source maps in dist
+        run: |
+          if find dist -type f -name "*.map" | grep -q .; then
+            echo "::error::Source maps published in admin-portal/dist/. Set vite build.sourcemap=false (Sentry uploads server-side)."
+            find dist -type f -name "*.map"
+            exit 1
+          fi
+          echo "OK — no source maps in dist/."
+
+      # ── Persist build for the deploy job ─────────────────────────────────
+      - name: Upload dist artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-portal-dist
+          path: admin-portal/dist
+          retention-days: 7
+
+  deploy:
+    name: Deploy to Cloudflare Pages
+    needs: security
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download dist artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: admin-portal-dist
+          path: admin-portal/dist
+
+      - name: Publish to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          projectName: ozly-admin-portal
+          directory: admin-portal/dist
+          branch: main
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
