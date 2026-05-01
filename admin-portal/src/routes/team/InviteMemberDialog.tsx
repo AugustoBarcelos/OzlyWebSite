@@ -20,19 +20,12 @@ interface Props {
  *  1. Admin preenche email + role + ajusta matriz de grants (preset por role)
  *  2. Frontend chama signInWithOtp(email) → Supabase cria auth.users + envia
  *     magic link (mesmo do admin login). Sem reset de password.
- *  3. Pega o user_id do retorno (admin tem service_role implicit via RPC server-side).
- *  4. Chama team_invite_member(user_id, role, display_name, grants) → cria
- *     team_members + channel_grants.
+ *  3. RPC `team_invite_by_email` (admin-only, SECURITY DEFINER) faz lookup
+ *     do user por email e cria team_members + channel_grants atomicamente.
  *
- * Limitação: signInWithOtp client-side não retorna user_id imediatamente —
- * só quando a pessoa clica no link. Solução: o admin precisa colar o
- * user_id após criar o convite manualmente, OU melhor: usar admin.createUser
- * via RPC server-side. Pra MVP, fazemos via RPC `team_invite_by_email` que
- * faz everything atomically (admin.createUser internal + invite_member).
- *
- * NOTA: O RPC `team_invite_by_email` será adicionado num passo subsequente —
- * por enquanto, esse dialog usa signInWithOtp (já cria o user) + grant via
- * email lookup helper.
+ * Limitação: signInWithOtp client-side não retorna user_id imediatamente.
+ * O lookup por email no RPC server-side resolve isso — a criação do auth.users
+ * pelo signInWithOtp é síncrona, então quando o RPC roda o user já existe.
  */
 export function InviteMemberDialog({ onClose, onInvited }: Props) {
   const [email, setEmail] = useState('');
