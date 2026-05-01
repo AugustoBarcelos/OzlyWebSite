@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import QRCode from 'qrcode';
 
 interface Props {
   /** Conteúdo a codificar no QR (URL completa). */
@@ -10,14 +11,37 @@ interface Props {
 }
 
 /**
- * QR code via API pública qrserver.com — zero dependências.
- *
- * Útil pra admin gerar QR pra afiliado compartilhar. Pra produção em escala,
- * trocar por geração local (lib qrcode-svg ~5KB) é recomendado.
+ * QR code renderizado localmente via lib `qrcode` (~6KB).
+ * Sem dependência de API externa — funciona offline e respeita CSP estrito.
  */
 export function QrCode({ data, size = 200, alt = 'QR code' }: Props) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [dataUrl, setDataUrl] = useState<string>('');
   const [copied, setCopied] = useState(false);
-  const url = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&margin=10&data=${encodeURIComponent(data)}`;
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    if (!canvasRef.current) return;
+    QRCode.toCanvas(canvasRef.current, data, {
+      width: size,
+      margin: 2,
+      color: { dark: '#0F172A', light: '#FFFFFF' },
+      errorCorrectionLevel: 'M',
+    })
+      .then(() => {
+        if (!alive || !canvasRef.current) return;
+        setDataUrl(canvasRef.current.toDataURL('image/png'));
+        setErr(null);
+      })
+      .catch((e: unknown) => {
+        if (!alive) return;
+        setErr(e instanceof Error ? e.message : 'QR render failed');
+      });
+    return () => {
+      alive = false;
+    };
+  }, [data, size]);
 
   async function copyLink() {
     try {
@@ -25,16 +49,15 @@ export function QrCode({ data, size = 200, alt = 'QR code' }: Props) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      /* no-op */
+      /* clipboard blocked — silent */
     }
   }
 
   function downloadPng() {
+    if (!dataUrl) return;
     const a = document.createElement('a');
-    a.href = url;
+    a.href = dataUrl;
     a.download = `qr-${Date.now()}.png`;
-    a.target = '_blank';
-    a.rel = 'noopener noreferrer';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -42,13 +65,16 @@ export function QrCode({ data, size = 200, alt = 'QR code' }: Props) {
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <img
-        src={url}
-        alt={alt}
+      <canvas
+        ref={canvasRef}
+        aria-label={alt}
+        className="rounded-lg border border-navy-100 bg-white p-2"
         width={size}
         height={size}
-        className="rounded-lg border border-navy-100 bg-white p-2"
       />
+      {err && (
+        <div className="text-xs text-rose-600">QR error: {err}</div>
+      )}
       <div className="w-full break-all rounded-md bg-navy-50/60 px-2 py-1.5 text-center font-mono text-[10px] text-navy-600">
         {data}
       </div>
@@ -65,7 +91,8 @@ export function QrCode({ data, size = 200, alt = 'QR code' }: Props) {
         <button
           type="button"
           onClick={downloadPng}
-          className="flex-1 rounded-md border border-navy-100 bg-white px-2 py-1.5 text-xs font-medium text-navy-600 hover:border-brand-300 hover:text-brand-700"
+          disabled={!dataUrl}
+          className="flex-1 rounded-md border border-navy-100 bg-white px-2 py-1.5 text-xs font-medium text-navy-600 hover:border-brand-300 hover:text-brand-700 disabled:opacity-50"
         >
           Download PNG
         </button>
