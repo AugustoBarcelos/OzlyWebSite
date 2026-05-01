@@ -53,8 +53,8 @@ export function FeatureAdoptionList({ features, activeUsers, loading }: Props) {
             const tone =
               pct >= 50 ? 'bg-emerald-400' : pct >= 20 ? 'bg-amber-400' : 'bg-rose-400';
             return (
-              <li key={f.feature} className="flex items-center gap-3 text-sm">
-                <span className="w-32 truncate text-navy-700">
+              <li key={f.feature} className="flex items-center gap-2 sm:gap-3 text-sm">
+                <span className="w-24 sm:w-32 truncate text-navy-700">
                   {FEATURE_LABELS[f.feature] ?? f.feature}
                 </span>
                 <div className="relative h-6 flex-1 overflow-hidden rounded bg-navy-50">
@@ -66,7 +66,7 @@ export function FeatureAdoptionList({ features, activeUsers, loading }: Props) {
                     {pct.toFixed(1)}%
                   </span>
                 </div>
-                <span className="w-16 text-right text-xs tabular-nums text-navy-500">
+                <span className="w-12 sm:w-16 text-right text-xs tabular-nums text-navy-500">
                   {formatNumber(f.users_used)}
                 </span>
               </li>

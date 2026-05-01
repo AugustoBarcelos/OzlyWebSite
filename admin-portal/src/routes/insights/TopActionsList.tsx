@@ -73,18 +73,18 @@ export function TopActionsList({ actions, loading }: Props) {
             const pct = top > 0 ? (a.count / top) * 100 : 0;
             return (
               <li key={a.event_name} className="flex items-center gap-2 text-sm">
-                <span className="w-44 truncate text-navy-700">{pretty(a.event_name)}</span>
+                <span className="w-28 sm:w-44 truncate text-navy-700">{pretty(a.event_name)}</span>
                 <div className="relative h-5 flex-1 overflow-hidden rounded bg-navy-50">
                   <div
                     className="h-full bg-brand-400/70"
                     style={{ width: `${Math.max(pct, 2)}%` }}
                   />
                 </div>
-                <span className="w-16 text-right text-xs tabular-nums text-navy-700">
+                <span className="w-12 sm:w-16 text-right text-xs tabular-nums text-navy-700">
                   {formatNumber(a.count)}
                 </span>
                 <span
-                  className="w-12 text-right text-[10px] text-navy-400"
+                  className="hidden sm:inline-block w-12 text-right text-[10px] text-navy-400"
                   title={`${a.distinct_users} usuários únicos`}
                 >
                   {formatNumber(a.distinct_users)}u

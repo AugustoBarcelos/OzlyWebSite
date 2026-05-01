@@ -57,7 +57,8 @@ export function GrantsMatrix({
             <div className="bg-navy-50/50 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-navy-500">
               {GROUP_LABELS[group]}
             </div>
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[480px] text-sm">
               <thead className="border-b border-navy-50 bg-white">
                 <tr className="text-left text-[10px] uppercase tracking-wide text-navy-400">
                   <th className="px-3 py-1.5 w-1/3">Channel</th>
@@ -103,6 +104,7 @@ export function GrantsMatrix({
                 })}
               </tbody>
             </table>
+            </div>
           </div>
         );
       })}
