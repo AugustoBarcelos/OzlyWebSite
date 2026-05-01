@@ -30,17 +30,56 @@ const PAGE_SIZE = 50;
 const CSV_MAX_ROWS = 10_000;
 
 const KNOWN_ACTIONS = [
+  // User actions
+  'admin_search_users',
+  'admin_list_users',
+  'admin_view_user_360',
   'admin_grant_promo',
+  'admin_bulk_grant_promo',
   'admin_force_resync',
   'admin_soft_delete_user',
   'admin_ban_user',
-  'admin_search_users',
-  'admin_view_user_360',
   'admin_export_user_data',
   'admin_revoke_sessions',
+  // Affiliates
+  'admin_create_affiliate',
+  'admin_update_affiliate',
+  'admin_delete_affiliate',
+  'admin_affiliates_list',
+  'admin_affiliate_funnel',
+  'admin_affiliate_timeseries',
+  'admin_affiliate_milestones',
+  'admin_affiliate_volume_awards',
+  'admin_affiliate_payout_planning',
+  'admin_affiliate_payouts_history',
+  'admin_mark_volume_award_paid',
+  'admin_mark_milestone_paid',
+  'admin_bulk_pay_affiliate',
+  'admin_mark_conversion_paid',
+  'affiliate_award_retention_milestones',
+  // Reads / Dashboard
   'admin_audit_list',
+  'admin_kpi_dashboard',
   'admin_revenue_summary',
+  'admin_attribution_summary',
 ];
+
+// Actions de risco mais alto destacam em vermelho na coluna `Action`.
+const HIGH_RISK_ACTIONS = new Set([
+  'admin_ban_user',
+  'admin_soft_delete_user',
+  'admin_revoke_sessions',
+  'admin_export_user_data',
+  'admin_bulk_grant_promo',
+  'admin_bulk_pay_affiliate',
+  'admin_delete_affiliate',
+]);
+
+const QUICK_RANGES = [
+  { label: 'Hoje', days: 1 },
+  { label: '7d', days: 7 },
+  { label: '30d', days: 30 },
+] as const;
 
 interface AuditRow {
   id?: string;
@@ -66,6 +105,7 @@ interface Filters {
   targetUserId: string;
   since: string; // YYYY-MM-DD
   until: string; // YYYY-MM-DD
+  result: '' | 'success' | 'forbidden' | 'failed';
 }
 
 const EMPTY_FILTERS: Filters = {
@@ -74,6 +114,7 @@ const EMPTY_FILTERS: Filters = {
   targetUserId: '',
   since: '',
   until: '',
+  result: '',
 };
 
 function buildRpcFilter(f: Filters): Record<string, unknown> {
@@ -83,7 +124,19 @@ function buildRpcFilter(f: Filters): Record<string, unknown> {
   if (f.targetUserId.trim()) out.target_user_id = f.targetUserId.trim();
   if (f.since) out.since = new Date(`${f.since}T00:00:00Z`).toISOString();
   if (f.until) out.until = new Date(`${f.until}T23:59:59Z`).toISOString();
+  if (f.result) out.result = f.result;
   return out;
+}
+
+/** Today / 7d / 30d helper — sets `since` to N days ago at 00:00 UTC. */
+function quickRangeToFilters(days: number): Pick<Filters, 'since' | 'until'> {
+  const now = new Date();
+  const since = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+  const isoDate = (d: Date) => d.toISOString().slice(0, 10);
+  return {
+    since: isoDate(since),
+    until: isoDate(now),
+  };
 }
 
 function csvEscape(v: unknown): string {
@@ -267,6 +320,22 @@ export function AuditPage() {
         onExport={() => {
           void handleExportCsv();
         }}
+        onQuickRange={(days) => {
+          const next: Filters = {
+            ...draftFilters,
+            ...quickRangeToFilters(days),
+          };
+          setDraftFilters(next);
+          setAppliedFilters(next);
+        }}
+        onForbiddenOnly={() => {
+          const next: Filters = {
+            ...EMPTY_FILTERS,
+            result: 'forbidden',
+          };
+          setDraftFilters(next);
+          setAppliedFilters(next);
+        }}
         exporting={exporting}
       />
 
@@ -310,7 +379,15 @@ export function AuditPage() {
                           : '—'}
                       </TableCell>
                       <TableCell>
-                        <Badge color="indigo" size="xs">
+                        <Badge
+                          color={
+                            r.action && HIGH_RISK_ACTIONS.has(r.action)
+                              ? 'rose'
+                              : 'indigo'
+                          }
+                          size="xs"
+                        >
+                          {r.action && HIGH_RISK_ACTIONS.has(r.action) && '🛡 '}
                           {r.action ?? 'unknown'}
                         </Badge>
                       </TableCell>
@@ -396,6 +473,8 @@ function FiltersPanel({
   onApply,
   onReset,
   onExport,
+  onQuickRange,
+  onForbiddenOnly,
   exporting,
 }: {
   draft: Filters;
@@ -403,6 +482,8 @@ function FiltersPanel({
   onApply: () => void;
   onReset: () => void;
   onExport: () => void;
+  onQuickRange: (days: number) => void;
+  onForbiddenOnly: () => void;
   exporting: boolean;
 }) {
   const [open, setOpen] = useState(true);
@@ -421,7 +502,26 @@ function FiltersPanel({
         >
           Filters {open ? '▾' : '▸'}
         </button>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {/* Quick range filters — auto-apply */}
+          {QUICK_RANGES.map((q) => (
+            <button
+              key={q.label}
+              type="button"
+              onClick={() => onQuickRange(q.days)}
+              className="rounded-md border border-navy-100 bg-white px-2.5 py-1 text-xs font-medium text-navy-600 hover:border-brand-300 hover:text-brand-700"
+            >
+              {q.label}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={onForbiddenOnly}
+            className="rounded-md border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-700 hover:bg-rose-100"
+            title="Tentativas bloqueadas pelo admin check"
+          >
+            🛡 Forbidden only
+          </button>
           <Button
             variant="secondary"
             disabled={exporting}
@@ -502,6 +602,23 @@ function FiltersPanel({
               }
               className="block w-full rounded-md border border-navy-100 px-3 py-2 text-sm shadow-sm outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
             />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-navy-500">
+              Result
+            </label>
+            <select
+              value={draft.result}
+              onChange={(e) =>
+                onChange({ ...draft, result: e.target.value as Filters['result'] })
+              }
+              className="block w-full rounded-md border border-navy-100 px-3 py-2 text-sm shadow-sm outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+            >
+              <option value="">Todos</option>
+              <option value="success">success</option>
+              <option value="forbidden">forbidden</option>
+              <option value="failed">failed</option>
+            </select>
           </div>
           <div className="flex items-end gap-2">
             <Button variant="primary" onClick={onApply}>

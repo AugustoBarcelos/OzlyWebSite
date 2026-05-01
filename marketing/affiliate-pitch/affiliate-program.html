@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Programa de Afiliados Ozly</title>
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 16mm;
+  }
+  :root {
+    --brand-50: #e8f8f3;
+    --brand-100: #c5ede2;
+    --brand-500: #2bbb97;
+    --brand-700: #1d8a6e;
+    --lime-400: #9dd760;
+    --navy-50: #e8ecf0;
+    --navy-100: #c5cdd6;
+    --navy-300: #526982;
+    --navy-500: #1f2e3e;
+    --navy-700: #162431;
+    --amber-50: #fef3c7;
+    --amber-100: #fde68a;
+    --amber-700: #b45309;
+    --rose-500: #f43f5e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+    color: var(--navy-700);
+    line-height: 1.5;
+    font-size: 11pt;
+  }
+  /* Cover */
+  .cover {
+    page-break-after: always;
+    background: linear-gradient(135deg, var(--brand-500), var(--lime-400));
+    color: white;
+    padding: 60mm 16mm;
+    margin: -18mm -16mm;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .cover .logo {
+    width: 80px;
+    height: 80px;
+    background: white;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    color: var(--brand-500);
+    font-size: 32pt;
+    margin-bottom: 24mm;
+  }
+  .cover h1 {
+    font-size: 36pt;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 8mm;
+    letter-spacing: -0.02em;
+  }
+  .cover .subtitle {
+    font-size: 14pt;
+    opacity: 0.95;
+    max-width: 130mm;
+    line-height: 1.4;
+  }
+  .cover .footer {
+    margin-top: auto;
+    padding-top: 30mm;
+    font-size: 10pt;
+    opacity: 0.85;
+  }
+
+  /* Content pages */
+  h1 {
+    color: var(--brand-700);
+    font-size: 22pt;
+    margin-top: 8mm;
+    margin-bottom: 6mm;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  h2 {
+    color: var(--navy-700);
+    font-size: 14pt;
+    margin-top: 8mm;
+    margin-bottom: 3mm;
+    font-weight: 700;
+  }
+  h3 {
+    color: var(--navy-700);
+    font-size: 12pt;
+    margin-top: 5mm;
+    margin-bottom: 2mm;
+    font-weight: 600;
+  }
+  p { margin-bottom: 3mm; }
+  ul, ol { margin-left: 5mm; margin-bottom: 3mm; }
+  li { margin-bottom: 1.5mm; }
+
+  /* Hero stat box */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4mm;
+    margin: 5mm 0;
+  }
+  .stat-card {
+    border: 1px solid var(--navy-100);
+    border-radius: 8px;
+    padding: 5mm;
+    background: white;
+  }
+  .stat-card .label {
+    font-size: 8pt;
+    color: var(--navy-300);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    margin-bottom: 1mm;
+  }
+  .stat-card .value {
+    font-size: 18pt;
+    color: var(--brand-700);
+    font-weight: 800;
+    margin-bottom: 1mm;
+  }
+  .stat-card .hint {
+    font-size: 9pt;
+    color: var(--navy-300);
+  }
+
+  /* Tier table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 4mm 0;
+    font-size: 10pt;
+  }
+  th, td {
+    text-align: left;
+    padding: 3mm 4mm;
+    border-bottom: 1px solid var(--navy-50);
+  }
+  th {
+    background: var(--brand-50);
+    color: var(--brand-700);
+    font-weight: 700;
+    font-size: 9pt;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.highlight {
+    color: var(--brand-700);
+    font-weight: 700;
+  }
+
+  /* Callout */
+  .callout {
+    border-left: 4px solid var(--brand-500);
+    background: var(--brand-50);
+    padding: 4mm 5mm;
+    border-radius: 0 6px 6px 0;
+    margin: 4mm 0;
+  }
+  .callout.warn {
+    border-left-color: var(--amber-700);
+    background: var(--amber-50);
+  }
+  .callout strong {
+    color: var(--brand-700);
+  }
+  .callout.warn strong {
+    color: var(--amber-700);
+  }
+
+  /* Funnel diagram */
+  .funnel {
+    margin: 4mm 0;
+  }
+  .funnel-step {
+    background: var(--navy-50);
+    padding: 3mm 5mm;
+    margin-bottom: 2mm;
+    border-left: 4px solid var(--brand-500);
+    border-radius: 0 6px 6px 0;
+    display: flex;
+    align-items: center;
+    gap: 4mm;
+  }
+  .funnel-step .num {
+    font-size: 18pt;
+    font-weight: 800;
+    color: var(--brand-500);
+    width: 12mm;
+    text-align: center;
+  }
+  .funnel-step strong { color: var(--navy-700); }
+
+  /* Footer / page break */
+  .page-break { page-break-before: always; }
+
+  /* Highlight number in text */
+  .num-pill {
+    display: inline-block;
+    background: var(--brand-500);
+    color: white;
+    border-radius: 12px;
+    padding: 0 8px;
+    font-weight: 700;
+  }
+
+  /* Code style for things like links */
+  code {
+    background: var(--navy-50);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-family: 'SF Mono', Monaco, monospace;
+    font-size: 0.9em;
+  }
+</style>
+</head>
+<body>
+
+<!-- ─── CAPA ───────────────────────────────────────────────────────────── -->
+<section class="cover">
+  <div class="logo">O</div>
+  <h1>Programa de<br>Afiliados Ozly</h1>
+  <div class="subtitle">
+    Ganhe comissões recorrentes ajudando profissionais autônomos australianos
+    a organizar suas finanças e impostos.
+  </div>
+  <div class="footer">
+    Versão Maio/2026 · ozly.au
+  </div>
+</section>
+
+<!-- ─── 1. SOBRE A OZLY ────────────────────────────────────────────────── -->
+<h1>Sobre a Ozly</h1>
+<p>
+  A <strong>Ozly</strong> é o app que profissionais autônomos na Austrália
+  usam pra organizar jobs, despesas, faturas e impostos (TFN/ABN). Mais de
+  <em>14 mil</em> usuários downloads, com público forte na comunidade LATAM
+  (BR, AR, ES) que vem trabalhar como contractor no AU.
+</p>
+<p>
+  Cobramos AUD&nbsp;$14.99/mês (TFN/ABN) ou AUD&nbsp;$19.99/mês (PRO).
+  Apple/Google levam 15-30%, e nós dividimos uma parte significativa com
+  você, parceiro afiliado, em troca de cada novo cliente que trouxer.
+</p>
+
+<!-- ─── 2. COMO FUNCIONA ───────────────────────────────────────────────── -->
+<h1>Como funciona</h1>
+
+<div class="funnel">
+  <div class="funnel-step">
+    <div class="num">1</div>
+    <div>
+      <strong>Você compartilha seu QR code</strong><br>
+      Cada afiliado recebe um QR único e uma página personalizada
+      <code>ozly.au/v/SEUCODIGO</code>. Distribua em redes sociais,
+      eventos, comunidade.
+    </div>
+  </div>
+  <div class="funnel-step">
+    <div class="num">2</div>
+    <div>
+      <strong>Cliente baixa o app</strong><br>
+      O QR detecta iOS/Android e leva direto pra App Store ou Play Store.
+      Seu código fica vinculado ao usuário.
+    </div>
+  </div>
+  <div class="funnel-step">
+    <div class="num">3</div>
+    <div>
+      <strong>Cliente assina</strong><br>
+      Após trial gratuito, ele faz a primeira compra. Sua conversão fica
+      registrada como <em>"subscribed"</em>.
+    </div>
+  </div>
+  <div class="funnel-step">
+    <div class="num">4</div>
+    <div>
+      <strong>Cliente renova (1ª vez)</strong><br>
+      Quando o cliente paga a 2ª mensalidade, libera sua comissão base.
+      Esse esquema garante que você só recebe por clientes reais
+      (não trial-quitters).
+    </div>
+  </div>
+  <div class="funnel-step">
+    <div class="num">5</div>
+    <div>
+      <strong>Cliente continua ativo</strong><br>
+      A cada milestone (3 / 6 / 12 meses), você recebe um bonus extra de
+      retenção. Quanto mais o cliente fica, mais você ganha.
+    </div>
+  </div>
+</div>
+
+<!-- ─── 3. ESTRUTURA DE COMISSÃO ──────────────────────────────────────── -->
+<div class="page-break"></div>
+<h1>Estrutura de comissão</h1>
+
+<h2>Comissão base</h2>
+<p>
+  <strong>AUD $10 por cliente</strong> que assinar e renovar pelo menos uma
+  vez. Pago após a 1ª renovação confirmada.
+</p>
+
+<h2>Volume bonus (mensal)</h2>
+<p>
+  Quanto mais clientes você trouxer no mês, mais ganha. Bonus pago como
+  pagamento <strong>único (lump-sum)</strong> assim que atinge a meta:
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Meta no mês</th>
+      <th>Bonus extra</th>
+      <th class="num">Total efetivo / cliente</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0–49 clientes</td>
+      <td>—</td>
+      <td class="num">AUD $10.00</td>
+    </tr>
+    <tr>
+      <td><strong>≥ 50 clientes</strong></td>
+      <td><strong>+ AUD $100</strong> lump-sum</td>
+      <td class="num highlight">≈ AUD $12.00</td>
+    </tr>
+    <tr>
+      <td><strong>≥ 100 clientes</strong></td>
+      <td><strong>+ AUD $300</strong> lump-sum (acima dos $100)</td>
+      <td class="num highlight">≈ AUD $14.00</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <strong>📈 Exemplo prático:</strong> trouxe 75 clientes em maio? Você ganha
+  75 × $10 = $750 base + $100 bonus de 50 = <strong>$850 no mês</strong>
+  (efetivo de $11.33/cliente).<br><br>
+  Trouxe 120 num mês? 120 × $10 + $100 + $300 = <strong>$1.600</strong>
+  (efetivo de $13.33/cliente).
+</div>
+
+<h2>Retention bonus (por cliente que fica)</h2>
+<p>
+  Pra premiar quem traz cliente <strong>de qualidade</strong> (não só volume),
+  cada cliente seu que continua ativo gera bonus extras:
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Tempo de assinatura</th>
+      <th>Bonus extra</th>
+      <th class="num">Acumulado / cliente</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Renovou (mês 2)</td>
+      <td>Comissão base $10</td>
+      <td class="num">$10.00</td>
+    </tr>
+    <tr>
+      <td>Cliente ativo aos <strong>3 meses</strong></td>
+      <td>+ AUD $5</td>
+      <td class="num">$15.00</td>
+    </tr>
+    <tr>
+      <td>Cliente ativo aos <strong>6 meses</strong></td>
+      <td>+ AUD $5</td>
+      <td class="num">$20.00</td>
+    </tr>
+    <tr>
+      <td>Cliente ativo aos <strong>12 meses</strong></td>
+      <td>+ AUD $5</td>
+      <td class="num highlight">$25.00 (máximo / cliente)</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <strong>🎯 Ganhos máximos por cliente:</strong> AUD&nbsp;$25 ao longo de 12 meses,
+  combinados com volume bonuses. Um afiliado top que traz 100 clientes/mês e
+  mantém 80% de retenção pode chegar a <strong>AUD $2.000+/mês</strong> no programa.
+</div>
+
+<!-- ─── 4. EXEMPLO COMPLETO ────────────────────────────────────────────── -->
+<div class="page-break"></div>
+<h1>Exemplo completo</h1>
+<h2>Ana Luiza, afiliada começando</h2>
+<p>Ana é influencer LATAM em Sydney. Em maio 2026 ela:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Atividade</th>
+      <th class="num">Quantidade</th>
+      <th class="num">Ganho</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Clientes que assinaram e renovaram em maio</td>
+      <td class="num">62</td>
+      <td class="num">62 × $10 = $620</td>
+    </tr>
+    <tr>
+      <td>Volume bonus (atingiu meta de 50)</td>
+      <td class="num">1×</td>
+      <td class="num">+$100</td>
+    </tr>
+    <tr>
+      <td>Clientes que completaram 3 meses ativos</td>
+      <td class="num">8</td>
+      <td class="num">8 × $5 = $40</td>
+    </tr>
+    <tr>
+      <td>Clientes que completaram 6 meses ativos</td>
+      <td class="num">3</td>
+      <td class="num">3 × $5 = $15</td>
+    </tr>
+    <tr style="background: var(--brand-50);">
+      <td><strong>Total a receber em maio</strong></td>
+      <td class="num"></td>
+      <td class="num highlight"><strong>AUD $775</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ─── 5. PAGAMENTO ───────────────────────────────────────────────────── -->
+<h1>Pagamento</h1>
+<ul>
+  <li><strong>Frequência:</strong> mensal, sempre no início do mês seguinte ao trabalho.</li>
+  <li><strong>Método:</strong> PayID (instant payment AU) ou bank transfer. Pra
+    parceiros no Brasil: PIX em BRL com câmbio na data do pagamento.</li>
+  <li><strong>Mínimo:</strong> sem mínimo — qualquer valor acumulado é pago. Mas
+    se for menos de AUD $20, juntamos com o próximo mês pra economizar taxa.</li>
+  <li><strong>Notificação:</strong> avisamos por WhatsApp / email quando o
+    pagamento sai com referência da transação.</li>
+</ul>
+
+<h2>Quando o cliente cancela</h2>
+<p>
+  Se um cliente seu cancelar antes da 1ª renovação, sua comissão dele não é
+  paga (motivo: queremos que você indique <em>clientes reais</em>). Se ele
+  cancelar entre os meses 2-12, você já recebeu o que tinha direito até o
+  último milestone alcançado, mas não ganha os próximos. Justo dos dois lados.
+</p>
+
+<!-- ─── 6. FERRAMENTAS ─────────────────────────────────────────────────── -->
+<div class="page-break"></div>
+<h1>O que você recebe</h1>
+
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="label">QR code exclusivo</div>
+    <div class="value">📱</div>
+    <div class="hint">Print ready, transparente, ideal pra Stories e flyers.</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Página personalizada</div>
+    <div class="value">🌐</div>
+    <div class="hint">ozly.au/v/SEUCODIGO — leva o cliente direto pra Apple/Play Store.</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Materiais gráficos</div>
+    <div class="value">🎨</div>
+    <div class="hint">Banners pro Insta, modelos de copy em PT/ES/EN.</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Suporte direto</div>
+    <div class="value">💬</div>
+    <div class="hint">Você fala com a gente direto via WhatsApp.</div>
+  </div>
+</div>
+
+<!-- ─── 7. EXPECTATIVAS ────────────────────────────────────────────────── -->
+<h1>O que esperamos de você</h1>
+<ul>
+  <li>
+    <strong>Comunicação honesta.</strong> A Ozly resolve um problema real
+    de quem trabalha por conta própria — não exagere features que não existem. Hype quebra
+    confiança e a gente prefere conversões reais.
+  </li>
+  <li>
+    <strong>Audiência alinhada.</strong> Foco no público que faz sentido:
+    profissionais autônomos em AU, recém-chegados LATAM, comunidade BR/ES em Sydney,
+    Melbourne, Brisbane, Perth.
+  </li>
+  <li>
+    <strong>Sem spam.</strong> Não permitimos enviar QR pra listas frias nem
+    posts em massa fora de contexto. Quem fizer perde a conta de afiliado.
+  </li>
+  <li>
+    <strong>Transparência sobre o link.</strong> Sempre identifique como
+    "código de afiliado" / "link de parceiro" — Australian Consumer Law e
+    bom senso.
+  </li>
+</ul>
+
+<!-- ─── 8. PRÓXIMOS PASSOS ─────────────────────────────────────────────── -->
+<h1>Como começar</h1>
+<ol>
+  <li>Mande mensagem pra <strong>WhatsApp +61 493 735 179</strong> pedindo seu código de afiliado.</li>
+  <li>A gente cadastra e te manda QR + link personalizado.</li>
+  <li>Você começa a divulgar via <code>ozly.au/v/SEUCODIGO</code>.</li>
+  <li>Acompanhe seu progresso em tempo real em <code>ozly.au/me/SEUCODIGO</code> — quantas conversões fez, quanto vai receber, próxima meta de bonus.</li>
+  <li>Pagamentos saem todo início de mês com base no que você gerou.</li>
+</ol>
+
+<div class="callout">
+  <strong>📊 Painel pessoal:</strong> Cada afiliado tem uma página privada
+  <code>ozly.au/me/SEUCODIGO</code> que mostra:
+  <ul style="margin-top: 2mm; margin-bottom: 0;">
+    <li>Total a receber (com breakdown: conversões + volume bonus + retenção)</li>
+    <li>Funil de conversão (signups → trial → pagantes)</li>
+    <li>Quantas conversões faltam pro próximo tier de volume bonus</li>
+    <li>Histórico de pagamentos lifetime</li>
+  </ul>
+  Sem precisar nos perguntar, sem login. Atualizado em tempo real.
+</div>
+
+<div class="callout warn">
+  <strong>⚠️ Disclaimers:</strong> Tabela de comissões pode ser ajustada com
+  30 dias de aviso. Programa válido pra clientes pagantes recurring (não
+  conta promo grants do app). Pagamentos sujeitos à validação de fraude:
+  conversões com sinal de auto-signup, contas duplicadas ou padrões
+  suspeitos podem ser estornadas.
+</div>
+
+<p style="margin-top: 12mm; font-size: 9pt; color: var(--navy-300); text-align: center;">
+  Ozly App Pty Ltd · ABN xx xxx xxx xxx · Sydney, Australia<br>
+  ozly.au · suporte@ozly.au · WhatsApp +61 493 735 179
+</p>
+
+</body>
+</html>

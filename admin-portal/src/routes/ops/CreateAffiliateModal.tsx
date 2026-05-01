@@ -5,11 +5,14 @@ import { useToast } from '@/components/Toast';
 import { Spinner } from '@/components/Spinner';
 import { XIcon } from '@/components/Icons';
 import { TierEditor } from './TierEditor';
+import { RetentionBonusEditor } from './RetentionBonusEditor';
 import {
   DEFAULT_BASE_CENTS,
-  DEFAULT_TIERS,
+  DEFAULT_RETENTION,
+  DEFAULT_VOLUME_TIERS,
   type BonusPeriod,
-  type BonusTier,
+  type RetentionBonus,
+  type VolumeTier,
 } from './tierMath';
 
 const CURRENCIES = ['AUD', 'BRL', 'USD'] as const;
@@ -34,8 +37,9 @@ export interface AffiliateLike {
   currency: string;
   notes: string | null;
   active: boolean;
-  bonus_tiers?: BonusTier[];
+  bonus_tiers?: VolumeTier[];
   bonus_period?: BonusPeriod;
+  retention_bonuses?: RetentionBonus[];
 }
 
 interface Props {
@@ -61,8 +65,9 @@ export function CreateAffiliateModal({ open, onClose, onSaved, editing }: Props)
   const [active, setActive] = useState(true);
 
   const [baseCents, setBaseCents] = useState<number>(DEFAULT_BASE_CENTS);
-  const [bonusTiers, setBonusTiers] = useState<BonusTier[]>(DEFAULT_TIERS);
+  const [bonusTiers, setBonusTiers] = useState<VolumeTier[]>(DEFAULT_VOLUME_TIERS);
   const [bonusPeriod, setBonusPeriod] = useState<BonusPeriod>('monthly');
+  const [retention, setRetention] = useState<RetentionBonus[]>(DEFAULT_RETENTION);
 
   // Reset/load when opening modal or switching editing target.
   useEffect(() => {
@@ -82,9 +87,14 @@ export function CreateAffiliateModal({ open, onClose, onSaved, editing }: Props)
       setBonusTiers(
         Array.isArray(editing.bonus_tiers) && editing.bonus_tiers.length > 0
           ? editing.bonus_tiers
-          : DEFAULT_TIERS,
+          : DEFAULT_VOLUME_TIERS,
       );
       setBonusPeriod(editing.bonus_period ?? 'monthly');
+      setRetention(
+        Array.isArray(editing.retention_bonuses) && editing.retention_bonuses.length > 0
+          ? editing.retention_bonuses
+          : DEFAULT_RETENTION,
+      );
     } else {
       setCode('');
       setName('');
@@ -95,8 +105,9 @@ export function CreateAffiliateModal({ open, onClose, onSaved, editing }: Props)
       setNotes('');
       setActive(true);
       setBaseCents(DEFAULT_BASE_CENTS);
-      setBonusTiers(DEFAULT_TIERS);
+      setBonusTiers(DEFAULT_VOLUME_TIERS);
       setBonusPeriod('monthly');
+      setRetention(DEFAULT_RETENTION);
     }
   }, [open, editing]);
 
@@ -137,6 +148,7 @@ export function CreateAffiliateModal({ open, onClose, onSaved, editing }: Props)
           p_notes: notes.trim() || null,
           p_bonus_tiers: bonusTiers,
           p_bonus_period: bonusPeriod,
+          p_retention_bonuses: retention,
         });
         toast({
           variant: 'success',
@@ -159,6 +171,7 @@ export function CreateAffiliateModal({ open, onClose, onSaved, editing }: Props)
           p_notes: notes.trim() || null,
           p_bonus_tiers: bonusTiers,
           p_bonus_period: bonusPeriod,
+          p_retention_bonuses: retention,
         });
 
         const syncPromise = callEdge<{
@@ -321,22 +334,22 @@ export function CreateAffiliateModal({ open, onClose, onSaved, editing }: Props)
             </Field>
           </div>
 
-          {/* Tier editor */}
+          {/* Volume tiers (lump-sum) */}
           <div className="space-y-1.5 pt-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-navy-600">
-                Estrutura de comissão
+                💰 Volume bonus (lump-sum no período)
               </span>
               <button
                 type="button"
                 onClick={() => {
                   setBaseCents(DEFAULT_BASE_CENTS);
-                  setBonusTiers(DEFAULT_TIERS);
+                  setBonusTiers(DEFAULT_VOLUME_TIERS);
                   setBonusPeriod('monthly');
                 }}
                 className="text-[11px] text-brand-700 underline"
               >
-                Restaurar default ($5 base + tiers $2/$5/$10)
+                Default ($10 base + ≥50:$100, ≥100:$300)
               </button>
             </div>
             <TierEditor
@@ -346,6 +359,28 @@ export function CreateAffiliateModal({ open, onClose, onSaved, editing }: Props)
               onTiersChange={setBonusTiers}
               period={bonusPeriod}
               onPeriodChange={setBonusPeriod}
+              currency={currency}
+            />
+          </div>
+
+          {/* Retention bonuses (per user) */}
+          <div className="space-y-1.5 pt-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-navy-600">
+                ⏰ Retention bonus (por user que mantém X meses)
+              </span>
+              <button
+                type="button"
+                onClick={() => setRetention(DEFAULT_RETENTION)}
+                className="text-[11px] text-brand-700 underline"
+              >
+                Default ($5/$5/$5 → max $25/user 12m)
+              </button>
+            </div>
+            <RetentionBonusEditor
+              baseCents={baseCents}
+              retention={retention}
+              onChange={setRetention}
               currency={currency}
             />
           </div>

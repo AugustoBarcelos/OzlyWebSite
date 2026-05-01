@@ -9,6 +9,7 @@ const Guide = lazy(() => import("./pages/Guide"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfUse = lazy(() => import("./pages/TermsOfUse"));
 const ReferralLanding = lazy(() => import("./pages/ReferralLanding"));
+const AffiliateDashboard = lazy(() => import("./pages/AffiliateDashboard"));
 
 function RouteFallback() {
   return (
@@ -34,6 +35,8 @@ export default function App() {
                 `/v/` = vendedor. `/refer` (estático, em public/) fica
                 para o marketing antigo genérico e é intocado. */}
             <Route path="/v/:code" element={<ReferralLanding />} />
+            {/* Dashboard privado do afiliado (sem auth — código é o identificador). */}
+            <Route path="/me/:code" element={<AffiliateDashboard />} />
           </Routes>
         </Suspense>
       </main>

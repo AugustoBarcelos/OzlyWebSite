@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card, Text, Title, Badge } from '@tremor/react';
 import { callRpc, RpcError } from '@/lib/rpc';
 import { Spinner } from '@/components/Spinner';
+import { useToast } from '@/components/Toast';
 
 interface PendingByAff {
   id: string;
@@ -12,6 +13,12 @@ interface PendingByAff {
   currency: string;
   count: number;
   cents: number;
+  breakdown_conv_count: number;
+  breakdown_conv_cents: number;
+  breakdown_volume_count: number;
+  breakdown_volume_cents: number;
+  breakdown_milestone_count: number;
+  breakdown_milestone_cents: number;
   oldest_ready_at: string | null;
 }
 
@@ -55,9 +62,12 @@ interface Props {
  *   - Histórico últimos 12 meses (quanto pagou cada mês × moeda)
  */
 export function PendingPayoutsCard({ refreshKey, onSelectAffiliate }: Props) {
+  const { toast } = useToast();
   const [data, setData] = useState<PlanningResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [paying, setPaying] = useState<string | null>(null);
+  const [localRefresh, setLocalRefresh] = useState(0);
 
   useEffect(() => {
     let alive = true;
@@ -77,7 +87,41 @@ export function PendingPayoutsCard({ refreshKey, onSelectAffiliate }: Props) {
     return () => {
       alive = false;
     };
-  }, [refreshKey]);
+  }, [refreshKey, localRefresh]);
+
+  async function bulkPay(aff: PendingByAff) {
+    const total = formatMoney(aff.cents, aff.currency);
+    const ref = window.prompt(
+      `Vai marcar TUDO de ${aff.code} (${total}, ${aff.count} itens) como pago.\n\nReferência opcional (ex: PIX-2026-05-01):`,
+      '',
+    );
+    if (ref === null) return;
+    setPaying(aff.id);
+    try {
+      await callRpc<{ success: boolean; payout_id: string; total_cents: number }>(
+        'admin_bulk_pay_affiliate',
+        {
+          p_affiliate_id: aff.id,
+          p_method: 'pix',
+          p_reference: ref || null,
+        },
+      );
+      toast({
+        variant: 'success',
+        title: `${aff.code} pago`,
+        description: `${total} consolidado em 1 payout (${aff.count} itens marcados).`,
+      });
+      setLocalRefresh((k) => k + 1);
+    } catch (e) {
+      toast({
+        variant: 'error',
+        title: 'Falha ao pagar',
+        description: e instanceof RpcError ? e.message : 'Unknown',
+      });
+    } finally {
+      setPaying(null);
+    }
+  }
 
   if (loading && !data) {
     return (
@@ -164,8 +208,19 @@ export function PendingPayoutsCard({ refreshKey, onSelectAffiliate }: Props) {
                     (1000 * 60 * 60 * 24),
                 )
               : null;
+            const breakdown: string[] = [];
+            if (a.breakdown_conv_count > 0)
+              breakdown.push(`${a.breakdown_conv_count} convs $${(a.breakdown_conv_cents / 100).toFixed(2)}`);
+            if (a.breakdown_volume_count > 0)
+              breakdown.push(`${a.breakdown_volume_count} vol $${(a.breakdown_volume_cents / 100).toFixed(2)}`);
+            if (a.breakdown_milestone_count > 0)
+              breakdown.push(`${a.breakdown_milestone_count} ret $${(a.breakdown_milestone_cents / 100).toFixed(2)}`);
+
             return (
-              <li key={a.id} className="flex items-center gap-3 px-3 py-2.5 text-sm">
+              <li
+                key={a.id}
+                className="flex items-center gap-3 px-3 py-2.5 text-sm"
+              >
                 <button
                   type="button"
                   onClick={() => onSelectAffiliate?.(a.id)}
@@ -185,15 +240,30 @@ export function PendingPayoutsCard({ refreshKey, onSelectAffiliate }: Props) {
                       </span>
                     )}
                   </div>
+                  {breakdown.length > 0 && (
+                    <div className="mt-0.5 text-[10px] text-navy-400">
+                      {breakdown.join(' · ')}
+                    </div>
+                  )}
                 </button>
                 <div className="text-right">
                   <div className="font-semibold tabular-nums text-amber-700">
                     {formatMoney(a.cents, a.currency)}
                   </div>
                   <div className="text-[10px] text-navy-400">
-                    {a.count} conv
+                    {a.count} {a.count === 1 ? 'item' : 'itens'}
                   </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    void bulkPay(a);
+                  }}
+                  disabled={paying === a.id}
+                  className="rounded-md bg-brand-600 px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-50"
+                >
+                  {paying === a.id ? '…' : 'Pagar tudo'}
+                </button>
               </li>
             );
           })}

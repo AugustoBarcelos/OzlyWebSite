@@ -153,6 +153,19 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
       {/* Footer: external resources + user + sign out */}
       <div className="border-t border-navy-800/60 p-3">
+        <NavLink
+          to="/settings"
+          className={({ isActive }) =>
+            [
+              'mb-2 flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] transition-colors',
+              isActive
+                ? 'bg-navy-800/60 text-white'
+                : 'text-navy-200 hover:bg-navy-800/60 hover:text-white',
+            ].join(' ')
+          }
+        >
+          ⚙ Settings
+        </NavLink>
         <a
           href="https://supabase.com/dashboard/project/jnhwgwnphlnhjlgygjql/functions"
           target="_blank"

@@ -6,6 +6,7 @@ import { Layout } from './components/Layout';
 import { UnauthorizedPage } from './components/UnauthorizedPage';
 import { ToastProvider } from './components/Toast';
 import { Spinner } from './components/Spinner';
+import { PreferencesProvider } from './lib/preferences';
 import { LoginPage } from './routes/login';
 import { AuthCallbackPage } from './routes/auth/callback';
 
@@ -33,6 +34,9 @@ const GrowthPage = lazy(() =>
 );
 const ReliabilityPage = lazy(() =>
   import('./routes/reliability').then((m) => ({ default: m.ReliabilityPage })),
+);
+const SettingsPage = lazy(() =>
+  import('./routes/settings').then((m) => ({ default: m.SettingsPage })),
 );
 
 function RouteFallback() {
@@ -77,9 +81,10 @@ function NotFound() {
 export function App() {
   return (
     <AuthProvider>
-      <ToastProvider>
-        <Routes>
-        {/* Public */}
+      <PreferencesProvider>
+        <ToastProvider>
+          <Routes>
+            {/* Public */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
@@ -151,6 +156,14 @@ export function App() {
                 </Suspense>
               }
             />
+            <Route
+              path="/settings"
+              element={
+                <Suspense fallback={<RouteFallback />}>
+                  <SettingsPage />
+                </Suspense>
+              }
+            />
             {/* Backward-compat redirects for old bookmarks */}
             <Route path="/marketing" element={<Navigate to="/growth" replace />} />
             <Route path="/errors" element={<Navigate to="/reliability" replace />} />
@@ -167,8 +180,9 @@ export function App() {
 
         {/* Catch-all */}
         <Route path="*" element={<NotFound />} />
-      </Routes>
-      </ToastProvider>
+          </Routes>
+        </ToastProvider>
+      </PreferencesProvider>
     </AuthProvider>
   );
 }

@@ -1,31 +1,36 @@
 import { XIcon } from '@/components/Icons';
 import {
   BONUS_PERIODS,
+  effectiveAvgCents,
   formatMoneyCents,
   type BonusPeriod,
-  type BonusTier,
+  type VolumeTier,
 } from './tierMath';
 
 interface Props {
   baseCents: number;
   onBaseChange: (cents: number) => void;
-  tiers: BonusTier[];
-  onTiersChange: (next: BonusTier[]) => void;
+  tiers: VolumeTier[];
+  onTiersChange: (next: VolumeTier[]) => void;
   period: BonusPeriod;
   onPeriodChange: (p: BonusPeriod) => void;
   currency: string;
 }
 
 /**
- * Editor visual da estrutura de comissão tiered:
+ * Volume Tier Editor — bonus LUMP-SUM por threshold.
  *
- *   - Base ($)
- *   - Janela (mensal/trimestral/anual/lifetime)
- *   - Lista de tiers: { threshold, bonus_cents }
- *   - Coluna calculada: total $ por conversão (base + bonus desse tier)
+ * Modelo:
+ *   - Atinge `threshold` conversões no `period` → afiliado recebe `bonus_cents`
+ *     UMA VEZ (não muda o valor de cada conversão).
  *
- * Sortado por threshold ASC. Add/remove inline. Mostra preview de quanto
- * fica o "top tier" pra rapida sanidade.
+ *   - O ganho efetivo é distribuído: rate avg / conv sobe à medida que
+ *     thresholds são alcançados. Mostramos o avg pra cada tier pra deixar
+ *     claro o "sweet point" do bonus.
+ *
+ * Ex: base $10, ≥50→+$100 lump, ≥100→+$300 lump
+ *   - Aos 50 vendas: 50×$10 + $100 = $600 (avg $12/conv)
+ *   - Aos 100 vendas: 100×$10 + $100 + $300 = $1400 (avg $14/conv)
  */
 export function TierEditor({
   baseCents,
@@ -37,12 +42,8 @@ export function TierEditor({
   currency,
 }: Props) {
   const sortedTiers = [...tiers].sort((a, b) => a.threshold - b.threshold);
-  const topTotalCents =
-    sortedTiers.length > 0
-      ? baseCents + (sortedTiers[sortedTiers.length - 1]?.bonus_cents ?? 0)
-      : baseCents;
 
-  function updateTier(idx: number, patch: Partial<BonusTier>) {
+  function updateTier(idx: number, patch: Partial<VolumeTier>) {
     const next = sortedTiers.map((t, i) => (i === idx ? { ...t, ...patch } : t));
     onTiersChange(next);
   }
@@ -64,7 +65,7 @@ export function TierEditor({
       {/* Base + period */}
       <div className="grid grid-cols-2 gap-3">
         <label className="flex flex-col gap-1 text-xs">
-          <span className="font-medium text-navy-600">Comissão base</span>
+          <span className="font-medium text-navy-600">Base por conversão</span>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-navy-400">
               $
@@ -79,12 +80,12 @@ export function TierEditor({
             />
           </div>
           <span className="text-[11px] text-navy-300">
-            Sempre paga por conversão
+            Sempre paga em cada conversão
           </span>
         </label>
 
         <label className="flex flex-col gap-1 text-xs">
-          <span className="font-medium text-navy-600">Janela do bonus</span>
+          <span className="font-medium text-navy-600">Janela do volume</span>
           <select
             value={period}
             onChange={(e) => onPeriodChange(e.target.value as BonusPeriod)}
@@ -102,23 +103,31 @@ export function TierEditor({
         </label>
       </div>
 
-      {/* Tiers table */}
+      {/* Tiers — agora lump-sum */}
       <div className="rounded-md border border-navy-100 bg-navy-50/30">
         <div className="grid grid-cols-12 gap-2 border-b border-navy-100 bg-navy-50/60 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-navy-500">
-          <span className="col-span-3">Quando</span>
-          <span className="col-span-3">Bonus por conv</span>
-          <span className="col-span-4">Total / conv</span>
+          <span className="col-span-3">Atinge ≥</span>
+          <span className="col-span-3">Lump-sum</span>
+          <span className="col-span-4">Avg / conv nesse tier</span>
           <span className="col-span-2"></span>
         </div>
 
         {sortedTiers.length === 0 && (
           <div className="px-3 py-4 text-center text-xs text-navy-400">
-            Sem tiers ainda. Click <strong>+ Adicionar tier</strong> abaixo.
+            Sem tiers de volume. Click <strong>+ Adicionar tier</strong>.
           </div>
         )}
 
         {sortedTiers.map((t, idx) => {
-          const total = baseCents + t.bonus_cents;
+          // Avg = todas conversões do tier × base + soma lumps até esse tier
+          const lumpsThroughHere = sortedTiers
+            .slice(0, idx + 1)
+            .reduce((s, x) => s + x.bonus_cents, 0);
+          const avgAtThisTier = effectiveAvgCents(
+            baseCents,
+            sortedTiers.slice(0, idx + 1),
+            t.threshold,
+          );
           return (
             <div
               key={idx}
@@ -152,10 +161,11 @@ export function TierEditor({
                   className="w-full rounded border border-navy-100 bg-white px-2 py-1 text-xs"
                 />
               </div>
-              <div className="col-span-4 font-medium tabular-nums text-navy-700">
-                {formatMoneyCents(total, currency)}
+              <div className="col-span-4 font-medium tabular-nums text-emerald-700">
+                {formatMoneyCents(avgAtThisTier, currency)} / conv
                 <span className="ml-1 text-[10px] text-navy-300">
-                  ({formatMoneyCents(baseCents, currency)} + {formatMoneyCents(t.bonus_cents, currency)})
+                  ({formatMoneyCents(baseCents, currency)} +{' '}
+                  {formatMoneyCents(lumpsThroughHere, currency)} ÷ {t.threshold})
                 </span>
               </div>
               <div className="col-span-2 text-right">
@@ -183,18 +193,11 @@ export function TierEditor({
         </div>
       </div>
 
-      {/* Top tier preview */}
-      {sortedTiers.length > 0 && (
-        <div className="rounded-md bg-emerald-50/60 px-3 py-2 text-xs text-emerald-800">
-          🎯 No top tier (≥{sortedTiers[sortedTiers.length - 1]?.threshold} conv) o
-          afiliado ganha <strong>{formatMoneyCents(topTotalCents, currency)}</strong> por conversão
-          {topTotalCents !== 1500 && (
-            <span className="ml-1 text-emerald-700">
-              · default sugerido é {currency} 15.00
-            </span>
-          )}
-        </div>
-      )}
+      <div className="rounded-md bg-emerald-50/60 px-3 py-2 text-xs text-emerald-800">
+        💡 Lump-sum = pagamento único quando atinge o threshold no período.
+        Não muda o valor das outras conversões; o "avg / conv" mostra o ganho
+        efetivo distribuído.
+      </div>
     </div>
   );
 }

@@ -18,7 +18,8 @@ import { formatNumber, formatRelativeTime } from '@/lib/format';
 import { CreateAffiliateModal } from './CreateAffiliateModal';
 import { AffiliateDetailPanel } from './AffiliateDetailPanel';
 import { PendingPayoutsCard } from './PendingPayoutsCard';
-import type { BonusTier, BonusPeriod } from './tierMath';
+import { PayoutsHistoryCard } from './PayoutsHistoryCard';
+import type { BonusPeriod, RetentionBonus, VolumeTier } from './tierMath';
 
 /**
  * /ops/affiliates — vendor / sales partner management.
@@ -49,8 +50,13 @@ interface AffiliateRow {
   currency: string;
   active: boolean;
   notes: string | null;
-  bonus_tiers: BonusTier[];
+  bonus_tiers: VolumeTier[];
   bonus_period: BonusPeriod;
+  retention_bonuses: RetentionBonus[];
+  volume_awards_pending: number;
+  volume_awards_cents: number;
+  milestone_pending: number;
+  milestone_cents: number;
   signups: number;
   signups_30d: number;
   purchases: number;
@@ -434,10 +440,13 @@ export function AffiliatesPage() {
           email={selected.email}
           pay_id={selected.pay_id}
           currency={selected.currency}
-          baseCents={selected.commission_cents ?? 500}
+          baseCents={selected.commission_cents ?? 1000}
           bonusTiers={selected.bonus_tiers}
           bonusPeriod={selected.bonus_period}
+          retentionBonuses={selected.retention_bonuses ?? []}
           currentPeriodCount={selected.current_period_count}
+          volumeAwardsCents={selected.volume_awards_cents}
+          milestoneCents={selected.milestone_cents}
           onEdit={() => setEditing(selected)}
           conversionsTable={
             <Card>
@@ -514,6 +523,9 @@ export function AffiliatesPage() {
           }
         />
       )}
+
+      {/* Histórico completo de payouts (filtros + CSV) */}
+      <PayoutsHistoryCard refreshKey={refreshKey} />
     </div>
   );
 }

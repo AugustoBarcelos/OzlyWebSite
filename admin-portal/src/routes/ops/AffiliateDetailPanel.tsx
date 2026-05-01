@@ -5,14 +5,18 @@ import { Spinner } from '@/components/Spinner';
 import { QrCode } from '@/components/QrCode';
 import { ExternalLinkIcon } from '@/components/Icons';
 import { formatRelativeTime } from '@/lib/format';
+import { AffiliateAwardsList } from './AffiliateAwardsList';
 import {
   BONUS_PERIODS,
-  activeTierIdx,
+  activeVolumeIdx,
+  effectiveAvgCents,
   formatMoneyCents,
-  nextTier,
-  totalCentsAtCount,
+  maxLifetimePayoutCents,
+  nextVolumeTier,
+  volumeBonusEarnedCents,
   type BonusPeriod,
-  type BonusTier,
+  type RetentionBonus,
+  type VolumeTier,
 } from './tierMath';
 
 interface Props {
@@ -23,9 +27,12 @@ interface Props {
   pay_id: string | null;
   currency: string;
   baseCents: number;
-  bonusTiers: BonusTier[];
+  bonusTiers: VolumeTier[];
   bonusPeriod: BonusPeriod;
+  retentionBonuses: RetentionBonus[];
   currentPeriodCount: number;
+  volumeAwardsCents: number;
+  milestoneCents: number;
   onEdit?: () => void;
 }
 
@@ -74,7 +81,10 @@ export function AffiliateDetailPanel({
   baseCents,
   bonusTiers,
   bonusPeriod,
+  retentionBonuses,
   currentPeriodCount,
+  volumeAwardsCents,
+  milestoneCents,
   onEdit,
   conversionsTable,
 }: Props & { conversionsTable: React.ReactNode }) {
@@ -121,15 +131,15 @@ export function AffiliateDetailPanel({
   const periodIdx = PERIODS.indexOf(period);
   const [previewOpen, setPreviewOpen] = useState(false);
 
-  // Tier maths
-  const tierIdx = activeTierIdx(bonusTiers, currentPeriodCount);
+  // Volume tier maths (lump-sum)
+  const tierIdx = activeVolumeIdx(bonusTiers, currentPeriodCount);
   const sortedTiers = [...bonusTiers].sort((a, b) => a.threshold - b.threshold);
   const currentTier = tierIdx >= 0 ? sortedTiers[tierIdx] : null;
-  const nextT = nextTier(bonusTiers, currentPeriodCount);
-  const currentTotal = totalCentsAtCount(baseCents, bonusTiers, currentPeriodCount);
+  const nextT = nextVolumeTier(bonusTiers, currentPeriodCount);
+  const earnedLumpCents = volumeBonusEarnedCents(bonusTiers, currentPeriodCount);
+  const avgRateCents = effectiveAvgCents(baseCents, bonusTiers, currentPeriodCount);
   const periodLabel =
     BONUS_PERIODS.find((p) => p.value === bonusPeriod)?.label ?? bonusPeriod;
-  const nextTotal = nextT ? baseCents + nextT.tier.bonus_cents : null;
   const progressPct = nextT
     ? Math.min(
         100,
@@ -141,6 +151,7 @@ export function AffiliateDetailPanel({
         ),
       )
     : 100;
+  const maxPerUser = maxLifetimePayoutCents(baseCents, retentionBonuses);
 
   return (
     <div className="space-y-4">
@@ -180,21 +191,23 @@ export function AffiliateDetailPanel({
         </div>
       </Card>
 
-      {/* Tier progress */}
+      {/* Volume bonus progress */}
       <Card>
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <div>
             <Title className="!text-sm">
-              💰 Tier {tierIdx >= 0 ? `${tierIdx + 1}` : 'base'} ·{' '}
+              💰 Volume bonus · avg{' '}
               <span className="text-emerald-700">
-                {formatMoneyCents(currentTotal, currency)} / conv
+                {formatMoneyCents(avgRateCents, currency)} / conv
               </span>
             </Title>
             <Text className="mt-0.5 text-xs text-navy-300">
-              {currentPeriodCount} conversões em {periodLabel.toLowerCase()}
+              {currentPeriodCount} conv em {periodLabel.toLowerCase()} · base{' '}
+              {formatMoneyCents(baseCents, currency)} ·{' '}
+              {formatMoneyCents(earnedLumpCents, currency)} de bonus já ganho
               {currentTier && (
                 <>
-                  {' '}· tier ativo: ≥{currentTier.threshold} convs (+
+                  {' '}· tier ativo: ≥{currentTier.threshold} (lump{' '}
                   {formatMoneyCents(currentTier.bonus_cents, currency)})
                 </>
               )}
@@ -207,6 +220,14 @@ export function AffiliateDetailPanel({
           )}
         </div>
 
+        {/* Pending awards alert */}
+        {volumeAwardsCents > 0 && (
+          <div className="mt-3 rounded-md bg-amber-100 px-3 py-2 text-xs font-medium text-amber-900">
+            💵 {formatMoneyCents(volumeAwardsCents, currency)} em volume
+            bonuses pendentes de pagamento
+          </div>
+        )}
+
         <div className="mt-4 space-y-2">
           {sortedTiers.length === 0 ? (
             <div className="text-xs text-navy-400">
@@ -214,11 +235,11 @@ export function AffiliateDetailPanel({
             </div>
           ) : (
             <>
-              {nextT && nextTotal !== null && (
+              {nextT && (
                 <div className="rounded-md bg-amber-50/60 px-3 py-2 text-xs text-amber-800">
                   📈 Faltam <strong>{nextT.needs}</strong> conversões pra atingir
-                  ≥{nextT.tier.threshold} e subir pra{' '}
-                  <strong>{formatMoneyCents(nextTotal, currency)}/conv</strong>
+                  ≥{nextT.tier.threshold} e ganhar lump{' '}
+                  <strong>{formatMoneyCents(nextT.tier.bonus_cents, currency)}</strong>
                 </div>
               )}
 
@@ -226,7 +247,6 @@ export function AffiliateDetailPanel({
                 {sortedTiers.map((t, i) => {
                   const reached = currentPeriodCount >= t.threshold;
                   const isCurrent = i === tierIdx;
-                  const total = baseCents + t.bonus_cents;
                   return (
                     <li
                       key={i}
@@ -243,12 +263,13 @@ export function AffiliateDetailPanel({
                         ≥{t.threshold}
                       </span>
                       <span className="flex-1 text-navy-500">
-                        +{formatMoneyCents(t.bonus_cents, currency)} bonus →{' '}
-                        <span className="font-medium text-navy-700">
-                          {formatMoneyCents(total, currency)} / conv
-                        </span>
+                        lump{' '}
+                        <strong className="text-navy-700">
+                          {formatMoneyCents(t.bonus_cents, currency)}
+                        </strong>{' '}
+                        quando atinge
                       </span>
-                      <span className="text-[10px]">{reached ? '✓' : '—'}</span>
+                      <span className="text-[10px]">{reached ? '✓ ganho' : '—'}</span>
                     </li>
                   );
                 })}
@@ -264,6 +285,54 @@ export function AffiliateDetailPanel({
               )}
             </>
           )}
+        </div>
+      </Card>
+
+      {/* Retention bonuses */}
+      <Card>
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <div>
+            <Title className="!text-sm">⏰ Retention · max {formatMoneyCents(maxPerUser, currency)} / user em 12m</Title>
+            <Text className="mt-0.5 text-xs text-navy-300">
+              Pago por user que mantém assinatura X meses após signup.
+            </Text>
+          </div>
+        </div>
+
+        {milestoneCents > 0 && (
+          <div className="mt-3 rounded-md bg-amber-100 px-3 py-2 text-xs font-medium text-amber-900">
+            💵 {formatMoneyCents(milestoneCents, currency)} em retention
+            milestones pendentes de pagamento
+          </div>
+        )}
+
+        <ul className="mt-3 space-y-1.5">
+          {retentionBonuses
+            .slice()
+            .sort((a, b) => a.months - b.months)
+            .map((r) => (
+              <li
+                key={r.months}
+                className="flex items-center gap-3 rounded-md border border-navy-100 bg-white px-3 py-1.5 text-xs"
+              >
+                <span className="w-16 font-mono text-navy-600">
+                  {r.months}m
+                </span>
+                <span className="flex-1 text-navy-500">
+                  +{formatMoneyCents(r.bonus_cents, currency)} quando user fica{' '}
+                  {r.months} meses ativo
+                </span>
+              </li>
+            ))}
+          {retentionBonuses.length === 0 && (
+            <li className="text-xs text-navy-400">Sem retention bonuses configurados.</li>
+          )}
+        </ul>
+
+        <div className="mt-3 rounded-md bg-navy-50/60 px-3 py-2 text-[11px] text-navy-500">
+          ⚙️ Detecção automática (Phase 2): pg_cron checa users de cada conv
+          que cruzaram 3/6/12m e ainda estão ativos no RC. Por enquanto a
+          estrutura fica salva mas o pagamento é registrado manualmente.
         </div>
       </Card>
 
@@ -356,6 +425,9 @@ export function AffiliateDetailPanel({
         </Text>
         {timeseries && <Sparkbars data={timeseries.series} />}
       </Card>
+
+      {/* Awards & Milestones — pagos vs pendentes */}
+      <AffiliateAwardsList affiliateId={affiliateId} />
 
       {/* Conversions table — passada de fora */}
       {conversionsTable}
