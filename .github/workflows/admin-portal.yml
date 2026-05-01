@@ -126,8 +126,14 @@ jobs:
           # Build-time env vars come from repo secrets; never write real values to disk.
           VITE_SUPABASE_URL: ${{ secrets.ADMIN_PORTAL_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.ADMIN_PORTAL_SUPABASE_ANON_KEY }}
-          VITE_POSTHOG_KEY: ${{ secrets.ADMIN_PORTAL_POSTHOG_KEY }}
+          # PostHog — note env var is API_KEY (was misnamed as POSTHOG_KEY before).
+          VITE_POSTHOG_API_KEY: ${{ secrets.ADMIN_PORTAL_POSTHOG_KEY }}
+          VITE_POSTHOG_HOST: ${{ secrets.ADMIN_PORTAL_POSTHOG_HOST }}
+          # Sentry — DSN for client SDK; API token/org/project for /errors page REST data.
           VITE_SENTRY_DSN: ${{ secrets.ADMIN_PORTAL_SENTRY_DSN }}
+          VITE_SENTRY_API_TOKEN: ${{ secrets.ADMIN_PORTAL_SENTRY_API_TOKEN }}
+          VITE_SENTRY_ORG: ${{ secrets.ADMIN_PORTAL_SENTRY_ORG }}
+          VITE_SENTRY_PROJECT: ${{ secrets.ADMIN_PORTAL_SENTRY_PROJECT }}
           # YouTube Data API — public channel id + browser-restricted API key.
           VITE_YT_API_KEY: ${{ secrets.ADMIN_PORTAL_YT_API_KEY }}
           VITE_YT_CHANNEL_ID: ${{ secrets.ADMIN_PORTAL_YT_CHANNEL_ID }}
