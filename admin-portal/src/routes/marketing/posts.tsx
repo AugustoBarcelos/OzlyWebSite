@@ -19,6 +19,7 @@ import {
 } from '@/lib/marketing';
 import { RpcError } from '@/lib/rpc';
 import { PageHeader } from './_PageHeader';
+import { ExternalPostsSection } from './ExternalPostsSection';
 
 const PAGE_SIZE = 25;
 
@@ -415,6 +416,9 @@ export function MarketingPostsPage() {
           </button>
         </div>
       )}
+
+      {/* Publicações reais nos canais (YT live; outros pendentes de token). */}
+      <ExternalPostsSection channelFilter={channelFilter} />
 
       {editing && (
         <div
