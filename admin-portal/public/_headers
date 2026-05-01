@@ -1,5 +1,5 @@
 /*
-  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.supabase.co; font-src 'self'; connect-src 'self' https://*.supabase.co https://eu.posthog.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'none'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: ; font-src 'self'; connect-src 'self' https://*.supabase.co https://eu.posthog.com https://www.googleapis.com https://*.ingest.sentry.io https://cloudflareinsights.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; upgrade-insecure-requests
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
