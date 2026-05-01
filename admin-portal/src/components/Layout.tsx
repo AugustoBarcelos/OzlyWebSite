@@ -60,25 +60,40 @@ function isBranch(item: NavItem): item is NavBranch {
   return 'children' in item;
 }
 
-const SIDEBAR_STATE_KEY = 'ozly-admin-sidebar-expanded';
+const SIDEBAR_STATE_KEY = 'ozly-admin-sidebar-overrides';
 
-function loadExpandedState(): Set<string> {
-  if (typeof window === 'undefined') return new Set();
+/**
+ * Sidebar branch state precedence:
+ *   1. User explicit override (open/closed) — wins always
+ *   2. Auto-expanded (current route is inside this branch)
+ *   3. Collapsed (default)
+ *
+ * Old impl used Set<string> which OR'd with autoExpanded → user's "close"
+ * could never win. New impl uses Map<string, boolean> = user override.
+ */
+function loadOverrides(): Map<string, boolean> {
+  if (typeof window === 'undefined') return new Map();
   try {
     const raw = window.localStorage.getItem(SIDEBAR_STATE_KEY);
-    if (!raw) return new Set();
+    if (!raw) return new Map();
     const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return new Set();
-    return new Set(parsed.filter((s): s is string => typeof s === 'string'));
+    if (!Array.isArray(parsed)) return new Map();
+    const out = new Map<string, boolean>();
+    for (const e of parsed) {
+      if (Array.isArray(e) && typeof e[0] === 'string' && typeof e[1] === 'boolean') {
+        out.set(e[0], e[1]);
+      }
+    }
+    return out;
   } catch {
-    return new Set();
+    return new Map();
   }
 }
 
-function saveExpandedState(state: Set<string>): void {
+function saveOverrides(state: Map<string, boolean>): void {
   if (typeof window === 'undefined') return;
   try {
-    window.localStorage.setItem(SIDEBAR_STATE_KEY, JSON.stringify([...state]));
+    window.localStorage.setItem(SIDEBAR_STATE_KEY, JSON.stringify([...state.entries()]));
   } catch {
     /* localStorage quota / disabled — silently ignore */
   }
@@ -224,20 +239,23 @@ function useExpandedBranches(items: ReadonlyArray<NavItem>) {
     return out;
   }, [items, pathname]);
 
-  const [userToggled, setUserToggled] = useState<Set<string>>(loadExpandedState);
+  const [overrides, setOverrides] = useState<Map<string, boolean>>(loadOverrides);
 
   useEffect(() => {
-    saveExpandedState(userToggled);
-  }, [userToggled]);
+    saveOverrides(overrides);
+  }, [overrides]);
 
-  const isExpanded = (label: string) =>
-    autoExpanded.has(label) || userToggled.has(label);
+  const isExpanded = (label: string): boolean => {
+    const ov = overrides.get(label);
+    if (ov !== undefined) return ov; // explicit user choice wins
+    return autoExpanded.has(label);
+  };
 
   const toggle = (label: string) => {
-    setUserToggled((prev) => {
-      const next = new Set(prev);
-      if (next.has(label)) next.delete(label);
-      else next.add(label);
+    setOverrides((prev) => {
+      const next = new Map(prev);
+      const current = prev.get(label) ?? autoExpanded.has(label);
+      next.set(label, !current);
       return next;
     });
   };
