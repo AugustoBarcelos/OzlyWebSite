@@ -6,7 +6,6 @@ import { OrganicTab } from './OrganicTab';
 import { MessagingTab } from './MessagingTab';
 import { SiteTab } from '../marketing/SiteTab';
 import { StoresTab } from '../marketing/StoresTab';
-import { AffiliatesPage } from '../ops/affiliates';
 import { GROWTH_PERIODS, useGrowthPeriod } from './period';
 
 /**
@@ -19,11 +18,12 @@ import { GROWTH_PERIODS, useGrowthPeriod } from './period';
  *   - Messaging    : 1:1 outbound (Resend email, WhatsApp Cloud API, SMS Twilio)
  *   - Site         : GA4 + Search Console
  *   - Stores       : ASO (App Store / Play Store)
- *   - Affiliates   : programa de comissão (vendor payouts)
+ *
+ * Affiliates é menu top-level dedicado (/affiliates) — payout tracking +
+ * detail panels não cabem como tab dentro de Growth.
  *
  * Filtro de período global (7d/30d/90d/12m) URL-persistido em ?period=N.
- * Tabs time-bound (Overview, Affiliates) consomem; tabs sem tempo (Paid stubs,
- * Organic/Messaging current-state, Site/Stores com periodos próprios) ignoram.
+ * Tabs time-bound (Overview) consomem; demais tabs ignoram.
  */
 
 const TABS = [
@@ -33,7 +33,6 @@ const TABS = [
   { key: 'messaging', label: 'Messaging', usesPeriod: false },
   { key: 'site', label: 'Site', usesPeriod: false },
   { key: 'stores', label: 'Stores', usesPeriod: false },
-  { key: 'affiliates', label: 'Affiliates', usesPeriod: false },
 ] as const;
 
 export function GrowthPage() {
@@ -50,7 +49,7 @@ export function GrowthPage() {
           <Title className="!text-navy-700">Growth</Title>
           <p className="mt-0.5 text-xs text-navy-300">
             Onde os novos pagantes vêm — e quanto custou cada um. Paid · Organic ·
-            Messaging · Site · Stores · Affiliates.
+            Messaging · Site · Stores.
           </p>
         </div>
 
@@ -106,11 +105,6 @@ export function GrowthPage() {
           <TabPanel>
             <div className="mt-4">
               <StoresTab />
-            </div>
-          </TabPanel>
-          <TabPanel>
-            <div className="mt-4">
-              <AffiliatesPage />
             </div>
           </TabPanel>
         </TabPanels>

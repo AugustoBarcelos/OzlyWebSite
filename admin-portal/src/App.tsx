@@ -32,6 +32,9 @@ const RevenuePage = lazy(() =>
 const GrowthPage = lazy(() =>
   import('./routes/growth').then((m) => ({ default: m.GrowthPage })),
 );
+const AffiliatesPage = lazy(() =>
+  import('./routes/ops/affiliates').then((m) => ({ default: m.AffiliatesPage })),
+);
 const ReliabilityPage = lazy(() =>
   import('./routes/reliability').then((m) => ({ default: m.ReliabilityPage })),
 );
@@ -157,6 +160,14 @@ export function App() {
               }
             />
             <Route
+              path="/affiliates"
+              element={
+                <Suspense fallback={<RouteFallback />}>
+                  <AffiliatesPage />
+                </Suspense>
+              }
+            />
+            <Route
               path="/settings"
               element={
                 <Suspense fallback={<RouteFallback />}>
@@ -169,7 +180,11 @@ export function App() {
             <Route path="/errors" element={<Navigate to="/reliability" replace />} />
             <Route
               path="/ops/affiliates"
-              element={<Navigate to="/growth" replace />}
+              element={<Navigate to="/affiliates" replace />}
+            />
+            <Route
+              path="/growth/affiliates"
+              element={<Navigate to="/affiliates" replace />}
             />
             <Route
               path="/ops/functions"

@@ -53,7 +53,6 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
     } catch (e) {
       // Silent — RPC may not exist in this env (older deployment) or not authed yet.
       if (!(e instanceof RpcError)) {
-        // eslint-disable-next-line no-console
         console.warn('[preferences] failed to load', e);
       }
     } finally {
@@ -68,7 +67,6 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
       });
       setPrefs(updated);
     } catch (e) {
-      // eslint-disable-next-line no-console
       console.warn('[preferences] failed to update', e);
       throw e;
     }
