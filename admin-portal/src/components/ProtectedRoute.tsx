@@ -3,16 +3,17 @@ import { useAuth } from '@/lib/auth';
 import { FullScreenSpinner } from './Spinner';
 
 /**
- * Route guard for authenticated admin routes.
+ * Route guard for authenticated portal routes.
  *
- * BRIEFING § 7-L4 / § 11.1:
- *  - Loading → spinner.
- *  - No user → redirect to /login, preserving intended path in `from` query.
- *  - User but role != admin → redirect to /unauthorized.
- *  - Else render nested routes via <Outlet />.
+ * Aceita: admin (profiles.role='admin') OU team_member ativo com pelo menos
+ * 1 grant. Senão → /unauthorized.
+ *
+ * Per-channel access (e.g. "só vê /paid se tem qualquer grant paid_*") é feito
+ * pelo `<ProtectedChannel>` em rotas individuais — esse guard só bloqueia
+ * randoms.
  */
 export function ProtectedRoute() {
-  const { user, role, loading } = useAuth();
+  const { user, role, hasPortalAccess, loading } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -25,7 +26,7 @@ export function ProtectedRoute() {
     return <Navigate to={to} replace />;
   }
 
-  if (role !== 'admin') {
+  if (role === null || !hasPortalAccess) {
     return <Navigate to="/unauthorized" replace />;
   }
 

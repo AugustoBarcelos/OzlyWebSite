@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { ComponentType, SVGProps } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { useAuth } from '@/lib/auth';
+import { useAuth, hasAnyChannelOfKind } from '@/lib/auth';
 import {
   DollarSignIcon,
   ExternalLinkIcon,
@@ -42,25 +42,58 @@ interface NavGroup {
   items: NavItem[];
 }
 
-const NAV: ReadonlyArray<NavGroup> = [
-  {
-    items: [
+/**
+ * Build nav groups dynamically based on the user's grants.
+ *
+ *  - Admin: vê tudo (incluindo grupo Ops com /team).
+ *  - content_creator (qualquer grant org_*): vê Dashboard + Organic.
+ *  - traffic_manager (qualquer grant paid_*): vê Dashboard + Paid.
+ *  - messaging_manager (qualquer grant msg_*): vê Dashboard + Messaging.
+ *  - Híbrido (grants em múltiplos prefixos): vê todos os itens correspondentes.
+ *
+ * Server re-checa via RPC; sidebar é só UX.
+ */
+function useNavGroups(): ReadonlyArray<NavGroup> {
+  const { isAdmin, grants } = useAuth();
+  return useMemo(() => {
+    if (isAdmin) {
+      return [
+        {
+          items: [
+            { label: 'Dashboard', to: '/', icon: LayoutDashboardIcon, end: true },
+            { label: 'Users', to: '/users', icon: UsersIcon },
+            { label: 'Revenue', to: '/revenue', icon: DollarSignIcon },
+            { label: 'Growth', to: '/growth', icon: TrendingUpIcon },
+            { label: 'Affiliates', to: '/affiliates', icon: HandshakeIcon },
+            { label: 'Reliability', to: '/reliability', icon: ShieldCheckIcon },
+          ],
+        },
+        {
+          label: 'Ops',
+          items: [
+            { label: 'Team', to: '/team', icon: UsersIcon },
+            { label: 'Grants', to: '/ops/grants', icon: GiftIcon },
+            { label: 'Audit', to: '/ops/audit', icon: ScrollTextIcon },
+          ],
+        },
+      ];
+    }
+
+    const items: NavItem[] = [
       { label: 'Dashboard', to: '/', icon: LayoutDashboardIcon, end: true },
-      { label: 'Users', to: '/users', icon: UsersIcon },
-      { label: 'Revenue', to: '/revenue', icon: DollarSignIcon },
-      { label: 'Growth', to: '/growth', icon: TrendingUpIcon },
-      { label: 'Affiliates', to: '/affiliates', icon: HandshakeIcon },
-      { label: 'Reliability', to: '/reliability', icon: ShieldCheckIcon },
-    ],
-  },
-  {
-    label: 'Ops',
-    items: [
-      { label: 'Grants', to: '/ops/grants', icon: GiftIcon },
-      { label: 'Audit', to: '/ops/audit', icon: ScrollTextIcon },
-    ],
-  },
-];
+    ];
+    if (hasAnyChannelOfKind(grants, 'org_')) {
+      items.push({ label: 'Organic', to: '/organic', icon: TrendingUpIcon });
+    }
+    if (hasAnyChannelOfKind(grants, 'paid_')) {
+      items.push({ label: 'Paid', to: '/paid', icon: DollarSignIcon });
+    }
+    if (hasAnyChannelOfKind(grants, 'msg_')) {
+      items.push({ label: 'Messaging', to: '/messaging', icon: HandshakeIcon });
+    }
+    return [{ items }];
+  }, [isAdmin, grants]);
+}
 
 /** Build human-readable breadcrumbs from the current pathname. */
 function useBreadcrumbs(): string[] {
@@ -77,7 +110,8 @@ function useBreadcrumbs(): string[] {
 }
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin, member } = useAuth();
+  const navGroups = useNavGroups();
 
   return (
     <div className="flex h-full flex-col bg-navy-700 text-navy-50">
@@ -100,7 +134,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-2 py-4">
-        {NAV.map((group, idx) => (
+        {navGroups.map((group, idx) => (
           <div key={idx} className="mb-4">
             {group.label && (
               <div className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-navy-200/70">
@@ -155,31 +189,40 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
       {/* Footer: external resources + user + sign out */}
       <div className="border-t border-navy-800/60 p-3">
-        <NavLink
-          to="/settings"
-          className={({ isActive }) =>
-            [
-              'mb-2 flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] transition-colors',
-              isActive
-                ? 'bg-navy-800/60 text-white'
-                : 'text-navy-200 hover:bg-navy-800/60 hover:text-white',
-            ].join(' ')
-          }
-        >
-          ⚙ Settings
-        </NavLink>
-        <a
-          href="https://supabase.com/dashboard/project/jnhwgwnphlnhjlgygjql/functions"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mb-2 flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] text-navy-200 transition-colors hover:bg-navy-800/60 hover:text-white"
-        >
-          <ExternalLinkIcon className="h-3 w-3" />
-          Edge Functions
-        </a>
+        {isAdmin && (
+          <>
+            <NavLink
+              to="/settings"
+              className={({ isActive }) =>
+                [
+                  'mb-2 flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] transition-colors',
+                  isActive
+                    ? 'bg-navy-800/60 text-white'
+                    : 'text-navy-200 hover:bg-navy-800/60 hover:text-white',
+                ].join(' ')
+              }
+            >
+              ⚙ Settings
+            </NavLink>
+            <a
+              href="https://supabase.com/dashboard/project/jnhwgwnphlnhjlgygjql/functions"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mb-2 flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] text-navy-200 transition-colors hover:bg-navy-800/60 hover:text-white"
+            >
+              <ExternalLinkIcon className="h-3 w-3" />
+              Edge Functions
+            </a>
+          </>
+        )}
         {user?.email && (
-          <div className="mb-2 truncate px-1 text-[11px] text-navy-200">
+          <div className="mb-1 truncate px-1 text-[11px] text-navy-200">
             {user.email}
+          </div>
+        )}
+        {!isAdmin && member && (
+          <div className="mb-2 px-1 text-[10px] uppercase tracking-wide text-navy-300">
+            {member.role.replace('_', ' ')}
           </div>
         )}
         <button

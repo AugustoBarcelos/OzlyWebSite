@@ -41,6 +41,9 @@ const ReliabilityPage = lazy(() =>
 const SettingsPage = lazy(() =>
   import('./routes/settings').then((m) => ({ default: m.SettingsPage })),
 );
+const TeamPage = lazy(() =>
+  import('./routes/team').then((m) => ({ default: m.TeamPage })),
+);
 
 function RouteFallback() {
   return (
@@ -172,6 +175,14 @@ export function App() {
               element={
                 <Suspense fallback={<RouteFallback />}>
                   <SettingsPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/team"
+              element={
+                <Suspense fallback={<RouteFallback />}>
+                  <TeamPage />
                 </Suspense>
               }
             />
