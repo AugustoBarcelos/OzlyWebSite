@@ -128,6 +128,9 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.ADMIN_PORTAL_SUPABASE_ANON_KEY }}
           VITE_POSTHOG_KEY: ${{ secrets.ADMIN_PORTAL_POSTHOG_KEY }}
           VITE_SENTRY_DSN: ${{ secrets.ADMIN_PORTAL_SENTRY_DSN }}
+          # YouTube Data API — public channel id + browser-restricted API key.
+          VITE_YT_API_KEY: ${{ secrets.ADMIN_PORTAL_YT_API_KEY }}
+          VITE_YT_CHANNEL_ID: ${{ secrets.ADMIN_PORTAL_YT_CHANNEL_ID }}
 
       # ── Gate 2: no console.log in OUR source ─────────────────────────────
       # We check src/ (our code) instead of dist/ because vendor bundles
