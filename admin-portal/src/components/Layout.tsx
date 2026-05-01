@@ -1,14 +1,17 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ComponentType, SVGProps } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth, hasAnyChannelOfKind } from '@/lib/auth';
 import {
+  ChevronDownIcon,
   DollarSignIcon,
   ExternalLinkIcon,
   GiftIcon,
   HandshakeIcon,
   LayoutDashboardIcon,
   LogOutIcon,
+  MailIcon,
+  MegaphoneIcon,
   MenuIcon,
   ScrollTextIcon,
   ShieldCheckIcon,
@@ -23,33 +26,72 @@ import { MessagingFab } from './MessagingFab';
  *
  * BRIEFING § 11 — sidebar + topbar shell that hosts every later screen.
  *  - Sidebar (240px desktop, off-canvas on mobile)
+ *  - Top-level entries can be leaves (links) or branches (expandable groups)
+ *  - Branch state is auto-expanded when a child route is active, and user
+ *    toggles persist in localStorage.
  *  - Topbar with breadcrumbs + external dashboard links
  *  - Main area renders nested routes via <Outlet />.
  */
 
 type IconComponent = ComponentType<Omit<SVGProps<SVGSVGElement>, 'children'>>;
 
-interface NavItem {
+interface NavLeaf {
   label: string;
   to: string;
-  icon: IconComponent;
+  icon?: IconComponent;
   /** If true, only treat as active when path === to. */
   end?: boolean;
 }
 
+interface NavBranch {
+  label: string;
+  icon: IconComponent;
+  children: ReadonlyArray<NavLeaf>;
+}
+
+type NavItem = NavLeaf | NavBranch;
+
 interface NavGroup {
   label?: string;
-  items: NavItem[];
+  items: ReadonlyArray<NavItem>;
+}
+
+function isBranch(item: NavItem): item is NavBranch {
+  return 'children' in item;
+}
+
+const SIDEBAR_STATE_KEY = 'ozly-admin-sidebar-expanded';
+
+function loadExpandedState(): Set<string> {
+  if (typeof window === 'undefined') return new Set();
+  try {
+    const raw = window.localStorage.getItem(SIDEBAR_STATE_KEY);
+    if (!raw) return new Set();
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return new Set();
+    return new Set(parsed.filter((s): s is string => typeof s === 'string'));
+  } catch {
+    return new Set();
+  }
+}
+
+function saveExpandedState(state: Set<string>): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(SIDEBAR_STATE_KEY, JSON.stringify([...state]));
+  } catch {
+    /* localStorage quota / disabled — silently ignore */
+  }
 }
 
 /**
  * Build nav groups dynamically based on the user's grants.
  *
- *  - Admin: vê tudo (incluindo grupo Ops com /team).
- *  - content_creator (qualquer grant org_*): vê Dashboard + Organic.
- *  - traffic_manager (qualquer grant paid_*): vê Dashboard + Paid.
- *  - messaging_manager (qualquer grant msg_*): vê Dashboard + Messaging.
- *  - Híbrido (grants em múltiplos prefixos): vê todos os itens correspondentes.
+ *  - Admin: vê tudo, com Marketing/Tráfego Pago/Mensageria como branches expansíveis.
+ *  - content_creator (qualquer grant org_*): vê Dashboard + Marketing.
+ *  - traffic_manager (qualquer grant paid_*): vê Dashboard + Tráfego Pago.
+ *  - messaging_manager (qualquer grant msg_*): vê Dashboard + Mensageria.
+ *  - Híbrido (grants em múltiplos prefixos): vê todos os branches correspondentes.
  *
  * Server re-checa via RPC; sidebar é só UX.
  */
@@ -63,8 +105,51 @@ function useNavGroups(): ReadonlyArray<NavGroup> {
             { label: 'Dashboard', to: '/', icon: LayoutDashboardIcon, end: true },
             { label: 'Users', to: '/users', icon: UsersIcon },
             { label: 'Revenue', to: '/revenue', icon: DollarSignIcon },
-            { label: 'Growth', to: '/growth', icon: TrendingUpIcon },
             { label: 'Affiliates', to: '/affiliates', icon: HandshakeIcon },
+          ],
+        },
+        {
+          label: 'Crescimento',
+          items: [
+            { label: 'Insights', to: '/insights', icon: TrendingUpIcon },
+            {
+              label: 'Marketing',
+              icon: MegaphoneIcon,
+              children: [
+                { label: 'Calendário', to: '/marketing/calendar' },
+                { label: 'Composer', to: '/marketing/composer' },
+                { label: 'Publicações', to: '/marketing/posts' },
+                { label: 'Canais Orgânicos', to: '/marketing/channels' },
+                { label: 'SEO & Site', to: '/marketing/seo' },
+                { label: 'Lojas (ASO)', to: '/marketing/aso' },
+              ],
+            },
+            {
+              label: 'Tráfego Pago',
+              icon: DollarSignIcon,
+              children: [
+                { label: 'Visão Geral', to: '/ads', end: true },
+                { label: 'Google Ads', to: '/ads/google' },
+                { label: 'Meta Ads', to: '/ads/meta' },
+                { label: 'Apple Search Ads', to: '/ads/asa' },
+                { label: 'TikTok Ads', to: '/ads/tiktok' },
+                { label: 'UTM & Atribuição', to: '/ads/attribution' },
+              ],
+            },
+            {
+              label: 'Mensageria',
+              icon: MailIcon,
+              children: [
+                { label: 'Email', to: '/messaging/email' },
+                { label: 'WhatsApp', to: '/messaging/whatsapp' },
+                { label: 'SMS', to: '/messaging/sms' },
+              ],
+            },
+          ],
+        },
+        {
+          label: 'Plataforma',
+          items: [
             { label: 'Reliability', to: '/reliability', icon: ShieldCheckIcon },
           ],
         },
@@ -79,20 +164,85 @@ function useNavGroups(): ReadonlyArray<NavGroup> {
       ];
     }
 
+    // Non-admin members — show only branches whose grants they hold.
     const items: NavItem[] = [
       { label: 'Dashboard', to: '/', icon: LayoutDashboardIcon, end: true },
     ];
     if (hasAnyChannelOfKind(grants, 'org_')) {
-      items.push({ label: 'Organic', to: '/organic', icon: TrendingUpIcon });
+      items.push({
+        label: 'Marketing',
+        icon: MegaphoneIcon,
+        children: [
+          { label: 'Calendário', to: '/marketing/calendar' },
+          { label: 'Composer', to: '/marketing/composer' },
+          { label: 'Publicações', to: '/marketing/posts' },
+          { label: 'Canais Orgânicos', to: '/marketing/channels' },
+        ],
+      });
     }
     if (hasAnyChannelOfKind(grants, 'paid_')) {
-      items.push({ label: 'Paid', to: '/paid', icon: DollarSignIcon });
+      items.push({
+        label: 'Tráfego Pago',
+        icon: DollarSignIcon,
+        children: [
+          { label: 'Visão Geral', to: '/ads', end: true },
+          { label: 'Google Ads', to: '/ads/google' },
+          { label: 'Meta Ads', to: '/ads/meta' },
+          { label: 'Apple Search Ads', to: '/ads/asa' },
+          { label: 'TikTok Ads', to: '/ads/tiktok' },
+        ],
+      });
     }
     if (hasAnyChannelOfKind(grants, 'msg_')) {
-      items.push({ label: 'Messaging', to: '/messaging', icon: HandshakeIcon });
+      items.push({
+        label: 'Mensageria',
+        icon: MailIcon,
+        children: [
+          { label: 'Email', to: '/messaging/email' },
+          { label: 'WhatsApp', to: '/messaging/whatsapp' },
+          { label: 'SMS', to: '/messaging/sms' },
+        ],
+      });
     }
     return [{ items }];
   }, [isAdmin, grants]);
+}
+
+function useExpandedBranches(items: ReadonlyArray<NavItem>) {
+  const { pathname } = useLocation();
+
+  const autoExpanded = useMemo(() => {
+    const out = new Set<string>();
+    for (const it of items) {
+      if (isBranch(it)) {
+        const match = it.children.some((c) =>
+          c.end ? pathname === c.to : pathname.startsWith(c.to),
+        );
+        if (match) out.add(it.label);
+      }
+    }
+    return out;
+  }, [items, pathname]);
+
+  const [userToggled, setUserToggled] = useState<Set<string>>(loadExpandedState);
+
+  useEffect(() => {
+    saveExpandedState(userToggled);
+  }, [userToggled]);
+
+  const isExpanded = (label: string) =>
+    autoExpanded.has(label) || userToggled.has(label);
+
+  const toggle = (label: string) => {
+    setUserToggled((prev) => {
+      const next = new Set(prev);
+      if (next.has(label)) next.delete(label);
+      else next.add(label);
+      return next;
+    });
+  };
+
+  return { isExpanded, toggle };
 }
 
 /** Build human-readable breadcrumbs from the current pathname. */
@@ -102,16 +252,138 @@ function useBreadcrumbs(): string[] {
     if (pathname === '/' || pathname === '') return ['Dashboard'];
     const parts = pathname.split('/').filter(Boolean);
     return parts.map((p) => {
-      // Heuristic: titlecase, leave UUID-ish segments truncated.
       if (/^[0-9a-f-]{8,}$/i.test(p)) return `${p.slice(0, 8)}…`;
       return p.charAt(0).toUpperCase() + p.slice(1);
     });
   }, [pathname]);
 }
 
-function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+function NavLeafItem({
+  item,
+  onNavigate,
+  indent = false,
+}: {
+  item: NavLeaf;
+  onNavigate?: (() => void) | undefined;
+  indent?: boolean | undefined;
+}) {
+  const Icon = item.icon;
+  return (
+    <li>
+      <NavLink
+        to={item.to}
+        end={item.end ?? false}
+        onClick={onNavigate}
+        className={({ isActive }) =>
+          [
+            'group relative flex items-center gap-2.5 rounded-md py-2 text-sm transition-colors',
+            indent ? 'pl-9 pr-3' : 'px-3',
+            isActive
+              ? 'bg-brand-500/15 text-white'
+              : 'text-navy-100 hover:bg-navy-800/60 hover:text-white',
+          ].join(' ')
+        }
+      >
+        {({ isActive }) => (
+          <>
+            {isActive && (
+              <span
+                aria-hidden
+                className="absolute inset-y-1 left-0 w-0.5 rounded-r bg-brand-400"
+              />
+            )}
+            {Icon && (
+              <Icon
+                className={
+                  'h-4 w-4 shrink-0 ' +
+                  (isActive
+                    ? 'text-brand-300'
+                    : 'text-navy-200 group-hover:text-brand-300')
+                }
+              />
+            )}
+            <span className="truncate">{item.label}</span>
+          </>
+        )}
+      </NavLink>
+    </li>
+  );
+}
+
+function NavBranchItem({
+  item,
+  expanded,
+  onToggle,
+  onNavigate,
+}: {
+  item: NavBranch;
+  expanded: boolean;
+  onToggle: () => void;
+  onNavigate?: (() => void) | undefined;
+}) {
+  const Icon = item.icon;
+  const { pathname } = useLocation();
+  const hasActiveChild = item.children.some((c) =>
+    c.end ? pathname === c.to : pathname.startsWith(c.to),
+  );
+
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={expanded}
+        className={[
+          'group relative flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors',
+          hasActiveChild
+            ? 'text-white'
+            : 'text-navy-100 hover:bg-navy-800/60 hover:text-white',
+        ].join(' ')}
+      >
+        <Icon
+          className={
+            'h-4 w-4 shrink-0 ' +
+            (hasActiveChild
+              ? 'text-brand-300'
+              : 'text-navy-200 group-hover:text-brand-300')
+          }
+        />
+        <span className="flex-1 truncate text-left">{item.label}</span>
+        <ChevronDownIcon
+          className={[
+            'h-3.5 w-3.5 shrink-0 text-navy-300 transition-transform',
+            expanded ? 'rotate-0' : '-rotate-90',
+          ].join(' ')}
+        />
+      </button>
+      {expanded && (
+        <ul className="mt-0.5 space-y-0.5">
+          {item.children.map((child) => (
+            <NavLeafItem
+              key={child.to}
+              item={child}
+              onNavigate={onNavigate}
+              indent
+            />
+          ))}
+        </ul>
+      )}
+    </li>
+  );
+}
+
+function SidebarContent({
+  onNavigate,
+}: {
+  onNavigate?: (() => void) | undefined;
+}) {
   const { user, signOut, isAdmin, member } = useAuth();
   const navGroups = useNavGroups();
+  const allItems = useMemo(
+    () => navGroups.flatMap((g) => g.items),
+    [navGroups],
+  );
+  const { isExpanded, toggle } = useExpandedBranches(allItems);
 
   return (
     <div className="flex h-full flex-col bg-navy-700 text-navy-50">
@@ -142,46 +414,23 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               </div>
             )}
             <ul className="space-y-0.5">
-              {group.items.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <li key={item.to}>
-                    <NavLink
-                      to={item.to}
-                      end={item.end ?? false}
-                      onClick={onNavigate}
-                      className={({ isActive }) =>
-                        [
-                          'group relative flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors',
-                          isActive
-                            ? 'bg-brand-500/15 text-white'
-                            : 'text-navy-100 hover:bg-navy-800/60 hover:text-white',
-                        ].join(' ')
-                      }
-                    >
-                      {({ isActive }) => (
-                        <>
-                          {isActive && (
-                            <span
-                              aria-hidden
-                              className="absolute inset-y-1 left-0 w-0.5 rounded-r bg-brand-400"
-                            />
-                          )}
-                          <Icon
-                            className={
-                              'h-4 w-4 shrink-0 ' +
-                              (isActive
-                                ? 'text-brand-300'
-                                : 'text-navy-200 group-hover:text-brand-300')
-                            }
-                          />
-                          <span>{item.label}</span>
-                        </>
-                      )}
-                    </NavLink>
-                  </li>
-                );
-              })}
+              {group.items.map((item) =>
+                isBranch(item) ? (
+                  <NavBranchItem
+                    key={item.label}
+                    item={item}
+                    expanded={isExpanded(item.label)}
+                    onToggle={() => toggle(item.label)}
+                    onNavigate={onNavigate}
+                  />
+                ) : (
+                  <NavLeafItem
+                    key={item.to}
+                    item={item}
+                    onNavigate={onNavigate}
+                  />
+                ),
+              )}
             </ul>
           </div>
         ))}

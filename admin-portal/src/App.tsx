@@ -29,8 +29,8 @@ const AuditPage = lazy(() =>
 const RevenuePage = lazy(() =>
   import('./routes/revenue').then((m) => ({ default: m.RevenuePage })),
 );
-const GrowthPage = lazy(() =>
-  import('./routes/growth').then((m) => ({ default: m.GrowthPage })),
+const InsightsPage = lazy(() =>
+  import('./routes/insights').then((m) => ({ default: m.InsightsPage })),
 );
 const AffiliatesPage = lazy(() =>
   import('./routes/ops/affiliates').then((m) => ({ default: m.AffiliatesPage })),
@@ -43,6 +43,77 @@ const SettingsPage = lazy(() =>
 );
 const TeamPage = lazy(() =>
   import('./routes/team').then((m) => ({ default: m.TeamPage })),
+);
+
+// Marketing — sidebar branch
+const MarketingCalendarPage = lazy(() =>
+  import('./routes/marketing/calendar').then((m) => ({
+    default: m.MarketingCalendarPage,
+  })),
+);
+const MarketingComposerPage = lazy(() =>
+  import('./routes/marketing/composer').then((m) => ({
+    default: m.MarketingComposerPage,
+  })),
+);
+const MarketingPostsPage = lazy(() =>
+  import('./routes/marketing/posts').then((m) => ({
+    default: m.MarketingPostsPage,
+  })),
+);
+const MarketingChannelsPage = lazy(() =>
+  import('./routes/marketing/channels').then((m) => ({
+    default: m.MarketingChannelsPage,
+  })),
+);
+const MarketingSeoPage = lazy(() =>
+  import('./routes/marketing/seo').then((m) => ({
+    default: m.MarketingSeoPage,
+  })),
+);
+const MarketingAsoPage = lazy(() =>
+  import('./routes/marketing/aso').then((m) => ({
+    default: m.MarketingAsoPage,
+  })),
+);
+
+// Tráfego Pago — sidebar branch
+const AdsOverviewPage = lazy(() =>
+  import('./routes/ads').then((m) => ({ default: m.AdsOverviewPage })),
+);
+const GoogleAdsPage = lazy(() =>
+  import('./routes/ads/google').then((m) => ({ default: m.GoogleAdsPage })),
+);
+const MetaAdsPage = lazy(() =>
+  import('./routes/ads/meta').then((m) => ({ default: m.MetaAdsPage })),
+);
+const AppleSearchAdsPage = lazy(() =>
+  import('./routes/ads/asa').then((m) => ({ default: m.AppleSearchAdsPage })),
+);
+const TikTokAdsPage = lazy(() =>
+  import('./routes/ads/tiktok').then((m) => ({ default: m.TikTokAdsPage })),
+);
+const AttributionPage = lazy(() =>
+  import('./routes/ads/attribution').then((m) => ({
+    default: m.AttributionPage,
+  })),
+);
+
+// Mensageria — sidebar branch
+const MessagingEmailPage = lazy(() =>
+  import('./routes/messaging/email').then((m) => ({
+    default: m.MessagingEmailPage,
+  })),
+);
+const MessagingWhatsAppPage = lazy(() =>
+  import('./routes/messaging/whatsapp').then((m) => ({
+    default: m.MessagingWhatsAppPage,
+  })),
+);
+const MessagingSmsPage = lazy(() =>
+  import('./routes/messaging/sms').then((m) => ({
+    default: m.MessagingSmsPage,
+  })),
 );
 
 function RouteFallback() {
@@ -61,14 +132,19 @@ function RouteFallback() {
  *  - /auth/callback
  *  - /unauthorized
  *
- * Protected routes (admin only) render inside <Layout> via <ProtectedRoute>:
- *  - /              dashboard placeholder (Wave 3 replaces)
- *  - /users         list placeholder       (Wave 4)
- *  - /users/:id     360 placeholder        (Wave 4)
- *  - /ops/grants    placeholder            (Wave 5)
- *  - /ops/audit     placeholder            (Wave 5)
- *  - /ops/functions placeholder            (Wave 5)
- *  - /revenue       placeholder            (Wave 5)
+ * Protected routes (admin only) render inside <Layout> via <ProtectedRoute>.
+ *
+ * IA atual:
+ *  - /                      Dashboard
+ *  - /users, /users/:id     User search + 360
+ *  - /revenue               Revenue snapshot
+ *  - /affiliates            Affiliates
+ *  - /insights              Crescimento (KPIs blended)
+ *  - /marketing/*           Marketing branch (calendar/composer/posts/channels/seo/aso)
+ *  - /ads/*                 Tráfego Pago branch (google/meta/asa/tiktok/attribution)
+ *  - /messaging/*           Mensageria branch (email/whatsapp/sms)
+ *  - /reliability           Reliability
+ *  - /team, /ops/*          Ops
  *
  * Spec: BRIEFING §§ 7-L3, 7-L4, 11.1, 11.9.
  */
@@ -123,13 +199,140 @@ export function App() {
               }
             />
             <Route
-              path="/growth"
+              path="/insights"
               element={
                 <Suspense fallback={<RouteFallback />}>
-                  <GrowthPage />
+                  <InsightsPage />
                 </Suspense>
               }
             />
+
+            {/* Marketing branch */}
+            <Route
+              path="/marketing/calendar"
+              element={
+                <Suspense fallback={<RouteFallback />}>
+                  <MarketingCalendarPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/marketing/composer"
+              element={
+                <Suspense fallback={<RouteFallback />}>
+                  <MarketingComposerPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/marketing/posts"
+              element={
+                <Suspense fallback={<RouteFallback />}>
+                  <MarketingPostsPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/marketing/channels"
+              element={
+                <Suspense fallback={<RouteFallback />}>
+                  <MarketingChannelsPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/marketing/seo"
+              element={
+                <Suspense fallback={<RouteFallback />}>
+                  <MarketingSeoPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/marketing/aso"
+              element={
+                <Suspense fallback={<RouteFallback />}>
+                  <MarketingAsoPage />
+                </Suspense>
+              }
+            />
+
+            {/* Tráfego Pago branch */}
+            <Route
+              path="/ads"
+              element={
+                <Suspense fallback={<RouteFallback />}>
+                  <AdsOverviewPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/ads/google"
+              element={
+                <Suspense fallback={<RouteFallback />}>
+                  <GoogleAdsPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/ads/meta"
+              element={
+                <Suspense fallback={<RouteFallback />}>
+                  <MetaAdsPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/ads/asa"
+              element={
+                <Suspense fallback={<RouteFallback />}>
+                  <AppleSearchAdsPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/ads/tiktok"
+              element={
+                <Suspense fallback={<RouteFallback />}>
+                  <TikTokAdsPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/ads/attribution"
+              element={
+                <Suspense fallback={<RouteFallback />}>
+                  <AttributionPage />
+                </Suspense>
+              }
+            />
+
+            {/* Mensageria branch */}
+            <Route
+              path="/messaging/email"
+              element={
+                <Suspense fallback={<RouteFallback />}>
+                  <MessagingEmailPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/messaging/whatsapp"
+              element={
+                <Suspense fallback={<RouteFallback />}>
+                  <MessagingWhatsAppPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/messaging/sms"
+              element={
+                <Suspense fallback={<RouteFallback />}>
+                  <MessagingSmsPage />
+                </Suspense>
+              }
+            />
+
             <Route
               path="/reliability"
               element={
@@ -187,7 +390,8 @@ export function App() {
               }
             />
             {/* Backward-compat redirects for old bookmarks */}
-            <Route path="/marketing" element={<Navigate to="/growth" replace />} />
+            <Route path="/growth" element={<Navigate to="/insights" replace />} />
+            <Route path="/marketing" element={<Navigate to="/marketing/calendar" replace />} />
             <Route path="/errors" element={<Navigate to="/reliability" replace />} />
             <Route
               path="/ops/affiliates"
