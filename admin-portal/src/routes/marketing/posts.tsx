@@ -104,6 +104,31 @@ function nextScheduled(post: MarketingPost): string | null {
   return dates[0] ?? null;
 }
 
+function isoToLocal(iso: string | null): string {
+  if (!iso) return '';
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return (
+      d.getFullYear() + '-' +
+      pad(d.getMonth() + 1) + '-' +
+      pad(d.getDate()) + 'T' +
+      pad(d.getHours()) + ':' +
+      pad(d.getMinutes())
+    );
+  } catch {
+    return '';
+  }
+}
+
+function localToIso(local: string): string | null {
+  if (!local) return null;
+  const d = new Date(local);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toISOString();
+}
+
 export function MarketingPostsPage() {
   const [posts, setPosts] = useState<MarketingPost[]>([]);
   const [total, setTotal] = useState(0);
@@ -113,6 +138,14 @@ export function MarketingPostsPage() {
   const [channelFilter, setChannelFilter] = useState<'' | MarketingChannel>('');
   const [page, setPage] = useState(0);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [editing, setEditing] = useState<{
+    variantId: string;
+    channel: MarketingChannel;
+    caption: string;
+    hashtags: string;
+    scheduledAt: string;
+    saving: boolean;
+  } | null>(null);
   const { toast } = useToast();
 
   const fetchPosts = useCallback(async () => {
@@ -197,6 +230,41 @@ export function MarketingPostsPage() {
     } catch (err) {
       toast({
         title: 'Falha ao atualizar',
+        description: err instanceof RpcError ? err.message : 'Erro inesperado',
+        variant: 'error',
+      });
+    }
+  };
+
+  const openEdit = (variant: MarketingVariant) => {
+    setEditing({
+      variantId: variant.id,
+      channel: variant.channel,
+      caption: variant.caption,
+      hashtags: variant.hashtags ?? '',
+      scheduledAt: isoToLocal(variant.scheduled_at),
+      saving: false,
+    });
+  };
+
+  const closeEdit = () => setEditing(null);
+
+  const saveEdit = async () => {
+    if (!editing) return;
+    setEditing({ ...editing, saving: true });
+    try {
+      await updateMarketingVariant(editing.variantId, {
+        caption: editing.caption,
+        hashtags: editing.hashtags.trim() || undefined,
+        scheduled_at: editing.scheduledAt ? localToIso(editing.scheduledAt) : null,
+      });
+      toast({ title: 'Variante atualizada', variant: 'success' });
+      setEditing(null);
+      void fetchPosts();
+    } catch (err) {
+      setEditing((e) => (e ? { ...e, saving: false } : null));
+      toast({
+        title: 'Falha ao salvar',
         description: err instanceof RpcError ? err.message : 'Erro inesperado',
         variant: 'error',
       });
@@ -314,6 +382,7 @@ export function MarketingPostsPage() {
                       onMarkPublished={(v) => void handleMarkPublished(v)}
                       onMarkFailed={(v) => void handleMarkFailed(v)}
                       onRevert={(v) => void handleRevertToScheduled(v)}
+                      onEdit={openEdit}
                     />
                   );
                 })}
@@ -346,6 +415,104 @@ export function MarketingPostsPage() {
           </button>
         </div>
       )}
+
+      {editing && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        >
+          <button
+            type="button"
+            aria-label="Fechar"
+            onClick={closeEdit}
+            className="absolute inset-0 bg-navy-900/50"
+          />
+          <div className="relative z-10 w-full max-w-lg rounded-lg bg-white p-5 shadow-xl">
+            <div className="mb-4 flex items-start justify-between">
+              <div>
+                <Text className="font-semibold text-navy-700">
+                  Editar {CHANNEL_LABELS[editing.channel]}
+                </Text>
+                <Text className="mt-0.5 text-xs text-navy-400">
+                  Caption, hashtags e horário desta variante.
+                </Text>
+              </div>
+              <button
+                type="button"
+                onClick={closeEdit}
+                aria-label="Fechar"
+                className="text-navy-300 hover:text-navy-700"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-medium text-navy-600">
+                  Caption
+                </label>
+                <textarea
+                  value={editing.caption}
+                  onChange={(e) =>
+                    setEditing({ ...editing, caption: e.target.value })
+                  }
+                  rows={4}
+                  className="mt-1.5 w-full rounded-md border border-navy-100 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-navy-600">
+                  Hashtags
+                </label>
+                <input
+                  type="text"
+                  value={editing.hashtags}
+                  onChange={(e) =>
+                    setEditing({ ...editing, hashtags: e.target.value })
+                  }
+                  placeholder="#abn #tradies"
+                  className="mt-1.5 w-full rounded-md border border-navy-100 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-navy-600">
+                  Agendar para
+                </label>
+                <input
+                  type="datetime-local"
+                  value={editing.scheduledAt}
+                  onChange={(e) =>
+                    setEditing({ ...editing, scheduledAt: e.target.value })
+                  }
+                  className="mt-1.5 w-full rounded-md border border-navy-100 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+                />
+                <p className="mt-1 text-[11px] text-navy-400">
+                  Vazio = sem agendamento; status volta para rascunho na próxima leitura.
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={closeEdit}
+                disabled={editing.saving}
+                className="rounded-md border border-navy-100 bg-white px-3 py-2 text-sm text-navy-500 hover:bg-navy-50 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => void saveEdit()}
+                disabled={editing.saving}
+                className="rounded-md bg-brand-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-600 disabled:opacity-50"
+              >
+                {editing.saving ? <Spinner size="sm" /> : 'Salvar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -358,6 +525,7 @@ function PostRow({
   onMarkPublished,
   onMarkFailed,
   onRevert,
+  onEdit,
 }: {
   post: MarketingPost;
   isOpen: boolean;
@@ -366,6 +534,7 @@ function PostRow({
   onMarkPublished: (v: MarketingVariant) => void;
   onMarkFailed: (v: MarketingVariant) => void;
   onRevert: (v: MarketingVariant) => void;
+  onEdit: (v: MarketingVariant) => void;
 }) {
   const captionShort = useMemo(
     () =>
@@ -504,13 +673,22 @@ function PostRow({
                       )}
                       <div className="mt-1 flex flex-wrap justify-end gap-1.5">
                         {v.status !== 'published' && (
-                          <button
-                            type="button"
-                            onClick={() => onMarkPublished(v)}
-                            className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 hover:bg-emerald-100"
-                          >
-                            Marcar publicado
-                          </button>
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => onEdit(v)}
+                              className="rounded-md border border-navy-200 bg-white px-2 py-0.5 text-[11px] font-medium text-navy-600 hover:bg-navy-50"
+                            >
+                              Editar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => onMarkPublished(v)}
+                              className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 hover:bg-emerald-100"
+                            >
+                              Marcar publicado
+                            </button>
+                          </>
                         )}
                         {v.status !== 'failed' && v.status !== 'published' && (
                           <button
