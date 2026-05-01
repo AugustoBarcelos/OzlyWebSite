@@ -67,7 +67,7 @@ export function BroadcastsTable({ channel, refreshKey = 0 }: Props) {
   }, [reload, refreshKey]);
 
   async function handleDelete(id: string) {
-    if (!confirm('Deletar broadcast? Só permitido se draft/scheduled/cancelled/failed.')) return;
+    if (!window.confirm('Deletar broadcast? Só permitido se draft/scheduled/cancelled/failed.')) return;
     try {
       await deleteBroadcast(id);
       toast({ title: 'Broadcast deletado', variant: 'success' });
