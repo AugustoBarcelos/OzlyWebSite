@@ -77,37 +77,55 @@ export function ConnectionsCard() {
   }, [load]);
 
   // Listen for the OAuth popup announcing it just saved a connection. The
-  // popup lives on the Supabase Edge Functions origin, so we restrict the
-  // listener to that origin to avoid honouring messages from other tabs.
+  // popup lands on /oauth/popup-callback (same origin as us), so postMessage
+  // is restricted to our own origin. Storage event is the COOP fallback for
+  // browsers that sever window.opener after cross-origin nav.
   useEffect(() => {
-    const supabaseOrigin = (() => {
-      try {
-        return new URL(import.meta.env.VITE_SUPABASE_URL ?? '').origin;
-      } catch {
-        return null;
-      }
-    })();
+    const consumed = new Set<string>();
 
-    function handler(e: MessageEvent) {
-      if (supabaseOrigin && e.origin !== supabaseOrigin) return;
-      const data = e.data as { type?: string; provider?: string } | null;
-      if (data?.type === 'oauth_connected') {
+    function consume(payload: unknown) {
+      const data = payload as
+        | { type?: string; provider?: string; ts?: number; desc?: string }
+        | null;
+      if (!data?.type) return;
+      const dedupeKey = `${data.type}:${data.provider ?? ''}:${data.ts ?? ''}`;
+      if (consumed.has(dedupeKey)) return;
+      consumed.add(dedupeKey);
+
+      if (data.type === 'oauth_connected') {
         toast({
           variant: 'success',
           title: `${data.provider ?? 'Conta'} conectado`,
           description: 'Atualizando lista de conexões…',
         });
         void load();
-      } else if (data?.type === 'oauth_failed') {
+      } else if (data.type === 'oauth_failed') {
         toast({
           variant: 'error',
           title: `Falha ao conectar ${data.provider ?? ''}`.trim(),
-          description: 'Confira os detalhes na janela do popup e tente de novo.',
+          description: data.desc ?? 'Tente de novo no fluxo OAuth.',
         });
       }
     }
-    window.addEventListener('message', handler);
-    return () => window.removeEventListener('message', handler);
+
+    function onMessage(e: MessageEvent) {
+      if (e.origin !== window.location.origin) return;
+      consume(e.data);
+    }
+    function onStorage(e: StorageEvent) {
+      if (e.key !== 'ozly_oauth_event' || !e.newValue) return;
+      try {
+        consume(JSON.parse(e.newValue));
+      } catch {
+        /* corrupt payload — ignore */
+      }
+    }
+    window.addEventListener('message', onMessage);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener('message', onMessage);
+      window.removeEventListener('storage', onStorage);
+    };
   }, [load, toast]);
 
   async function startConnect(provider: typeof PROVIDERS[number]) {

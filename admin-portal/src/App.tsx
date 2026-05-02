@@ -9,6 +9,7 @@ import { Spinner } from './components/Spinner';
 import { PreferencesProvider } from './lib/preferences';
 import { LoginPage } from './routes/login';
 import { AuthCallbackPage } from './routes/auth/callback';
+import { OAuthPopupCallbackPage } from './routes/oauth/popup-callback';
 
 // Heavy admin pages — lazy-loaded so Tremor / charts only ship when needed.
 const DashboardPage = lazy(() =>
@@ -169,6 +170,7 @@ export function App() {
             {/* Public */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
+        <Route path="/oauth/popup-callback" element={<OAuthPopupCallbackPage />} />
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
         {/* Protected — wrapped in Layout. Suspense around the lazy routes. */}
