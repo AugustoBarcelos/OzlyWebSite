@@ -61,6 +61,44 @@ async function validateCode(code) {
   }
 }
 
+// Logs an impression. Fire-and-forget — failures must not block the landing.
+// Server-side rate-limited (200/min/code) so flood won't escalate cost.
+async function trackView(code) {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !code) return;
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/rpc/affiliate_track_view`, {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        p_code: code,
+        p_user_agent: typeof navigator !== "undefined"
+          ? (navigator.userAgent ?? "").slice(0, 500)
+          : null,
+        p_referer: typeof document !== "undefined"
+          ? (document.referrer ?? "").slice(0, 500)
+          : null,
+      }),
+      // No keepalive needed — page sticks around. Don't block paint.
+    });
+  } catch {
+    /* noop */
+  }
+  // GA custom event — funnel-friendly. gtag is loaded in index.html.
+  if (typeof window !== "undefined" && typeof window.gtag === "function") {
+    try {
+      window.gtag("event", "affiliate_landing_view", {
+        affiliate_code: code,
+      });
+    } catch {
+      /* noop */
+    }
+  }
+}
+
 // Gera QR code via serviço público (não precisa instalar pacote). Retorna
 // URL da imagem; o <img> carrega direto.
 function qrImageUrl(text) {
@@ -96,6 +134,12 @@ export default function ReferralLanding() {
           ownerName: res.owner_name,
           kind: res.kind,
         });
+        // Only log impression for an affiliate (vendor) code — user-to-user
+        // referrals already have other attribution paths and aren't part of
+        // the affiliate funnel report.
+        if (res.kind === "affiliate") {
+          void trackView(code);
+        }
       } else {
         setValidation({ state: "invalid" });
       }

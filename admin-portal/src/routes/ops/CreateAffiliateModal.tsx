@@ -68,6 +68,55 @@ export function CreateAffiliateModal({ open, onClose, onSaved, editing }: Props)
   const [bonusTiers, setBonusTiers] = useState<VolumeTier[]>(DEFAULT_VOLUME_TIERS);
   const [bonusPeriod, setBonusPeriod] = useState<BonusPeriod>('monthly');
   const [retention, setRetention] = useState<RetentionBonus[]>(DEFAULT_RETENTION);
+  // Pre-submit code uniqueness check. Debounced — fires while typing so the
+  // user gets feedback before clicking Submit and hitting a backend error.
+  const [codeCheck, setCodeCheck] = useState<
+    | { state: 'idle' }
+    | { state: 'checking' }
+    | { state: 'available' }
+    | { state: 'taken'; ownerName: string | null }
+    | { state: 'invalid' }
+  >({ state: 'idle' });
+
+  useEffect(() => {
+    if (isEdit) return;
+    const trimmed = code.trim().toUpperCase();
+    if (trimmed.length === 0) {
+      setCodeCheck({ state: 'idle' });
+      return;
+    }
+    if (!/^[A-Z0-9_-]{3,32}$/.test(trimmed)) {
+      setCodeCheck({ state: 'invalid' });
+      return;
+    }
+    setCodeCheck({ state: 'checking' });
+    let aborted = false;
+    const timer = setTimeout(() => {
+      callRpc<{ valid: boolean; owner_name?: string | null; kind?: string }>(
+        'validate_referral_code',
+        { p_code: trimmed },
+      )
+        .then((r) => {
+          if (aborted) return;
+          if (r.valid) {
+            setCodeCheck({
+              state: 'taken',
+              ownerName: r.owner_name ?? null,
+            });
+          } else {
+            setCodeCheck({ state: 'available' });
+          }
+        })
+        .catch(() => {
+          // Server error — let submit handle it. Don't block typing.
+          if (!aborted) setCodeCheck({ state: 'idle' });
+        });
+    }, 350);
+    return () => {
+      aborted = true;
+      clearTimeout(timer);
+    };
+  }, [code, isEdit]);
 
   // Reset/load when opening modal or switching editing target.
   useEffect(() => {
@@ -127,6 +176,16 @@ export function CreateAffiliateModal({ open, onClose, onSaved, editing }: Props)
         });
         return;
       }
+      if (codeCheck.state === 'taken') {
+        toast({
+          variant: 'error',
+          title: 'Código já está em uso',
+          description: codeCheck.ownerName
+            ? `"${codeClean}" pertence a ${codeCheck.ownerName}.`
+            : `"${codeClean}" já está cadastrado.`,
+        });
+        return;
+      }
     }
     if (!name.trim()) {
       toast({ variant: 'error', title: 'Nome é obrigatório' });
@@ -174,22 +233,25 @@ export function CreateAffiliateModal({ open, onClose, onSaved, editing }: Props)
           p_retention_bonuses: retention,
         });
 
-        const syncPromise = callEdge<{
-          ok: boolean;
-          project_name?: string;
-          error?: string;
-        }>('affiliate-sync-rc', {
-          method: 'POST',
-          body: { affiliate_id: created.affiliate_id },
-        });
-
         toast({
           variant: 'success',
           title: `Afiliado ${codeClean} criado`,
           description: 'Sincronizando com RevenueCat...',
         });
 
-        void syncPromise.then((r) => {
+        // Await the sync so the modal closes only after we have a
+        // definitive result. If the user closes early with the modal,
+        // the toast still fires — but at least we surface RC failures
+        // before they think setup is "done".
+        try {
+          const r = await callEdge<{
+            ok: boolean;
+            project_name?: string;
+            error?: string;
+          }>('affiliate-sync-rc', {
+            method: 'POST',
+            body: { affiliate_id: created.affiliate_id },
+          });
           if (r.ok && r.data.ok) {
             toast({
               variant: 'success',
@@ -206,7 +268,13 @@ export function CreateAffiliateModal({ open, onClose, onSaved, editing }: Props)
               description: `Afiliado criado localmente. RC: ${detail}.`,
             });
           }
-        });
+        } catch (e) {
+          toast({
+            variant: 'info',
+            title: 'RC sync pendente',
+            description: `Afiliado criado localmente. RC: ${e instanceof Error ? e.message : 'erro inesperado'}.`,
+          });
+        }
       }
 
       onSaved();
@@ -260,15 +328,45 @@ export function CreateAffiliateModal({ open, onClose, onSaved, editing }: Props)
               required
               hint="MEMORÁVEL: ANALUIZA, VENDE01, JOAOQR (3-32 chars [A-Z0-9_-])"
             >
-              <input
-                type="text"
-                value={code}
-                onChange={(e) => setCode(e.target.value.toUpperCase())}
-                maxLength={32}
-                className="w-full rounded-md border border-navy-100 bg-white px-3 py-2 font-mono text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
-                placeholder="ANALUIZA"
-                autoFocus
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.toUpperCase())}
+                  maxLength={32}
+                  className={`w-full rounded-md border bg-white px-3 py-2 pr-9 font-mono text-sm focus:outline-none focus:ring-2 ${
+                    codeCheck.state === 'taken' || codeCheck.state === 'invalid'
+                      ? 'border-rose-300 focus:border-rose-500 focus:ring-rose-100'
+                      : codeCheck.state === 'available'
+                      ? 'border-emerald-300 focus:border-emerald-500 focus:ring-emerald-100'
+                      : 'border-navy-100 focus:border-brand-500 focus:ring-brand-100'
+                  }`}
+                  placeholder="ANALUIZA"
+                  autoFocus
+                />
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 text-xs">
+                  {codeCheck.state === 'checking' && <Spinner size="sm" />}
+                  {codeCheck.state === 'available' && (
+                    <span className="font-bold text-emerald-600" title="Disponível">✓</span>
+                  )}
+                  {codeCheck.state === 'taken' && (
+                    <span className="font-bold text-rose-600" title="Já em uso">✗</span>
+                  )}
+                  {codeCheck.state === 'invalid' && (
+                    <span className="font-bold text-amber-600" title="Formato inválido">!</span>
+                  )}
+                </div>
+              </div>
+              {codeCheck.state === 'taken' && (
+                <p className="mt-1 text-xs text-rose-600">
+                  Código já está em uso{codeCheck.ownerName ? ` por ${codeCheck.ownerName}` : ''}.
+                </p>
+              )}
+              {codeCheck.state === 'invalid' && (
+                <p className="mt-1 text-xs text-amber-600">
+                  Use 3-32 caracteres, apenas letras, números, _ ou -.
+                </p>
+              )}
             </Field>
           )}
 

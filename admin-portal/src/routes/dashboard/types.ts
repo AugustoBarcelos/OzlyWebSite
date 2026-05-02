@@ -19,6 +19,7 @@ export interface KpiDashboardResponse {
   trials_active: number | null;
   trials_started_period: number | null;
   trials_expiring_7d: number | null;
+  trials_lapsed_period: number | null;
   paid_active: PaidActiveBreakdown | null;
   mrr_estimate_aud: number | null;
   churn_period: number | null;

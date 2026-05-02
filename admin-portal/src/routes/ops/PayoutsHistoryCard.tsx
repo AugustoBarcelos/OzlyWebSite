@@ -158,23 +158,31 @@ export function PayoutsHistoryCard({ refreshKey }: Props) {
 
   async function exportCsv() {
     if (!data) return;
-    if (data.total_filtered > 5000) {
-      toast({
-        variant: 'error',
-        title: 'Resultado grande demais',
-        description: 'Filtre por mês — export limitado a 5000 rows.',
-      });
-      return;
-    }
+    // Stream chunked download — 500 rows/page, surface progress in toast.
+    // The heavy lifting (filtering) already happened server-side.
     setLoading(true);
+    const total = data.total_filtered;
+    if (total > 50000) {
+      const ok = window.confirm(
+        `Vai exportar ${total} payouts em CSV. Isso pode levar ${Math.ceil(total / 500)} requests. Continuar?`,
+      );
+      if (!ok) {
+        setLoading(false);
+        return;
+      }
+    }
     try {
       const all: PayoutRow[] = [];
-      for (let off = 0; off < data.total_filtered; off += 500) {
+      const pageSize = 500;
+      for (let off = 0; off < total; off += pageSize) {
         const chunk = await callRpc<HistoryResponse>(
           'admin_affiliate_payouts_history',
-          { p_filters: filters, p_limit: 500, p_offset: off },
+          { p_filters: filters, p_limit: pageSize, p_offset: off },
         );
         all.push(...chunk.rows);
+        // Defensive: if the server sends fewer rows than expected, stop —
+        // prevents infinite loop on schema drift.
+        if (chunk.rows.length === 0) break;
       }
       const filename = monthFilter
         ? `affiliate-payouts-${monthFilter}.csv`

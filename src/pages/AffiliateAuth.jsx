@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import { useI18n } from "../i18n";
 
 // /me/auth?t=TOKEN — troca o magic link por um session token de 30d e
 // redireciona pro dashboard. Sem token, mostra mensagem genérica.
@@ -34,6 +35,8 @@ async function verifyToken(token) {
 }
 
 export default function AffiliateAuth() {
+  const { t } = useI18n();
+  const a = t.affiliateAuth;
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const [state, setState] = useState({ status: "verifying" });
@@ -76,28 +79,28 @@ export default function AffiliateAuth() {
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 px-4 text-center">
         <div className="h-12 w-12 rounded-full border-4 border-brand-500 border-t-transparent animate-spin" />
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          Validando seu link…
+          {a.verifying}
         </p>
       </div>
     );
   }
 
   const messages = {
-    missing_token: "Link sem token. Pede um novo no /me/SEUCODIGO.",
-    invalid: "Link inválido. Pode ter sido reutilizado ou expirou.",
-    used: "Esse link já foi usado. Pede um novo no /me/SEUCODIGO.",
-    expired: "Esse link expirou (vale só 1 hora). Pede um novo.",
-    network: "Erro de rede. Tenta de novo.",
-    rpc_error: "Erro ao validar. Tenta de novo daqui a pouco.",
-    config_missing: "Configuração ausente. Avisa o suporte.",
-    unknown: "Não consegui validar esse link.",
+    missing_token: a.missingToken,
+    invalid: a.invalid,
+    used: a.used,
+    expired: a.expired,
+    network: a.network,
+    rpc_error: a.rpcError,
+    config_missing: a.configMissing,
+    unknown: a.unknown,
   };
 
   return (
     <div className="max-w-md mx-auto px-4 py-16 text-center">
       <div className="text-6xl mb-4">⏳</div>
       <h1 className="text-2xl font-bold mb-2 text-navy-700 dark:text-white">
-        Link inválido ou expirado
+        {a.invalidTitle}
       </h1>
       <p className="text-slate-600 dark:text-slate-400 mb-6">
         {messages[state.reason] ?? messages.unknown}
@@ -106,7 +109,7 @@ export default function AffiliateAuth() {
         to="/"
         className="inline-block rounded-md border border-slate-300 dark:border-navy-600 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:border-brand-300"
       >
-        Voltar pro site
+        {a.back}
       </Link>
     </div>
   );

@@ -129,7 +129,6 @@ export function AffiliateDetailPanel({
 
   const shareUrl = `https://ozly.au/v/${code}`;
   const periodIdx = PERIODS.indexOf(period);
-  const [previewOpen, setPreviewOpen] = useState(false);
 
   // Volume tier maths (lump-sum)
   const tierIdx = activeVolumeIdx(bonusTiers, currentPeriodCount);
@@ -355,13 +354,6 @@ export function AffiliateDetailPanel({
               <ExternalLinkIcon className="h-3 w-3" />
               Abrir landing pública
             </a>
-            <button
-              type="button"
-              onClick={() => setPreviewOpen((v) => !v)}
-              className="rounded-md border border-navy-100 bg-white px-3 py-1.5 text-xs font-medium text-navy-600 hover:border-brand-300 hover:text-brand-700"
-            >
-              {previewOpen ? 'Fechar preview' : 'Preview aqui no portal'}
-            </button>
           </div>
         </Card>
 
@@ -384,38 +376,6 @@ export function AffiliateDetailPanel({
           {funnel && <FunnelChart steps={funnel.steps} />}
         </Card>
       </div>
-
-      {/* Preview da landing (iframe) — mostra exatamente o que o afiliado vai compartilhar */}
-      {previewOpen && (
-        <Card>
-          <div className="flex items-center justify-between">
-            <div>
-              <Title className="!text-sm">Preview · landing pública</Title>
-              <Text className="mt-0.5 text-xs text-navy-300">
-                Renderizada direto de <code>{shareUrl}</code>
-              </Text>
-            </div>
-            <a
-              href={shareUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 rounded-md border border-navy-100 bg-white px-2.5 py-1 text-xs text-navy-600 hover:border-brand-300 hover:text-brand-700"
-            >
-              <ExternalLinkIcon className="h-3 w-3" />
-              Abrir em nova aba
-            </a>
-          </div>
-          <div className="mt-3 overflow-hidden rounded-lg border border-navy-100 bg-navy-50/40">
-            <iframe
-              src={shareUrl}
-              title={`Landing de ${code}`}
-              loading="lazy"
-              sandbox="allow-scripts allow-same-origin allow-popups"
-              className="h-[600px] w-full border-0 bg-white"
-            />
-          </div>
-        </Card>
-      )}
 
       {/* Timeseries */}
       <Card>

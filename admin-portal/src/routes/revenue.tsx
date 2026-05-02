@@ -108,6 +108,7 @@ export function RevenuePage() {
     : null;
   const trialsStarted = data?.kpi.trials_started_period ?? null;
   const trialsActive = data?.kpi.trials_active ?? null;
+  const trialsLapsed = data?.kpi.trials_lapsed_period ?? null;
   const snapshotAt = data?.revenue.snapshot_at ?? data?.kpi.snapshot_at ?? null;
 
   return (
@@ -231,9 +232,9 @@ export function RevenuePage() {
                 ? '—'
                 : `${(conversion * 100).toFixed(1)}%`}
           </div>
-          <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
+          <div className="mt-4 grid grid-cols-3 gap-3 text-xs">
             <div className="rounded-md border border-navy-50 bg-white p-2.5">
-              <div className="text-navy-300">Trials started</div>
+              <div className="text-navy-300">Started</div>
               <div className="mt-1 text-base font-medium text-navy-700">
                 {formatNumber(trialsStarted)}
               </div>
@@ -242,6 +243,12 @@ export function RevenuePage() {
               <div className="text-navy-300">Active now</div>
               <div className="mt-1 text-base font-medium text-navy-700">
                 {formatNumber(trialsActive)}
+              </div>
+            </div>
+            <div className="rounded-md border border-navy-50 bg-white p-2.5">
+              <div className="text-navy-300">Lapsed</div>
+              <div className="mt-1 text-base font-medium text-rose-600">
+                {formatNumber(trialsLapsed)}
               </div>
             </div>
           </div>

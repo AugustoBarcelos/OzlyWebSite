@@ -1,17 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import { useI18n } from "../i18n";
 
 // Dashboard privado do afiliado — ozly.au/me/:code
-//
-// Auth via magic link por email (Opção B):
-//  1. Sem session local → mostra "send my link" CTA.
-//  2. Click envia email com link /me/auth?t=TOKEN (vale 1h).
-//  3. Verify troca por session 30d salva em localStorage.
-//  4. Dashboard busca via affiliate_dashboard_authed(token).
-//
-// O code da URL é "claim" — afiliado pede pra receber o link no email
-// já cadastrado. Resposta da RPC é uniforme (ok=true sempre) pra evitar
-// enumeração de codes válidos.
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -68,26 +59,28 @@ function formatMoney(cents, currency) {
   return `${currency} ${(cents / 100).toFixed(2)}`;
 }
 
-function formatDate(iso) {
+function formatDate(iso, lang) {
   if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("pt-BR", {
+  const locale = lang === "pt" ? "pt-BR" : lang === "es" ? "es-ES" : "en-AU";
+  return new Date(iso).toLocaleDateString(locale, {
     day: "2-digit",
     month: "short",
     year: "numeric",
   });
 }
 
-function relativeTime(iso) {
-  if (!iso) return "nunca";
+function relativeTime(iso, d) {
+  if (!iso) return d.relativeNever;
   const ts = new Date(iso).getTime();
   if (Number.isNaN(ts)) return "—";
   const diff = Date.now() - ts;
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  if (days < 1) return "hoje";
-  if (days === 1) return "ontem";
-  if (days < 30) return `há ${days}d`;
+  if (days < 1) return d.relativeToday;
+  if (days === 1) return d.relativeYesterday;
+  if (days < 30) return d.relativeDays.replace("{n}", days);
   const months = Math.floor(days / 30);
-  return `há ${months} mes${months > 1 ? "es" : ""}`;
+  if (months === 1) return d.relativeMonth.replace("{n}", months);
+  return d.relativeMonths.replace("{n}", months);
 }
 
 function activeVolumeIdx(tiers, count) {
@@ -110,7 +103,7 @@ function nextVolumeTier(tiers, count) {
 
 // ─── Magic-link request UI ───────────────────────────────────────────────────
 
-function RequestLinkScreen({ code }) {
+function RequestLinkScreen({ code, d }) {
   const [status, setStatus] = useState("idle"); // idle | sending | sent | error
   const [error, setError] = useState(null);
 
@@ -118,7 +111,7 @@ function RequestLinkScreen({ code }) {
     setStatus("sending");
     setError(null);
     if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-      setError("Configuração ausente. Avisa o suporte.");
+      setError(d.configError);
       setStatus("error");
       return;
     }
@@ -136,18 +129,18 @@ function RequestLinkScreen({ code }) {
         }
       );
       if (res.status === 429) {
-        setError("Muitas tentativas. Aguarda 1 minuto e tenta de novo.");
+        setError(d.rateLimitError);
         setStatus("error");
         return;
       }
       if (!res.ok) {
-        setError("Erro ao pedir o link. Tenta de novo.");
+        setError(d.requestError);
         setStatus("error");
         return;
       }
       setStatus("sent");
     } catch {
-      setError("Erro de rede. Tenta de novo.");
+      setError(d.networkError);
       setStatus("error");
     }
   }
@@ -161,28 +154,24 @@ function RequestLinkScreen({ code }) {
               {code}
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-navy-700 dark:text-white">
-              Dashboard do afiliado
+              {d.title}
             </h1>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              Pra ver suas conversões e ganhos, vamos te mandar um link no
-              email cadastrado nesse código.
+              {d.requestIntro}
             </p>
           </div>
 
           {status === "sent" ? (
             <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/30 px-4 py-4 text-sm text-emerald-800 dark:text-emerald-200 text-center">
               <div className="text-3xl mb-2">📧</div>
-              <strong className="block mb-1">Link enviado!</strong>
-              <p>
-                Se esse código tem email cadastrado, ele já recebeu o link.
-                Confere a caixa de entrada (e o spam) — vale por 1 hora.
-              </p>
+              <strong className="block mb-1">{d.requestSent}</strong>
+              <p>{d.requestSentDetail}</p>
               <button
                 type="button"
                 onClick={() => setStatus("idle")}
                 className="mt-3 text-xs underline text-emerald-700 dark:text-emerald-300"
               >
-                Reenviar
+                {d.resend}
               </button>
             </div>
           ) : (
@@ -193,9 +182,7 @@ function RequestLinkScreen({ code }) {
                 disabled={status === "sending"}
                 className="w-full rounded-lg bg-brand-500 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {status === "sending"
-                  ? "Enviando…"
-                  : "📧 Receber meu link de acesso"}
+                {status === "sending" ? d.requestSending : d.requestCta}
               </button>
 
               {status === "error" && error && (
@@ -205,13 +192,12 @@ function RequestLinkScreen({ code }) {
               )}
 
               <p className="mt-4 text-xs text-slate-500 dark:text-slate-400 text-center">
-                Sua sessão fica salva por 30 dias depois que abrir o link.
-                Email não cadastrado? Avisa no{" "}
+                {d.noEmailHint}{" "}
                 <a
                   href="https://wa.me/61493735179"
                   className="text-brand-600 underline"
                 >
-                  WhatsApp
+                  {d.whatsapp}
                 </a>
                 .
               </p>
@@ -221,7 +207,7 @@ function RequestLinkScreen({ code }) {
 
         <div className="text-center mt-6">
           <Link to="/" className="text-xs text-slate-500 underline">
-            Voltar pro site
+            {d.backToSite}
           </Link>
         </div>
       </div>
@@ -232,10 +218,13 @@ function RequestLinkScreen({ code }) {
 // ─── Main page ───────────────────────────────────────────────────────────────
 
 export default function AffiliateDashboard() {
+  const { t, lang } = useI18n();
+  const d = t.affiliateDashboard;
   const { code } = useParams();
   const [session, setSession] = useState(() => loadSession(code));
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(Boolean(session));
+  const [linkCopied, setLinkCopied] = useState(false);
 
   useEffect(() => {
     if (!session) {
@@ -246,16 +235,15 @@ export default function AffiliateDashboard() {
     setLoading(true);
     callRpc("affiliate_dashboard_authed", {
       p_session_token: session.token,
-    }).then((d) => {
+    }).then((r) => {
       if (!alive) return;
-      // Sessão inválida (expirou no servidor antes do client expiry) — limpa.
-      if (d?.found === false && d?.reason === "invalid_session") {
+      if (r?.found === false && r?.reason === "invalid_session") {
         clearSession();
         setSession(null);
         setLoading(false);
         return;
       }
-      setData(d);
+      setData(r);
       setLoading(false);
     });
     return () => {
@@ -265,7 +253,6 @@ export default function AffiliateDashboard() {
 
   function handleSignOut() {
     if (session?.token) {
-      // Best-effort revoke — não bloqueia.
       callRpc("affiliate_session_revoke", {
         p_session_token: session.token,
       }).catch(() => {});
@@ -276,7 +263,7 @@ export default function AffiliateDashboard() {
   }
 
   if (!session) {
-    return <RequestLinkScreen code={code} />;
+    return <RequestLinkScreen code={code} d={d} />;
   }
 
   if (loading) {
@@ -291,17 +278,16 @@ export default function AffiliateDashboard() {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center">
         <div className="text-6xl mb-4">🤔</div>
-        <h1 className="text-2xl font-bold mb-2">Dashboard indisponível</h1>
+        <h1 className="text-2xl font-bold mb-2">{d.indisponivelTitle}</h1>
         <p className="text-slate-600 dark:text-slate-400 mb-6">
-          Não consegui carregar os dados desse afiliado. Pede um novo link
-          de acesso ou avisa o suporte.
+          {d.indisponivelDetail}
         </p>
         <button
           type="button"
           onClick={handleSignOut}
           className="inline-block rounded-md border border-slate-300 dark:border-navy-600 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:border-brand-300"
         >
-          Pedir novo link
+          {d.requestNewLink}
         </button>
       </div>
     );
@@ -314,6 +300,7 @@ export default function AffiliateDashboard() {
     commission_structure,
     stats,
     earnings,
+    recent_conversions = [],
   } = data;
   const tierIdx = activeVolumeIdx(
     commission_structure.volume_tiers,
@@ -331,12 +318,32 @@ export default function AffiliateDashboard() {
   );
 
   const periodLabels = {
-    monthly: "este mês",
-    quarterly: "este trimestre",
-    yearly: "este ano",
-    lifetime: "lifetime",
+    monthly: d.periodMonthly,
+    quarterly: d.periodQuarterly,
+    yearly: d.periodYearly,
+    lifetime: d.periodLifetime,
   };
-  const periodLabel = periodLabels[commission_structure.volume_period] ?? "este período";
+  const periodLabel = periodLabels[commission_structure.volume_period] ?? d.periodFallback;
+
+  const statusLabel = (s) =>
+    ({
+      pending_signup: d.statusPendingSignup,
+      subscribed: d.statusSubscribed,
+      commission_ready: d.statusCommissionReady,
+      paid: d.statusPaid,
+      cancelled: d.statusCancelled,
+      refunded: d.statusRefunded,
+    }[s] ?? s);
+
+  const statusTone = (s) =>
+    ({
+      pending_signup: "bg-slate-100 text-slate-700 dark:bg-navy-700 dark:text-slate-300",
+      subscribed: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200",
+      commission_ready: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200",
+      paid: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200",
+      cancelled: "bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200",
+      refunded: "bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200",
+    }[s] ?? "bg-slate-100 text-slate-700");
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-brand-50/40 to-white dark:from-navy-900 dark:to-navy-900">
@@ -348,45 +355,45 @@ export default function AffiliateDashboard() {
               {aff_code}
             </div>
             <h1 className="text-3xl sm:text-4xl font-bold text-navy-700 dark:text-white">
-              Olá{name ? `, ${name.split(" ")[0]}` : ""} 👋
+              {d.hello}{name ? `, ${name.split(" ")[0]}` : ""} 👋
             </h1>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-              Seu progresso no programa de afiliados Ozly · atualizado agora
+              {d.subtitle}
             </p>
           </div>
           <button
             type="button"
             onClick={handleSignOut}
-            title="Sair"
+            title={d.signOut}
             className="shrink-0 rounded-md border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:border-brand-300"
           >
-            Sair
+            {d.signOut}
           </button>
         </header>
 
         {/* Hero earnings */}
         <section className="rounded-2xl bg-gradient-to-br from-brand-500 to-emerald-600 text-white p-6 sm:p-8 shadow-lg">
           <div className="text-xs uppercase tracking-wide opacity-90 mb-1">
-            A receber
+            {d.pendingTotal}
           </div>
           <div className="text-4xl sm:text-5xl font-bold tabular-nums">
             {formatMoney(earnings.pending_total_cents, currency)}
           </div>
           <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
             <div>
-              <div className="opacity-80 text-xs">Conversões</div>
+              <div className="opacity-80 text-xs">{d.conversions}</div>
               <div className="font-semibold">
                 {formatMoney(earnings.pending_conversion_cents, currency)}
               </div>
             </div>
             <div>
-              <div className="opacity-80 text-xs">Volume bonus</div>
+              <div className="opacity-80 text-xs">{d.volumeBonus}</div>
               <div className="font-semibold">
                 {formatMoney(earnings.pending_volume_cents, currency)}
               </div>
             </div>
             <div>
-              <div className="opacity-80 text-xs">Retenção</div>
+              <div className="opacity-80 text-xs">{d.retentionBonus}</div>
               <div className="font-semibold">
                 {formatMoney(earnings.pending_milestone_cents, currency)}
               </div>
@@ -394,10 +401,10 @@ export default function AffiliateDashboard() {
           </div>
           {earnings.lifetime_paid_cents > 0 && (
             <div className="mt-4 pt-4 border-t border-white/20 text-xs opacity-90">
-              Total já recebido lifetime:{" "}
+              {d.lifetimePaid}{" "}
               <strong>{formatMoney(earnings.lifetime_paid_cents, currency)}</strong>
               {earnings.last_paid_at && (
-                <span> · último pagamento {relativeTime(earnings.last_paid_at)}</span>
+                <span> · {d.lastPayment} {relativeTime(earnings.last_paid_at, d)}</span>
               )}
             </div>
           )}
@@ -405,18 +412,17 @@ export default function AffiliateDashboard() {
 
         {/* Funnel */}
         <section className="rounded-2xl bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 p-5 sm:p-6">
-          <h2 className="text-lg font-bold text-navy-700 dark:text-white">Funil</h2>
+          <h2 className="text-lg font-bold text-navy-700 dark:text-white">{d.funnelTitle}</h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Total desde sempre · todas as conversões com seu código
+            {d.funnelSubtitle}
           </p>
           <div className="mt-4 space-y-2">
             {[
-              { label: "Signups", value: stats.signups, color: "bg-sky-500" },
-              { label: "Trial / 1ª compra", value: stats.purchases, color: "bg-amber-500" },
-              { label: "Pagantes (renovaram)", value: stats.renewals, color: "bg-emerald-500" },
+              { label: d.funnelSignups, value: stats.signups, color: "bg-sky-500" },
+              { label: d.funnelTrial, value: stats.purchases, color: "bg-amber-500" },
+              { label: d.funnelPaying, value: stats.renewals, color: "bg-emerald-500" },
             ].map((step) => {
-              const pct =
-                stats.signups > 0 ? (step.value / stats.signups) * 100 : 0;
+              const pct = stats.signups > 0 ? (step.value / stats.signups) * 100 : 0;
               return (
                 <div key={step.label} className="flex items-center gap-3">
                   <span className="w-32 sm:w-40 shrink-0 text-sm text-slate-700 dark:text-slate-300">
@@ -445,32 +451,34 @@ export default function AffiliateDashboard() {
           <div className="flex items-baseline justify-between gap-2">
             <div>
               <h2 className="text-lg font-bold text-navy-700 dark:text-white">
-                💰 Volume bonus · {periodLabel}
+                💰 {d.volumeTitle} · {periodLabel}
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                <strong>{stats.current_period_count}</strong> conversões{" "}
-                {periodLabel}. Cada cliente pago = base{" "}
-                {formatMoney(commission_structure.base_cents, currency)}
+                {d.volumeProgress
+                  .replace("{count}", stats.current_period_count)
+                  .replace("{period}", periodLabel)
+                  .replace("{base}", formatMoney(commission_structure.base_cents, currency))}
               </p>
             </div>
             {!next && tierIdx >= 0 && (
               <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold uppercase text-emerald-800">
-                🏆 top tier
+                {d.topTier}
               </span>
             )}
           </div>
 
           {next && (
             <div className="mt-4 rounded-lg bg-amber-50 dark:bg-amber-900/30 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
-              📈 Faltam <strong>{next.needs}</strong> conversões pra atingir{" "}
-              ≥{next.tier.threshold} e ganhar lump{" "}
-              <strong>{formatMoney(next.tier.bonus_cents, currency)}</strong>
+              📈 {d.volumeNeeds
+                .replace("{n}", next.needs)
+                .replace("{threshold}", next.tier.threshold)
+                .replace("{bonus}", formatMoney(next.tier.bonus_cents, currency))}
             </div>
           )}
 
           <ul className="mt-4 space-y-2">
-            {sortedTiers.map((t, i) => {
-              const reached = stats.current_period_count >= t.threshold;
+            {sortedTiers.map((tt, i) => {
+              const reached = stats.current_period_count >= tt.threshold;
               const isCurrent = i === tierIdx;
               return (
                 <li
@@ -485,12 +493,12 @@ export default function AffiliateDashboard() {
                   ].join(" ")}
                 >
                   <span className="w-16 font-mono text-slate-700 dark:text-slate-300">
-                    ≥{t.threshold}
+                    ≥{tt.threshold}
                   </span>
                   <span className="flex-1 text-slate-600 dark:text-slate-400">
-                    lump{" "}
+                    {d.tierLump}{" "}
                     <strong className="text-slate-800 dark:text-white">
-                      {formatMoney(t.bonus_cents, currency)}
+                      {formatMoney(tt.bonus_cents, currency)}
                     </strong>
                   </span>
                   <span className="text-xs">{reached ? "✓" : "—"}</span>
@@ -503,10 +511,10 @@ export default function AffiliateDashboard() {
         {/* Retention bonuses */}
         <section className="rounded-2xl bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 p-5 sm:p-6">
           <h2 className="text-lg font-bold text-navy-700 dark:text-white">
-            ⏰ Retention bonus
+            ⏰ {d.retentionTitle}
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Você ganha um extra por cada cliente seu que mantiver assinatura.
+            {d.retentionSubtitle}
           </p>
           <ul className="mt-4 space-y-2">
             {sortedRetention.map((r) => (
@@ -518,7 +526,7 @@ export default function AffiliateDashboard() {
                   {r.months}m
                 </span>
                 <span className="flex-1 text-slate-600 dark:text-slate-400">
-                  +{formatMoney(r.bonus_cents, currency)} por cliente
+                  +{formatMoney(r.bonus_cents, currency)} {d.retentionPerClient}
                 </span>
               </li>
             ))}
@@ -528,10 +536,10 @@ export default function AffiliateDashboard() {
         {/* Tools / how to share */}
         <section className="rounded-2xl bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 p-5 sm:p-6">
           <h2 className="text-lg font-bold text-navy-700 dark:text-white">
-            🚀 Compartilhe seu link
+            🚀 {d.shareTitle}
           </h2>
           <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-            Quanto mais pessoas baixarem usando seu código, mais você ganha.
+            {d.shareSubtitle}
           </p>
           <div className="mt-4 rounded-lg bg-slate-100 dark:bg-navy-700 p-3 font-mono text-sm break-all text-slate-800 dark:text-slate-200">
             ozly.au/v/{aff_code}
@@ -541,55 +549,116 @@ export default function AffiliateDashboard() {
               href={`/v/${aff_code}`}
               className="inline-flex items-center gap-1.5 rounded-md bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600"
             >
-              Ver landing pública →
+              {d.viewLanding}
             </a>
             <button
               type="button"
               onClick={() => {
-                navigator.clipboard?.writeText(`https://ozly.au/v/${aff_code}`);
+                navigator.clipboard?.writeText(`https://ozly.au/v/${aff_code}`).then(() => {
+                  setLinkCopied(true);
+                  setTimeout(() => setLinkCopied(false), 2000);
+                });
               }}
               className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:border-brand-300"
             >
-              Copiar link
+              {linkCopied ? d.linkCopied : d.copyLink}
             </button>
           </div>
         </section>
 
         {/* Activity */}
-        {stats.last_signup_at && (
+        {(stats.last_signup_at || stats.views_30d > 0) && (
           <section className="rounded-2xl bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 p-5 sm:p-6">
             <h2 className="text-lg font-bold text-navy-700 dark:text-white">
-              📊 Atividade recente
+              📊 {d.activityTitle}
             </h2>
-            <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+            <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+              {stats.last_signup_at && (
+                <div className="rounded-md bg-slate-50 dark:bg-navy-700 px-3 py-2">
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                    {d.lastSignup}
+                  </div>
+                  <div className="font-semibold text-slate-800 dark:text-white">
+                    {relativeTime(stats.last_signup_at, d)}
+                  </div>
+                </div>
+              )}
               <div className="rounded-md bg-slate-50 dark:bg-navy-700 px-3 py-2">
                 <div className="text-xs text-slate-500 dark:text-slate-400">
-                  Último signup
-                </div>
-                <div className="font-semibold text-slate-800 dark:text-white">
-                  {relativeTime(stats.last_signup_at)}
-                </div>
-              </div>
-              <div className="rounded-md bg-slate-50 dark:bg-navy-700 px-3 py-2">
-                <div className="text-xs text-slate-500 dark:text-slate-400">
-                  Signups últimos 30 dias
+                  {d.signups30d}
                 </div>
                 <div className="font-semibold text-slate-800 dark:text-white">
                   {stats.signups_30d}
                 </div>
               </div>
+              {typeof stats.views_30d === "number" && (
+                <div className="rounded-md bg-slate-50 dark:bg-navy-700 px-3 py-2">
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                    {d.views30d}
+                  </div>
+                  <div className="font-semibold text-slate-800 dark:text-white">
+                    {stats.views_30d}
+                  </div>
+                </div>
+              )}
             </div>
           </section>
         )}
 
+        {/* Recent conversions */}
+        <section className="rounded-2xl bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 p-5 sm:p-6">
+          <h2 className="text-lg font-bold text-navy-700 dark:text-white">
+            🧾 {d.recentTitle}
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            {d.recentSubtitle.replace("{n}", recent_conversions.length || 20)}
+          </p>
+          {recent_conversions.length === 0 ? (
+            <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
+              {d.recentEmpty}
+            </p>
+          ) : (
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-navy-700">
+                    <th className="pb-2 pr-2 font-medium">{d.recentColDate}</th>
+                    <th className="pb-2 pr-2 font-medium">{d.recentColStatus}</th>
+                    <th className="pb-2 pr-2 font-medium text-right">{d.recentColCommission}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recent_conversions.map((c, i) => (
+                    <tr key={i} className="border-b border-slate-100 dark:border-navy-700/60 last:border-0">
+                      <td className="py-2 pr-2 text-slate-700 dark:text-slate-300">
+                        {formatDate(c.signup_at, lang)}
+                      </td>
+                      <td className="py-2 pr-2">
+                        <span className={`inline-block rounded px-2 py-0.5 text-[11px] font-medium ${statusTone(c.status)}`}>
+                          {statusLabel(c.status)}
+                        </span>
+                      </td>
+                      <td className="py-2 pr-2 text-right tabular-nums text-slate-600 dark:text-slate-400">
+                        {c.commission_cents
+                          ? formatMoney(c.commission_cents, c.currency ?? currency)
+                          : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
         {/* Footer */}
         <footer className="text-center text-xs text-slate-500 dark:text-slate-400 pt-4">
-          Programa de afiliados Ozly · dúvidas?{" "}
+          {d.footer}{" "}
           <a href="https://wa.me/61493735179" className="text-brand-600 underline">
-            WhatsApp
+            {d.whatsapp}
           </a>
           <br />
-          Atualizado em tempo real · {formatDate(new Date().toISOString())}
+          {d.updatedNow} · {formatDate(new Date().toISOString(), lang)}
         </footer>
       </div>
     </div>

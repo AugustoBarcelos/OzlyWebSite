@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Badge,
   Card,
@@ -15,6 +15,7 @@ import { callRpc, RpcError } from '@/lib/rpc';
 import { Spinner } from '@/components/Spinner';
 import { useToast } from '@/components/Toast';
 import { formatNumber, formatRelativeTime } from '@/lib/format';
+import { ExternalLinkIcon } from '@/components/Icons';
 import { CreateAffiliateModal } from './CreateAffiliateModal';
 import { AffiliateDetailPanel } from './AffiliateDetailPanel';
 import { PendingPayoutsCard } from './PendingPayoutsCard';
@@ -114,6 +115,11 @@ export function AffiliatesPage() {
   const [editing, setEditing] = useState<AffiliateRow | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'active' | 'pending_payout'>('all');
+  const [search, setSearch] = useState('');
+  const [sortKey, setSortKey] = useState<
+    'code' | 'signups_30d' | 'payable_cents' | 'total_paid_cents' | 'last_signup_at'
+  >('payable_cents');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [refreshKey, setRefreshKey] = useState(0);
 
   const loadAffiliates = useCallback(async () => {
@@ -219,11 +225,56 @@ export function AffiliatesPage() {
     }
   }
 
-  const filteredAffiliates = affiliates.filter((a) => {
-    if (filter === 'active') return a.active;
-    if (filter === 'pending_payout') return a.has_pending_payout;
-    return true;
-  });
+  const filteredAffiliates = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const filtered = affiliates.filter((a) => {
+      if (filter === 'active' && !a.active) return false;
+      if (filter === 'pending_payout' && !a.has_pending_payout) return false;
+      if (q.length > 0) {
+        const haystack = [a.code, a.name, a.email, a.pay_id]
+          .filter((x): x is string => Boolean(x))
+          .join(' ')
+          .toLowerCase();
+        if (!haystack.includes(q)) return false;
+      }
+      return true;
+    });
+    const sign = sortDir === 'asc' ? 1 : -1;
+    const sorted = [...filtered].sort((a, b) => {
+      let av: string | number | null;
+      let bv: string | number | null;
+      switch (sortKey) {
+        case 'code':
+          return sign * a.code.localeCompare(b.code);
+        case 'signups_30d':
+          av = a.signups_30d; bv = b.signups_30d; break;
+        case 'payable_cents':
+          av = a.payable_cents; bv = b.payable_cents; break;
+        case 'total_paid_cents':
+          av = a.total_paid_cents; bv = b.total_paid_cents; break;
+        case 'last_signup_at':
+          av = a.last_signup_at ? new Date(a.last_signup_at).getTime() : 0;
+          bv = b.last_signup_at ? new Date(b.last_signup_at).getTime() : 0;
+          break;
+      }
+      return sign * (((av as number) ?? 0) - ((bv as number) ?? 0));
+    });
+    return sorted;
+  }, [affiliates, filter, search, sortKey, sortDir]);
+
+  function toggleSort(key: typeof sortKey) {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir(key === 'code' ? 'asc' : 'desc');
+    }
+  }
+
+  function sortIndicator(key: typeof sortKey) {
+    if (sortKey !== key) return null;
+    return <span className="ml-1 text-[10px]">{sortDir === 'asc' ? '▲' : '▼'}</span>;
+  }
 
   return (
     <div className="space-y-6">
@@ -274,28 +325,37 @@ export function AffiliatesPage() {
               ({filteredAffiliates.length} de {affiliates.length})
             </span>
           </div>
-          {/* Filter */}
-          <div className="inline-flex rounded-md border border-navy-100 bg-white p-0.5 text-xs">
-            {(
-              [
-                { v: 'all', label: 'Todos' },
-                { v: 'active', label: 'Ativos' },
-                { v: 'pending_payout', label: '$ pendente' },
-              ] as const
-            ).map((f) => (
-              <button
-                key={f.v}
-                type="button"
-                onClick={() => setFilter(f.v)}
-                className={
-                  filter === f.v
-                    ? 'rounded bg-brand-500 px-2.5 py-1 font-semibold text-white'
-                    : 'rounded px-2.5 py-1 text-navy-500 hover:bg-navy-50'
-                }
-              >
-                {f.label}
-              </button>
-            ))}
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar code, nome, email…"
+              className="rounded-md border border-navy-100 bg-white px-3 py-1.5 text-xs focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+              style={{ minWidth: '220px' }}
+            />
+            <div className="inline-flex rounded-md border border-navy-100 bg-white p-0.5 text-xs">
+              {(
+                [
+                  { v: 'all', label: 'Todos' },
+                  { v: 'active', label: 'Ativos' },
+                  { v: 'pending_payout', label: '$ pendente' },
+                ] as const
+              ).map((f) => (
+                <button
+                  key={f.v}
+                  type="button"
+                  onClick={() => setFilter(f.v)}
+                  className={
+                    filter === f.v
+                      ? 'rounded bg-brand-500 px-2.5 py-1 font-semibold text-white'
+                      : 'rounded px-2.5 py-1 text-navy-500 hover:bg-navy-50'
+                  }
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
         {error && (
@@ -312,14 +372,54 @@ export function AffiliatesPage() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableHeaderCell>Code</TableHeaderCell>
+                  <TableHeaderCell>
+                    <button
+                      type="button"
+                      onClick={() => toggleSort('code')}
+                      className="inline-flex items-center hover:text-brand-700"
+                    >
+                      Code{sortIndicator('code')}
+                    </button>
+                  </TableHeaderCell>
                   <TableHeaderCell>Name</TableHeaderCell>
                   <TableHeaderCell>Status</TableHeaderCell>
-                  <TableHeaderCell className="text-right">Signups (30d)</TableHeaderCell>
+                  <TableHeaderCell className="text-right">
+                    <button
+                      type="button"
+                      onClick={() => toggleSort('signups_30d')}
+                      className="inline-flex items-center hover:text-brand-700"
+                    >
+                      Signups (30d){sortIndicator('signups_30d')}
+                    </button>
+                  </TableHeaderCell>
                   <TableHeaderCell className="text-right">Pipeline</TableHeaderCell>
-                  <TableHeaderCell className="text-right">Pagar agora</TableHeaderCell>
-                  <TableHeaderCell className="text-right">Pago lifetime</TableHeaderCell>
-                  <TableHeaderCell>Última atividade</TableHeaderCell>
+                  <TableHeaderCell className="text-right">
+                    <button
+                      type="button"
+                      onClick={() => toggleSort('payable_cents')}
+                      className="inline-flex items-center hover:text-brand-700"
+                    >
+                      Pagar agora{sortIndicator('payable_cents')}
+                    </button>
+                  </TableHeaderCell>
+                  <TableHeaderCell className="text-right">
+                    <button
+                      type="button"
+                      onClick={() => toggleSort('total_paid_cents')}
+                      className="inline-flex items-center hover:text-brand-700"
+                    >
+                      Pago lifetime{sortIndicator('total_paid_cents')}
+                    </button>
+                  </TableHeaderCell>
+                  <TableHeaderCell>
+                    <button
+                      type="button"
+                      onClick={() => toggleSort('last_signup_at')}
+                      className="inline-flex items-center hover:text-brand-700"
+                    >
+                      Última atividade{sortIndicator('last_signup_at')}
+                    </button>
+                  </TableHeaderCell>
                   <TableHeaderCell></TableHeaderCell>
                 </TableRow>
               </TableHead>
@@ -337,7 +437,20 @@ export function AffiliatesPage() {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <div className="text-sm text-navy-700">{a.name ?? '—'}</div>
+                      <div className="flex items-center gap-1.5 text-sm text-navy-700">
+                        <span>{a.name ?? '—'}</span>
+                        <a
+                          href={`https://ozly.au/v/${a.code}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label={`Abrir landing pública de ${a.code}`}
+                          title={`Abrir ozly.au/v/${a.code}`}
+                          className="inline-flex h-5 w-5 items-center justify-center rounded text-navy-300 hover:bg-brand-50 hover:text-brand-700"
+                        >
+                          <ExternalLinkIcon className="h-3 w-3" />
+                        </a>
+                      </div>
                       <div className="text-[11px] text-navy-300">{a.email ?? a.pay_id ?? ''}</div>
                     </TableCell>
                     <TableCell>
