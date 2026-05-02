@@ -44,7 +44,6 @@ const CHANNEL_OPTIONS: ReadonlyArray<{
   { value: 'org_facebook', label: '📘 Facebook' },
   { value: 'org_tiktok', label: '🎵 TikTok' },
   { value: 'org_youtube', label: '▶️ YouTube' },
-  { value: 'org_linkedin', label: '✈️ LinkedIn' },
   { value: 'msg_email', label: '📧 Email' },
 ];
 

@@ -10,7 +10,7 @@ import { isYoutubeConfigured } from '@/lib/youtube';
  * YT: API key, sempre on quando env configurado.
  * TikTok: card auto-suficiente — connect/reconnect/stats tudo dentro do
  *         próprio dropdown (não precisa ir em Marketing pra plugar).
- * IG/FB/LinkedIn: stubs até as credenciais correspondentes existirem.
+ * IG/FB: stubs até as credenciais correspondentes existirem.
  */
 export function OrganicTab() {
   const ytConfigured = isYoutubeConfigured();
@@ -68,20 +68,6 @@ export function OrganicTab() {
           />
         )}
 
-        <IntegrationStub
-          icon="✈️"
-          title="LinkedIn (Company Page)"
-          description="Followers, post impressions, engagement (B2B angle)"
-          steps={[
-            'developer.linkedin.com → criar app linkado à Company Page',
-            'Request Marketing Developer Platform access (1-2 semanas de review)',
-            'OAuth flow → r_organization_social + r_ads_reporting scopes',
-            'Pula se você não está postando no LinkedIn',
-          ]}
-          envVars={['LINKEDIN_ACCESS_TOKEN', 'LINKEDIN_ORG_ID']}
-          ctaLabel="Abrir LinkedIn Dev"
-          ctaHref="https://developer.linkedin.com"
-        />
       </Grid>
     </div>
   );

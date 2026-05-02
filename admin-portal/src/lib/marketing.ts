@@ -33,7 +33,6 @@ export const MARKETING_CHANNELS = [
   'org_facebook',
   'org_tiktok',
   'org_youtube',
-  'org_linkedin',
   'msg_email',
 ] as const;
 
@@ -44,7 +43,6 @@ export const CHANNEL_LABELS: Record<MarketingChannel, string> = {
   org_facebook: 'Facebook',
   org_tiktok: 'TikTok',
   org_youtube: 'YouTube',
-  org_linkedin: 'LinkedIn',
   msg_email: 'Email (broadcast)',
 };
 
@@ -53,7 +51,6 @@ export const CHANNEL_ICONS: Record<MarketingChannel, string> = {
   org_facebook: '📘',
   org_tiktok: '🎵',
   org_youtube: '▶️',
-  org_linkedin: '✈️',
   msg_email: '📧',
 };
 

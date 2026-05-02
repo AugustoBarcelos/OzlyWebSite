@@ -49,8 +49,6 @@ export const CHANNELS: ReadonlyArray<ChannelMeta> = [
   { kind: 'org_facebook',  label: 'Facebook',   icon: '📘', group: 'organic',  defaultPerms: { ...FULL_OPS } },
   { kind: 'org_tiktok',    label: 'TikTok',     icon: '🎵', group: 'organic',  defaultPerms: { ...FULL_OPS } },
   { kind: 'org_youtube',   label: 'YouTube',    icon: '▶️', group: 'organic',  defaultPerms: { ...FULL_OPS } },
-  // org_linkedin: removido — LinkedIn Marketing API requer "approved partner"
-  // status, raramente concedido a apps individuais. Posta-se manual.
   // Paid
   { kind: 'paid_google',   label: 'Google Ads', icon: '🎯', group: 'paid',     defaultPerms: { ...FULL_BUDGET } },
   { kind: 'paid_meta',     label: 'Meta Ads',   icon: '📘', group: 'paid',     defaultPerms: { ...FULL_BUDGET } },

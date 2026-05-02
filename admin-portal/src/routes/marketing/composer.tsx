@@ -54,7 +54,6 @@ function suggestScheduledAt(channel: MarketingChannel): string {
     org_instagram: 19,
     org_facebook: 19,
     org_tiktok: 20,
-    org_linkedin: 9,
     org_youtube: 12,
     msg_email: 10,
   };
@@ -494,8 +493,8 @@ export function MarketingComposerPage() {
           marcando aqui depois como <em>publicado</em>.
         </Text>
         <Text className="mt-1.5 text-xs text-navy-500">
-          v1 ligará auto-publish via edge function (Meta Graph + TikTok +
-          LinkedIn) — sem dependência paga, tudo self-hosted.
+          v1 ligará auto-publish via edge function (Meta Graph + TikTok) —
+          sem dependência paga, tudo self-hosted.
         </Text>
       </Card>
     </div>

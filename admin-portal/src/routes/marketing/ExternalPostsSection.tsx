@@ -60,7 +60,7 @@ export function ExternalPostsSection({ channelFilter }: Props) {
 
   // Skip fetch when filter excludes external-capable channels.
   const skipExternal =
-    channelFilter !== '' && !['org_youtube', 'org_instagram', 'org_facebook', 'org_tiktok', 'org_linkedin'].includes(channelFilter);
+    channelFilter !== '' && !['org_youtube', 'org_instagram', 'org_facebook', 'org_tiktok'].includes(channelFilter);
 
   useEffect(() => {
     if (skipExternal) {
@@ -100,12 +100,11 @@ export function ExternalPostsSection({ channelFilter }: Props) {
         }
       }
 
-      // IG / FB / TT / LinkedIn — Meta+TikTok+LinkedIn APIs ainda não plugadas.
+      // IG / FB / TT — Meta+TikTok APIs ainda não plugadas pra listar posts.
       // Quando os tokens chegarem, adicionar fetchers similares aqui.
       if (channelFilter === '' || channelFilter === 'org_instagram') pending.push('org_instagram');
       if (channelFilter === '' || channelFilter === 'org_facebook')  pending.push('org_facebook');
       if (channelFilter === '' || channelFilter === 'org_tiktok')    pending.push('org_tiktok');
-      if (channelFilter === '' || channelFilter === 'org_linkedin')  pending.push('org_linkedin');
 
       if (!alive) return;
       // Sort newest first.
