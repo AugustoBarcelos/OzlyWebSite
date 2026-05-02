@@ -435,7 +435,7 @@
     "q85": "O que acontece se houver conflito de dados entre dispositivos?",
     "a85": "Se o mesmo registro foi editado offline em dois dispositivos, o Ozly aplica a regra last-write-wins usando o timestamp de modificação. A edição mais recente prevalece. Você vê um pequeno badge se um conflito foi resolvido, pra poder revisar e reeditar se necessário.",
     "q86": "Como reporto um bug ou contato o suporte?",
-    "a86": "Mande um email pra support@ozly.au com: versão do app (Configurações → Sobre), aparelho, versão do OS, passos pra reproduzir o problema, e screenshot ou gravação de tela se possível. Respondemos em 1 a 2 dias úteis.",
+    "a86": "Mande um email pra support@ozly.com.au com: versão do app (Configurações → Sobre), aparelho, versão do OS, passos pra reproduzir o problema, e screenshot ou gravação de tela se possível. Respondemos em 1 a 2 dias úteis.",
     "q87": "Quais aparelhos e versões de OS o Ozly suporta?",
     "a87": "iOS: iPhone com iOS 14 ou superior. Android: Android 8 (API 26) ou superior. iPad e tablets funcionam mas o layout é otimizado pra celular. Apple Watch e Wear OS ainda não são suportados.",
     "q88": "Posso usar o Ozly fora da Austrália?",

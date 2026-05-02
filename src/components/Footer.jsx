@@ -14,9 +14,9 @@ export default function Footer() {
         </div>
         <p>{t.footer.copyright}</p>
         <div className="flex items-center gap-4">
-          <a href="mailto:contact@ozly.au" className="inline-flex items-center gap-1.5 hover:text-white transition-colors">
+          <a href="mailto:contact@ozly.com.au" className="inline-flex items-center gap-1.5 hover:text-white transition-colors">
             <Mail size={14} />
-            contact@ozly.au
+            contact@ozly.com.au
           </a>
         </div>
         <div className="flex gap-6">

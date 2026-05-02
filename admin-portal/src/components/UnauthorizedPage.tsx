@@ -45,10 +45,10 @@ export function UnauthorizedPage() {
           You don&apos;t have access to the Ozly Admin Portal. If you believe
           this is wrong, contact{' '}
           <a
-            href="mailto:admin@ozly.au"
+            href="mailto:admin@ozly.com.au"
             className="font-medium text-brand-600 underline-offset-2 hover:underline"
           >
-            admin@ozly.au
+            admin@ozly.com.au
           </a>
           .
         </p>

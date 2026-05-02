@@ -82,7 +82,7 @@ const routes = [
       </ul>
 
       <h2>Need personal help?</h2>
-      <p>Email us at <a href="mailto:support@ozly.au">support@ozly.au</a> or check the full <a href="/guide">Ozly user guide</a> for step-by-step instructions.</p>
+      <p>Email us at <a href="mailto:support@ozly.com.au">support@ozly.com.au</a> or check the full <a href="/guide">Ozly user guide</a> for step-by-step instructions.</p>
     `,
   },
   {
@@ -107,7 +107,7 @@ const routes = [
       </ul>
 
       <h2>Questions?</h2>
-      <p>Visit the <a href="/support">Support &amp; FAQ</a> page or email <a href="mailto:support@ozly.au">support@ozly.au</a>.</p>
+      <p>Visit the <a href="/support">Support &amp; FAQ</a> page or email <a href="mailto:support@ozly.com.au">support@ozly.com.au</a>.</p>
     `,
   },
 ];
