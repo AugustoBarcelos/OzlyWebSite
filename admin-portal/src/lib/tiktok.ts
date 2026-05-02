@@ -42,6 +42,8 @@ export interface TiktokProfileStats {
   likes_count: number | null;
   video_count: number | null;
   scope: string | null;
+  /** Which field tier we successfully fetched: full | profile | basic. */
+  fields_tier: 'full' | 'profile' | 'basic' | 'none';
   /** Null when scope is missing or endpoint failed — see videos_error. */
   videos: TiktokVideo[] | null;
   videos_error: string | null;

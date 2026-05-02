@@ -1,131 +1,276 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Card, Grid, Text, Title } from '@tremor/react';
 import { ExternalLinkIcon } from '@/components/Icons';
 import { Spinner } from '@/components/Spinner';
 import { Collapsible } from '@/components/Collapsible';
-import { fetchTiktokStats, type TiktokProfileStats, type TiktokVideo } from '@/lib/tiktok';
+import { useToast } from '@/components/Toast';
+import {
+  clearTiktokStatsCache,
+  fetchTiktokStats,
+  type TiktokProfileStats,
+  type TiktokVideo,
+} from '@/lib/tiktok';
+import { startTiktokConnect, subscribeOauthEvents } from '@/lib/tiktokConnect';
 import { formatNumber, formatRelativeTime } from '@/lib/format';
 
 /**
- * TikTok profile summary — KPIs for the connected admin's TikTok account.
+ * Self-contained TikTok card for Growth → Organic.
  *
- * Source: `tiktok-stats` edge fn → /v2/user/info/. We render four KPIs
- * (followers, following, total likes, video count). Recent-videos list is
- * intentionally omitted: our OAuth scope set doesn't include `video.list`,
- * so /v2/video/list/ would 403. Adding it later means re-auth.
+ * Owns the full lifecycle: connect / reconnect (popup OAuth), stats fetch,
+ * scope-degradation warnings, recent videos. All inline so the admin never
+ * has to leave this dropdown to wire up TikTok.
  *
- * Lazy fetch (Collapsible only mounts content on open) so the card doesn't
- * hit the edge fn unless the admin actually expands it.
+ * States rendered:
+ *   - not connected → big "Conectar TikTok" CTA
+ *   - connected, stale scopes → KPIs + amber "Reconectar" badge
+ *   - connected fully → KPIs + bio + 6 recent videos
  */
 export function TiktokCard() {
   return (
     <Collapsible
       icon="🎵"
       title="TikTok"
-      subtitle="Profile KPIs · followers, likes, videos"
+      subtitle="Profile KPIs · followers, likes, recent videos"
     >
       <TiktokCardContent />
     </Collapsible>
   );
 }
 
-function TiktokCardContent() {
-  const [stats, setStats] = useState<TiktokProfileStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [errMsg, setErrMsg] = useState<string | null>(null);
+type LoadState =
+  | { kind: 'loading' }
+  | { kind: 'connected'; data: TiktokProfileStats }
+  | { kind: 'not_connected' }
+  | { kind: 'error'; message: string };
 
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      setLoading(true);
-      const r = await fetchTiktokStats();
-      if (!alive) return;
-      if (r.kind === 'connected') {
-        setStats(r.data);
-        setErrMsg(null);
-      } else if (r.kind === 'not_connected') {
-        setErrMsg('not_connected');
-      } else {
-        setErrMsg(r.message);
-      }
-      setLoading(false);
-    })();
-    return () => {
-      alive = false;
-    };
+function TiktokCardContent() {
+  const { toast } = useToast();
+  const [state, setState] = useState<LoadState>({ kind: 'loading' });
+  const [connecting, setConnecting] = useState(false);
+
+  const load = useCallback(async (force = false) => {
+    if (force) clearTiktokStatsCache();
+    setState({ kind: 'loading' });
+    const r = await fetchTiktokStats({ force });
+    if (r.kind === 'connected') setState({ kind: 'connected', data: r.data });
+    else if (r.kind === 'not_connected') setState({ kind: 'not_connected' });
+    else setState({ kind: 'error', message: r.message });
   }, []);
 
-  if (errMsg === 'not_connected') {
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  // Refresh when the OAuth popup signals success.
+  useEffect(() => {
+    return subscribeOauthEvents((e) => {
+      if (e.provider !== 'tiktok') return;
+      if (e.type === 'oauth_connected') {
+        toast({
+          variant: 'success',
+          title: 'TikTok conectado',
+          description: 'Carregando KPIs…',
+        });
+        void load(true);
+      } else {
+        toast({
+          variant: 'error',
+          title: 'Falha ao conectar TikTok',
+          description: e.desc ?? 'Tente de novo.',
+        });
+      }
+    });
+  }, [load, toast]);
+
+  async function onConnect() {
+    setConnecting(true);
+    try {
+      const r = await startTiktokConnect({ redirectAfter: '/ops/growth' });
+      if (!r.ok) {
+        toast({
+          variant: 'error',
+          title: 'Não consegui abrir o OAuth',
+          description: r.error ?? 'Unknown',
+        });
+      }
+    } finally {
+      setConnecting(false);
+    }
+  }
+
+  if (state.kind === 'loading') {
+    return (
+      <div className="flex items-center justify-center gap-2 py-6 text-sm text-navy-400">
+        <Spinner size="sm" />
+        Carregando TikTok…
+      </div>
+    );
+  }
+
+  if (state.kind === 'not_connected') {
     return (
       <Card>
-        <Text className="text-sm text-navy-400">
-          TikTok não está conectado. Vá em{' '}
-          <a href="/ops/marketing" className="text-brand-700 underline">
-            Marketing → Connections
-          </a>{' '}
-          e clique em "Conectar TikTok".
-        </Text>
+        <div className="flex flex-col items-center gap-3 py-4 text-center">
+          <div className="text-4xl">🎵</div>
+          <div>
+            <Title className="!text-base">Conecte o TikTok</Title>
+            <Text className="mt-1 text-xs text-navy-300">
+              Autorize a app pra puxar followers, likes, vídeos recentes e
+              publicar pelo Ozly. Em sandbox, só users cadastrados como
+              testers conseguem conectar.
+            </Text>
+          </div>
+          <button
+            type="button"
+            onClick={() => void onConnect()}
+            disabled={connecting}
+            className="mt-1 inline-flex items-center gap-2 rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+          >
+            {connecting ? 'Abrindo…' : '🎵 Conectar TikTok'}
+          </button>
+        </div>
       </Card>
     );
   }
 
+  if (state.kind === 'error') {
+    return (
+      <Card>
+        <Text className="text-sm text-rose-500">Erro: {state.message}</Text>
+        <div className="mt-3 flex gap-2">
+          <button
+            type="button"
+            onClick={() => void load(true)}
+            className="rounded-md border border-navy-100 bg-white px-3 py-1.5 text-xs font-medium text-navy-700 hover:border-brand-300"
+          >
+            Tentar de novo
+          </button>
+          <button
+            type="button"
+            onClick={() => void onConnect()}
+            disabled={connecting}
+            className="rounded-md border border-navy-100 bg-white px-3 py-1.5 text-xs font-medium text-navy-700 hover:border-brand-300 disabled:opacity-50"
+          >
+            {connecting ? 'Abrindo…' : 'Reconectar'}
+          </button>
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <ConnectedView
+      data={state.data}
+      onReconnect={() => void onConnect()}
+      onRefresh={() => void load(true)}
+      connecting={connecting}
+    />
+  );
+}
+
+function ConnectedView({
+  data,
+  onReconnect,
+  onRefresh,
+  connecting,
+}: {
+  data: TiktokProfileStats;
+  onReconnect: () => void;
+  onRefresh: () => void;
+  connecting: boolean;
+}) {
   const profileUrl =
-    stats?.profile_deep_link ??
-    (stats?.username ? `https://www.tiktok.com/@${stats.username}` : 'https://www.tiktok.com');
+    data.profile_deep_link ??
+    (data.username ? `https://www.tiktok.com/@${data.username}` : 'https://www.tiktok.com');
+
+  const missingProfileScope =
+    data.follower_count === null && data.likes_count === null;
+  const missingVideoListScope = data.videos === null;
 
   return (
     <Card>
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          {stats?.avatar_url && (
+          {data.avatar_url && (
             <img
-              src={stats.avatar_url}
-              alt={stats.display_name ?? 'TikTok profile'}
+              src={data.avatar_url}
+              alt={data.display_name ?? 'TikTok profile'}
               className="h-12 w-12 rounded-full border border-navy-50"
             />
           )}
           <div>
             <Title>
               <span className="mr-1.5 text-xl">🎵</span>
-              {stats?.display_name ?? 'TikTok'}
-              {stats?.is_verified && (
+              {data.display_name ?? 'TikTok'}
+              {data.is_verified && (
                 <span className="ml-1.5 text-sm text-brand-600" title="Verified">
                   ✔
                 </span>
               )}
             </Title>
             <Text className="text-xs text-navy-300">
-              {stats?.username ? `@${stats.username}` : 'Profile'}
-              {stats?.scope && (
-                <>
-                  {' '}· scopes: <span className="font-mono text-[10px]">{stats.scope}</span>
-                </>
-              )}
+              {data.username ? `@${data.username}` : 'Profile'}
             </Text>
           </div>
         </div>
-        <a
-          href={profileUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 rounded-md border border-navy-100 bg-white px-2.5 py-1 text-xs text-navy-600 hover:border-brand-300 hover:text-brand-700"
-        >
-          Open profile
-          <ExternalLinkIcon className="h-3 w-3" />
-        </a>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onRefresh}
+            className="rounded-md border border-navy-100 bg-white px-2.5 py-1 text-xs text-navy-600 hover:border-brand-300 hover:text-brand-700"
+            title="Atualizar"
+          >
+            ↻
+          </button>
+          <button
+            type="button"
+            onClick={onReconnect}
+            disabled={connecting}
+            className="rounded-md border border-navy-100 bg-white px-2.5 py-1 text-xs text-navy-600 hover:border-brand-300 hover:text-brand-700 disabled:opacity-50"
+          >
+            {connecting ? 'Abrindo…' : 'Reconectar'}
+          </button>
+          <a
+            href={profileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 rounded-md border border-navy-100 bg-white px-2.5 py-1 text-xs text-navy-600 hover:border-brand-300 hover:text-brand-700"
+          >
+            Open
+            <ExternalLinkIcon className="h-3 w-3" />
+          </a>
+        </div>
       </div>
 
+      {(missingProfileScope || missingVideoListScope) && (
+        <div className="mt-3 rounded-md border border-amber-200 bg-amber-50/40 p-2.5 text-xs text-amber-800">
+          ⚠️ Conexão tem scopes limitados.
+          {missingProfileScope && ' KPIs (followers, likes) indisponíveis.'}
+          {missingVideoListScope && ' Lista de vídeos indisponível.'}
+          {' '}
+          <button
+            type="button"
+            onClick={onReconnect}
+            disabled={connecting}
+            className="font-semibold underline disabled:opacity-50"
+          >
+            Reconectar
+          </button>{' '}
+          autorizando todos os scopes.
+        </div>
+      )}
+
       <Grid numItemsSm={2} numItemsMd={4} className="mt-4 gap-3">
-        <KpiTile label="Followers" value={stats?.follower_count} loading={loading && !stats} primary />
-        <KpiTile label="Following" value={stats?.following_count} loading={loading && !stats} />
-        <KpiTile label="Total likes" value={stats?.likes_count} loading={loading && !stats} />
-        <KpiTile label="Videos" value={stats?.video_count} loading={loading && !stats} />
+        <KpiTile label="Followers" value={data.follower_count} primary />
+        <KpiTile label="Following" value={data.following_count} />
+        <KpiTile label="Total likes" value={data.likes_count} />
+        <KpiTile label="Videos" value={data.video_count} />
       </Grid>
 
-      {stats?.bio_description && (
+      {data.bio_description && (
         <Text className="mt-4 text-xs text-navy-400">
           <span className="font-medium uppercase tracking-wide text-navy-300">Bio</span> ·{' '}
-          {stats.bio_description}
+          {data.bio_description}
         </Text>
       )}
 
@@ -133,46 +278,27 @@ function TiktokCardContent() {
         <Text className="text-xs font-medium uppercase tracking-wide text-navy-400">
           Recent videos
         </Text>
-        {loading && !stats ? (
-          <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {[0, 1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="h-28 animate-pulse rounded-md bg-navy-50/60" />
-            ))}
+        {missingVideoListScope ? (
+          <div className="mt-2 rounded-md border border-dashed border-amber-200 bg-amber-50/30 p-3 text-xs text-amber-800">
+            Reconecte autorizando <code>video.list</code> pra listar os vídeos
+            aqui{data.videos_error ? ` (last error: ${data.videos_error})` : ''}.
           </div>
-        ) : stats?.videos === null ? (
-          <div className="mt-2 rounded-md border border-dashed border-amber-200 bg-amber-50/40 p-3 text-xs text-amber-800">
-            ⚠️ Lista de vídeos indisponível
-            {stats?.videos_error ? ` (${stats.videos_error})` : ''}. Reconecte
-            o TikTok pra autorizar o scope <code>video.list</code>.
-          </div>
-        ) : (stats?.videos ?? []).length === 0 ? (
+        ) : (data.videos ?? []).length === 0 ? (
           <div className="mt-2 flex h-28 items-center justify-center rounded-md border border-dashed border-navy-100 bg-navy-50/30 text-sm text-navy-300">
             Nenhum vídeo público ainda.
           </div>
         ) : (
           <ul className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {(stats?.videos ?? []).map((v) => (
-              <VideoTile key={v.id ?? Math.random()} v={v} />
+            {(data.videos ?? []).map((v, i) => (
+              <VideoTile key={v.id ?? i} v={v} />
             ))}
           </ul>
         )}
       </div>
 
-      {errMsg && errMsg !== 'not_connected' && (
-        <Text className="mt-3 text-xs text-rose-500">Erro: {errMsg}</Text>
-      )}
-
-      {loading && (
-        <div className="mt-3 flex items-center justify-center gap-2 text-[11px] text-navy-400">
-          <Spinner size="sm" />
-          Loading TikTok…
-        </div>
-      )}
-
       <Text className="mt-4 text-[11px] text-navy-300">
         💡 Em sandbox, a TikTok API só retorna dados do próprio dono da app +
-        testers cadastrados. Em produção (após App Review) os dados de
-        qualquer usuário conectado aparecem.
+        testers cadastrados. Após App Review, qualquer conta conecta normal.
       </Text>
     </Card>
   );
@@ -229,12 +355,10 @@ function formatDuration(seconds: number): string {
 function KpiTile({
   label,
   value,
-  loading,
   primary = false,
 }: {
   label: string;
   value: number | null | undefined;
-  loading: boolean;
   primary?: boolean;
 }) {
   return (
@@ -242,15 +366,11 @@ function KpiTile({
       <div className="text-[11px] font-medium uppercase tracking-wide text-navy-400">
         {label}
       </div>
-      {loading ? (
-        <div className="mt-1 h-7 w-20 animate-pulse rounded bg-navy-100/60" />
-      ) : (
-        <div
-          className={`mt-1 text-2xl font-semibold ${primary ? 'text-brand-700' : 'text-navy-700'}`}
-        >
-          {value === null || value === undefined ? '—' : formatNumber(value)}
-        </div>
-      )}
+      <div
+        className={`mt-1 text-2xl font-semibold ${primary ? 'text-brand-700' : 'text-navy-700'}`}
+      >
+        {value === null || value === undefined ? '—' : formatNumber(value)}
+      </div>
     </div>
   );
 }
