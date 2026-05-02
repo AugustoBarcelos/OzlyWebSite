@@ -1,0 +1,20 @@
+name = "ozly-og-worker"
+main = "src/index.ts"
+compatibility_date = "2024-09-01"
+
+# Route: only triggers on /v/:code on the production domain.
+# /me/* (dashboard) and other routes go straight to GH Pages.
+routes = [
+  { pattern = "ozly.au/v/*", zone_name = "ozly.au" },
+]
+
+# Public, non-secret values. The anon Supabase key is safe in client
+# code (RLS protects everything sensitive). Set via wrangler secret
+# if you'd rather encrypt them — not needed here.
+[vars]
+SUPABASE_URL = "https://jnhwgwnphlnhjlgygjql.supabase.co"
+SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpuaHdnd25waGxuaGpsZ3lnanFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxODU2OTYsImV4cCI6MjA5MDc2MTY5Nn0.e4ayCaCsr3YEzYwsU2RpP-1DpCuCIYaBX-ba_7wz6hw"
+
+# Observability — Worker logs flow to Cloudflare Tail (free plan included).
+[observability]
+enabled = true

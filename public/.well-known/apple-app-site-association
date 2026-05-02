@@ -4,7 +4,13 @@
     "details": [
       {
         "appID": "9P8PQDB89D.com.augusto.ozly",
-        "paths": ["/refer", "/refer/*"]
+        "paths": [
+          "/refer",
+          "/refer/*",
+          "/v/*",
+          "/me/*",
+          "/me/auth"
+        ]
       }
     ]
   }
