@@ -76,6 +76,40 @@ export function ConnectionsCard() {
     void load();
   }, [load]);
 
+  // Listen for the OAuth popup announcing it just saved a connection. The
+  // popup lives on the Supabase Edge Functions origin, so we restrict the
+  // listener to that origin to avoid honouring messages from other tabs.
+  useEffect(() => {
+    const supabaseOrigin = (() => {
+      try {
+        return new URL(import.meta.env.VITE_SUPABASE_URL ?? '').origin;
+      } catch {
+        return null;
+      }
+    })();
+
+    function handler(e: MessageEvent) {
+      if (supabaseOrigin && e.origin !== supabaseOrigin) return;
+      const data = e.data as { type?: string; provider?: string } | null;
+      if (data?.type === 'oauth_connected') {
+        toast({
+          variant: 'success',
+          title: `${data.provider ?? 'Conta'} conectado`,
+          description: 'Atualizando lista de conexões…',
+        });
+        void load();
+      } else if (data?.type === 'oauth_failed') {
+        toast({
+          variant: 'error',
+          title: `Falha ao conectar ${data.provider ?? ''}`.trim(),
+          description: 'Confira os detalhes na janela do popup e tente de novo.',
+        });
+      }
+    }
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, [load, toast]);
+
   async function startConnect(provider: typeof PROVIDERS[number]) {
     setConnecting(provider.kind);
     try {
