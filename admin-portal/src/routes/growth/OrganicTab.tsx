@@ -1,18 +1,52 @@
+import { useEffect, useState } from 'react';
 import { Grid } from '@tremor/react';
 import { IntegrationStub } from '../marketing/PlaceholderCard';
 import { YoutubeCard } from '../marketing/YoutubeCard';
+import { TiktokCard } from '../marketing/TiktokCard';
 import { isYoutubeConfigured } from '@/lib/youtube';
+import { callRpc } from '@/lib/rpc';
+
+interface ConnRow {
+  provider: string;
+  health: 'active' | 'expiring_soon' | 'expired' | 'never_expires';
+}
 
 /**
- * Organic — canais sociais (não-pagos). YT canal já está plugado, IG/FB/TikTok
- * em pending até as credenciais Meta/TikTok serem geradas.
+ * Organic — canais sociais (não-pagos). YT canal usa API key (sempre on quando
+ * configurado). TikTok renderiza um card real depois que o admin conecta via
+ * OAuth (Marketing → Connections); IG/FB/LinkedIn ficam em stub até as
+ * credenciais correspondentes serem geradas.
  */
 export function OrganicTab() {
   const ytConfigured = isYoutubeConfigured();
+  const [tiktokConnected, setTiktokConnected] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      try {
+        const r = await callRpc<{ rows: ConnRow[] }>(
+          'admin_oauth_connections_list',
+          { p_provider: 'tiktok' },
+        );
+        if (!alive) return;
+        const ok = (r.rows ?? []).some(
+          (c) => c.provider === 'tiktok' && c.health !== 'expired',
+        );
+        setTiktokConnected(ok);
+      } catch {
+        if (alive) setTiktokConnected(false);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   return (
     <div className="space-y-4">
       {ytConfigured && <YoutubeCard />}
+      {tiktokConnected && <TiktokCard />}
 
       <Grid numItemsLg={2} className="gap-3">
         <IntegrationStub
@@ -45,19 +79,22 @@ export function OrganicTab() {
           ctaHref="https://business.facebook.com/latest/insights"
         />
 
-        <IntegrationStub
-          icon="🎵"
-          title="TikTok Business"
-          description="Profile follows, video views, average watch time"
-          steps={[
-            'business.tiktok.com → Creator Hub → Conectar conta',
-            'Mesmo TikTok app dos Ads + adicionar scope user.info.basic + video.list',
-            'Anotar TikTok Open ID da conta conectada',
-          ]}
-          envVars={['TIKTOK_OPEN_ID', 'TIKTOK_ACCESS_TOKEN']}
-          ctaLabel="Abrir TikTok Business"
-          ctaHref="https://business.tiktok.com"
-        />
+        {!tiktokConnected && (
+          <IntegrationStub
+            icon="🎵"
+            title="TikTok"
+            description="Followers, total likes, video count (sandbox-aware)"
+            steps={[
+              'Vá em Marketing → Connections',
+              'Clique em "Conectar TikTok" e autorize a app',
+              'Em sandbox: adicione seu user TikTok como tester no developer portal',
+              'Após App Review, qualquer conta pode conectar',
+            ]}
+            envVars={['TIKTOK_CLIENT_KEY', 'TIKTOK_CLIENT_SECRET']}
+            ctaLabel="Abrir Connections"
+            ctaHref="/ops/marketing"
+          />
+        )}
 
         {!ytConfigured && (
           <IntegrationStub
