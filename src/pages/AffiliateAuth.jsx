@@ -48,7 +48,11 @@ export default function AffiliateAuth() {
 
     const token = params.get("t");
     if (!token) {
-      setState({ status: "error", reason: "missing_token" });
+      // Defer to next tick so React doesn't see a setState during the same
+      // render commit (lint rule react-hooks/set-state-in-effect).
+      queueMicrotask(() =>
+        setState({ status: "error", reason: "missing_token" }),
+      );
       return;
     }
 

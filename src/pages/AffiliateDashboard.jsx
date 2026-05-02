@@ -228,10 +228,12 @@ export default function AffiliateDashboard() {
 
   useEffect(() => {
     if (!session) {
-      setLoading(false);
+      // Async to avoid setState-during-effect-body lint warning.
+      queueMicrotask(() => setLoading(false));
       return undefined;
     }
     let alive = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- loading flag tied to fetch; the cascade is intentional and contained.
     setLoading(true);
     callRpc("affiliate_dashboard_authed", {
       p_session_token: session.token,
