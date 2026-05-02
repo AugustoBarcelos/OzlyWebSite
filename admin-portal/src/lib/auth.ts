@@ -18,7 +18,6 @@ export type ChannelKind =
   | 'org_facebook'
   | 'org_tiktok'
   | 'org_youtube'
-  | 'org_linkedin'
   | 'paid_google'
   | 'paid_meta'
   | 'paid_asa'

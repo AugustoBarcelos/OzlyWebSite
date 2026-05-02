@@ -49,7 +49,8 @@ export const CHANNELS: ReadonlyArray<ChannelMeta> = [
   { kind: 'org_facebook',  label: 'Facebook',   icon: '📘', group: 'organic',  defaultPerms: { ...FULL_OPS } },
   { kind: 'org_tiktok',    label: 'TikTok',     icon: '🎵', group: 'organic',  defaultPerms: { ...FULL_OPS } },
   { kind: 'org_youtube',   label: 'YouTube',    icon: '▶️', group: 'organic',  defaultPerms: { ...FULL_OPS } },
-  { kind: 'org_linkedin',  label: 'LinkedIn',   icon: '✈️', group: 'organic',  defaultPerms: { ...FULL_OPS } },
+  // org_linkedin: removido — LinkedIn Marketing API requer "approved partner"
+  // status, raramente concedido a apps individuais. Posta-se manual.
   // Paid
   { kind: 'paid_google',   label: 'Google Ads', icon: '🎯', group: 'paid',     defaultPerms: { ...FULL_BUDGET } },
   { kind: 'paid_meta',     label: 'Meta Ads',   icon: '📘', group: 'paid',     defaultPerms: { ...FULL_BUDGET } },
@@ -70,7 +71,7 @@ export function channelsByGroup(group: ChannelMeta['group']): ChannelMeta[] {
  * já vêm com permissions razoáveis.
  */
 export const ROLE_PRESETS: Record<Exclude<TeamRole, 'admin'>, ChannelKind[]> = {
-  content_creator: ['org_instagram', 'org_facebook', 'org_tiktok', 'org_youtube', 'org_linkedin'],
+  content_creator: ['org_instagram', 'org_facebook', 'org_tiktok', 'org_youtube'],
   traffic_manager: ['paid_google', 'paid_meta', 'paid_asa', 'paid_tiktok'],
   messaging_manager: ['msg_email', 'msg_whatsapp'],
 };
