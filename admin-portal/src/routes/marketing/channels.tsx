@@ -1,5 +1,6 @@
 import { OrganicTab } from '../growth/OrganicTab';
 import { PageHeader } from './_PageHeader';
+import { ConnectionsCard } from './ConnectionsCard';
 
 export function MarketingChannelsPage() {
   return (
@@ -8,6 +9,7 @@ export function MarketingChannelsPage() {
         title="Canais Orgânicos"
         description="Métricas dos perfis sociais e canais próprios — followers, alcance, engajamento."
       />
+      <ConnectionsCard />
       <OrganicTab />
     </div>
   );
