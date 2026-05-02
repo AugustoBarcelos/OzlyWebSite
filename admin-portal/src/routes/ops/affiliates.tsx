@@ -18,6 +18,7 @@ import { formatNumber, formatRelativeTime } from '@/lib/format';
 import { ExternalLinkIcon } from '@/components/Icons';
 import { CreateAffiliateModal } from './CreateAffiliateModal';
 import { AffiliateDetailPanel } from './AffiliateDetailPanel';
+import { AffiliateInsightsCard } from './AffiliateInsightsCard';
 import { PendingPayoutsCard } from './PendingPayoutsCard';
 import { PayoutsHistoryCard } from './PayoutsHistoryCard';
 import type { BonusPeriod, RetentionBonus, VolumeTier } from './tierMath';
@@ -306,6 +307,9 @@ export function AffiliatesPage() {
           setRefreshKey((k) => k + 1);
         }}
       />
+
+      {/* Central de insights — funnel, retry queue, top afiliados, fraud */}
+      <AffiliateInsightsCard />
 
       {/* Card de gestão de payouts (pagar agora + histórico 12m) */}
       <PendingPayoutsCard
