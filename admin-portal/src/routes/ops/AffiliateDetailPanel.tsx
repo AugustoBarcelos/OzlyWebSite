@@ -24,6 +24,7 @@ interface Props {
   code: string;
   name: string | null;
   email: string | null;
+  phone: string | null;
   pay_id: string | null;
   currency: string;
   baseCents: number;
@@ -63,6 +64,40 @@ const PERIODS = [7, 30, 90] as const;
 type Period = (typeof PERIODS)[number];
 
 /**
+ * Onboarding template enviado via WhatsApp ao afiliado recém-cadastrado.
+ * Pré-preenche {nome}, {code}, {link} pra zero atrito ao admin.
+ * Espelha o template do MARKETING_AFFILIATES_PLAN.md §3.
+ */
+function buildWhatsAppOnboarding(
+  code: string,
+  name: string,
+  shareUrl: string,
+): string {
+  const firstName = name.split(/\s+/)[0] ?? name;
+  const dashboardUrl = `https://ozly.au/me/${code}`;
+  return `Oi ${firstName}! 🎉
+
+Tudo certo, você tá cadastrado no programa Ozly. Suas infos:
+
+🔗 Seu link de indicação:
+${shareUrl}
+
+💵 Seu dashboard pessoal (acompanha ganhos):
+${dashboardUrl}
+
+📧 Pra entrar no dashboard, acessa o link acima, clica em "Receber meu link de acesso", aí abre o email e clica no link do Ozly. Sua sessão fica salva por 30 dias.
+
+📱 Como compartilhar:
+1. Salva o link como contato no celular ou na bio do IG
+2. Compartilha pessoalmente nos grupos que você participa
+3. Manda no WhatsApp pra amigos brasileiros que são sole traders
+
+⚠️ IMPORTANTE: o Ozly tem que ser baixado E o usuário precisa pagar a 1ª renovação (mês 2) pra você ganhar a comissão. Tem que esperar ~30 dias depois do signup.
+
+Qualquer dúvida me chama aqui.`;
+}
+
+/**
  * Painel de detalhe do afiliado — substitui a card simples antiga.
  *
  * Inclui:
@@ -76,6 +111,7 @@ export function AffiliateDetailPanel({
   code,
   name,
   email,
+  phone,
   pay_id,
   currency,
   baseCents,
@@ -354,6 +390,23 @@ export function AffiliateDetailPanel({
               <ExternalLinkIcon className="h-3 w-3" />
               Abrir landing pública
             </a>
+            {phone && (
+              <a
+                href={`https://wa.me/${phone.replace(/[^0-9+]/g, '').replace(/^\+/, '')}?text=${encodeURIComponent(buildWhatsAppOnboarding(code, name ?? code, shareUrl))}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Enviar template de onboarding via WhatsApp"
+                className="inline-flex items-center justify-center gap-1.5 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:border-emerald-500 hover:bg-emerald-100"
+              >
+                <span>💬</span>
+                Enviar onboarding (WhatsApp)
+              </a>
+            )}
+            {!phone && (
+              <span className="text-center text-[11px] text-navy-300">
+                💬 Cadastra phone pra enviar onboarding via WhatsApp
+              </span>
+            )}
           </div>
         </Card>
 

@@ -47,6 +47,7 @@ interface AffiliateRow {
   code: string;
   name: string | null;
   email: string | null;
+  phone: string | null;
   pay_id: string | null;
   commission_cents: number | null;
   currency: string;
@@ -555,6 +556,7 @@ export function AffiliatesPage() {
           code={selected.code}
           name={selected.name}
           email={selected.email}
+          phone={selected.phone}
           pay_id={selected.pay_id}
           currency={selected.currency}
           baseCents={selected.commission_cents ?? 1000}
