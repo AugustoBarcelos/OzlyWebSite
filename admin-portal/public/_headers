@@ -1,5 +1,5 @@
 /*
-  Content-Security-Policy: default-src 'none'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: ; font-src 'self'; connect-src 'self' https://*.supabase.co https://eu.posthog.com https://www.googleapis.com https://sentry.io https://*.ingest.sentry.io https://cloudflareinsights.com https://itunes.apple.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'none'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: ; font-src 'self'; connect-src 'self' https://*.supabase.co https://*.posthog.com https://www.googleapis.com https://sentry.io https://*.ingest.sentry.io https://*.ingest.de.sentry.io https://cloudflareinsights.com https://itunes.apple.com https://open.tiktokapis.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; upgrade-insecure-requests
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
