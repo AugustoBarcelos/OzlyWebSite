@@ -170,8 +170,9 @@ const FinancePnlPage = lazy(() =>
 const FinanceForecastPage = lazy(() =>
   import('./routes/finance/forecast').then((m) => ({ default: m.FinanceForecastPage })),
 );
+// Tier B — Finance reconciliation (real)
 const FinanceReconciliationPage = lazy(() =>
-  import('./routes/_hubs').then((m) => ({ default: m.FinanceReconciliationPage })),
+  import('./routes/finance/reconciliation').then((m) => ({ default: m.FinanceReconciliationPage })),
 );
 const FinanceTaxPage = lazy(() =>
   import('./routes/_hubs').then((m) => ({ default: m.FinanceTaxPage })),
@@ -186,8 +187,9 @@ const ProductRetentionPage = lazy(() =>
 const ProductEngagementPage = lazy(() =>
   import('./routes/product/engagement').then((m) => ({ default: m.ProductEngagementPage })),
 );
+// Tier B — Product features (real)
 const ProductFeaturesPage = lazy(() =>
-  import('./routes/_hubs').then((m) => ({ default: m.ProductFeaturesPage })),
+  import('./routes/product/features').then((m) => ({ default: m.ProductFeaturesPage })),
 );
 const ProductFeedbackPage = lazy(() =>
   import('./routes/_hubs').then((m) => ({ default: m.ProductFeedbackPage })),
@@ -210,20 +212,22 @@ const OperationsRunbooksPage = lazy(() =>
 const TechErrorsPage = lazy(() =>
   import('./routes/tech/errors').then((m) => ({ default: m.TechErrorsPage })),
 );
+// Tier B — Tech sub-pages (real)
 const TechEdgeFunctionsPage = lazy(() =>
-  import('./routes/_hubs').then((m) => ({ default: m.TechEdgeFunctionsPage })),
+  import('./routes/tech/edge-functions').then((m) => ({ default: m.TechEdgeFunctionsPage })),
 );
 const TechDatabasePage = lazy(() =>
-  import('./routes/_hubs').then((m) => ({ default: m.TechDatabasePage })),
+  import('./routes/tech/database').then((m) => ({ default: m.TechDatabasePage })),
 );
 const TechCronPage = lazy(() =>
-  import('./routes/_hubs').then((m) => ({ default: m.TechCronPage })),
+  import('./routes/tech/cron').then((m) => ({ default: m.TechCronPage })),
 );
 const TechCICDPage = lazy(() =>
   import('./routes/_hubs').then((m) => ({ default: m.TechCICDPage })),
 );
+// Tier B — Inbox sub-pages (real where possible)
 const InboxAlertsPage = lazy(() =>
-  import('./routes/_hubs').then((m) => ({ default: m.InboxAlertsPage })),
+  import('./routes/inbox/alerts').then((m) => ({ default: m.InboxAlertsPage })),
 );
 const InboxSupportPage = lazy(() =>
   import('./routes/_hubs').then((m) => ({ default: m.InboxSupportPage })),
@@ -232,10 +236,10 @@ const InboxReviewsPage = lazy(() =>
   import('./routes/_hubs').then((m) => ({ default: m.InboxReviewsPage })),
 );
 const InboxRefundsPage = lazy(() =>
-  import('./routes/_hubs').then((m) => ({ default: m.InboxRefundsPage })),
+  import('./routes/inbox/refunds').then((m) => ({ default: m.InboxRefundsPage })),
 );
 const InboxSystemPage = lazy(() =>
-  import('./routes/_hubs').then((m) => ({ default: m.InboxSystemPage })),
+  import('./routes/inbox/system').then((m) => ({ default: m.InboxSystemPage })),
 );
 const InboxAffiliatesPage = lazy(() =>
   import('./routes/_hubs').then((m) => ({ default: m.InboxAffiliatesPage })),
