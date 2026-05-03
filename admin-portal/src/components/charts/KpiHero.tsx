@@ -1,4 +1,5 @@
 import { BadgeDelta, SparkAreaChart } from '@tremor/react';
+import { Link } from 'react-router-dom';
 import { formatNumber } from '@/lib/format';
 
 /**
@@ -23,6 +24,10 @@ export interface KpiHeroProps {
   seriesCategory?: string;
   /** Tone drives the accent color: brand (default), warning (churn), neutral. */
   tone?: 'brand' | 'lime' | 'warning' | 'neutral';
+  /** Optional internal link — when set, the whole card becomes a router Link
+   *  (e.g. drill into /users with a prefilter). External URLs are passed
+   *  straight to <a target="_blank">. */
+  href?: string;
 }
 
 const TONE_CLASS: Record<NonNullable<KpiHeroProps['tone']>, string> = {
@@ -57,9 +62,13 @@ export function KpiHero({
   seriesIndex = 'date',
   seriesCategory = 'value',
   tone = 'brand',
+  href,
 }: KpiHeroProps) {
-  return (
-    <div className="ozly-card ozly-card-hero relative px-5 py-4">
+  const interactiveClass = href
+    ? 'transition-shadow hover:shadow-md hover:ring-1 hover:ring-brand-200 cursor-pointer'
+    : '';
+  const inner = (
+    <div className={`ozly-card ozly-card-hero relative px-5 py-4 ${interactiveClass}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-navy-300">
@@ -98,5 +107,12 @@ export function KpiHero({
         </div>
       </div>
     </div>
+  );
+
+  if (!href) return inner;
+  return (
+    <Link to={href} aria-label={`Drill into ${label}`} className="block">
+      {inner}
+    </Link>
   );
 }

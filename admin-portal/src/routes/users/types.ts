@@ -2,6 +2,7 @@
 
 export type UserPlan = 'tfn' | 'abn' | 'pro' | 'free';
 export type UserStatus = 'paying' | 'trial' | 'churned' | 'never';
+export type UserStore = 'app_store' | 'play_store' | 'promotional';
 
 export interface UserListRow {
   id: string;
@@ -10,6 +11,7 @@ export interface UserListRow {
   role: string;
   plan: UserPlan;
   status: UserStatus;
+  store: UserStore | null;
   is_active: boolean;
   monthly_price_aud: number | null;
   signup_date: string;
@@ -34,6 +36,9 @@ export interface UserListStats {
   plan_abn: number;
   plan_pro: number;
   plan_free: number;
+  store_app_store: number;
+  store_play_store: number;
+  store_promotional: number;
   banned: number;
   deleted: number;
 }
@@ -59,6 +64,7 @@ export interface UserFilters {
   query: string;
   plans: UserPlan[];
   statuses: UserStatus[];
+  stores: UserStore[];
   signup_within_days: number | null; // 7|30|90|365|null=all
   active_within_days: number | null; // 7|30|null=all
   inactive: boolean; // last_seen > 30d OR never_seen
@@ -72,6 +78,7 @@ export const EMPTY_FILTERS: UserFilters = {
   query: '',
   plans: [],
   statuses: [],
+  stores: [],
   signup_within_days: null,
   active_within_days: null,
   inactive: false,
@@ -95,6 +102,12 @@ export const STATUS_LABEL: Record<UserStatus, string> = {
   never: 'Nunca pagou',
 };
 
+export const STORE_LABEL: Record<UserStore, string> = {
+  app_store: 'App Store',
+  play_store: 'Play Store',
+  promotional: 'Promo',
+};
+
 export const AU_STATES = ['NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT'] as const;
 
 /** Convert UserFilters → the jsonb the RPC accepts. Null/empty = no filter. */
@@ -104,6 +117,7 @@ export function filtersToRpc(f: UserFilters): Record<string, unknown> {
   if (trimmed.length >= 3) out.query = trimmed;
   if (f.plans.length > 0) out.plans = f.plans;
   if (f.statuses.length > 0) out.statuses = f.statuses;
+  if (f.stores.length > 0) out.stores = f.stores;
   if (f.signup_within_days) out.signup_within_days = f.signup_within_days;
   if (f.active_within_days) out.active_within_days = f.active_within_days;
   if (f.inactive) out.inactive = true;
@@ -120,6 +134,7 @@ export function filtersToSearchParams(f: UserFilters, sort: SortKey): URLSearchP
   if (f.query.trim()) sp.set('q', f.query.trim());
   if (f.plans.length) sp.set('plan', f.plans.join(','));
   if (f.statuses.length) sp.set('status', f.statuses.join(','));
+  if (f.stores.length) sp.set('store', f.stores.join(','));
   if (f.signup_within_days) sp.set('signup', String(f.signup_within_days));
   if (f.active_within_days) sp.set('active', String(f.active_within_days));
   if (f.inactive) sp.set('inactive', '1');
@@ -144,6 +159,10 @@ export function searchParamsToFilters(
     (s): s is UserStatus =>
       s === 'paying' || s === 'trial' || s === 'churned' || s === 'never',
   );
+  const stores = csv('store').filter(
+    (s): s is UserStore =>
+      s === 'app_store' || s === 'play_store' || s === 'promotional',
+  );
   const role = sp.get('role');
   const banned = sp.get('banned');
   const deleted = sp.get('deleted');
@@ -154,6 +173,7 @@ export function searchParamsToFilters(
       query: sp.get('q') ?? '',
       plans,
       statuses,
+      stores,
       signup_within_days: sp.get('signup') ? Number(sp.get('signup')) : null,
       active_within_days: sp.get('active') ? Number(sp.get('active')) : null,
       inactive: sp.get('inactive') === '1',
@@ -171,6 +191,7 @@ export function countActiveFilters(f: UserFilters): number {
   let n = 0;
   if (f.plans.length) n++;
   if (f.statuses.length) n++;
+  if (f.stores.length) n++;
   if (f.signup_within_days) n++;
   if (f.active_within_days) n++;
   if (f.inactive) n++;

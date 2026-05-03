@@ -1,4 +1,4 @@
-import type { UserPlan, UserStatus } from './types';
+import type { UserPlan, UserStatus, UserStore } from './types';
 
 /** Status badge: paying=green, trial=amber, churned=red, never=slate. */
 export function StatusBadge({ status }: { status: UserStatus }) {
@@ -48,6 +48,31 @@ export function PlanBadge({ plan }: { plan: UserPlan }) {
       ].join(' ')}
     >
       {labels[plan]}
+    </span>
+  );
+}
+
+/** Store badge: distinguishes paid (App/Play Store) from comp (Promo). */
+export function StoreBadge({ store }: { store: UserStore | null }) {
+  if (!store) return <span className="text-[11px] text-navy-300">—</span>;
+  const styles: Record<UserStore, string> = {
+    app_store: 'bg-slate-50 text-slate-700 ring-slate-200',
+    play_store: 'bg-lime-50 text-lime-700 ring-lime-100',
+    promotional: 'bg-amber-50 text-amber-800 ring-amber-200',
+  };
+  const labels: Record<UserStore, string> = {
+    app_store: 'App Store',
+    play_store: 'Play Store',
+    promotional: 'Promo',
+  };
+  return (
+    <span
+      className={[
+        'inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-medium ring-1 ring-inset',
+        styles[store],
+      ].join(' ')}
+    >
+      {labels[store]}
     </span>
   );
 }

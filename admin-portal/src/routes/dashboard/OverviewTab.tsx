@@ -28,6 +28,8 @@ export function OverviewTab({ data, loading, period }: Props) {
       (kpi.paid_active.abn ?? 0) +
       (kpi.paid_active.pro ?? 0)
     : null;
+  const promoGrantsActive = kpi?.promo_grants_active ?? null;
+  const trialsActive = kpi?.trials_active ?? null;
 
   const paidDonut = kpi?.paid_active
     ? [
@@ -45,7 +47,7 @@ export function OverviewTab({ data, loading, period }: Props) {
 
   return (
     <div className="space-y-6">
-      <Grid numItemsSm={2} numItemsLg={4} className="gap-4">
+      <Grid numItemsSm={2} numItemsMd={3} numItemsLg={4} className="gap-4">
         <KpiHero
           label={`Signups · ${period}d`}
           value={kpi?.signups_period ?? null}
@@ -53,6 +55,7 @@ export function OverviewTab({ data, loading, period }: Props) {
           loading={loading && !kpi}
           series={sparkSignups}
           tone="brand"
+          href={`/users?signup=${period}`}
         />
         <KpiHero
           label={`Activation · ${period}d`}
@@ -81,6 +84,7 @@ export function OverviewTab({ data, loading, period }: Props) {
           }
           loading={loading && !kpi}
           tone="brand"
+          href="/users?status=paying"
         />
         <KpiHero
           label={`Churn · ${period}d`}
@@ -93,6 +97,34 @@ export function OverviewTab({ data, loading, period }: Props) {
           loading={loading && !kpi}
           tone="warning"
           isIncreasePositive={false}
+          href="/users?status=churned"
+        />
+      </Grid>
+
+      <Grid numItemsSm={2} numItemsMd={3} className="gap-4">
+        <KpiHero
+          label="Paid subscribers"
+          value={paidActiveTotal}
+          hint={paidActiveTotal === null ? 'Pending RC sync' : 'Real paying — excl. promo'}
+          loading={loading && !kpi}
+          tone="lime"
+          href="/users?status=paying"
+        />
+        <KpiHero
+          label="Active trials"
+          value={trialsActive}
+          hint={trialsActive === null ? 'Pending RC sync' : 'In free-trial period'}
+          loading={loading && !kpi}
+          tone="brand"
+          href="/users?status=trial"
+        />
+        <KpiHero
+          label="Promo grants"
+          value={promoGrantsActive}
+          hint={promoGrantsActive === null ? 'Pending RC sync' : 'Manual comps via RC'}
+          loading={loading && !kpi}
+          tone="neutral"
+          href="/users?store=promotional"
         />
       </Grid>
 

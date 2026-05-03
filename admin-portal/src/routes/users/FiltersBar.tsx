@@ -4,10 +4,12 @@ import {
   EMPTY_FILTERS,
   PLAN_LABEL,
   STATUS_LABEL,
+  STORE_LABEL,
   countActiveFilters,
   type UserFilters,
   type UserPlan,
   type UserStatus,
+  type UserStore,
 } from './types';
 import { SearchIcon, XIcon } from '@/components/Icons';
 
@@ -70,6 +72,16 @@ export function FiltersBar({ filters, onChange, loading }: Props) {
           )}
           values={filters.statuses}
           onChange={(v) => set('statuses', v as UserStatus[])}
+        />
+
+        {/* Store */}
+        <MultiSelect
+          label="Store"
+          options={(['app_store', 'play_store', 'promotional'] as UserStore[]).map(
+            (s) => ({ value: s, label: STORE_LABEL[s] }),
+          )}
+          values={filters.stores}
+          onChange={(v) => set('stores', v as UserStore[])}
         />
 
         {/* Signup */}

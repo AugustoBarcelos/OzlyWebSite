@@ -1,4 +1,4 @@
-import type { UserListStats, UserFilters, UserStatus, UserPlan } from './types';
+import type { UserListStats, UserFilters, UserStatus, UserPlan, UserStore } from './types';
 
 interface Props {
   totalUnfiltered: number;
@@ -7,6 +7,7 @@ interface Props {
   filters: UserFilters;
   onToggleStatus: (status: UserStatus) => void;
   onTogglePlan: (plan: UserPlan) => void;
+  onToggleStore?: (store: UserStore) => void;
 }
 
 /**
@@ -20,6 +21,7 @@ export function StatRibbon({
   filters,
   onToggleStatus,
   onTogglePlan,
+  onToggleStore,
 }: Props) {
   return (
     <div className="rounded-xl border border-navy-100 bg-white p-3 shadow-sm">
@@ -101,6 +103,21 @@ export function StatRibbon({
             onClick={() => onTogglePlan('free')}
           />
         </div>
+
+        {onToggleStore && (stats.store_promotional > 0 || filters.stores.includes('promotional')) && (
+          <>
+            <div className="ml-2 hidden h-8 w-px bg-navy-100 sm:block" />
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Chip
+                label="Promo"
+                value={stats.store_promotional}
+                tone="amber"
+                active={filters.stores.includes('promotional')}
+                onClick={() => onToggleStore('promotional')}
+              />
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

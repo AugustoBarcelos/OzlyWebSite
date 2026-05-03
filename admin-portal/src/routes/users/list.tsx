@@ -22,7 +22,7 @@ import { useToast } from '@/components/Toast';
 import { FiltersBar } from './FiltersBar';
 import { StatRibbon } from './StatRibbon';
 import { BulkActionsBar } from './BulkActionsBar';
-import { PlanBadge, RoleBadge, StatusBadge } from './badges';
+import { PlanBadge, RoleBadge, StatusBadge, StoreBadge } from './badges';
 import {
   EMPTY_FILTERS,
   filtersToRpc,
@@ -34,6 +34,7 @@ import {
   type UserListRow,
   type UserPlan,
   type UserStatus,
+  type UserStore,
 } from './types';
 
 const PAGE_SIZE = 50;
@@ -257,6 +258,13 @@ export function UserListPage() {
       plans: has ? filters.plans.filter((x) => x !== p) : [...filters.plans, p],
     });
   };
+  const toggleStore = (s: UserStore) => {
+    const has = filters.stores.includes(s);
+    setFilters({
+      ...filters,
+      stores: has ? filters.stores.filter((x) => x !== s) : [...filters.stores, s],
+    });
+  };
 
   const exportFiltered = async () => {
     if (totalFiltered > 10_000) {
@@ -343,6 +351,7 @@ export function UserListPage() {
           filters={filters}
           onToggleStatus={toggleStatus}
           onTogglePlan={togglePlan}
+          onToggleStore={toggleStore}
         />
       )}
 
@@ -460,7 +469,10 @@ export function UserListPage() {
                     className="cursor-pointer px-3 py-2.5"
                     onClick={() => navigate(`/users/${row.id}`)}
                   >
-                    <StatusBadge status={row.status} />
+                    <div className="flex flex-wrap items-center gap-1">
+                      <StatusBadge status={row.status} />
+                      {row.store === 'promotional' && <StoreBadge store={row.store} />}
+                    </div>
                   </td>
                   <td
                     className="cursor-pointer px-3 py-2.5"

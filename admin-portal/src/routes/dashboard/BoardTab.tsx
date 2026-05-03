@@ -22,7 +22,6 @@ export function BoardTab({ data, loading, period }: Props) {
     : 'Retention by signup cohort';
 
   const mrr = kpi?.mrr_estimate_aud ?? revenue?.mrr_total ?? null;
-  const ltv = revenue?.ltv_estimate_aud ?? null;
   const churn = kpi?.churn_period ?? revenue?.churn_period ?? null;
 
   const paidActiveTotal = kpi?.paid_active
@@ -30,6 +29,8 @@ export function BoardTab({ data, loading, period }: Props) {
       (kpi.paid_active.abn ?? 0) +
       (kpi.paid_active.pro ?? 0)
     : null;
+  const promoGrantsActive = kpi?.promo_grants_active ?? null;
+  const trialsActive = kpi?.trials_active ?? null;
 
   const paidDonut = kpi?.paid_active
     ? [
@@ -48,7 +49,7 @@ export function BoardTab({ data, loading, period }: Props) {
 
   return (
     <div className="space-y-6">
-      <Grid numItemsSm={2} numItemsLg={4} className="gap-4">
+      <Grid numItemsSm={2} numItemsMd={3} numItemsLg={5} className="gap-4">
         <KpiHero
           label="MRR"
           value={mrr}
@@ -56,13 +57,31 @@ export function BoardTab({ data, loading, period }: Props) {
           hint={mrr === null ? 'Pending RevenueCat sync' : 'Monthly recurring (AUD)'}
           loading={loading && !kpi}
           tone="brand"
+          href="/users?status=paying"
         />
         <KpiHero
           label="Paid subscribers"
           value={paidActiveTotal}
-          hint={paidActiveTotal === null ? 'Pending RC sync' : 'Active across all plans'}
+          hint={paidActiveTotal === null ? 'Pending RC sync' : 'Real paying — excl. promo'}
           loading={loading && !kpi}
           tone="lime"
+          href="/users?status=paying"
+        />
+        <KpiHero
+          label="Active trials"
+          value={trialsActive}
+          hint={trialsActive === null ? 'Pending RC sync' : 'In free-trial period'}
+          loading={loading && !kpi}
+          tone="brand"
+          href="/users?status=trial"
+        />
+        <KpiHero
+          label="Promo grants"
+          value={promoGrantsActive}
+          hint={promoGrantsActive === null ? 'Pending RC sync' : 'Manual comps via RC'}
+          loading={loading && !kpi}
+          tone="neutral"
+          href="/users?store=promotional"
         />
         <KpiHero
           label={`Churn · ${period}d`}
@@ -71,14 +90,7 @@ export function BoardTab({ data, loading, period }: Props) {
           loading={loading && !kpi}
           tone="warning"
           isIncreasePositive={false}
-        />
-        <KpiHero
-          label="LTV estimate"
-          value={ltv}
-          formatter={formatCurrencyAUD}
-          hint="Pending RevenueCat sync"
-          loading={loading && !kpi}
-          tone="neutral"
+          href="/users?status=churned"
         />
       </Grid>
 
