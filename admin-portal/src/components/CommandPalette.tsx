@@ -97,6 +97,14 @@ const ALL_COMMANDS: CommandItem[] = [
 
   // Quick actions
   { id: 'qa-alerts', label: 'View pending alerts', group: 'Quick Actions', icon: BellIcon, to: '/inbox' },
+  {
+    id: 'qa-glossary',
+    label: 'Glossário & abreviações (CAC, MRR, ABN…)',
+    group: 'Quick Actions',
+    icon: SparklesIcon,
+    to: '/help/glossary',
+    keywords: ['cac', 'mrr', 'arr', 'ltv', 'abn', 'tfn', 'bas', 'gst', 'abreviacao', 'termo', 'help', 'tutorial'],
+  },
 ];
 
 interface CommandPaletteProps {

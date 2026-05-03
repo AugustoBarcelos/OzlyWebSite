@@ -16,6 +16,11 @@ const CockpitPage = lazy(() =>
   import('./routes/cockpit').then((m) => ({ default: m.CockpitPage })),
 );
 
+// ─── Help / Glossary ────────────────────────────────────────────────────────
+const GlossaryPage = lazy(() =>
+  import('./routes/help/glossary').then((m) => ({ default: m.GlossaryPage })),
+);
+
 // ─── Existing pages (preserved) ─────────────────────────────────────────────
 const DashboardPage = lazy(() =>
   import('./routes/dashboard').then((m) => ({ default: m.DashboardPage })),
@@ -372,6 +377,10 @@ export function App() {
                 <Route path="/tech/cron" element={lazyRoute(TechCronPage)} />
                 <Route path="/tech/cicd" element={lazyRoute(TechCICDPage)} />
                 <Route path="/reliability" element={lazyRoute(ReliabilityPage)} />
+
+                {/* Help / Glossary */}
+                <Route path="/help/glossary" element={lazyRoute(GlossaryPage)} />
+                <Route path="/glossary" element={<Navigate to="/help/glossary" replace />} />
 
                 {/* Settings & Team */}
                 <Route path="/settings" element={lazyRoute(SettingsPage)} />

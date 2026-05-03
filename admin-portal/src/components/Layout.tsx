@@ -4,6 +4,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth, hasAnyChannelOfKind } from '@/lib/auth';
 import {
   ActivityIcon,
+  BookIcon,
   ChevronDownIcon,
   CommandIcon,
   DollarSignIcon,
@@ -644,6 +645,29 @@ function Topbar({
         >
           <SearchIcon className="h-5 w-5" />
         </button>
+        <NavLink
+          to="/help/glossary"
+          aria-label="Glossário (termos & abreviações)"
+          title="Glossário — CAC, MRR, ABN, etc"
+          className={({ isActive }) =>
+            [
+              'hidden items-center gap-1 rounded-md px-2 py-1.5 text-xs transition-colors sm:flex',
+              isActive
+                ? 'bg-brand-50 text-brand-700'
+                : 'text-navy-400 hover:bg-navy-50 hover:text-brand-600',
+            ].join(' ')
+          }
+        >
+          <BookIcon className="h-3.5 w-3.5" />
+          <span>Glossário</span>
+        </NavLink>
+        <NavLink
+          to="/help/glossary"
+          aria-label="Glossário"
+          className="rounded-md p-1.5 text-navy-400 hover:bg-navy-50 hover:text-brand-600 sm:hidden"
+        >
+          <BookIcon className="h-4 w-4" />
+        </NavLink>
         <button
           type="button"
           onClick={onOpenHelp}
