@@ -173,10 +173,9 @@ export function MarketingHubPage() {
         },
         {
           label: 'AI Composer',
-          to: '/marketing/composer',
+          to: '/marketing/ai-composer',
           description: 'Gemini gera variações respeitando brand voice + regras de canal.',
           icon: SparklesIcon,
-          status: 'parte2',
         },
         {
           label: 'Posts',

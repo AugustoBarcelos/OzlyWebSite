@@ -137,6 +137,10 @@ jobs:
           # YouTube Data API — public channel id + browser-restricted API key.
           VITE_YT_API_KEY: ${{ secrets.ADMIN_PORTAL_YT_API_KEY }}
           VITE_YT_CHANNEL_ID: ${{ secrets.ADMIN_PORTAL_YT_CHANNEL_ID }}
+          # Gemini API key — powers /marketing/ai-composer. Optional: the
+          # page renders a configuration banner when the key is missing.
+          # Add as ADMIN_PORTAL_GEMINI_KEY in GitHub secrets to activate.
+          VITE_GEMINI_API_KEY: ${{ secrets.ADMIN_PORTAL_GEMINI_KEY }}
 
       # ── Gate 2: no console.log in OUR source ─────────────────────────────
       # We check src/ (our code) instead of dist/ because vendor bundles

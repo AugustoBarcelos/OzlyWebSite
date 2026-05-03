@@ -153,6 +153,7 @@ function useNavGroups(): ReadonlyArray<NavGroup> {
               children: [
                 { label: 'Calendar', to: '/marketing/calendar' },
                 { label: 'Composer', to: '/marketing/composer' },
+                { label: 'AI Composer', to: '/marketing/ai-composer' },
                 { label: 'Posts', to: '/marketing/posts' },
                 { label: 'Channels (organic)', to: '/marketing/channels' },
                 { label: 'SEO & Site', to: '/marketing/seo' },

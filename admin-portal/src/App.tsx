@@ -67,6 +67,12 @@ const MarketingComposerPage = lazy(() =>
     default: m.MarketingComposerPage,
   })),
 );
+// AI Composer (Gemini)
+const AiComposerPage = lazy(() =>
+  import('./routes/marketing/ai-composer').then((m) => ({
+    default: m.AiComposerPage,
+  })),
+);
 const MarketingPostsPage = lazy(() =>
   import('./routes/marketing/posts').then((m) => ({
     default: m.MarketingPostsPage,
@@ -340,6 +346,7 @@ export function App() {
                 <Route path="/marketing" element={lazyRoute(MarketingHubPage)} />
                 <Route path="/marketing/calendar" element={lazyRoute(MarketingCalendarPage)} />
                 <Route path="/marketing/composer" element={lazyRoute(MarketingComposerPage)} />
+                <Route path="/marketing/ai-composer" element={lazyRoute(AiComposerPage)} />
                 <Route path="/marketing/posts" element={lazyRoute(MarketingPostsPage)} />
                 <Route path="/marketing/channels" element={lazyRoute(MarketingChannelsPage)} />
                 <Route path="/marketing/seo" element={lazyRoute(MarketingSeoPage)} />

@@ -25,6 +25,7 @@ type EnvKey =
   | 'VITE_SENTRY_PROJECT'
   | 'VITE_YT_API_KEY'
   | 'VITE_YT_CHANNEL_ID'
+  | 'VITE_GEMINI_API_KEY'
   | 'VITE_APP_URL';
 
 function read(name: EnvKey): string | undefined {
@@ -82,5 +83,11 @@ export const env = {
   ytApiKey: read('VITE_YT_API_KEY'),
   /** YouTube channel id (UCxxxxx) we care about. */
   ytChannelId: read('VITE_YT_CHANNEL_ID'),
+  /**
+   * Google AI (Gemini) API key — powers /marketing/ai-composer.
+   * Restricted to client-side use of generateContent endpoint. Cost
+   * tracked per call via ai_inference_log table.
+   */
+  geminiApiKey: read('VITE_GEMINI_API_KEY'),
   appUrl,
 } as const;
