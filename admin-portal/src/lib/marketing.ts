@@ -274,7 +274,51 @@ const ALLOWED_ASSET_MIMES = [
   'video/webm',
 ] as const;
 
-const MAX_ASSET_BYTES = 50 * 1024 * 1024; // 50 MB — alinhado com bucket policy
+/**
+ * Per-channel max upload size in bytes. Sourced from each platform's published
+ * limits (2026 reference). The bucket itself stores temporarily — after a post
+ * is published, the platform returns its own permanent CDN URL and we should
+ * delete the bucket asset (see `cleanupPublishedAsset` skeleton below).
+ *
+ *   - IG / FB Reels: ~1 GB / up to 90s
+ *   - TikTok upload: 287 MB / up to 60s via Business API
+ *   - YouTube: ≤256 GB (we cap conservatively)
+ *   - WhatsApp video: 16 MB (Meta Cloud API hard cap)
+ *   - Email/Resend: ~25 MB total payload
+ *   - SMS: video not supported
+ */
+export const CHANNEL_MAX_BYTES: Record<string, number> = {
+  org_instagram: 1024 * 1024 * 1024,        // 1 GB
+  org_facebook: 1024 * 1024 * 1024,         // 1 GB
+  org_tiktok: 287 * 1024 * 1024,            // 287 MB
+  org_youtube: 4 * 1024 * 1024 * 1024,      // 4 GB (we cap; raw API allows more)
+  msg_email: 25 * 1024 * 1024,              // 25 MB
+  msg_whatsapp: 16 * 1024 * 1024,           // 16 MB
+  msg_sms: 0,                                // SMS doesn't carry video
+};
+
+/** Bucket-level cap (enforced server-side via storage.buckets.file_size_limit). */
+const BUCKET_MAX_BYTES = 1024 * 1024 * 1024; // 1 GB
+
+/**
+ * Returns the smallest max-bytes among the selected channels (so the upload
+ * fits in every one). Falls back to BUCKET_MAX_BYTES if no channels are
+ * selected yet.
+ */
+export function maxBytesForChannels(channels: ReadonlyArray<string>): number {
+  const limits = channels
+    .map((c) => CHANNEL_MAX_BYTES[c])
+    .filter((n): n is number => typeof n === 'number' && n > 0);
+  if (limits.length === 0) return BUCKET_MAX_BYTES;
+  return Math.min(...limits);
+}
+
+/** Pretty-print bytes as MB/GB. */
+export function formatBytes(b: number): string {
+  if (b >= 1024 * 1024 * 1024) return `${(b / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+  if (b >= 1024 * 1024) return `${Math.round(b / (1024 * 1024))} MB`;
+  return `${Math.round(b / 1024)} KB`;
+}
 
 export interface UploadResult {
   path: string;
@@ -284,12 +328,26 @@ export interface UploadResult {
 /**
  * Faz upload de um asset (imagem/vídeo) pro bucket marketing-assets e retorna
  * a public URL. Path é prefixado com YYYY-MM/ para organizar por mês.
+ *
+ * Pass `channels` so the size cap matches the smallest platform target.
+ * After the post publishes successfully, call `cleanupPublishedAsset(path)`
+ * to delete the bucket copy — the platform's permalink is the source of truth.
  */
-export async function uploadMarketingAsset(file: File): Promise<UploadResult> {
-  if (file.size > MAX_ASSET_BYTES) {
+export async function uploadMarketingAsset(
+  file: File,
+  channels: ReadonlyArray<string> = [],
+): Promise<UploadResult> {
+  const cap = maxBytesForChannels(channels);
+  if (file.size > cap) {
     throw new RpcError(
       'storage_upload',
-      `Arquivo passa de 50MB (${(file.size / 1024 / 1024).toFixed(1)}MB)`,
+      `Arquivo passa do limite de ${formatBytes(cap)} (${formatBytes(file.size)})`,
+    );
+  }
+  if (file.size > BUCKET_MAX_BYTES) {
+    throw new RpcError(
+      'storage_upload',
+      `Arquivo passa do limite do bucket (${formatBytes(BUCKET_MAX_BYTES)})`,
     );
   }
   if (!ALLOWED_ASSET_MIMES.includes(file.type as never)) {
@@ -334,4 +392,23 @@ export function inferAssetTypeFromMime(mime: string): MarketingAssetType {
   if (mime.startsWith('video/')) return 'video';
   if (mime.startsWith('image/')) return 'image';
   return 'text';
+}
+
+/**
+ * Cleanup helper — apaga o asset do bucket. Chamar APÓS o post publicar com
+ * sucesso em todos os canais alvo, quando a URL retornada pela plataforma
+ * (CDN do Meta/TikTok/YouTube/etc) já estiver salva no `marketing_posts`.
+ *
+ * Princípio: o bucket é staging. A fonte de verdade da URL pública é a
+ * plataforma de destino, não o nosso storage.
+ *
+ * Failure mode: silent — se delete falhar, o asset fica órfão (cleanup
+ * cron diário pode varrer depois). Não bloqueia o fluxo de publish.
+ */
+export async function cleanupPublishedAsset(path: string): Promise<void> {
+  try {
+    await supabase.storage.from(MARKETING_ASSETS_BUCKET).remove([path]);
+  } catch {
+    // Silent: failure to clean staging is recoverable, never fatal.
+  }
 }

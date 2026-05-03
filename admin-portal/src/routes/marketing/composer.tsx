@@ -8,7 +8,9 @@ import {
   CHANNEL_LABELS,
   MARKETING_CHANNELS,
   createMarketingPost,
+  formatBytes,
   inferAssetTypeFromMime,
+  maxBytesForChannels,
   uploadMarketingAsset,
   type MarketingAssetType,
   type MarketingChannel,
@@ -100,7 +102,7 @@ export function MarketingComposerPage() {
     setUploading(true);
     try {
       const inferredType = inferAssetTypeFromMime(file.type);
-      const { publicUrl } = await uploadMarketingAsset(file);
+      const { publicUrl } = await uploadMarketingAsset(file, [...selectedChannels]);
       setAssetUrl(publicUrl);
       if (inferredType !== 'text') setAssetType(inferredType);
       toast({ title: 'Asset enviado', variant: 'success' });
@@ -307,10 +309,21 @@ export function MarketingComposerPage() {
                     ) : (
                       <>
                         <span>📤</span>
-                        <span>Selecionar arquivo (até 50MB)</span>
+                        <span>
+                          Selecionar arquivo (até{' '}
+                          {formatBytes(maxBytesForChannels([...selectedChannels]))})
+                        </span>
                       </>
                     )}
                   </button>
+                  <p className="px-1 text-[10px] leading-relaxed text-navy-400">
+                    Limite dinâmico — usa o menor cap das plataformas selecionadas.
+                    {selectedChannels.size === 0 && (
+                      <> Selecione canais acima pra ajustar.</>
+                    )}{' '}
+                    Após publicar, o arquivo é removido do nosso storage e fica
+                    referenciado pela URL retornada da plataforma.
+                  </p>
 
                   <details className="text-[11px] text-navy-400">
                     <summary className="cursor-pointer hover:text-navy-600">
