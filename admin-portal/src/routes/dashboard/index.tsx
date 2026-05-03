@@ -8,12 +8,22 @@ import {
   Title,
 } from '@tremor/react';
 import { Spinner } from '@/components/Spinner';
+import { useToast } from '@/components/Toast';
 import { formatRelativeTime } from '@/lib/format';
+import { callEdge } from '@/lib/edge';
 import { OverviewTab } from './OverviewTab';
 import { BoardTab } from './BoardTab';
 import { ProductTab } from './ProductTab';
 import { useDashboardData } from './useDashboardData';
 import { PERIODS, type Period } from './types';
+
+interface RcSyncResponse {
+  success?: boolean;
+  total?: number;
+  synced?: number;
+  duration_ms?: number;
+  breakdown?: Record<string, number>;
+}
 
 /**
  * Dashboard hub — KPIs executivos consolidados:
@@ -38,9 +48,41 @@ const TABS = [
 export function DashboardPage() {
   const [period, setPeriod] = useState<Period>(30);
   const { data, loading, error, refetch } = useDashboardData(period);
+  const { toast } = useToast();
+  const [syncing, setSyncing] = useState(false);
 
   const periodIndex = PERIODS.findIndex((p) => p.days === period);
   const snapshotAt = data.kpi?.snapshot_at;
+
+  const syncRevenueCat = async () => {
+    setSyncing(true);
+    const r = await callEdge<RcSyncResponse>('revenuecat-sync', {
+      method: 'POST',
+      body: {},
+    });
+    setSyncing(false);
+    if (!r.ok) {
+      toast({
+        title: 'RC sync failed',
+        description: r.error,
+        variant: 'error',
+      });
+      return;
+    }
+    const synced = r.data.synced ?? 0;
+    const ms = r.data.duration_ms ?? 0;
+    const description = r.data.breakdown
+      ? Object.entries(r.data.breakdown)
+          .map(([k, v]) => `${k}: ${v}`)
+          .join(' · ')
+      : '';
+    toast({
+      title: `RC sync OK · ${synced} users in ${(ms / 1000).toFixed(1)}s`,
+      description,
+      variant: 'success',
+    });
+    await refetch();
+  };
 
   return (
     <div className="space-y-6">
@@ -82,10 +124,24 @@ export function DashboardPage() {
               void refetch();
             }}
             disabled={loading}
+            title="Re-fetch the cached snapshot (fast)"
             className="inline-flex items-center gap-2 rounded-md border border-navy-100 bg-white px-3 py-1.5 text-xs font-medium text-navy-600 shadow-sm transition-colors hover:border-brand-300 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? <Spinner size="sm" /> : null}
             Refresh
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              void syncRevenueCat();
+            }}
+            disabled={syncing || loading}
+            title="Pull fresh data from RevenueCat (~7s)"
+            className="inline-flex items-center gap-2 rounded-md border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700 shadow-sm transition-colors hover:border-brand-400 hover:bg-brand-100 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {syncing ? <Spinner size="sm" /> : null}
+            Sync RC
           </button>
         </div>
       </div>
