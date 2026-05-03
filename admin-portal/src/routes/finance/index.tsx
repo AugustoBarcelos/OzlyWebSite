@@ -157,10 +157,11 @@ export function FinanceHubPage() {
         </h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <SubPage to="/revenue" icon={DollarSignIcon} label="Revenue" desc="MRR, subscriptions, trials, plan mix, cohorts & LTV." status="live" />
-          <SubPage to="/finance/costs" icon={ArrowDownRightIcon} label="Costs" desc="Ad spend + infra + tools + affiliate + WhatsApp + AI." status={runwayPending ? 'parte2' : 'live'} />
+          <SubPage to="/finance/cost-monitor" icon={ArrowDownRightIcon} label="Cost Monitor" desc="Painel consolidado: manual + AI tokens (Gemini) + DB infra estimado." status="live" />
+          <SubPage to="/finance/costs" icon={ArrowDownRightIcon} label="Costs (manual)" desc="Cadastro manual de custos por categoria." status={runwayPending ? 'parte2' : 'live'} />
           <SubPage to="/finance/forecast" icon={SparklesIcon} label="Forecast & Runway" desc="Projeção com sliders de cenário." status="live" />
-          <SubPage to="/finance/pnl" icon={TrendingUpIcon} label="P&L" desc="Profit & Loss mensal e YTD." status="wip" />
-          <SubPage to="/finance/reconciliation" icon={ShieldCheckIcon} label="Reconciliation" desc="Diff RevenueCat × App Store × Play." status="wip" />
+          <SubPage to="/finance/pnl" icon={TrendingUpIcon} label="P&L" desc="Profit & Loss mensal e YTD." status="live" />
+          <SubPage to="/finance/reconciliation" icon={ShieldCheckIcon} label="Reconciliation" desc="Diff RevenueCat × App Store × Play." status="live" />
           <SubPage to="/finance/tax" icon={ScrollTextIcon} label="Tax & Reports" desc="GST AU, Apple Small Business, exports pro contador." status="wip" />
         </div>
       </div>

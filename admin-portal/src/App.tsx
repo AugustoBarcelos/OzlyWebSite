@@ -163,6 +163,9 @@ const SalesFunnelPage = lazy(() =>
 const FinanceCostsPage = lazy(() =>
   import('./routes/finance/costs').then((m) => ({ default: m.FinanceCostsPage })),
 );
+const FinanceCostMonitorPage = lazy(() =>
+  import('./routes/finance/cost-monitor').then((m) => ({ default: m.FinanceCostMonitorPage })),
+);
 // Tier B — real P&L
 const FinancePnlPage = lazy(() =>
   import('./routes/finance/pnl').then((m) => ({ default: m.FinancePnlPage })),
@@ -350,6 +353,7 @@ export function App() {
                 {/* Finance Hub */}
                 <Route path="/finance" element={lazyRoute(FinanceHubPage)} />
                 <Route path="/finance/costs" element={lazyRoute(FinanceCostsPage)} />
+                <Route path="/finance/cost-monitor" element={lazyRoute(FinanceCostMonitorPage)} />
                 <Route path="/finance/pnl" element={lazyRoute(FinancePnlPage)} />
                 <Route path="/finance/forecast" element={lazyRoute(FinanceForecastPage)} />
                 <Route path="/finance/reconciliation" element={lazyRoute(FinanceReconciliationPage)} />

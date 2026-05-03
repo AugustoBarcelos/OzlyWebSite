@@ -174,7 +174,8 @@ function useNavGroups(): ReadonlyArray<NavGroup> {
               children: [
                 { label: 'Hub', to: '/finance', end: true },
                 { label: 'Revenue', to: '/revenue' },
-                { label: 'Costs', to: '/finance/costs' },
+                { label: 'Cost Monitor', to: '/finance/cost-monitor' },
+                { label: 'Costs (manual)', to: '/finance/costs' },
                 { label: 'P&L', to: '/finance/pnl' },
                 { label: 'Forecast & Runway', to: '/finance/forecast' },
                 { label: 'Reconciliation', to: '/finance/reconciliation' },
