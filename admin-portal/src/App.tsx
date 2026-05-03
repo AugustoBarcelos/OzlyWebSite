@@ -11,7 +11,12 @@ import { LoginPage } from './routes/login';
 import { AuthCallbackPage } from './routes/auth/callback';
 import { OAuthPopupCallbackPage } from './routes/oauth/popup-callback';
 
-// Heavy admin pages — lazy-loaded so Tremor / charts only ship when needed.
+// ─── Cockpit (W2 — north star home) ─────────────────────────────────────────
+const CockpitPage = lazy(() =>
+  import('./routes/cockpit').then((m) => ({ default: m.CockpitPage })),
+);
+
+// ─── Existing pages (preserved) ─────────────────────────────────────────────
 const DashboardPage = lazy(() =>
   import('./routes/dashboard').then((m) => ({ default: m.DashboardPage })),
 );
@@ -46,7 +51,7 @@ const TeamPage = lazy(() =>
   import('./routes/team').then((m) => ({ default: m.TeamPage })),
 );
 
-// Marketing — sidebar branch
+// Marketing
 const MarketingCalendarPage = lazy(() =>
   import('./routes/marketing/calendar').then((m) => ({
     default: m.MarketingCalendarPage,
@@ -78,7 +83,7 @@ const MarketingAsoPage = lazy(() =>
   })),
 );
 
-// Tráfego Pago — sidebar branch
+// Ads (Tráfego Pago)
 const AdsOverviewPage = lazy(() =>
   import('./routes/ads').then((m) => ({ default: m.AdsOverviewPage })),
 );
@@ -100,7 +105,7 @@ const AttributionPage = lazy(() =>
   })),
 );
 
-// Mensageria — sidebar branch
+// Mensageria
 const MessagingEmailPage = lazy(() =>
   import('./routes/messaging/email').then((m) => ({
     default: m.MessagingEmailPage,
@@ -117,6 +122,116 @@ const MessagingSmsPage = lazy(() =>
   })),
 );
 
+// ─── W4 — real Inbox ────────────────────────────────────────────────────────
+const InboxPage = lazy(() =>
+  import('./routes/inbox').then((m) => ({ default: m.InboxPage })),
+);
+
+// ─── New IA Hubs (W1 — placeholders) ────────────────────────────────────────
+const GrowthHubPage = lazy(() =>
+  import('./routes/_hubs').then((m) => ({ default: m.GrowthHubPage })),
+);
+const MarketingHubPage = lazy(() =>
+  import('./routes/_hubs').then((m) => ({ default: m.MarketingHubPage })),
+);
+// W5 — real Finance Hub
+const FinanceHubPage = lazy(() =>
+  import('./routes/finance').then((m) => ({ default: m.FinanceHubPage })),
+);
+const ProductHubPage = lazy(() =>
+  import('./routes/_hubs').then((m) => ({ default: m.ProductHubPage })),
+);
+const OperationsHubPage = lazy(() =>
+  import('./routes/_hubs').then((m) => ({ default: m.OperationsHubPage })),
+);
+const TechHubPage = lazy(() =>
+  import('./routes/_hubs').then((m) => ({ default: m.TechHubPage })),
+);
+
+// W3 — real Sales Funnel
+const SalesFunnelPage = lazy(() =>
+  import('./routes/growth/funnel').then((m) => ({ default: m.SalesFunnelPage })),
+);
+
+// Sub-page placeholders
+// W5 — real Costs + Forecast
+const FinanceCostsPage = lazy(() =>
+  import('./routes/finance/costs').then((m) => ({ default: m.FinanceCostsPage })),
+);
+const FinancePnlPage = lazy(() =>
+  import('./routes/_hubs').then((m) => ({ default: m.FinancePnlPage })),
+);
+const FinanceForecastPage = lazy(() =>
+  import('./routes/finance/forecast').then((m) => ({ default: m.FinanceForecastPage })),
+);
+const FinanceReconciliationPage = lazy(() =>
+  import('./routes/_hubs').then((m) => ({ default: m.FinanceReconciliationPage })),
+);
+const FinanceTaxPage = lazy(() =>
+  import('./routes/_hubs').then((m) => ({ default: m.FinanceTaxPage })),
+);
+const ProductActivationPage = lazy(() =>
+  import('./routes/_hubs').then((m) => ({ default: m.ProductActivationPage })),
+);
+const ProductRetentionPage = lazy(() =>
+  import('./routes/_hubs').then((m) => ({ default: m.ProductRetentionPage })),
+);
+const ProductEngagementPage = lazy(() =>
+  import('./routes/_hubs').then((m) => ({ default: m.ProductEngagementPage })),
+);
+const ProductFeaturesPage = lazy(() =>
+  import('./routes/_hubs').then((m) => ({ default: m.ProductFeaturesPage })),
+);
+const ProductFeedbackPage = lazy(() =>
+  import('./routes/_hubs').then((m) => ({ default: m.ProductFeedbackPage })),
+);
+// W8 — real Operations
+const OperationsRoadmapPage = lazy(() =>
+  import('./routes/operations/roadmap').then((m) => ({ default: m.OperationsRoadmapPage })),
+);
+const OperationsIncidentsPage = lazy(() =>
+  import('./routes/operations/incidents').then((m) => ({ default: m.OperationsIncidentsPage })),
+);
+const OperationsReleasesPage = lazy(() =>
+  import('./routes/_hubs').then((m) => ({ default: m.OperationsReleasesPage })),
+);
+const OperationsRunbooksPage = lazy(() =>
+  import('./routes/_hubs').then((m) => ({ default: m.OperationsRunbooksPage })),
+);
+const TechErrorsPage = lazy(() =>
+  import('./routes/_hubs').then((m) => ({ default: m.TechErrorsPage })),
+);
+const TechEdgeFunctionsPage = lazy(() =>
+  import('./routes/_hubs').then((m) => ({ default: m.TechEdgeFunctionsPage })),
+);
+const TechDatabasePage = lazy(() =>
+  import('./routes/_hubs').then((m) => ({ default: m.TechDatabasePage })),
+);
+const TechCronPage = lazy(() =>
+  import('./routes/_hubs').then((m) => ({ default: m.TechCronPage })),
+);
+const TechCICDPage = lazy(() =>
+  import('./routes/_hubs').then((m) => ({ default: m.TechCICDPage })),
+);
+const InboxAlertsPage = lazy(() =>
+  import('./routes/_hubs').then((m) => ({ default: m.InboxAlertsPage })),
+);
+const InboxSupportPage = lazy(() =>
+  import('./routes/_hubs').then((m) => ({ default: m.InboxSupportPage })),
+);
+const InboxReviewsPage = lazy(() =>
+  import('./routes/_hubs').then((m) => ({ default: m.InboxReviewsPage })),
+);
+const InboxRefundsPage = lazy(() =>
+  import('./routes/_hubs').then((m) => ({ default: m.InboxRefundsPage })),
+);
+const InboxSystemPage = lazy(() =>
+  import('./routes/_hubs').then((m) => ({ default: m.InboxSystemPage })),
+);
+const InboxAffiliatesPage = lazy(() =>
+  import('./routes/_hubs').then((m) => ({ default: m.InboxAffiliatesPage })),
+);
+
 function RouteFallback() {
   return (
     <div className="flex h-[60vh] items-center justify-center">
@@ -125,30 +240,11 @@ function RouteFallback() {
   );
 }
 
-/**
- * Wave 2: real auth + persistent layout.
- *
- * Public routes (no auth required):
- *  - /login
- *  - /auth/callback
- *  - /unauthorized
- *
- * Protected routes (admin only) render inside <Layout> via <ProtectedRoute>.
- *
- * IA atual:
- *  - /                      Dashboard
- *  - /users, /users/:id     User search + 360
- *  - /revenue               Revenue snapshot
- *  - /affiliates            Affiliates
- *  - /insights              Crescimento (KPIs blended)
- *  - /marketing/*           Marketing branch (calendar/composer/posts/channels/seo/aso)
- *  - /ads/*                 Tráfego Pago branch (google/meta/asa/tiktok/attribution)
- *  - /messaging/*           Mensageria branch (email/whatsapp/sms)
- *  - /reliability           Reliability
- *  - /team, /ops/*          Ops
- *
- * Spec: BRIEFING §§ 7-L3, 7-L4, 11.1, 11.9.
- */
+const lazyRoute = (Component: React.ComponentType) => (
+  <Suspense fallback={<RouteFallback />}>
+    <Component />
+  </Suspense>
+);
 
 function NotFound() {
   return (
@@ -161,6 +257,22 @@ function NotFound() {
   );
 }
 
+/**
+ * IA v3 (9 Hubs Founder Cockpit). See docs/ADMIN_PORTAL_UX_PLAN.md.
+ *
+ *   /                       → redirects to /cockpit
+ *   /cockpit                → CockpitPage (W2 — north star)
+ *   /inbox                  → InboxPage + sub-routes (W4)
+ *   /growth                 → GrowthHubPage + /growth/funnel (W3)
+ *   /marketing              → MarketingHubPage + /marketing/* (existing)
+ *   /finance                → FinanceHubPage + /finance/* (W5)
+ *   /product                → ProductHubPage + /product/* (post-MVP)
+ *   /users, /users/:id      → existing
+ *   /operations             → OperationsHubPage + /operations/* (W8)
+ *   /tech                   → TechHubPage + /tech/* (W8.5)
+ *
+ * Legacy redirects below preserve all old bookmarks.
+ */
 export function App() {
   return (
     <AuthProvider>
@@ -168,250 +280,113 @@ export function App() {
         <ToastProvider>
           <Routes>
             {/* Public */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/auth/callback" element={<AuthCallbackPage />} />
-        <Route path="/oauth/popup-callback" element={<OAuthPopupCallbackPage />} />
-        <Route path="/unauthorized" element={<UnauthorizedPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/auth/callback" element={<AuthCallbackPage />} />
+            <Route path="/oauth/popup-callback" element={<OAuthPopupCallbackPage />} />
+            <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
-        {/* Protected — wrapped in Layout. Suspense around the lazy routes. */}
-        <Route element={<ProtectedRoute />}>
-          <Route element={<Layout />}>
-            <Route
-              path="/"
-              element={
-                <Suspense fallback={<RouteFallback />}>
-                  <DashboardPage />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/users"
-              element={
-                <Suspense fallback={<RouteFallback />}>
-                  <UserListPage />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/users/:id"
-              element={
-                <Suspense fallback={<RouteFallback />}>
-                  <User360Page />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/insights"
-              element={
-                <Suspense fallback={<RouteFallback />}>
-                  <InsightsPage />
-                </Suspense>
-              }
-            />
+            {/* Protected — wrapped in Layout */}
+            <Route element={<ProtectedRoute />}>
+              <Route element={<Layout />}>
+                {/* Cockpit (home) */}
+                <Route path="/" element={<Navigate to="/cockpit" replace />} />
+                <Route path="/cockpit" element={lazyRoute(CockpitPage)} />
 
-            {/* Marketing branch */}
-            <Route
-              path="/marketing/calendar"
-              element={
-                <Suspense fallback={<RouteFallback />}>
-                  <MarketingCalendarPage />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/marketing/composer"
-              element={
-                <Suspense fallback={<RouteFallback />}>
-                  <MarketingComposerPage />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/marketing/posts"
-              element={
-                <Suspense fallback={<RouteFallback />}>
-                  <MarketingPostsPage />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/marketing/channels"
-              element={
-                <Suspense fallback={<RouteFallback />}>
-                  <MarketingChannelsPage />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/marketing/seo"
-              element={
-                <Suspense fallback={<RouteFallback />}>
-                  <MarketingSeoPage />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/marketing/aso"
-              element={
-                <Suspense fallback={<RouteFallback />}>
-                  <MarketingAsoPage />
-                </Suspense>
-              }
-            />
+                {/* Legacy /dashboard kept reachable for back-compat */}
+                <Route path="/dashboard" element={lazyRoute(DashboardPage)} />
 
-            {/* Tráfego Pago branch */}
-            <Route
-              path="/ads"
-              element={
-                <Suspense fallback={<RouteFallback />}>
-                  <AdsOverviewPage />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/ads/google"
-              element={
-                <Suspense fallback={<RouteFallback />}>
-                  <GoogleAdsPage />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/ads/meta"
-              element={
-                <Suspense fallback={<RouteFallback />}>
-                  <MetaAdsPage />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/ads/asa"
-              element={
-                <Suspense fallback={<RouteFallback />}>
-                  <AppleSearchAdsPage />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/ads/tiktok"
-              element={
-                <Suspense fallback={<RouteFallback />}>
-                  <TikTokAdsPage />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/ads/attribution"
-              element={
-                <Suspense fallback={<RouteFallback />}>
-                  <AttributionPage />
-                </Suspense>
-              }
-            />
+                {/* Inbox */}
+                <Route path="/inbox" element={lazyRoute(InboxPage)} />
+                <Route path="/inbox/alerts" element={lazyRoute(InboxAlertsPage)} />
+                <Route path="/inbox/support" element={lazyRoute(InboxSupportPage)} />
+                <Route path="/inbox/reviews" element={lazyRoute(InboxReviewsPage)} />
+                <Route path="/inbox/refunds" element={lazyRoute(InboxRefundsPage)} />
+                <Route path="/inbox/system" element={lazyRoute(InboxSystemPage)} />
+                <Route path="/inbox/affiliates" element={lazyRoute(InboxAffiliatesPage)} />
 
-            {/* Mensageria branch */}
-            <Route
-              path="/messaging/email"
-              element={
-                <Suspense fallback={<RouteFallback />}>
-                  <MessagingEmailPage />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/messaging/whatsapp"
-              element={
-                <Suspense fallback={<RouteFallback />}>
-                  <MessagingWhatsAppPage />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/messaging/sms"
-              element={
-                <Suspense fallback={<RouteFallback />}>
-                  <MessagingSmsPage />
-                </Suspense>
-              }
-            />
+                {/* Growth Hub */}
+                <Route path="/growth" element={lazyRoute(GrowthHubPage)} />
+                <Route path="/growth/funnel" element={lazyRoute(SalesFunnelPage)} />
+                <Route path="/insights" element={lazyRoute(InsightsPage)} />
 
-            <Route
-              path="/reliability"
-              element={
-                <Suspense fallback={<RouteFallback />}>
-                  <ReliabilityPage />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/ops/grants"
-              element={
-                <Suspense fallback={<RouteFallback />}>
-                  <GrantsPage />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/ops/audit"
-              element={
-                <Suspense fallback={<RouteFallback />}>
-                  <AuditPage />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/revenue"
-              element={
-                <Suspense fallback={<RouteFallback />}>
-                  <RevenuePage />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/affiliates"
-              element={
-                <Suspense fallback={<RouteFallback />}>
-                  <AffiliatesPage />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <Suspense fallback={<RouteFallback />}>
-                  <SettingsPage />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/team"
-              element={
-                <Suspense fallback={<RouteFallback />}>
-                  <TeamPage />
-                </Suspense>
-              }
-            />
-            {/* Backward-compat redirects for old bookmarks */}
-            <Route path="/growth" element={<Navigate to="/insights" replace />} />
-            <Route path="/marketing" element={<Navigate to="/marketing/calendar" replace />} />
-            <Route path="/errors" element={<Navigate to="/reliability" replace />} />
-            <Route
-              path="/ops/affiliates"
-              element={<Navigate to="/affiliates" replace />}
-            />
-            <Route
-              path="/growth/affiliates"
-              element={<Navigate to="/affiliates" replace />}
-            />
-            <Route
-              path="/ops/functions"
-              element={<Navigate to="/" replace />}
-            />
-          </Route>
-        </Route>
+                {/* Ads (Growth > Channels — kept at /ads/* for compat) */}
+                <Route path="/ads" element={lazyRoute(AdsOverviewPage)} />
+                <Route path="/ads/google" element={lazyRoute(GoogleAdsPage)} />
+                <Route path="/ads/meta" element={lazyRoute(MetaAdsPage)} />
+                <Route path="/ads/asa" element={lazyRoute(AppleSearchAdsPage)} />
+                <Route path="/ads/tiktok" element={lazyRoute(TikTokAdsPage)} />
+                <Route path="/ads/attribution" element={lazyRoute(AttributionPage)} />
 
-        {/* Catch-all */}
-        <Route path="*" element={<NotFound />} />
+                {/* Affiliates */}
+                <Route path="/affiliates" element={lazyRoute(AffiliatesPage)} />
+
+                {/* Marketing Hub */}
+                <Route path="/marketing" element={lazyRoute(MarketingHubPage)} />
+                <Route path="/marketing/calendar" element={lazyRoute(MarketingCalendarPage)} />
+                <Route path="/marketing/composer" element={lazyRoute(MarketingComposerPage)} />
+                <Route path="/marketing/posts" element={lazyRoute(MarketingPostsPage)} />
+                <Route path="/marketing/channels" element={lazyRoute(MarketingChannelsPage)} />
+                <Route path="/marketing/seo" element={lazyRoute(MarketingSeoPage)} />
+                <Route path="/marketing/aso" element={lazyRoute(MarketingAsoPage)} />
+
+                {/* Messaging (Marketing > Messaging — kept at /messaging/* for compat) */}
+                <Route path="/messaging/email" element={lazyRoute(MessagingEmailPage)} />
+                <Route path="/messaging/whatsapp" element={lazyRoute(MessagingWhatsAppPage)} />
+                <Route path="/messaging/sms" element={lazyRoute(MessagingSmsPage)} />
+
+                {/* Finance Hub */}
+                <Route path="/finance" element={lazyRoute(FinanceHubPage)} />
+                <Route path="/finance/costs" element={lazyRoute(FinanceCostsPage)} />
+                <Route path="/finance/pnl" element={lazyRoute(FinancePnlPage)} />
+                <Route path="/finance/forecast" element={lazyRoute(FinanceForecastPage)} />
+                <Route path="/finance/reconciliation" element={lazyRoute(FinanceReconciliationPage)} />
+                <Route path="/finance/tax" element={lazyRoute(FinanceTaxPage)} />
+                <Route path="/revenue" element={lazyRoute(RevenuePage)} />
+
+                {/* Product Hub */}
+                <Route path="/product" element={lazyRoute(ProductHubPage)} />
+                <Route path="/product/activation" element={lazyRoute(ProductActivationPage)} />
+                <Route path="/product/retention" element={lazyRoute(ProductRetentionPage)} />
+                <Route path="/product/engagement" element={lazyRoute(ProductEngagementPage)} />
+                <Route path="/product/features" element={lazyRoute(ProductFeaturesPage)} />
+                <Route path="/product/feedback" element={lazyRoute(ProductFeedbackPage)} />
+
+                {/* Users */}
+                <Route path="/users" element={lazyRoute(UserListPage)} />
+                <Route path="/users/:id" element={lazyRoute(User360Page)} />
+
+                {/* Operations Hub */}
+                <Route path="/operations" element={lazyRoute(OperationsHubPage)} />
+                <Route path="/operations/roadmap" element={lazyRoute(OperationsRoadmapPage)} />
+                <Route path="/operations/incidents" element={lazyRoute(OperationsIncidentsPage)} />
+                <Route path="/operations/releases" element={lazyRoute(OperationsReleasesPage)} />
+                <Route path="/operations/runbooks" element={lazyRoute(OperationsRunbooksPage)} />
+                <Route path="/ops/grants" element={lazyRoute(GrantsPage)} />
+                <Route path="/ops/audit" element={lazyRoute(AuditPage)} />
+
+                {/* Tech Hub */}
+                <Route path="/tech" element={lazyRoute(TechHubPage)} />
+                <Route path="/tech/errors" element={lazyRoute(TechErrorsPage)} />
+                <Route path="/tech/edge-functions" element={lazyRoute(TechEdgeFunctionsPage)} />
+                <Route path="/tech/database" element={lazyRoute(TechDatabasePage)} />
+                <Route path="/tech/cron" element={lazyRoute(TechCronPage)} />
+                <Route path="/tech/cicd" element={lazyRoute(TechCICDPage)} />
+                <Route path="/reliability" element={lazyRoute(ReliabilityPage)} />
+
+                {/* Settings & Team */}
+                <Route path="/settings" element={lazyRoute(SettingsPage)} />
+                <Route path="/team" element={lazyRoute(TeamPage)} />
+
+                {/* Backward-compat redirects for old bookmarks */}
+                <Route path="/errors" element={<Navigate to="/reliability" replace />} />
+                <Route path="/ops/affiliates" element={<Navigate to="/affiliates" replace />} />
+                <Route path="/growth/affiliates" element={<Navigate to="/affiliates" replace />} />
+                <Route path="/ops/functions" element={<Navigate to="/cockpit" replace />} />
+              </Route>
+            </Route>
+
+            {/* Catch-all */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </ToastProvider>
       </PreferencesProvider>

@@ -3,34 +3,49 @@ import type { ComponentType, SVGProps } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth, hasAnyChannelOfKind } from '@/lib/auth';
 import {
+  ActivityIcon,
   ChevronDownIcon,
+  CommandIcon,
   DollarSignIcon,
   ExternalLinkIcon,
-  GiftIcon,
+  FunnelIcon,
   HandshakeIcon,
-  LayoutDashboardIcon,
+  HomeIcon,
+  InboxIcon,
   LogOutIcon,
   MailIcon,
   MegaphoneIcon,
   MenuIcon,
+  PackageIcon,
+  PenSquareIcon,
   ScrollTextIcon,
+  SearchIcon,
+  ServerIcon,
   ShieldCheckIcon,
   TrendingUpIcon,
   UsersIcon,
+  WorkflowIcon,
   XIcon,
 } from './Icons';
 import { MessagingFab } from './MessagingFab';
+import { CommandPalette, useCommandPalette } from './CommandPalette';
+import { EngineerModeToggle } from './RawDataPanel';
+import { useEngineerModeShortcut } from '@/lib/useEngineerMode';
+import { KeyboardShortcutsHelp, useKeyboardHelp } from './KeyboardShortcutsHelp';
 
 /**
  * Persistent layout for authenticated admin routes.
  *
- * BRIEFING § 11 — sidebar + topbar shell that hosts every later screen.
+ * IA v3 (9 hubs founder cockpit — see docs/ADMIN_PORTAL_UX_PLAN.md):
+ *  - Cockpit · Inbox · Growth · Marketing · Finance · Product · Users · Operations · Tech
  *  - Sidebar (240px desktop, off-canvas on mobile)
- *  - Top-level entries can be leaves (links) or branches (expandable groups)
- *  - Branch state is auto-expanded when a child route is active, and user
- *    toggles persist in localStorage.
- *  - Topbar with breadcrumbs + external dashboard links
+ *  - Topbar with breadcrumbs + cmd-K trigger + external dashboard links
  *  - Main area renders nested routes via <Outlet />.
+ *  - Cmd-K / Ctrl-K opens command palette; `g+letter` quick-jumps between hubs.
+ *
+ * Backward compat: useNavGroups still filters by grants; legacy routes
+ * (/insights, /ads/*, /messaging/*, /revenue, /affiliates) keep working via
+ * App.tsx — they're nested inside the new hubs in the sidebar.
  */
 
 type IconComponent = ComponentType<Omit<SVGProps<SVGSVGElement>, 'children'>>;
@@ -41,11 +56,15 @@ interface NavLeaf {
   icon?: IconComponent;
   /** If true, only treat as active when path === to. */
   end?: boolean;
+  /** Show "Soon" badge when feature is on roadmap but not built */
+  soon?: boolean;
 }
 
 interface NavBranch {
   label: string;
   icon: IconComponent;
+  /** Optional landing route — clicking the branch label navigates here AND toggles. */
+  to?: string;
   children: ReadonlyArray<NavLeaf>;
 }
 
@@ -62,15 +81,6 @@ function isBranch(item: NavItem): item is NavBranch {
 
 const SIDEBAR_STATE_KEY = 'ozly-admin-sidebar-overrides';
 
-/**
- * Sidebar branch state precedence:
- *   1. User explicit override (open/closed) — wins always
- *   2. Auto-expanded (current route is inside this branch)
- *   3. Collapsed (default)
- *
- * Old impl used Set<string> which OR'd with autoExpanded → user's "close"
- * could never win. New impl uses Map<string, boolean> = user override.
- */
 function loadOverrides(): Map<string, boolean> {
   if (typeof window === 'undefined') return new Map();
   try {
@@ -102,13 +112,8 @@ function saveOverrides(state: Map<string, boolean>): void {
 /**
  * Build nav groups dynamically based on the user's grants.
  *
- *  - Admin: vê tudo, com Marketing/Tráfego Pago/Mensageria como branches expansíveis.
- *  - content_creator (qualquer grant org_*): vê Dashboard + Marketing.
- *  - traffic_manager (qualquer grant paid_*): vê Dashboard + Tráfego Pago.
- *  - messaging_manager (qualquer grant msg_*): vê Dashboard + Mensageria.
- *  - Híbrido (grants em múltiplos prefixos): vê todos os branches correspondentes.
- *
- * Server re-checa via RPC; sidebar é só UX.
+ * Admin sees the full 9-hub IA. Non-admins see only hubs whose grants they
+ * hold (content_creator → Marketing; traffic_manager → Growth; etc).
  */
 function useNavGroups(): ReadonlyArray<NavGroup> {
   const { isAdmin, grants } = useAuth();
@@ -117,44 +122,40 @@ function useNavGroups(): ReadonlyArray<NavGroup> {
       return [
         {
           items: [
-            { label: 'Dashboard', to: '/', icon: LayoutDashboardIcon, end: true },
-            { label: 'Users', to: '/users', icon: UsersIcon },
-            { label: 'Revenue', to: '/revenue', icon: DollarSignIcon },
-            { label: 'Affiliates', to: '/affiliates', icon: HandshakeIcon },
+            { label: 'Cockpit', to: '/cockpit', icon: HomeIcon, end: true },
+            { label: 'Inbox', to: '/inbox', icon: InboxIcon },
           ],
         },
         {
           label: 'Crescimento',
           items: [
-            { label: 'Insights', to: '/insights', icon: TrendingUpIcon },
             {
-              label: 'Marketing',
-              icon: MegaphoneIcon,
+              label: 'Growth',
+              icon: TrendingUpIcon,
+              to: '/growth',
               children: [
-                { label: 'Calendário', to: '/marketing/calendar' },
-                { label: 'Composer', to: '/marketing/composer' },
-                { label: 'Publicações', to: '/marketing/posts' },
-                { label: 'Canais Orgânicos', to: '/marketing/channels' },
-                { label: 'SEO & Site', to: '/marketing/seo' },
-                { label: 'Lojas (ASO)', to: '/marketing/aso' },
-              ],
-            },
-            {
-              label: 'Tráfego Pago',
-              icon: DollarSignIcon,
-              children: [
-                { label: 'Visão Geral', to: '/ads', end: true },
+                { label: 'Hub', to: '/growth', end: true },
+                { label: 'Sales Funnel', to: '/growth/funnel', icon: FunnelIcon, soon: true },
+                { label: 'Insights (GA4)', to: '/insights' },
                 { label: 'Google Ads', to: '/ads/google' },
                 { label: 'Meta Ads', to: '/ads/meta' },
                 { label: 'Apple Search Ads', to: '/ads/asa' },
                 { label: 'TikTok Ads', to: '/ads/tiktok' },
-                { label: 'UTM & Atribuição', to: '/ads/attribution' },
+                { label: 'Attribution / UTM', to: '/ads/attribution' },
+                { label: 'Affiliates', to: '/affiliates', icon: HandshakeIcon },
               ],
             },
             {
-              label: 'Mensageria',
-              icon: MailIcon,
+              label: 'Marketing',
+              icon: MegaphoneIcon,
+              to: '/marketing',
               children: [
+                { label: 'Calendar', to: '/marketing/calendar' },
+                { label: 'Composer', to: '/marketing/composer' },
+                { label: 'Posts', to: '/marketing/posts' },
+                { label: 'Channels (organic)', to: '/marketing/channels' },
+                { label: 'SEO & Site', to: '/marketing/seo' },
+                { label: 'ASO (App Store)', to: '/marketing/aso' },
                 { label: 'Email', to: '/messaging/email' },
                 { label: 'WhatsApp', to: '/messaging/whatsapp' },
                 { label: 'SMS', to: '/messaging/sms' },
@@ -163,17 +164,60 @@ function useNavGroups(): ReadonlyArray<NavGroup> {
           ],
         },
         {
-          label: 'Plataforma',
+          label: 'Negócio',
           items: [
-            { label: 'Reliability', to: '/reliability', icon: ShieldCheckIcon },
+            {
+              label: 'Finance',
+              icon: DollarSignIcon,
+              to: '/finance',
+              children: [
+                { label: 'Hub', to: '/finance', end: true },
+                { label: 'Revenue', to: '/revenue' },
+                { label: 'Costs', to: '/finance/costs' },
+                { label: 'Forecast & Runway', to: '/finance/forecast' },
+                { label: 'Reconciliation', to: '/finance/reconciliation', soon: true },
+              ],
+            },
+            {
+              label: 'Product',
+              icon: PackageIcon,
+              to: '/product',
+              children: [
+                { label: 'Hub', to: '/product', end: true },
+                { label: 'Activation Funnel', to: '/product/activation', soon: true },
+                { label: 'Retention Cohorts', to: '/product/retention', soon: true },
+                { label: 'Engagement', to: '/product/engagement', soon: true },
+              ],
+            },
+            { label: 'Users', to: '/users', icon: UsersIcon },
           ],
         },
         {
-          label: 'Ops',
+          label: 'Plataforma',
           items: [
-            { label: 'Team', to: '/team', icon: UsersIcon },
-            { label: 'Grants', to: '/ops/grants', icon: GiftIcon },
-            { label: 'Audit', to: '/ops/audit', icon: ScrollTextIcon },
+            {
+              label: 'Operations',
+              icon: ScrollTextIcon,
+              to: '/operations',
+              children: [
+                { label: 'Hub', to: '/operations', end: true },
+                { label: 'Roadmap', to: '/operations/roadmap' },
+                { label: 'Incidents', to: '/operations/incidents' },
+                { label: 'Releases', to: '/operations/releases', soon: true },
+                { label: 'Grants', to: '/ops/grants' },
+                { label: 'Audit', to: '/ops/audit' },
+              ],
+            },
+            {
+              label: 'Tech',
+              icon: ServerIcon,
+              to: '/tech',
+              children: [
+                { label: 'Hub', to: '/tech', end: true },
+                { label: 'Reliability', to: '/reliability', icon: ShieldCheckIcon },
+                { label: 'CI/CD', to: '/tech/cicd', icon: WorkflowIcon, soon: true },
+              ],
+            },
           ],
         },
       ];
@@ -181,26 +225,28 @@ function useNavGroups(): ReadonlyArray<NavGroup> {
 
     // Non-admin members — show only branches whose grants they hold.
     const items: NavItem[] = [
-      { label: 'Dashboard', to: '/', icon: LayoutDashboardIcon, end: true },
+      { label: 'Cockpit', to: '/cockpit', icon: HomeIcon, end: true },
     ];
     if (hasAnyChannelOfKind(grants, 'org_')) {
       items.push({
         label: 'Marketing',
         icon: MegaphoneIcon,
+        to: '/marketing',
         children: [
-          { label: 'Calendário', to: '/marketing/calendar' },
+          { label: 'Calendar', to: '/marketing/calendar' },
           { label: 'Composer', to: '/marketing/composer' },
-          { label: 'Publicações', to: '/marketing/posts' },
-          { label: 'Canais Orgânicos', to: '/marketing/channels' },
+          { label: 'Posts', to: '/marketing/posts' },
+          { label: 'Channels (organic)', to: '/marketing/channels' },
         ],
       });
     }
     if (hasAnyChannelOfKind(grants, 'paid_')) {
       items.push({
-        label: 'Tráfego Pago',
-        icon: DollarSignIcon,
+        label: 'Growth',
+        icon: TrendingUpIcon,
+        to: '/growth',
         children: [
-          { label: 'Visão Geral', to: '/ads', end: true },
+          { label: 'Hub', to: '/growth', end: true },
           { label: 'Google Ads', to: '/ads/google' },
           { label: 'Meta Ads', to: '/ads/meta' },
           { label: 'Apple Search Ads', to: '/ads/asa' },
@@ -210,7 +256,7 @@ function useNavGroups(): ReadonlyArray<NavGroup> {
     }
     if (hasAnyChannelOfKind(grants, 'msg_')) {
       items.push({
-        label: 'Mensageria',
+        label: 'Messaging',
         icon: MailIcon,
         children: [
           { label: 'Email', to: '/messaging/email' },
@@ -264,14 +310,26 @@ function useExpandedBranches(items: ReadonlyArray<NavItem>) {
 }
 
 /** Build human-readable breadcrumbs from the current pathname. */
-function useBreadcrumbs(): string[] {
+interface Crumb {
+  label: string;
+  to?: string;
+}
+
+function useBreadcrumbs(): Crumb[] {
   const { pathname } = useLocation();
-  return useMemo(() => {
-    if (pathname === '/' || pathname === '') return ['Dashboard'];
+  return useMemo<Crumb[]>(() => {
+    if (pathname === '/' || pathname === '' || pathname === '/cockpit') {
+      return [{ label: 'Cockpit' }];
+    }
     const parts = pathname.split('/').filter(Boolean);
-    return parts.map((p) => {
-      if (/^[0-9a-f-]{8,}$/i.test(p)) return `${p.slice(0, 8)}…`;
-      return p.charAt(0).toUpperCase() + p.slice(1);
+    return parts.map((p, i): Crumb => {
+      const accumulated = '/' + parts.slice(0, i + 1).join('/');
+      const label = /^[0-9a-f-]{8,}$/i.test(p)
+        ? `${p.slice(0, 8)}…`
+        : p.charAt(0).toUpperCase() + p.slice(1);
+      // Only set `to` for non-final crumbs (final = current page, no link).
+      if (i < parts.length - 1) return { label, to: accumulated };
+      return { label };
     });
   }, [pathname]);
 }
@@ -320,7 +378,12 @@ function NavLeafItem({
                 }
               />
             )}
-            <span className="truncate">{item.label}</span>
+            <span className="flex-1 truncate">{item.label}</span>
+            {item.soon && (
+              <span className="rounded-full bg-navy-800/80 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider text-navy-200">
+                soon
+              </span>
+            )}
           </>
         )}
       </NavLink>
@@ -418,7 +481,7 @@ function SidebarContent({
         </div>
         <div className="flex flex-col leading-tight">
           <span className="text-sm font-semibold tracking-tight">Ozly Admin</span>
-          <span className="text-[11px] text-navy-200">Internal</span>
+          <span className="text-[11px] text-navy-200">Founder Cockpit</span>
         </div>
       </div>
 
@@ -510,9 +573,13 @@ function SidebarContent({
 function Topbar({
   onMenuClick,
   crumbs,
+  onOpenPalette,
+  onOpenHelp,
 }: {
   onMenuClick: () => void;
-  crumbs: string[];
+  crumbs: Crumb[];
+  onOpenPalette: () => void;
+  onOpenHelp: () => void;
 }) {
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-navy-50 bg-white/90 px-4 backdrop-blur supports-[backdrop-filter]:bg-white/80">
@@ -528,17 +595,26 @@ function Topbar({
         <nav aria-label="Breadcrumb">
           <ol className="flex items-center gap-1.5 text-sm text-navy-300">
             {crumbs.map((c, i) => (
-              <li key={`${c}-${i}`} className="flex items-center gap-1.5">
+              <li key={`${c.label}-${i}`} className="flex items-center gap-1.5">
                 {i > 0 && <span className="text-navy-100">/</span>}
-                <span
-                  className={
-                    i === crumbs.length - 1
-                      ? 'font-medium text-navy-700'
-                      : ''
-                  }
-                >
-                  {c}
-                </span>
+                {c.to && i < crumbs.length - 1 ? (
+                  <NavLink
+                    to={c.to}
+                    className="hover:text-navy-600"
+                  >
+                    {c.label}
+                  </NavLink>
+                ) : (
+                  <span
+                    className={
+                      i === crumbs.length - 1
+                        ? 'font-medium text-navy-700'
+                        : ''
+                    }
+                  >
+                    {c.label}
+                  </span>
+                )}
               </li>
             ))}
           </ol>
@@ -546,13 +622,46 @@ function Topbar({
       </div>
 
       <div className="flex items-center gap-1">
+        <EngineerModeToggle />
+        <button
+          type="button"
+          onClick={onOpenPalette}
+          aria-label="Open command palette"
+          title="Search (⌘K)"
+          className="hidden items-center gap-2 rounded-md border border-navy-100 bg-white px-2 py-1.5 text-xs text-navy-400 transition-colors hover:border-brand-200 hover:text-brand-600 sm:flex"
+        >
+          <SearchIcon className="h-3.5 w-3.5" />
+          <span>Search</span>
+          <kbd className="rounded border border-navy-100 bg-navy-50 px-1 py-0.5 font-mono text-[10px] text-navy-400">
+            <CommandIcon className="inline h-2.5 w-2.5" /> K
+          </kbd>
+        </button>
+        <button
+          type="button"
+          onClick={onOpenPalette}
+          aria-label="Open command palette"
+          className="rounded-md p-1.5 text-navy-500 hover:bg-navy-50 sm:hidden"
+        >
+          <SearchIcon className="h-5 w-5" />
+        </button>
+        <button
+          type="button"
+          onClick={onOpenHelp}
+          aria-label="Keyboard shortcuts (?)"
+          title="Keyboard shortcuts (?)"
+          className="rounded-md p-1.5 text-navy-400 hover:bg-navy-50 hover:text-brand-600"
+        >
+          <kbd className="rounded border border-navy-100 bg-navy-50 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-navy-500">
+            ?
+          </kbd>
+        </button>
         <a
           href="https://eu.posthog.com"
           target="_blank"
           rel="noopener noreferrer"
           title="Open PostHog dashboard"
           aria-label="Open PostHog dashboard"
-          className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-navy-400 transition-colors hover:bg-brand-50 hover:text-brand-700"
+          className="hidden items-center gap-1 rounded-md px-2 py-1.5 text-xs text-navy-400 transition-colors hover:bg-brand-50 hover:text-brand-700 lg:flex"
         >
           PostHog
           <ExternalLinkIcon className="h-3.5 w-3.5" />
@@ -563,7 +672,7 @@ function Topbar({
           rel="noopener noreferrer"
           title="Open Sentry dashboard"
           aria-label="Open Sentry dashboard"
-          className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-navy-400 transition-colors hover:bg-brand-50 hover:text-brand-700"
+          className="hidden items-center gap-1 rounded-md px-2 py-1.5 text-xs text-navy-400 transition-colors hover:bg-brand-50 hover:text-brand-700 lg:flex"
         >
           Sentry
           <ExternalLinkIcon className="h-3.5 w-3.5" />
@@ -576,6 +685,10 @@ function Topbar({
 export function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const crumbs = useBreadcrumbs();
+  const { open: paletteOpen, setOpen: setPaletteOpen } = useCommandPalette();
+  const { open: helpOpen, setOpen: setHelpOpen } = useKeyboardHelp();
+  // Register `r` shortcut globally — toggles engineer mode (raw data panels)
+  useEngineerModeShortcut();
 
   return (
     <div className="ozly-bg flex min-h-[100dvh]">
@@ -616,6 +729,8 @@ export function Layout() {
         <Topbar
           onMenuClick={() => setMobileOpen(true)}
           crumbs={crumbs}
+          onOpenPalette={() => setPaletteOpen(true)}
+          onOpenHelp={() => setHelpOpen(true)}
         />
         <main className="flex-1 p-4 md:p-6">
           <Outlet />
@@ -624,6 +739,15 @@ export function Layout() {
 
       {/* Floating WhatsApp + Email shortcut — visible on every protected page */}
       <MessagingFab />
+
+      {/* Cmd-K command palette — global */}
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+
+      {/* `?` keyboard shortcuts help */}
+      <KeyboardShortcutsHelp open={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
 }
+
+// Re-export so external imports (sidebar tests) keep working
+export { ActivityIcon, PenSquareIcon };
