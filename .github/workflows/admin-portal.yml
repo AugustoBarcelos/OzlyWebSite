@@ -19,6 +19,9 @@ on:
     paths:
       - 'admin-portal/**'
       - '.github/workflows/admin-portal.yml'
+  # Manual trigger via `gh workflow run admin-portal.yml` — handy after
+  # rotating a secret without needing a code push.
+  workflow_dispatch:
 
 # Lock down the default token; deploy step elevates with explicit secrets.
 permissions:
