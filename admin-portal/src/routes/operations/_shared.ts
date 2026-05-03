@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { callRpc, RpcError } from '@/lib/rpc';
 
-export type ItemKind = 'task' | 'incident';
+export type ItemKind = 'task' | 'incident' | 'release' | 'runbook';
 export type ItemStatus = 'todo' | 'doing' | 'done' | 'open' | 'resolved';
 export type ItemPriority = 'p0' | 'p1' | 'p2' | 'p3';
 

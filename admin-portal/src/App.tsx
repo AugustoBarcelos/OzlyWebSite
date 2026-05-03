@@ -163,8 +163,9 @@ const SalesFunnelPage = lazy(() =>
 const FinanceCostsPage = lazy(() =>
   import('./routes/finance/costs').then((m) => ({ default: m.FinanceCostsPage })),
 );
+// Tier B — real P&L
 const FinancePnlPage = lazy(() =>
-  import('./routes/_hubs').then((m) => ({ default: m.FinancePnlPage })),
+  import('./routes/finance/pnl').then((m) => ({ default: m.FinancePnlPage })),
 );
 const FinanceForecastPage = lazy(() =>
   import('./routes/finance/forecast').then((m) => ({ default: m.FinanceForecastPage })),
@@ -175,14 +176,15 @@ const FinanceReconciliationPage = lazy(() =>
 const FinanceTaxPage = lazy(() =>
   import('./routes/_hubs').then((m) => ({ default: m.FinanceTaxPage })),
 );
+// Tier A — real Product analytics
 const ProductActivationPage = lazy(() =>
-  import('./routes/_hubs').then((m) => ({ default: m.ProductActivationPage })),
+  import('./routes/product/activation').then((m) => ({ default: m.ProductActivationPage })),
 );
 const ProductRetentionPage = lazy(() =>
-  import('./routes/_hubs').then((m) => ({ default: m.ProductRetentionPage })),
+  import('./routes/product/retention').then((m) => ({ default: m.ProductRetentionPage })),
 );
 const ProductEngagementPage = lazy(() =>
-  import('./routes/_hubs').then((m) => ({ default: m.ProductEngagementPage })),
+  import('./routes/product/engagement').then((m) => ({ default: m.ProductEngagementPage })),
 );
 const ProductFeaturesPage = lazy(() =>
   import('./routes/_hubs').then((m) => ({ default: m.ProductFeaturesPage })),
@@ -197,14 +199,16 @@ const OperationsRoadmapPage = lazy(() =>
 const OperationsIncidentsPage = lazy(() =>
   import('./routes/operations/incidents').then((m) => ({ default: m.OperationsIncidentsPage })),
 );
+// Tier B — Releases + Runbooks
 const OperationsReleasesPage = lazy(() =>
-  import('./routes/_hubs').then((m) => ({ default: m.OperationsReleasesPage })),
+  import('./routes/operations/releases').then((m) => ({ default: m.OperationsReleasesPage })),
 );
 const OperationsRunbooksPage = lazy(() =>
-  import('./routes/_hubs').then((m) => ({ default: m.OperationsRunbooksPage })),
+  import('./routes/operations/runbooks').then((m) => ({ default: m.OperationsRunbooksPage })),
 );
+// Tier A — real Tech > Errors
 const TechErrorsPage = lazy(() =>
-  import('./routes/_hubs').then((m) => ({ default: m.TechErrorsPage })),
+  import('./routes/tech/errors').then((m) => ({ default: m.TechErrorsPage })),
 );
 const TechEdgeFunctionsPage = lazy(() =>
   import('./routes/_hubs').then((m) => ({ default: m.TechEdgeFunctionsPage })),
