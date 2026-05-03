@@ -9,13 +9,15 @@ export interface IntegrationStubProps {
   ctaHref: string;
   envVars?: string[];
   icon?: string;
+  status?: 'pending' | 'connected';
 }
 
 /**
- * Reusable card for a not-yet-wired marketing integration. Tells the admin
- * exactly what credentials we need and where to get them — so when they're
- * ready, they paste a token, we plug the wire, and the placeholder turns
- * into real charts.
+ * Reusable card for a marketing integration. Two visual states:
+ *   - 'pending'   → API not wired yet. Shows credential checklist + steps.
+ *   - 'connected' → Pipeline operational, just waiting for upstream data
+ *                   (e.g. user hasn't created a campaign yet). Same shape,
+ *                   green badge, env vars labeled as configured.
  *
  * Collapsed by default — the steps + env vars are useful when you're actually
  * wiring an integration, not while skimming the page.
@@ -28,15 +30,23 @@ export function IntegrationStub({
   ctaHref,
   envVars,
   icon,
+  status = 'pending',
 }: IntegrationStubProps) {
+  const isConnected = status === 'connected';
   return (
     <Collapsible
       icon={icon}
       title={title}
       subtitle={description}
       meta={
-        <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
-          Pending
+        <span
+          className={
+            isConnected
+              ? 'rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700'
+              : 'rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700'
+          }
+        >
+          {isConnected ? 'Connected · waiting for data' : 'Pending'}
         </span>
       }
     >
@@ -51,12 +61,12 @@ export function IntegrationStub({
       {envVars && envVars.length > 0 && (
         <div className="mt-4 rounded-md bg-navy-50 p-2.5">
           <div className="text-[10px] font-medium uppercase tracking-wide text-navy-400">
-            Env vars expected
+            {isConnected ? 'Configured (Supabase secrets)' : 'Env vars expected'}
           </div>
           <div className="mt-1 space-y-0.5">
             {envVars.map((v) => (
               <code key={v} className="block font-mono text-[11px] text-navy-700">
-                {v}
+                {isConnected ? `✓ ${v}` : v}
               </code>
             ))}
           </div>
