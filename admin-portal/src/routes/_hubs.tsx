@@ -430,67 +430,15 @@ function SoonPage(props: { title: string; wave: string; backTo?: string; backLab
   );
 }
 
-export const SalesFunnelPage = () => (
-  <SoonPage
-    title="Sales Funnel"
-    wave="Wave 3 — Impression → Retained"
-    backTo="/growth"
-    backLabel="Growth Hub"
-  />
-);
-
-export const FinanceCostsPage = () => (
-  <SoonPage title="Costs" wave="Wave 5 — Finance" backTo="/finance" />
-);
-export const FinancePnlPage = () => (
-  <SoonPage title="P&L" wave="Wave 5 — Finance" backTo="/finance" />
-);
-export const FinanceForecastPage = () => (
-  <SoonPage title="Forecast & Runway" wave="Wave 5 — Finance" backTo="/finance" />
-);
-export const FinanceReconciliationPage = () => (
-  <SoonPage title="Reconciliation" wave="Wave 5 — Finance" backTo="/finance" />
-);
-export const OperationsRoadmapPage = () => (
-  <SoonPage title="Roadmap (Kanban)" wave="Wave 8 — Operations" backTo="/operations" />
-);
-export const OperationsIncidentsPage = () => (
-  <SoonPage title="Incidents" wave="Wave 8 — Operations" backTo="/operations" />
-);
-export const OperationsReleasesPage = () => (
-  <SoonPage title="Releases" wave="Wave 8 — Operations" backTo="/operations" />
-);
-export const OperationsRunbooksPage = () => (
-  <SoonPage title="Runbooks" wave="Wave 8 — Operations" backTo="/operations" />
-);
-
-export const TechErrorsPage = () => (
-  <SoonPage title="Errors" wave="Wave — Tech" backTo="/tech" />
-);
-export const TechEdgeFunctionsPage = () => (
-  <SoonPage title="Edge Functions" wave="Wave — Tech" backTo="/tech" />
-);
-export const TechDatabasePage = () => (
-  <SoonPage title="Database" wave="Wave — Tech" backTo="/tech" />
-);
-export const TechCronPage = () => (
-  <SoonPage title="Cron Jobs" wave="Wave — Tech" backTo="/tech" />
-);
-export const InboxAlertsPage = () => (
-  <SoonPage title="Alerts" wave="Wave 4 — Inbox" backTo="/inbox" />
-);
+// Placeholder pages still routed via App.tsx — keep these until real
+// implementations land or the routes are redirected. All other SoonPage
+// exports were removed once their real subdirectory implementations shipped.
 export const InboxSupportPage = () => (
-  <SoonPage title="Support tickets" wave="Wave 4 — Inbox" backTo="/inbox" />
+  <SoonPage title="Support tickets" wave="Parte 2 — esperando integração helpdesk" backTo="/inbox" />
 );
 export const InboxReviewsPage = () => (
-  <SoonPage title="App Store reviews" wave="Wave 4 — Inbox" backTo="/inbox" />
-);
-export const InboxRefundsPage = () => (
-  <SoonPage title="Refund requests" wave="Wave 4 — Inbox" backTo="/inbox" />
-);
-export const InboxSystemPage = () => (
-  <SoonPage title="System events" wave="Wave 4 — Inbox" backTo="/inbox" />
+  <SoonPage title="App Store reviews" wave="Parte 2 — esperando App Store Connect API key" backTo="/inbox" />
 );
 export const InboxAffiliatesPage = () => (
-  <SoonPage title="Affiliate approvals" wave="Wave 4 — Inbox" backTo="/inbox" />
+  <SoonPage title="Affiliate approvals" wave="Use /affiliates filtrado por status=pending" backTo="/inbox" />
 );

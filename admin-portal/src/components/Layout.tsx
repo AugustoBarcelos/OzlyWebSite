@@ -180,6 +180,7 @@ function useNavGroups(): ReadonlyArray<NavGroup> {
                 { label: 'P&L', to: '/finance/pnl' },
                 { label: 'Forecast & Runway', to: '/finance/forecast' },
                 { label: 'Reconciliation', to: '/finance/reconciliation' },
+                { label: 'Tax & Reports', to: '/finance/tax' },
               ],
             },
             {
@@ -192,6 +193,7 @@ function useNavGroups(): ReadonlyArray<NavGroup> {
                 { label: 'Retention Cohorts', to: '/product/retention' },
                 { label: 'Engagement', to: '/product/engagement' },
                 { label: 'Feature Adoption', to: '/product/features' },
+                { label: 'Feedback', to: '/product/feedback' },
               ],
             },
             { label: 'Users', to: '/users', icon: UsersIcon },
