@@ -4,11 +4,14 @@ import { BrowserRouter } from 'react-router-dom';
 import { App } from './App';
 import { initPostHog } from './lib/posthog';
 import { initSentry } from './lib/sentry';
+import { clearStaleChunkFlag, installStaleChunkHandler } from './lib/stale-chunk';
 import './index.css';
 
 // Init observability before mounting (BRIEFING § 13).
 initSentry();
 initPostHog();
+installStaleChunkHandler();
+clearStaleChunkFlag();
 
 const rootEl = document.getElementById('root');
 if (!rootEl) {
