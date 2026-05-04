@@ -52,6 +52,11 @@ const ReliabilityPage = lazy(() =>
 const SettingsPage = lazy(() =>
   import('./routes/settings').then((m) => ({ default: m.SettingsPage })),
 );
+const SettingsIntegrationsPage = lazy(() =>
+  import('./routes/settings/integrations').then((m) => ({
+    default: m.SettingsIntegrationsPage,
+  })),
+);
 const TeamPage = lazy(() =>
   import('./routes/team').then((m) => ({ default: m.TeamPage })),
 );
@@ -403,6 +408,7 @@ export function App() {
 
                 {/* Settings & Team */}
                 <Route path="/settings" element={lazyRoute(SettingsPage)} />
+                <Route path="/settings/integrations" element={lazyRoute(SettingsIntegrationsPage)} />
                 <Route path="/team" element={lazyRoute(TeamPage)} />
 
                 {/* Backward-compat redirects for old bookmarks */}

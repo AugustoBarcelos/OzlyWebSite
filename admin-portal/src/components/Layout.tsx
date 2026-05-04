@@ -535,6 +535,20 @@ function SidebarContent({
               to="/settings"
               className={({ isActive }) =>
                 [
+                  'mb-1 flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] transition-colors',
+                  isActive
+                    ? 'bg-navy-800/60 text-white'
+                    : 'text-navy-200 hover:bg-navy-800/60 hover:text-white',
+                ].join(' ')
+              }
+              end
+            >
+              ⚙ Settings
+            </NavLink>
+            <NavLink
+              to="/settings/integrations"
+              className={({ isActive }) =>
+                [
                   'mb-2 flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] transition-colors',
                   isActive
                     ? 'bg-navy-800/60 text-white'
@@ -542,7 +556,7 @@ function SidebarContent({
                 ].join(' ')
               }
             >
-              ⚙ Settings
+              ⚡ Integrations
             </NavLink>
             <a
               href="https://supabase.com/dashboard/project/jnhwgwnphlnhjlgygjql/functions"
