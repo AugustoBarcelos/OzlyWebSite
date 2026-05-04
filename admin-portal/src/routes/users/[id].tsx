@@ -125,6 +125,8 @@ interface UserGrantRow {
   status_code?: number | null;
   admin_id?: string | null;
   note?: string | null;
+  /** Set when a subsequent admin_revoke_promo for the same entitlement exists. */
+  revoked_at?: string | null;
 }
 
 interface UserGrantsPayload {
@@ -1110,28 +1112,52 @@ export function User360Page() {
                           {grants.admin_grants.map((g) => {
                             const ent = (g.entitlement ?? 'pro') as Entitlement;
                             const isRevoking = revokingEntitlement === ent;
+                            const isRevoked = !!g.revoked_at;
+                            const rc = g.status_code;
+                            // Status badge: pending (no rc_status yet), success (2xx), error (anything else)
+                            const statusBadge = rc == null
+                              ? { label: 'pending', cls: 'bg-amber-50 text-amber-700 border-amber-200' }
+                              : rc >= 200 && rc < 300
+                                ? { label: `RC ${rc}`, cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' }
+                                : { label: `RC ${rc}`, cls: 'bg-rose-50 text-rose-700 border-rose-200' };
                             return (
                               <div
                                 key={g.id}
-                                className="flex items-center justify-between rounded-md border border-navy-50 bg-white px-3 py-2 text-xs"
+                                className={`flex items-center justify-between rounded-md border px-3 py-2 text-xs ${
+                                  isRevoked
+                                    ? 'border-navy-100 bg-navy-50/40 opacity-60'
+                                    : 'border-navy-50 bg-white'
+                                }`}
                               >
-                                <span className="font-medium text-navy-700">
-                                  {ent.toUpperCase()}
-                                  {g.days ? ` · ${g.days}d` : ''}
-                                </span>
                                 <div className="flex items-center gap-2">
-                                  <span className="text-navy-300">
+                                  <span className={`font-medium text-navy-700 ${isRevoked ? 'line-through' : ''}`}>
+                                    {ent.toUpperCase()}
+                                    {g.days ? ` · ${g.days}d` : ''}
+                                  </span>
+                                  <span className={`inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${statusBadge.cls}`}>
+                                    {statusBadge.label}
+                                  </span>
+                                  {isRevoked && (
+                                    <span className="inline-flex items-center rounded border border-navy-200 bg-white px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-navy-500">
+                                      revoked
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-navy-300" title={g.granted_at ?? ''}>
                                     {formatRelative(g.granted_at)}
                                   </span>
-                                  <button
-                                    type="button"
-                                    onClick={() => handlePerGrantRevoke(ent)}
-                                    disabled={isRevoking}
-                                    title={`Revoga TODOS os promos de ${ent.toUpperCase()} deste usuário (limitação RC API)`}
-                                    className="rounded border border-rose-200 bg-white px-2 py-0.5 text-[11px] font-medium text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
-                                  >
-                                    {isRevoking ? '...' : 'Revoke'}
-                                  </button>
+                                  {!isRevoked && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handlePerGrantRevoke(ent)}
+                                      disabled={isRevoking}
+                                      title={`Revoga TODOS os promos de ${ent.toUpperCase()} deste usuário (limitação RC API)`}
+                                      className="rounded border border-rose-200 bg-white px-2 py-0.5 text-[11px] font-medium text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                      {isRevoking ? '...' : 'Revoke'}
+                                    </button>
+                                  )}
                                 </div>
                               </div>
                             );
