@@ -14,7 +14,7 @@
  *
  * Adjust PRICES below as Google/Anthropic update their tables.
  */
-import { supabase } from './supabase';
+import { callRpc } from './rpc';
 
 interface PriceRow {
   in_per_1m_usd: number;
@@ -55,23 +55,25 @@ export interface LogAiInferenceArgs {
 /**
  * Fire-and-forget log of an AI call. Failures are silent — never break the
  * caller's UX because of a logging issue.
+ *
+ * Routes via admin_log_ai_inference RPC (SECURITY DEFINER) instead of direct
+ * INSERT — safer + no GRANT INSERT needed on base table.
  */
 export async function logAiInference(args: LogAiInferenceArgs): Promise<void> {
   try {
     const cost =
       args.cost_usd ?? estimateCostUsd(args.model, args.tokens_in, args.tokens_out);
-    const payload: Record<string, unknown> = {
-      source: args.source,
-      model: args.model,
-      tokens_in: Math.max(0, Math.floor(args.tokens_in)),
-      tokens_out: Math.max(0, Math.floor(args.tokens_out)),
-      cost_usd: Number(cost.toFixed(6)),
-      status: args.status ?? 'ok',
-    };
-    if (args.prompt_hash) payload.prompt_hash = args.prompt_hash;
-    if (args.duration_ms !== undefined) payload.duration_ms = args.duration_ms;
-    if (args.error) payload.error = args.error;
-    await supabase.from('ai_inference_log').insert(payload);
+    await callRpc('admin_log_ai_inference', {
+      p_source: args.source,
+      p_model: args.model,
+      p_tokens_in: Math.max(0, Math.floor(args.tokens_in)),
+      p_tokens_out: Math.max(0, Math.floor(args.tokens_out)),
+      p_cost_usd: Number(cost.toFixed(6)),
+      p_status: args.status ?? 'ok',
+      p_duration_ms: args.duration_ms ?? null,
+      p_prompt_hash: args.prompt_hash ?? null,
+      p_error: args.error ?? null,
+    });
   } catch {
     /* silent — never throw from logging */
   }
