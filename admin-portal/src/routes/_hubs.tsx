@@ -245,35 +245,30 @@ export function FinanceHubPage() {
           to: '/finance/costs',
           description: 'Ad spend + infra + tools + affiliate payouts + WhatsApp + AI.',
           icon: ArrowDownRightIcon,
-          status: 'wip',
         },
         {
           label: 'P&L',
           to: '/finance/pnl',
           description: 'Profit & Loss mensal e YTD.',
           icon: TrendingUpIcon,
-          status: 'wip',
         },
         {
           label: 'Forecast & Runway',
           to: '/finance/forecast',
           description: 'Projeção com sliders de cenário (e se eu dobrar ad spend?).',
           icon: SparklesIcon,
-          status: 'wip',
         },
         {
           label: 'Reconciliation',
           to: '/finance/reconciliation',
           description: 'Diff RevenueCat × App Store × Play Store + affiliate commissions.',
           icon: ShieldCheckIcon,
-          status: 'wip',
         },
         {
           label: 'Tax & Reports',
           to: '/finance/tax',
-          description: 'GST AU, Apple Small Business, exports pro contador.',
+          description: 'GST AU, Apple Small Business, CSV export pro contador.',
           icon: ScrollTextIcon,
-          status: 'wip',
         },
       ]}
     />
@@ -388,7 +383,6 @@ export function TechHubPage() {
       title="Tech"
       subtitle="Reliability, errors, edge functions, CI/CD."
       icon={ServerIcon}
-      wave="Wave 8.5 — CI/CD GitHub Actions"
       links={[
         {
           label: 'Reliability',
@@ -401,35 +395,30 @@ export function TechHubPage() {
           to: '/tech/errors',
           description: 'Sentry + Crashlytics agregados.',
           icon: BellIcon,
-          status: 'wip',
         },
         {
           label: 'Edge Functions',
           to: '/tech/edge-functions',
-          description: 'Status de cada edge function + logs.',
+          description: 'Catálogo de edge functions + atalho pros logs.',
           icon: ServerIcon,
-          status: 'wip',
         },
         {
           label: 'Database',
           to: '/tech/database',
-          description: 'Slow queries, table sizes, indexes.',
+          description: 'Tamanho total + top tabelas por tamanho.',
           icon: ServerIcon,
-          status: 'wip',
         },
         {
           label: 'Cron Jobs',
           to: '/tech/cron',
-          description: 'Snapshots, sync, dispatch — schedule e última execução.',
+          description: 'pg_cron schedule + última execução por job.',
           icon: ActivityIcon,
-          status: 'wip',
         },
         {
           label: 'CI/CD (GitHub Actions)',
           to: '/tech/cicd',
           description: 'Workflows, runs, failures, performance.',
           icon: WorkflowIcon,
-          status: 'parte2',
         },
       ]}
     />
@@ -478,10 +467,6 @@ export const FinanceForecastPage = () => (
 export const FinanceReconciliationPage = () => (
   <SoonPage title="Reconciliation" wave="Wave 5 — Finance" backTo="/finance" />
 );
-export const FinanceTaxPage = () => (
-  <SoonPage title="Tax & Reports" wave="Wave 5 — Finance" backTo="/finance" />
-);
-
 export const ProductActivationPage = () => (
   <SoonPage title="Activation Funnel" wave="Pós-MVP — Product" backTo="/product" />
 );
@@ -523,14 +508,6 @@ export const TechDatabasePage = () => (
 export const TechCronPage = () => (
   <SoonPage title="Cron Jobs" wave="Wave — Tech" backTo="/tech" />
 );
-export const TechCICDPage = () => (
-  <SoonPage
-    title="CI/CD — GitHub Actions"
-    wave="Wave 8.5 — Parte 2 (precisa GitHub PAT)"
-    backTo="/tech"
-  />
-);
-
 export const InboxAlertsPage = () => (
   <SoonPage title="Alerts" wave="Wave 4 — Inbox" backTo="/inbox" />
 );

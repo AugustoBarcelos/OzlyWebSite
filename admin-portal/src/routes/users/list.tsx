@@ -12,7 +12,7 @@
  * Backend: admin_list_users(p_filters jsonb, p_sort, p_limit, p_offset).
  */
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { callRpc, RpcError } from '@/lib/rpc';
 import { track } from '@/lib/posthog';
 import { Avatar } from '@/components/Avatar';
@@ -324,6 +324,12 @@ export function UserListPage() {
 
         <div className="flex items-center gap-2">
           <SortPicker value={sort} onChange={setSort} />
+          <Link
+            to="/users/nps"
+            className="inline-flex items-center gap-1.5 rounded-md border border-navy-100 bg-white px-3 py-1.5 text-xs font-medium text-navy-600 transition-colors hover:border-brand-300 hover:text-brand-700"
+          >
+            NPS
+          </Link>
           <button
             type="button"
             onClick={() => {

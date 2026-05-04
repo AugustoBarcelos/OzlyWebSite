@@ -42,7 +42,7 @@ interface CommandItem {
   id: string;
   label: string;
   hint?: string;
-  group: 'Hubs' | 'Growth' | 'Marketing' | 'Finance' | 'Tech' | 'Operations' | 'Quick Actions';
+  group: 'Hubs' | 'Growth' | 'Marketing' | 'Finance' | 'Tech' | 'Operations' | 'Users' | 'Quick Actions';
   icon: React.ComponentType<{ className?: string }>;
   to?: string;
   onAction?: () => void;
@@ -86,6 +86,10 @@ const ALL_COMMANDS: CommandItem[] = [
   { id: 'fin-revenue', label: 'Revenue', group: 'Finance', icon: DollarSignIcon, to: '/revenue', keywords: ['mrr', 'subscriptions'] },
   { id: 'fin-costs', label: 'Costs (V2)', group: 'Finance', icon: DollarSignIcon, to: '/finance/costs' },
   { id: 'fin-forecast', label: 'Forecast & Runway (V2)', group: 'Finance', icon: TrendingUpIcon, to: '/finance/forecast' },
+  { id: 'fin-tax', label: 'Tax & Reports (CSV)', group: 'Finance', icon: ScrollTextIcon, to: '/finance/tax', keywords: ['bas', 'gst', 'apple fee', 'accountant'] },
+
+  // Users
+  { id: 'users-nps', label: 'NPS — Net Promoter Score', group: 'Users', icon: ActivityIcon, to: '/users/nps', keywords: ['survey', 'feedback', 'satisfaction', 'resend'] },
 
   // Tech
   { id: 'tech-cicd', label: 'CI/CD (V2)', group: 'Tech', icon: WorkflowIcon, to: '/tech/cicd', keywords: ['github actions', 'tests', 'workflows'] },

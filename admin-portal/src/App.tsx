@@ -31,6 +31,9 @@ const UserListPage = lazy(() =>
 const User360Page = lazy(() =>
   import('./routes/users/[id]').then((m) => ({ default: m.User360Page })),
 );
+const UsersNpsPage = lazy(() =>
+  import('./routes/users/nps').then((m) => ({ default: m.UsersNpsPage })),
+);
 const GrantsPage = lazy(() =>
   import('./routes/ops/grants').then((m) => ({ default: m.GrantsPage })),
 );
@@ -189,7 +192,7 @@ const FinanceReconciliationPage = lazy(() =>
   import('./routes/finance/reconciliation').then((m) => ({ default: m.FinanceReconciliationPage })),
 );
 const FinanceTaxPage = lazy(() =>
-  import('./routes/_hubs').then((m) => ({ default: m.FinanceTaxPage })),
+  import('./routes/finance/tax').then((m) => ({ default: m.FinanceTaxPage })),
 );
 // Tier A — real Product analytics
 const ProductActivationPage = lazy(() =>
@@ -237,7 +240,7 @@ const TechCronPage = lazy(() =>
   import('./routes/tech/cron').then((m) => ({ default: m.TechCronPage })),
 );
 const TechCICDPage = lazy(() =>
-  import('./routes/_hubs').then((m) => ({ default: m.TechCICDPage })),
+  import('./routes/tech/cicd').then((m) => ({ default: m.TechCICDPage })),
 );
 // Tier B — Inbox sub-pages (real where possible)
 const InboxAlertsPage = lazy(() =>
@@ -382,6 +385,7 @@ export function App() {
 
                 {/* Users */}
                 <Route path="/users" element={lazyRoute(UserListPage)} />
+                <Route path="/users/nps" element={lazyRoute(UsersNpsPage)} />
                 <Route path="/users/:id" element={lazyRoute(User360Page)} />
 
                 {/* Operations Hub */}
