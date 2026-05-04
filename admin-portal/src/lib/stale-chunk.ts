@@ -19,13 +19,13 @@ function isStaleChunkError(message: unknown): boolean {
 }
 
 function reloadOnce(): void {
-  if (sessionStorage.getItem(RELOAD_FLAG) === '1') return;
-  sessionStorage.setItem(RELOAD_FLAG, '1');
+  if (window.sessionStorage.getItem(RELOAD_FLAG) === '1') return;
+  window.sessionStorage.setItem(RELOAD_FLAG, '1');
   window.location.reload();
 }
 
 export function clearStaleChunkFlag(): void {
-  sessionStorage.removeItem(RELOAD_FLAG);
+  window.sessionStorage.removeItem(RELOAD_FLAG);
 }
 
 export function installStaleChunkHandler(): void {
