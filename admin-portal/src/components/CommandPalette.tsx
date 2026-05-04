@@ -84,8 +84,11 @@ const ALL_COMMANDS: CommandItem[] = [
 
   // Finance
   { id: 'fin-revenue', label: 'Revenue', group: 'Finance', icon: DollarSignIcon, to: '/revenue', keywords: ['mrr', 'subscriptions'] },
-  { id: 'fin-costs', label: 'Costs (V2)', group: 'Finance', icon: DollarSignIcon, to: '/finance/costs' },
-  { id: 'fin-forecast', label: 'Forecast & Runway (V2)', group: 'Finance', icon: TrendingUpIcon, to: '/finance/forecast' },
+  { id: 'fin-cost-monitor', label: 'Cost Monitor (live)', group: 'Finance', icon: DollarSignIcon, to: '/finance/cost-monitor', keywords: ['supabase', 'ai', 'gemini', 'tier'] },
+  { id: 'fin-costs', label: 'Costs (manual entries)', group: 'Finance', icon: DollarSignIcon, to: '/finance/costs' },
+  { id: 'fin-pnl', label: 'P&L', group: 'Finance', icon: TrendingUpIcon, to: '/finance/pnl' },
+  { id: 'fin-forecast', label: 'Forecast & Runway', group: 'Finance', icon: TrendingUpIcon, to: '/finance/forecast' },
+  { id: 'fin-reconciliation', label: 'Reconciliation', group: 'Finance', icon: ShieldCheckIcon, to: '/finance/reconciliation' },
   { id: 'fin-tax', label: 'Tax & Reports (CSV)', group: 'Finance', icon: ScrollTextIcon, to: '/finance/tax', keywords: ['bas', 'gst', 'apple fee', 'accountant'] },
 
   // Users
@@ -105,15 +108,23 @@ const ALL_COMMANDS: CommandItem[] = [
   { id: 'inbox-reviews', label: 'App Store reviews', group: 'Inbox', icon: SparklesIcon, to: '/inbox/reviews', keywords: ['ratings', 'apple', 'feedback'] },
 
   // Tech
-  { id: 'tech-cicd', label: 'CI/CD (V2)', group: 'Tech', icon: WorkflowIcon, to: '/tech/cicd', keywords: ['github actions', 'tests', 'workflows'] },
   { id: 'tech-reliability', label: 'Reliability', group: 'Tech', icon: ShieldCheckIcon, to: '/reliability', keywords: ['errors', 'uptime'] },
+  { id: 'tech-errors', label: 'Errors (Sentry/Crashlytics)', group: 'Tech', icon: BellIcon, to: '/tech/errors' },
+  { id: 'tech-edge', label: 'Edge Functions', group: 'Tech', icon: ServerIcon, to: '/tech/edge-functions' },
+  { id: 'tech-database', label: 'Database', group: 'Tech', icon: ServerIcon, to: '/tech/database' },
+  { id: 'tech-cron', label: 'Cron Jobs', group: 'Tech', icon: ActivityIcon, to: '/tech/cron' },
+  { id: 'tech-cicd', label: 'CI/CD (GitHub Actions)', group: 'Tech', icon: WorkflowIcon, to: '/tech/cicd', keywords: ['github', 'workflows', 'runs'] },
 
   // Operations
+  { id: 'ops-roadmap', label: 'Roadmap (Kanban)', group: 'Operations', icon: PenSquareIcon, to: '/operations/roadmap' },
+  { id: 'ops-incidents', label: 'Incidents', group: 'Operations', icon: BellIcon, to: '/operations/incidents' },
+  { id: 'ops-releases', label: 'Releases', group: 'Operations', icon: PackageIcon, to: '/operations/releases' },
+  { id: 'ops-runbooks', label: 'Runbooks', group: 'Operations', icon: ScrollTextIcon, to: '/operations/runbooks' },
   { id: 'ops-grants', label: 'Grants', group: 'Operations', icon: ScrollTextIcon, to: '/ops/grants' },
   { id: 'ops-audit', label: 'Audit', group: 'Operations', icon: ScrollTextIcon, to: '/ops/audit' },
 
   // Quick actions
-  { id: 'qa-alerts', label: 'View pending alerts', group: 'Quick Actions', icon: BellIcon, to: '/inbox' },
+  { id: 'qa-alerts', label: 'View pending alerts', group: 'Quick Actions', icon: BellIcon, to: '/inbox/alerts' },
   {
     id: 'qa-glossary',
     label: 'Glossário & abreviações (CAC, MRR, ABN…)',
