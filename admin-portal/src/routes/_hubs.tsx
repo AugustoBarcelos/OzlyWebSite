@@ -73,9 +73,8 @@ export function InboxPage() {
         {
           label: 'App Store reviews',
           to: '/inbox/reviews',
-          description: 'Reviews novas no App Store + Play Store agregadas.',
+          description: 'Reviews via App Store Connect API — read-only.',
           icon: SparklesIcon,
-          status: 'parte2',
         },
       ]}
     />
@@ -435,9 +434,6 @@ function SoonPage(props: { title: string; wave: string; backTo?: string; backLab
 // exports were removed once their real subdirectory implementations shipped.
 export const InboxSupportPage = () => (
   <SoonPage title="Support tickets" wave="Parte 2 — esperando integração helpdesk" backTo="/inbox" />
-);
-export const InboxReviewsPage = () => (
-  <SoonPage title="App Store reviews" wave="Parte 2 — esperando App Store Connect API key" backTo="/inbox" />
 );
 export const InboxAffiliatesPage = () => (
   <SoonPage title="Affiliate approvals" wave="Use /affiliates filtrado por status=pending" backTo="/inbox" />

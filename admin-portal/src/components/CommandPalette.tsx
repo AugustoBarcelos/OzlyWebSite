@@ -102,6 +102,7 @@ const ALL_COMMANDS: CommandItem[] = [
   { id: 'inbox-alerts', label: 'Alerts (anomalias)', group: 'Inbox', icon: BellIcon, to: '/inbox/alerts' },
   { id: 'inbox-refunds', label: 'Refund requests', group: 'Inbox', icon: DollarSignIcon, to: '/inbox/refunds' },
   { id: 'inbox-system', label: 'System events', group: 'Inbox', icon: ActivityIcon, to: '/inbox/system' },
+  { id: 'inbox-reviews', label: 'App Store reviews', group: 'Inbox', icon: SparklesIcon, to: '/inbox/reviews', keywords: ['ratings', 'apple', 'feedback'] },
 
   // Tech
   { id: 'tech-cicd', label: 'CI/CD (V2)', group: 'Tech', icon: WorkflowIcon, to: '/tech/cicd', keywords: ['github actions', 'tests', 'workflows'] },

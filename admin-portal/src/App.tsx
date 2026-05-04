@@ -250,7 +250,7 @@ const InboxSupportPage = lazy(() =>
   import('./routes/_hubs').then((m) => ({ default: m.InboxSupportPage })),
 );
 const InboxReviewsPage = lazy(() =>
-  import('./routes/_hubs').then((m) => ({ default: m.InboxReviewsPage })),
+  import('./routes/inbox/reviews').then((m) => ({ default: m.InboxReviewsPage })),
 );
 const InboxRefundsPage = lazy(() =>
   import('./routes/inbox/refunds').then((m) => ({ default: m.InboxRefundsPage })),
