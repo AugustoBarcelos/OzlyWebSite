@@ -209,7 +209,7 @@ const ProductFeaturesPage = lazy(() =>
   import('./routes/product/features').then((m) => ({ default: m.ProductFeaturesPage })),
 );
 const ProductFeedbackPage = lazy(() =>
-  import('./routes/_hubs').then((m) => ({ default: m.ProductFeedbackPage })),
+  import('./routes/product/feedback').then((m) => ({ default: m.ProductFeedbackPage })),
 );
 // W8 — real Operations
 const OperationsRoadmapPage = lazy(() =>

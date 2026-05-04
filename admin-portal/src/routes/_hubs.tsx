@@ -38,49 +38,44 @@ export function InboxPage() {
       title="Inbox"
       subtitle="Tudo que precisa da sua atenção, num só lugar."
       icon={InboxIcon}
-      wave="Wave 4 — Inbox unificada"
       links={[
         {
           label: 'Alerts (anomalias)',
           to: '/inbox/alerts',
-          description: 'CAC subiu sem motivo, churn em pico, MRR caiu — IA detecta e te avisa.',
+          description: 'KPIs em variação anômala — MRR, CAC, churn.',
           icon: BellIcon,
-          status: 'wip',
-        },
-        {
-          label: 'Support tickets',
-          to: '/inbox/support',
-          description: 'Issues formais — refunds, bugs, queixas escaladas.',
-          icon: ScrollTextIcon,
-          status: 'wip',
-        },
-        {
-          label: 'App Store reviews',
-          to: '/inbox/reviews',
-          description: 'Reviews novas no App Store + Play Store agregadas.',
-          icon: SparklesIcon,
-          status: 'wip',
         },
         {
           label: 'Refund requests',
           to: '/inbox/refunds',
           description: 'Pedidos de reembolso pendentes de aprovação.',
           icon: DollarSignIcon,
-          status: 'wip',
         },
         {
           label: 'System events',
           to: '/inbox/system',
-          description: 'Snapshots, sync jobs, edge functions errors, CI failures.',
+          description: 'Recent admin actions + sync/cron events.',
           icon: ActivityIcon,
-          status: 'wip',
         },
         {
           label: 'Affiliate approvals',
-          to: '/inbox/affiliates',
-          description: 'Aplicações de novos afiliados pendentes.',
+          to: '/affiliates',
+          description: 'Aplicações pendentes — abre o /affiliates filtrado.',
           icon: HandshakeIcon,
-          status: 'wip',
+        },
+        {
+          label: 'Support tickets',
+          to: '/inbox/support',
+          description: 'Issues formais — refunds, bugs, queixas escaladas.',
+          icon: ScrollTextIcon,
+          status: 'parte2',
+        },
+        {
+          label: 'App Store reviews',
+          to: '/inbox/reviews',
+          description: 'Reviews novas no App Store + Play Store agregadas.',
+          icon: SparklesIcon,
+          status: 'parte2',
         },
       ]}
     />
@@ -94,14 +89,12 @@ export function GrowthHubPage() {
       title="Growth"
       subtitle="Aquisição, atribuição e otimização de canais."
       icon={TrendingUpIcon}
-      wave="Wave 3 + 3.5 — Sales Funnel + Affiliates"
       links={[
         {
           label: 'Sales Funnel',
           to: '/growth/funnel',
           description: 'Impression → Click → Install → Signup → Activation → Trial → Paid → Retained.',
           icon: FunnelIcon,
-          status: 'wip',
         },
         {
           label: 'Insights (GA4)',
@@ -282,42 +275,36 @@ export function ProductHubPage() {
       title="Product"
       subtitle="Activation, retention, engagement, feedback."
       icon={PackageIcon}
-      wave="Pós-MVP — Product analytics"
       links={[
         {
           label: 'Activation Funnel',
           to: '/product/activation',
           description: 'Signup → onboard → trial picked → first session → first job.',
           icon: FunnelIcon,
-          status: 'wip',
         },
         {
           label: 'Retention Cohorts',
           to: '/product/retention',
           description: 'Heatmap de retenção por cohort de signup.',
           icon: ActivityIcon,
-          status: 'wip',
         },
         {
           label: 'Engagement (DAU/WAU/MAU)',
           to: '/product/engagement',
           description: 'Daily/Weekly/Monthly active users.',
           icon: TrendingUpIcon,
-          status: 'wip',
         },
         {
           label: 'Feature Adoption',
           to: '/product/features',
           description: 'Quais features são usadas, por quem, com que frequência.',
           icon: PackageIcon,
-          status: 'wip',
         },
         {
           label: 'Feedback (NPS, reviews)',
           to: '/product/feedback',
-          description: 'NPS, App Store reviews aggregadas, support themes.',
+          description: 'NPS agregado + App Store reviews (parte 2).',
           icon: SparklesIcon,
-          status: 'wip',
         },
       ]}
     />
@@ -331,7 +318,6 @@ export function OperationsHubPage() {
       title="Operations"
       subtitle="Self-PM Kanban + incidents + releases + grants + audit."
       icon={ScrollTextIcon}
-      wave="Wave 8 — Operations"
       links={[
         {
           label: 'Roadmap (Kanban)',
@@ -350,14 +336,12 @@ export function OperationsHubPage() {
           to: '/operations/releases',
           description: 'Histórico de builds — TestFlight + Play Console.',
           icon: PackageIcon,
-          status: 'wip',
         },
         {
           label: 'Runbooks',
           to: '/operations/runbooks',
           description: 'Procedimentos padronizados (deploy, refund, payout).',
           icon: ScrollTextIcon,
-          status: 'wip',
         },
         {
           label: 'Grants',
@@ -467,22 +451,6 @@ export const FinanceForecastPage = () => (
 export const FinanceReconciliationPage = () => (
   <SoonPage title="Reconciliation" wave="Wave 5 — Finance" backTo="/finance" />
 );
-export const ProductActivationPage = () => (
-  <SoonPage title="Activation Funnel" wave="Pós-MVP — Product" backTo="/product" />
-);
-export const ProductRetentionPage = () => (
-  <SoonPage title="Retention Cohorts" wave="Pós-MVP — Product" backTo="/product" />
-);
-export const ProductEngagementPage = () => (
-  <SoonPage title="Engagement" wave="Pós-MVP — Product" backTo="/product" />
-);
-export const ProductFeaturesPage = () => (
-  <SoonPage title="Feature Adoption" wave="Pós-MVP — Product" backTo="/product" />
-);
-export const ProductFeedbackPage = () => (
-  <SoonPage title="Feedback (NPS, reviews)" wave="Pós-MVP — Product" backTo="/product" />
-);
-
 export const OperationsRoadmapPage = () => (
   <SoonPage title="Roadmap (Kanban)" wave="Wave 8 — Operations" backTo="/operations" />
 );

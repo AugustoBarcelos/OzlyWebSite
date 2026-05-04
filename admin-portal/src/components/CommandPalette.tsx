@@ -42,7 +42,7 @@ interface CommandItem {
   id: string;
   label: string;
   hint?: string;
-  group: 'Hubs' | 'Growth' | 'Marketing' | 'Finance' | 'Tech' | 'Operations' | 'Users' | 'Quick Actions';
+  group: 'Hubs' | 'Growth' | 'Marketing' | 'Finance' | 'Tech' | 'Operations' | 'Users' | 'Product' | 'Inbox' | 'Quick Actions';
   icon: React.ComponentType<{ className?: string }>;
   to?: string;
   onAction?: () => void;
@@ -90,6 +90,18 @@ const ALL_COMMANDS: CommandItem[] = [
 
   // Users
   { id: 'users-nps', label: 'NPS — Net Promoter Score', group: 'Users', icon: ActivityIcon, to: '/users/nps', keywords: ['survey', 'feedback', 'satisfaction', 'resend'] },
+
+  // Product
+  { id: 'prod-activation', label: 'Activation Funnel', group: 'Product', icon: FunnelIcon, to: '/product/activation', keywords: ['onboard', 'trial', 'signup'] },
+  { id: 'prod-retention', label: 'Retention Cohorts', group: 'Product', icon: ActivityIcon, to: '/product/retention' },
+  { id: 'prod-engagement', label: 'Engagement (DAU/WAU/MAU)', group: 'Product', icon: TrendingUpIcon, to: '/product/engagement' },
+  { id: 'prod-features', label: 'Feature Adoption', group: 'Product', icon: PackageIcon, to: '/product/features' },
+  { id: 'prod-feedback', label: 'Feedback (NPS + reviews)', group: 'Product', icon: SparklesIcon, to: '/product/feedback' },
+
+  // Inbox
+  { id: 'inbox-alerts', label: 'Alerts (anomalias)', group: 'Inbox', icon: BellIcon, to: '/inbox/alerts' },
+  { id: 'inbox-refunds', label: 'Refund requests', group: 'Inbox', icon: DollarSignIcon, to: '/inbox/refunds' },
+  { id: 'inbox-system', label: 'System events', group: 'Inbox', icon: ActivityIcon, to: '/inbox/system' },
 
   // Tech
   { id: 'tech-cicd', label: 'CI/CD (V2)', group: 'Tech', icon: WorkflowIcon, to: '/tech/cicd', keywords: ['github actions', 'tests', 'workflows'] },
