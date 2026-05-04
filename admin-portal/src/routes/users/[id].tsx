@@ -36,6 +36,7 @@ import {
 } from '@tremor/react';
 import { callRpc, RpcError } from '@/lib/rpc';
 import { env } from '@/lib/env';
+import { formatRelativeTime } from '@/lib/format';
 import { Avatar } from '@/components/Avatar';
 import { MaskedField } from '@/components/MaskedField';
 import { Spinner } from '@/components/Spinner';
@@ -149,6 +150,24 @@ interface UserAuditRow {
 
 interface UserAuditPayload {
   rows: UserAuditRow[];
+}
+
+interface UserErrorRow {
+  id: string;
+  created_at: string;
+  message: string;
+  screen: string | null;
+  severity: string;
+  stack_trace: string | null;
+}
+
+interface UserErrorsPayload {
+  user_id: string;
+  days: number;
+  limit: number;
+  total: number;
+  truncated: boolean;
+  rows: UserErrorRow[];
 }
 
 interface User360Referrer {
@@ -503,6 +522,10 @@ export function User360Page() {
   const [data, setData] = useState<User360Payload | null>(null);
   const [grants, setGrants] = useState<UserGrantsPayload | null>(null);
   const [audit, setAudit] = useState<UserAuditPayload | null>(null);
+  const [errors, setErrors] = useState<UserErrorsPayload | null>(null);
+  const [errorsLoading, setErrorsLoading] = useState(false);
+  const [errorsError, setErrorsError] = useState<string | null>(null);
+  const [errorsDays, setErrorsDays] = useState<number>(30);
   const [loading, setLoading] = useState(true);
   const [piiRevealed, setPiiRevealed] = useState(false);
   const [piiLoading, setPiiLoading] = useState(false);
@@ -531,6 +554,31 @@ export function User360Page() {
     []
   );
 
+  // Errors are fetched separately so the initial 360 load stays fast — and so
+  // we can offer a Refresh button on the Errors tab without re-pulling
+  // everything else.
+  const fetchErrors = useCallback(
+    async (userId: string, days: number) => {
+      setErrorsLoading(true);
+      setErrorsError(null);
+      try {
+        const payload = await callRpc<UserErrorsPayload>('admin_user_errors', {
+          p_user_id: userId,
+          p_days: days,
+          p_limit: 50,
+        });
+        setErrors(payload);
+      } catch (err: unknown) {
+        const msg =
+          err instanceof RpcError ? err.message : 'Failed to load errors.';
+        setErrorsError(msg);
+      } finally {
+        setErrorsLoading(false);
+      }
+    },
+    []
+  );
+
   // Initial load + reload when `id` param changes.
   useEffect(() => {
     if (!id) {
@@ -543,6 +591,8 @@ export function User360Page() {
     setLoading(true);
     setError(null);
     setPiiRevealed(false);
+
+    void fetchErrors(id, errorsDays);
 
     fetchUser(id, false)
       .then((payload) => {
@@ -564,7 +614,7 @@ export function User360Page() {
     return () => {
       cancelled = true;
     };
-  }, [id, fetchUser]);
+  }, [id, fetchUser, fetchErrors, errorsDays]);
 
   // Reveal PII — re-fetches with p_include_pii=true. The RPC logs a
   // 'pii_revealed' audit row server-side; we don't (and can't) bypass that.
@@ -1072,29 +1122,116 @@ export function User360Page() {
 
                 {/* ERRORS */}
                 <TabPanel>
-                  <div className="mt-3 space-y-2">
-                    {sentryConfigured ? (
-                      <>
-                        <Text className="text-sm">
-                          Filter errors by user_id in Sentry:
-                        </Text>
-                        <a
-                          href={sentryQueryUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 rounded-md border border-navy-100 bg-white px-3 py-1.5 text-xs font-medium text-navy-600 hover:bg-navy-50"
+                  <div className="mt-3 space-y-3">
+                    {/* Header: count + refresh + Sentry link */}
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="text-xs text-navy-500">
+                        {errorsLoading
+                          ? 'Loading errors…'
+                          : errors
+                            ? `${errors.total} error${errors.total === 1 ? '' : 's'} in last ${errors.days}d${errors.truncated ? ` (showing first ${errors.limit})` : ''}`
+                            : 'Errors not loaded yet'}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={errorsDays}
+                          onChange={(e) => setErrorsDays(Number(e.target.value))}
+                          disabled={errorsLoading}
+                          className="rounded-md border border-navy-100 bg-white px-2 py-1 text-xs font-medium text-navy-600 hover:bg-navy-50 disabled:cursor-not-allowed disabled:opacity-60"
+                          aria-label="Period"
                         >
-                          Open in Sentry
-                          <ExternalLinkIcon className="h-3.5 w-3.5" />
-                        </a>
-                        <Text className="text-[11px] text-navy-300">
-                          Sentry filter: <code>user.id:{profile.id}</code>
-                        </Text>
-                      </>
+                          <option value={7}>Last 7 days</option>
+                          <option value={30}>Last 30 days</option>
+                          <option value={90}>Last 90 days</option>
+                          <option value={365}>Last 365 days</option>
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (id) void fetchErrors(id, errorsDays);
+                          }}
+                          disabled={errorsLoading}
+                          className="inline-flex items-center gap-1.5 rounded-md border border-navy-100 bg-white px-3 py-1 text-xs font-medium text-navy-600 hover:bg-navy-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {errorsLoading ? <Spinner size="sm" /> : null}
+                          Refresh
+                        </button>
+                        {sentryConfigured && (
+                          <a
+                            href={sentryQueryUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 rounded-md border border-navy-100 bg-white px-3 py-1 text-xs font-medium text-navy-600 hover:bg-navy-50"
+                          >
+                            Open in Sentry
+                            <ExternalLinkIcon className="h-3.5 w-3.5" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Body */}
+                    {errorsError ? (
+                      <div className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700">
+                        {errorsError}
+                      </div>
+                    ) : !errors && errorsLoading ? (
+                      <div className="rounded-md border border-dashed border-navy-100 bg-navy-50 p-4 text-xs text-navy-400">
+                        Loading…
+                      </div>
+                    ) : !errors || errors.rows.length === 0 ? (
+                      <div className="rounded-md border border-dashed border-navy-100 bg-navy-50 p-4 text-xs text-navy-400">
+                        No errors logged for this user in the last 30 days. 🎉
+                      </div>
                     ) : (
-                      <div className="rounded-md border border-dashed border-navy-100 bg-navy-50 p-3 text-xs text-navy-400">
-                        Configure Sentry (set <code>VITE_SENTRY_DSN</code>) to
-                        enable a deep link to errors filtered by this user&apos;s id.
+                      <ul className="space-y-1.5">
+                        {errors.rows.map((row) => {
+                          const sevColor =
+                            row.severity === 'fatal'
+                              ? 'border-red-300 bg-red-50 text-red-800'
+                              : row.severity === 'warning'
+                                ? 'border-amber-300 bg-amber-50 text-amber-800'
+                                : 'border-orange-300 bg-orange-50 text-orange-800';
+                          return (
+                            <li
+                              key={row.id}
+                              className="rounded-md border border-navy-100 bg-white p-3 text-xs"
+                            >
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <span
+                                  className={`inline-flex rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${sevColor}`}
+                                >
+                                  {row.severity}
+                                </span>
+                                <span className="text-navy-400">
+                                  {formatRelativeTime(row.created_at)}
+                                  {row.screen ? ` · ${row.screen}` : ''}
+                                </span>
+                              </div>
+                              <div className="mt-1.5 break-words font-medium text-navy-700">
+                                {row.message}
+                              </div>
+                              {row.stack_trace && (
+                                <details className="mt-1.5">
+                                  <summary className="cursor-pointer text-[11px] text-navy-400 hover:text-navy-600">
+                                    Stack trace
+                                  </summary>
+                                  <pre className="mt-1 max-h-48 overflow-auto rounded bg-navy-50 p-2 text-[10px] text-navy-600">
+                                    {row.stack_trace}
+                                  </pre>
+                                </details>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+
+                    {!sentryConfigured && (
+                      <div className="rounded-md border border-dashed border-navy-100 bg-navy-50 p-2 text-[11px] text-navy-400">
+                        Sentry deep-link disabled (set <code>VITE_SENTRY_DSN</code>{' '}
+                        to enable). Stack traces above come from{' '}
+                        <code>app_events</code> only.
                       </div>
                     )}
                   </div>
