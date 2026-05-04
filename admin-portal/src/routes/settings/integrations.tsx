@@ -23,6 +23,21 @@ import { callRpc, RpcError } from '@/lib/rpc';
 
 type IntegrationStatus = 'active' | 'configured' | 'pending' | 'parte2' | 'unknown';
 
+interface SecretField {
+  key_name: string;
+  label: string;
+  type: 'text' | 'password' | 'textarea';
+  placeholder?: string;
+  helpUrl?: string;
+  helpText?: string;
+}
+
+interface IntegrationSecretSpec {
+  /** integration_id used in admin_integration_secrets table */
+  integration_id: string;
+  fields: SecretField[];
+}
+
 interface Integration {
   id: string;
   name: string;
@@ -35,6 +50,18 @@ interface Integration {
   icon: React.ComponentType<{ className?: string }>;
   /** What the user needs to do to activate it (when pending/parte2) */
   activationHint?: string | undefined;
+  /** Editable secrets for this integration (DB-stored). Adds Edit form. */
+  secrets?: IntegrationSecretSpec | undefined;
+}
+
+interface SecretRow {
+  integration_id: string;
+  key_name: string;
+  value_length: number;
+  value_preview: string;
+  updated_at: string;
+  created_at: string;
+  updated_by_email: string | null;
 }
 
 const STATUS_LABEL: Record<IntegrationStatus, string> = {
@@ -85,20 +112,35 @@ interface TiktokRow {
 export function SettingsIntegrationsPage() {
   const [tiktokConnected, setTiktokConnected] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
+  const [secretsByIntegration, setSecretsByIntegration] = useState<Record<string, Record<string, SecretRow>>>({});
+  const [secretsTableMissing, setSecretsTableMissing] = useState(false);
+
+  const reloadSecrets = () => {
+    void callRpc<{ rows: SecretRow[] }>('admin_integration_secrets_list', {})
+      .then((r) => {
+        const grouped: Record<string, Record<string, SecretRow>> = {};
+        for (const row of r.rows) {
+          (grouped[row.integration_id] ??= {})[row.key_name] = row;
+        }
+        setSecretsByIntegration(grouped);
+      })
+      .catch((e: unknown) => {
+        if (
+          e instanceof RpcError &&
+          (e.code === '42883' || e.message.includes('does not exist'))
+        ) {
+          setSecretsTableMissing(true);
+        }
+      });
+  };
 
   useEffect(() => {
     let alive = true;
     setLoading(true);
-    // Probe TikTok via the existing tiktok-stats edge function (which we
-    // already use in /marketing/channels — 200 = connected, 404 = not).
     void Promise.allSettled([
-      // We can't call the edge function from here without a circular dep,
-      // so just check if oauth_connections has any row by doing a minimal
-      // rpc the admin already has access to.
       callRpc<{ rows: TiktokRow[] }>('admin_oauth_connections_list', {
         p_provider: 'tiktok',
       }).catch((e) => {
-        // If RPC doesn't exist yet, fall back to "unknown"
         if (
           e instanceof RpcError &&
           (e.code === '42883' || e.message.includes('does not exist'))
@@ -120,6 +162,7 @@ export function SettingsIntegrationsPage() {
       }
       setLoading(false);
     });
+    reloadSecrets();
     return () => {
       alive = false;
     };
@@ -187,11 +230,11 @@ export function SettingsIntegrationsPage() {
       status: isGeminiConfigured() ? 'active' : 'pending',
       detail: isGeminiConfigured()
         ? 'Key configurada via VITE_GEMINI_API_KEY · custos em /finance/cost-monitor'
-        : 'VITE_GEMINI_API_KEY não configurado',
+        : 'VITE_GEMINI_API_KEY não configurado (build-time)',
       consoleUrl: 'https://aistudio.google.com/app/apikey',
       icon: SparklesIcon,
       activationHint: !isGeminiConfigured()
-        ? 'Adicionar ADMIN_PORTAL_GEMINI_KEY como secret no GitHub OzlyWebSite'
+        ? 'Build-time secret: rodar `gh secret set ADMIN_PORTAL_GEMINI_KEY --repo AugustoBarcelos/OzlyWebSite --body "..."` e re-trigger o workflow'
         : undefined,
     },
     {
@@ -218,6 +261,19 @@ export function SettingsIntegrationsPage() {
         'Edge function admin-resend-stats ACTIVE no Supabase. RESEND_API_KEY armazenado nos Supabase secrets, não exposto ao client.',
       consoleUrl: 'https://resend.com/dashboard',
       icon: MailIcon,
+      secrets: {
+        integration_id: 'resend',
+        fields: [
+          {
+            key_name: 'api_key',
+            label: 'Resend API Key',
+            type: 'password',
+            placeholder: 're_xxxxxxxxxxxxxxxxxxxxx',
+            helpUrl: 'https://resend.com/api-keys',
+            helpText: 'Cria/copia em resend.com/api-keys (tipo: Full Access pra send broadcasts).',
+          },
+        ],
+      },
     },
     {
       id: 'youtube',
@@ -303,26 +359,45 @@ export function SettingsIntegrationsPage() {
       name: 'App Store Connect API',
       category: 'finance',
       description: 'Reviews + sales reports + screenshot A/B tests.',
-      status: 'parte2',
-      detail: 'Não habilitado — usar billing direto no App Store Connect',
-      consoleUrl: 'https://appstoreconnect.apple.com',
+      status: 'configured',
+      detail: 'Edge fn appstore-connect-proxy ACTIVE — JWT ES256 server-side',
+      consoleUrl: 'https://appstoreconnect.apple.com/access/integrations/api',
       icon: DollarSignIcon,
-      activationHint:
-        'Settings → Users and Access → Keys → Create API Key → adicionar ADMIN_PORTAL_APP_STORE_CONNECT_KEY',
+      secrets: {
+        integration_id: 'appstore_connect',
+        fields: [
+          {
+            key_name: 'issuer_id',
+            label: 'Issuer ID',
+            type: 'text',
+            placeholder: 'aa4c3c0f-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
+            helpUrl: 'https://appstoreconnect.apple.com/access/integrations/api',
+            helpText: 'UUID no topo da página Team Keys.',
+          },
+          {
+            key_name: 'key_id',
+            label: 'Key ID',
+            type: 'text',
+            placeholder: 'H4Z2CDJ6DH',
+            helpText: '10 chars, aparece na linha da key gerada.',
+          },
+          {
+            key_name: 'private_key',
+            label: 'Private Key (.p8 content)',
+            type: 'textarea',
+            placeholder: '-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----',
+            helpText: 'Cole o conteúdo inteiro do arquivo .p8 baixado da Apple (incluindo BEGIN/END).',
+          },
+          {
+            key_name: 'app_id',
+            label: 'App ID (numeric)',
+            type: 'text',
+            placeholder: '6760398649',
+            helpText: 'Numeric App ID — encontra em App Store Connect → My Apps → Ozly → App Information.',
+          },
+        ],
+      },
     },
-    {
-      id: 'play-developer',
-      name: 'Google Play Developer API',
-      category: 'finance',
-      description: 'Reviews + sales reports + listing experiments.',
-      status: 'parte2',
-      detail: 'Não habilitado — usar Play Console direto',
-      consoleUrl: 'https://play.google.com/console',
-      icon: DollarSignIcon,
-      activationHint:
-        'Play Console → API access → Create service account → adicionar credentials JSON',
-    },
-
     // ─── DevOps & infra ────────────────────────────────────────────
     {
       id: 'github-actions',
@@ -338,21 +413,77 @@ export function SettingsIntegrationsPage() {
     },
     {
       id: 'github-pat',
-      name: 'GitHub PAT (Tech > CI/CD page)',
+      name: 'GitHub PAT (Tech → CI/CD page)',
       category: 'devops',
       description:
         'Personal Access Token pra a página /tech/cicd mostrar runs + logs.',
-      status: 'parte2',
-      detail: 'Página /tech/cicd existe como placeholder até a key ser adicionada',
-      consoleUrl: 'https://github.com/settings/tokens',
+      status: 'configured',
+      detail: 'Edge fn github-actions-proxy ACTIVE — read-only via PAT server-side',
+      consoleUrl: 'https://github.com/settings/personal-access-tokens',
       icon: HandshakeIcon,
-      activationHint:
-        '1) Criar fine-grained PAT em settings/tokens com escopo repo + workflow 2) gh secret set ADMIN_PORTAL_GITHUB_PAT --repo AugustoBarcelos/OzlyWebSite --body "..." 3) Mexe no workflow + lib/github.ts',
+      secrets: {
+        integration_id: 'github',
+        fields: [
+          {
+            key_name: 'pat',
+            label: 'GitHub PAT (fine-grained)',
+            type: 'password',
+            placeholder: 'github_pat_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+            helpUrl: 'https://github.com/settings/personal-access-tokens',
+            helpText: 'Permissions read-only: Actions, Contents, Metadata. Scope: AugustoBarcelos/OzlyWebSite + AusClean.',
+          },
+          {
+            key_name: 'repo',
+            label: 'Default repo (owner/name)',
+            type: 'text',
+            placeholder: 'AugustoBarcelos/OzlyWebSite',
+            helpText: 'Repo padrão consultado em /tech/cicd quando ?repo= não é passado.',
+          },
+        ],
+      },
+    },
+    {
+      id: 'play-developer-api',
+      name: 'Google Play Developer API',
+      category: 'finance',
+      description: 'Reviews Android + sales reports + listing experiments.',
+      status: 'parte2',
+      detail: 'Aguardando service account JSON do Play Console',
+      consoleUrl: 'https://play.google.com/console/u/0/developers/api-access',
+      icon: DollarSignIcon,
+      secrets: {
+        integration_id: 'play_developer',
+        fields: [
+          {
+            key_name: 'service_account_json',
+            label: 'Service Account JSON',
+            type: 'textarea',
+            placeholder: '{"type":"service_account","project_id":"..."}',
+            helpUrl: 'https://play.google.com/console/u/0/developers/api-access',
+            helpText: 'Cola o conteúdo inteiro do .json baixado do Play Console → API access.',
+          },
+        ],
+      },
     },
   ];
 
+  // Override status based on what's actually saved in admin_integration_secrets.
+  // If all required keys are present → 'configured' (or keep 'active' if already so).
+  const integrationsWithDbStatus = integrations.map((i) => {
+    if (!i.secrets) return i;
+    const saved = secretsByIntegration[i.secrets.integration_id] ?? {};
+    const allPresent = i.secrets.fields.every((f) => saved[f.key_name]);
+    if (allPresent) {
+      return { ...i, status: 'configured' as IntegrationStatus };
+    }
+    if (Object.keys(saved).length > 0) {
+      return { ...i, status: 'pending' as IntegrationStatus };
+    }
+    return i;
+  });
+
   // Group by category
-  const byCategory = integrations.reduce<Record<Integration['category'], Integration[]>>(
+  const byCategory = integrationsWithDbStatus.reduce<Record<Integration['category'], Integration[]>>(
     (acc, i) => {
       const arr = acc[i.category] ?? [];
       arr.push(i);
@@ -362,7 +493,7 @@ export function SettingsIntegrationsPage() {
     { core: [], analytics: [], ai: [], marketing: [], finance: [], devops: [] },
   );
 
-  const counts = integrations.reduce(
+  const counts = integrationsWithDbStatus.reduce(
     (acc, i) => {
       acc[i.status] += 1;
       return acc;
@@ -443,7 +574,12 @@ export function SettingsIntegrationsPage() {
               </h2>
               <div className="grid gap-3 md:grid-cols-2">
                 {items.map((i) => (
-                  <IntegrationCard key={i.id} integration={i} />
+                  <IntegrationCard
+                    key={i.id}
+                    integration={i}
+                    savedSecrets={i.secrets ? (secretsByIntegration[i.secrets.integration_id] ?? {}) : {}}
+                    onSecretsChange={reloadSecrets}
+                  />
                 ))}
               </div>
             </section>
@@ -451,27 +587,48 @@ export function SettingsIntegrationsPage() {
         },
       )}
 
+      {secretsTableMissing && (
+        <Card className="ozly-card border-amber-200 bg-amber-50/60">
+          <Title className="!text-sm !font-semibold text-amber-800">
+            Self-service migration pendente
+          </Title>
+          <p className="mt-1 text-xs text-amber-700">
+            Aplicar <code className="font-mono">20260504090000_admin_integration_secrets.sql</code>{' '}
+            em prod. Sem isso, os botões "Edit credentials" não conseguem ler/salvar.
+          </p>
+        </Card>
+      )}
+
       {/* Footer hint */}
       <Card className="ozly-card border-navy-100 bg-navy-50/40">
         <Title className="!text-sm !font-semibold text-navy-700">
-          Adicionar nova integração
+          Como funciona o self-service
         </Title>
         <p className="mt-1 text-xs text-navy-500">
-          1) Adicionar secret no GitHub <code className="font-mono">OzlyWebSite</code> com
-          prefixo <code className="font-mono">ADMIN_PORTAL_*</code>. 2) Injetar no
-          workflow <code className="font-mono">.github/workflows/admin-portal.yml</code>{' '}
-          como <code className="font-mono">VITE_*</code>. 3) Adicionar ao{' '}
-          <code className="font-mono">src/lib/env.ts</code>. 4) Adicionar entrada nesta
-          página (<code className="font-mono">routes/settings/integrations.tsx</code>).
+          Cada card com <strong>Edit credentials</strong> grava na tabela{' '}
+          <code className="font-mono">admin_integration_secrets</code> (RLS admin-only). Edge
+          functions leem com fallback pro env, então rotação não precisa redeploy.{' '}
+          <strong>Build-time secrets</strong> (Gemini, Sentry, PostHog, YouTube) ainda precisam
+          de <code className="font-mono">gh secret set</code> + re-trigger workflow porque vão
+          baked no JS bundle.
         </p>
       </Card>
     </div>
   );
 }
 
-function IntegrationCard({ integration }: { integration: Integration }) {
+function IntegrationCard({
+  integration,
+  savedSecrets,
+  onSecretsChange,
+}: {
+  integration: Integration;
+  savedSecrets: Record<string, SecretRow>;
+  onSecretsChange: () => void;
+}) {
   const Icon = integration.icon;
   const StatusIcon = STATUS_ICON[integration.status];
+  const [editing, setEditing] = useState(false);
   return (
     <Card className="ozly-card">
       <div className="flex items-start justify-between gap-2">
@@ -504,32 +661,219 @@ function IntegrationCard({ integration }: { integration: Integration }) {
         </div>
       )}
 
-      {(integration.consoleUrl || integration.docsUrl) && (
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          {integration.consoleUrl && (
-            <a
-              href={integration.consoleUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 rounded-md border border-navy-100 bg-white px-2 py-1 text-[11px] font-medium text-navy-600 hover:border-brand-300 hover:text-brand-700"
-            >
-              Console
-              <ExternalLinkIcon className="h-3 w-3" />
-            </a>
-          )}
-          {integration.docsUrl && (
-            <a
-              href={integration.docsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 rounded-md border border-navy-100 bg-white px-2 py-1 text-[11px] font-medium text-navy-600 hover:border-brand-300 hover:text-brand-700"
-            >
-              Docs
-              <ExternalLinkIcon className="h-3 w-3" />
-            </a>
-          )}
-        </div>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        {integration.consoleUrl && (
+          <a
+            href={integration.consoleUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 rounded-md border border-navy-100 bg-white px-2 py-1 text-[11px] font-medium text-navy-600 hover:border-brand-300 hover:text-brand-700"
+          >
+            Console
+            <ExternalLinkIcon className="h-3 w-3" />
+          </a>
+        )}
+        {integration.docsUrl && (
+          <a
+            href={integration.docsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 rounded-md border border-navy-100 bg-white px-2 py-1 text-[11px] font-medium text-navy-600 hover:border-brand-300 hover:text-brand-700"
+          >
+            Docs
+            <ExternalLinkIcon className="h-3 w-3" />
+          </a>
+        )}
+        {integration.secrets && (
+          <button
+            type="button"
+            onClick={() => setEditing((prev) => !prev)}
+            className="inline-flex items-center gap-1 rounded-md border border-brand-200 bg-brand-50 px-2 py-1 text-[11px] font-medium text-brand-700 hover:bg-brand-100"
+          >
+            {editing ? 'Cancelar' : 'Edit credentials'}
+          </button>
+        )}
+      </div>
+
+      {integration.secrets && editing && (
+        <SecretsEditor
+          spec={integration.secrets}
+          savedSecrets={savedSecrets}
+          onSave={() => {
+            setEditing(false);
+            onSecretsChange();
+          }}
+          onCancel={() => setEditing(false)}
+        />
       )}
     </Card>
+  );
+}
+
+function SecretsEditor({
+  spec,
+  savedSecrets,
+  onSave,
+  onCancel,
+}: {
+  spec: IntegrationSecretSpec;
+  savedSecrets: Record<string, SecretRow>;
+  onSave: () => void;
+  onCancel: () => void;
+}) {
+  const [values, setValues] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [savedFlash, setSavedFlash] = useState(false);
+
+  async function save() {
+    setSaving(true);
+    setError(null);
+    try {
+      // Save only fields the user actually edited (non-empty)
+      const dirty = Object.entries(values).filter(([, v]) => v.trim() !== '');
+      if (dirty.length === 0) {
+        setError('Nada pra salvar — preencha pelo menos um campo.');
+        setSaving(false);
+        return;
+      }
+      for (const [key_name, value] of dirty) {
+        await callRpc('admin_integration_secret_set', {
+          p_integration_id: spec.integration_id,
+          p_key_name: key_name,
+          p_value: value,
+        });
+      }
+      setValues({});
+      setSavedFlash(true);
+      window.setTimeout(() => setSavedFlash(false), 2000);
+      onSave();
+    } catch (e: unknown) {
+      setError(e instanceof RpcError ? e.message : 'Erro ao salvar');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function deleteKey(key_name: string) {
+    if (!window.confirm(`Apagar ${spec.integration_id}.${key_name}?`)) return;
+    try {
+      await callRpc('admin_integration_secret_delete', {
+        p_integration_id: spec.integration_id,
+        p_key_name: key_name,
+      });
+      onSave();
+    } catch (e: unknown) {
+      setError(e instanceof RpcError ? e.message : 'Erro ao apagar');
+    }
+  }
+
+  return (
+    <div className="mt-3 space-y-3 rounded-md border border-brand-200 bg-brand-50/30 p-3">
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-brand-700">
+        Edit credentials — {spec.integration_id}
+      </div>
+      {spec.fields.map((field) => {
+        const saved = savedSecrets[field.key_name];
+        return (
+          <div key={field.key_name} className="space-y-1">
+            <div className="flex items-center justify-between">
+              <label className="text-[12px] font-medium text-navy-700">
+                {field.label}
+              </label>
+              {saved && (
+                <button
+                  type="button"
+                  onClick={() => deleteKey(field.key_name)}
+                  className="text-[10px] text-rose-600 hover:underline"
+                  disabled={saving}
+                >
+                  Apagar
+                </button>
+              )}
+            </div>
+            {saved && (
+              <div className="rounded-sm bg-white px-2 py-1 text-[11px] text-navy-500">
+                <span className="font-mono">{saved.value_preview}</span>
+                <span className="ml-2 text-navy-300">
+                  ({saved.value_length} chars · atualizado{' '}
+                  {new Date(saved.updated_at).toLocaleDateString('en-AU')})
+                </span>
+              </div>
+            )}
+            {field.type === 'textarea' ? (
+              <textarea
+                rows={4}
+                value={values[field.key_name] ?? ''}
+                onChange={(e) =>
+                  setValues((v) => ({ ...v, [field.key_name]: e.target.value }))
+                }
+                placeholder={field.placeholder}
+                className="w-full rounded-md border border-navy-100 bg-white px-2 py-1.5 font-mono text-[11px] text-navy-700"
+              />
+            ) : (
+              <input
+                type={field.type === 'password' ? 'password' : 'text'}
+                value={values[field.key_name] ?? ''}
+                onChange={(e) =>
+                  setValues((v) => ({ ...v, [field.key_name]: e.target.value }))
+                }
+                placeholder={field.placeholder}
+                className="w-full rounded-md border border-navy-100 bg-white px-2 py-1.5 text-[12px] text-navy-700"
+              />
+            )}
+            {(field.helpText || field.helpUrl) && (
+              <div className="text-[10px] text-navy-400">
+                {field.helpText}
+                {field.helpUrl && (
+                  <>
+                    {' '}
+                    <a
+                      href={field.helpUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-brand-600 hover:underline"
+                    >
+                      Como obter →
+                    </a>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      {error && (
+        <div className="rounded-md border border-rose-200 bg-rose-50 px-2 py-1 text-[11px] text-rose-700">
+          {error}
+        </div>
+      )}
+
+      {savedFlash && (
+        <div className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] text-emerald-700">
+          ✓ Salvo. Novas chamadas vão usar a key nova (cache 60s).
+        </div>
+      )}
+
+      <div className="flex justify-end gap-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={saving}
+          className="rounded-md border border-navy-100 bg-white px-3 py-1 text-[11px] text-navy-600 hover:border-navy-200"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          onClick={save}
+          disabled={saving}
+          className="rounded-md bg-brand-600 px-3 py-1 text-[11px] font-medium text-white hover:bg-brand-700 disabled:bg-navy-200"
+        >
+          {saving ? 'Salvando…' : 'Salvar'}
+        </button>
+      </div>
+    </div>
   );
 }
