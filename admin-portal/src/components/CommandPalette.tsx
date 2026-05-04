@@ -80,6 +80,7 @@ const ALL_COMMANDS: CommandItem[] = [
   { id: 'mkt-seo', label: 'SEO & Site', group: 'Marketing', icon: TrendingUpIcon, to: '/marketing/seo' },
   { id: 'msg-email', label: 'Messaging — Email', group: 'Marketing', icon: MailIcon, to: '/messaging/email' },
   { id: 'msg-whatsapp', label: 'Messaging — WhatsApp', group: 'Marketing', icon: MailIcon, to: '/messaging/whatsapp' },
+  { id: 'msg-messenger', label: 'Messaging — Messenger', group: 'Marketing', icon: MailIcon, to: '/messaging/messenger' },
   { id: 'msg-sms', label: 'Messaging — SMS', group: 'Marketing', icon: MailIcon, to: '/messaging/sms' },
 
   // Finance

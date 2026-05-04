@@ -1,36 +1,67 @@
+import { useEffect, useState } from 'react';
 import { IntegrationStub } from '../marketing/PlaceholderCard';
 import { PageHeader } from '../marketing/_PageHeader';
+import { InboxView } from './_InboxView';
+import { callRpc } from '@/lib/rpc';
+
+interface SecretRow {
+  integration_id: string;
+  key_name: string;
+}
+
+const REQUIRED_KEYS = ['access_token', 'phone_number_id', 'business_account_id', 'webhook_verify_token', 'app_secret'] as const;
 
 export function MessagingWhatsAppPage() {
+  const [configured, setConfigured] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    void callRpc<{ rows: SecretRow[] }>('admin_integration_secrets_list', {})
+      .then((res) => {
+        const wa = (res.rows ?? []).filter((r) => r.integration_id === 'whatsapp_business');
+        const have = new Set(wa.map((r) => r.key_name));
+        setConfigured(REQUIRED_KEYS.every((k) => have.has(k)));
+      })
+      .catch(() => setConfigured(false));
+  }, []);
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="WhatsApp"
-        description="WhatsApp Cloud API — alta taxa de abertura (~80%), ideal para trial-expiring, welcome e reactivation."
+        description="Inbox WhatsApp Cloud API + templates aprovados pra trial-expiring, welcome, support."
       />
-      <IntegrationStub
-        icon="💬"
-        title="WhatsApp Cloud API"
-        description="Mensagens automatizadas via Meta WhatsApp Business Platform — alta taxa de abertura (~80%), ideal pra trial-expiring, welcome e reactivation"
-        steps={[
-          'business.facebook.com → criar WABA (WhatsApp Business Account) dentro do Business Manager',
-          'Adicionar número de telefone dedicado — virtual (~$10/ano) ou portar. NÃO pode ser número com WhatsApp pessoal/business app',
-          'Iniciar Business Verification — Meta pede docs do CNPJ/ABN, leva 3-14 dias de review',
-          'Após verificação: System Users → criar admin → gerar Permanent Access Token com scopes whatsapp_business_messaging + whatsapp_business_management',
-          'Anotar Phone Number ID + Business Account ID (Meta Business Suite → WhatsApp Manager)',
-          'Submeter templates de mensagem pra approval (24-48h Meta review): trial_expiring_v1, welcome_v1, invoice_ready_v1',
-          'Me passa token + phone_number_id + business_account_id — deploy edge fn wa-send + webhook wa-receive',
-        ]}
-        envVars={[
-          'WA_ACCESS_TOKEN',
-          'WA_PHONE_NUMBER_ID',
-          'WA_BUSINESS_ACCOUNT_ID',
-          'WA_VERIFY_TOKEN',
-          'WA_APP_SECRET',
-        ]}
-        ctaLabel="Abrir WhatsApp Manager"
-        ctaHref="https://business.facebook.com/wa/manage"
-      />
+      {configured === null ? (
+        <div className="rounded-lg border border-navy-100 bg-white p-6 text-sm text-navy-500">
+          Verificando configuração…
+        </div>
+      ) : configured ? (
+        <InboxView channel="whatsapp" emptyHint="Nenhuma conversa ainda — aguardando primeiro inbound." />
+      ) : (
+        <IntegrationStub
+          icon="💬"
+          title="WhatsApp Cloud API — configurar credenciais"
+          description="Vá em Settings → Integrations → WhatsApp Business pra colar Access Token + Phone Number ID + WABA ID + Verify Token."
+          steps={[
+            'business.facebook.com → Business Settings → criar WABA dentro do Business Manager',
+            'Adicionar número de telefone dedicado — virtual ou portar. NÃO pode estar em uso no WhatsApp pessoal',
+            'Iniciar Business Verification (CNPJ/ABN docs) — Meta review demora 3-7 dias',
+            'System Users → criar admin → Generate Permanent Access Token (whatsapp_business_messaging + whatsapp_business_management)',
+            'Configurar webhook: URL = https://<seu-projeto>.supabase.co/functions/v1/whatsapp-webhook · Verify Token = string aleatória que você define',
+            'Subscrever campos: messages, message_status',
+            'Settings → Integrations → WhatsApp Business → cole tudo: Access Token, Phone Number ID, WABA ID, Verify Token, App Secret',
+            'Submeter templates pra approval no WA Manager: trial_expiring_v1, welcome_v1, support_reply_v1',
+          ]}
+          envVars={[
+            'access_token (admin_integration_secrets)',
+            'phone_number_id',
+            'business_account_id',
+            'webhook_verify_token',
+            'app_secret',
+          ]}
+          ctaLabel="Abrir WhatsApp Manager"
+          ctaHref="https://business.facebook.com/wa/manage"
+        />
+      )}
     </div>
   );
 }

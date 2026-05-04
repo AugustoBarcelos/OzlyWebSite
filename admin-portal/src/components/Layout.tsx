@@ -160,6 +160,7 @@ function useNavGroups(): ReadonlyArray<NavGroup> {
                 { label: 'ASO (App Store)', to: '/marketing/aso' },
                 { label: 'Email', to: '/messaging/email' },
                 { label: 'WhatsApp', to: '/messaging/whatsapp' },
+                { label: 'Messenger', to: '/messaging/messenger' },
                 { label: 'SMS', to: '/messaging/sms' },
               ],
             },
@@ -273,6 +274,7 @@ function useNavGroups(): ReadonlyArray<NavGroup> {
         children: [
           { label: 'Email', to: '/messaging/email' },
           { label: 'WhatsApp', to: '/messaging/whatsapp' },
+          { label: 'Messenger', to: '/messaging/messenger' },
           { label: 'SMS', to: '/messaging/sms' },
         ],
       });

@@ -135,6 +135,11 @@ const MessagingWhatsAppPage = lazy(() =>
     default: m.MessagingWhatsAppPage,
   })),
 );
+const MessagingMessengerPage = lazy(() =>
+  import('./routes/messaging/messenger').then((m) => ({
+    default: m.MessagingMessengerPage,
+  })),
+);
 const MessagingSmsPage = lazy(() =>
   import('./routes/messaging/sms').then((m) => ({
     default: m.MessagingSmsPage,
@@ -363,6 +368,7 @@ export function App() {
                 {/* Messaging (Marketing > Messaging — kept at /messaging/* for compat) */}
                 <Route path="/messaging/email" element={lazyRoute(MessagingEmailPage)} />
                 <Route path="/messaging/whatsapp" element={lazyRoute(MessagingWhatsAppPage)} />
+                <Route path="/messaging/messenger" element={lazyRoute(MessagingMessengerPage)} />
                 <Route path="/messaging/sms" element={lazyRoute(MessagingSmsPage)} />
 
                 {/* Finance Hub */}

@@ -19,6 +19,7 @@ import {
   InboxIcon,
   MailIcon,
   MegaphoneIcon,
+  MessengerIcon,
   PackageIcon,
   PenSquareIcon,
   ScrollTextIcon,
@@ -202,8 +203,15 @@ export function MarketingHubPage() {
         {
           label: 'WhatsApp',
           to: '/messaging/whatsapp',
-          description: 'Campanhas WhatsApp Business + conversas inbound.',
+          description: 'Inbox WhatsApp Cloud API + templates aprovados.',
           icon: WhatsAppIcon,
+          status: 'parte2',
+        },
+        {
+          label: 'Messenger',
+          to: '/messaging/messenger',
+          description: 'Inbox Facebook Page (24h window + Message Tags).',
+          icon: MessengerIcon,
           status: 'parte2',
         },
         {
