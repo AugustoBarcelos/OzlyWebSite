@@ -118,14 +118,14 @@ const CATEGORY_LABEL: Record<string, string> = {
 const TIER_KEY = 'ozly-admin-supabase-tier';
 
 function loadTier(): SupabaseTier {
-  if (typeof window === 'undefined') return 'pro';
+  if (typeof window === 'undefined') return 'free';
   try {
     const v = window.localStorage.getItem(TIER_KEY);
     if (v === 'free' || v === 'pro' || v === 'team') return v;
   } catch {
     /* ignore */
   }
-  return 'pro';
+  return 'free';
 }
 
 /**
@@ -934,6 +934,35 @@ function AiDrilldown({ overview, ai }: { overview: CostsOverview; ai: AiSummary 
         <code className="font-mono">lib/aiInferenceLog.ts</code> (Gemini Flash:
         $0.075/1M in, $0.30/1M out).
       </div>
+
+      <details className="rounded-md border border-amber-200 bg-amber-50/60 p-3 text-[11px]">
+        <summary className="cursor-pointer text-amber-900 font-medium">
+          Pra incluir chamadas Gemini do app Flutter (clique pra expandir)
+        </summary>
+        <div className="mt-2 space-y-2 text-amber-800">
+          <p>
+            Hoje só o admin-portal loga em{' '}
+            <code className="font-mono">ai_inference_log</code>. Pra o app Flutter
+            também aparecer aqui, depois de cada chamada Gemini no Dart, chame a
+            RPC <code className="font-mono">log_ai_inference_user</code>:
+          </p>
+          <pre className="overflow-x-auto rounded bg-amber-100/50 p-2 font-mono text-[10px] leading-relaxed">{`// Após chamada Gemini no app Flutter:
+await Supabase.instance.client.rpc('log_ai_inference_user', params: {
+  'p_source': 'app_chat',          // ou 'app_compose', etc
+  'p_model': 'gemini-1.5-flash',
+  'p_tokens_in': response.usageMetadata?.promptTokenCount ?? 0,
+  'p_tokens_out': response.usageMetadata?.candidatesTokenCount ?? 0,
+  'p_cost_usd': estimateCost(...),
+  'p_status': 'ok',
+  'p_duration_ms': stopwatch.elapsedMilliseconds,
+});`}</pre>
+          <p>
+            <strong>source</strong> deve começar com <code>app_</code> /{' '}
+            <code>admin_</code> / <code>edge_</code>. <strong>user_id</strong> é
+            preenchido auto via <code>auth.uid()</code> — não tem como falsear.
+          </p>
+        </div>
+      </details>
     </div>
   );
 }
