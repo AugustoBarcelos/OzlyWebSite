@@ -85,6 +85,30 @@ export async function grantPromo(
 }
 
 /**
+ * Revoke ALL promotional entitlements for a user/entitlement.
+ * Rate-limited 10/min per admin (shared bucket with grantPromo).
+ */
+export async function revokePromo(
+  targetUserId: string,
+  entitlement: Entitlement,
+): Promise<ActionResult> {
+  if (!targetUserId) return { success: false, error: 'Missing user id' };
+  if (!VALID_ENTITLEMENTS.has(entitlement)) {
+    return { success: false, error: 'Invalid entitlement' };
+  }
+  try {
+    const data = await callRpc<unknown>('admin_revoke_promo', {
+      p_target: targetUserId,
+      p_entitlement: entitlement,
+    });
+    const auditId = pickAuditId(data);
+    return auditId ? { success: true, audit_id: auditId } : { success: true };
+  } catch (err) {
+    return { success: false, error: toErrorMessage(err) };
+  }
+}
+
+/**
  * Mark the user's profile so the mobile client triggers a full local sync
  * on next foreground. Rate-limited 30/min.
  */

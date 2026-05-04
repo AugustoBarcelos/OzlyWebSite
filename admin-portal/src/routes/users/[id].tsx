@@ -44,6 +44,7 @@ import { DangerZone } from '@/components/DangerZone';
 import { useToast } from '@/components/Toast';
 import {
   grantPromo,
+  revokePromo,
   forceResync,
   softDeleteUser,
   banUser,
@@ -299,6 +300,7 @@ function ActionPanel({
   const [grantEntitlement, setGrantEntitlement] = useState<Entitlement>('pro');
   const [grantDays, setGrantDays] = useState(30);
   const [grantSubmitting, setGrantSubmitting] = useState(false);
+  const [revokeSubmitting, setRevokeSubmitting] = useState(false);
   const [resyncSubmitting, setResyncSubmitting] = useState(false);
   const [exportSubmitting, setExportSubmitting] = useState(false);
 
@@ -345,6 +347,28 @@ function ActionPanel({
       toast({
         variant: 'error',
         title: 'Export failed',
+        description: result.error ?? 'Request failed',
+      });
+    }
+  }
+
+  async function handleRevokePromo() {
+    if (!targetId) return;
+    if (!window.confirm(`Revogar TODOS os promos de "${grantEntitlement}" deste usuário?`)) return;
+    setRevokeSubmitting(true);
+    const result = await revokePromo(targetId, grantEntitlement);
+    setRevokeSubmitting(false);
+    if (result.success) {
+      toast({
+        variant: 'success',
+        title: 'Promo revoked',
+        description: `${grantEntitlement} promotional grants removed`,
+      });
+      onAfterAction();
+    } else {
+      toast({
+        variant: 'error',
+        title: 'Failed to revoke promo',
         description: result.error ?? 'Request failed',
       });
     }
@@ -454,6 +478,16 @@ function ActionPanel({
               </div>
             </div>
           )}
+
+          {/* Revoke promo (revoga TODOS os promos do entitlement selecionado) */}
+          <Button
+            variant="secondary"
+            className="w-full justify-start"
+            disabled={!targetId || revokeSubmitting}
+            onClick={handleRevokePromo}
+          >
+            {revokeSubmitting ? 'Revoking…' : `Revoke promo (${grantEntitlement})`}
+          </Button>
 
           {/* Force resync */}
           <Button
