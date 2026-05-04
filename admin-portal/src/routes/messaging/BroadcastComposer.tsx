@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Card, Text, Title, Badge } from '@tremor/react';
 import { useToast } from '@/components/Toast';
+import { AiSuggestButton } from '@/components/AiSuggestButton';
 import {
   MESSAGING_SEGMENTS,
   createBroadcast,
@@ -151,6 +152,19 @@ export function BroadcastComposer({ channel, disabled, disabledReason, onCreated
             </strong>
           </Text>
         </div>
+
+        {/* AI assist — fills subject + body from a brief */}
+        {!disabled && (
+          <AiSuggestButton
+            source={`broadcast_composer_${channel}`}
+            channel={channel}
+            segmentHint={segment}
+            onAccept={(r) => {
+              if (r.subject !== null) setSubject(r.subject);
+              setBody(r.body);
+            }}
+          />
+        )}
 
         {/* Subject (email only) */}
         {channel === 'msg_email' && (

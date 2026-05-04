@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, Title } from '@tremor/react';
 import { ExternalLinkIcon, SparklesIcon, XIcon } from '@/components/Icons';
@@ -11,6 +11,9 @@ import {
   type MarketingChannel,
 } from '@/lib/marketing';
 import { generateContent, GeminiError, isGeminiConfigured } from '@/lib/gemini';
+
+const VIDEO_MAX_INLINE_BYTES = 20 * 1024 * 1024; // 20 MB Gemini inline cap
+const ALLOWED_VIDEO_MIMES = ['video/mp4', 'video/quicktime', 'video/webm'];
 
 type AiChannel =
   | 'org_instagram'
@@ -81,6 +84,64 @@ NÚMEROS REAIS quando houver: "$14.99 AUD/mês" não "preço acessível".
 IDIOMA: detecte do brief. Suporte PT-BR, EN (Aussie English — "colour" não
 "color"), ES (LATAM neutro, "ustedes" não "vosotros").`;
 
+const SEO_VOICE_AMENDMENT = `# SEO mode (ativo)
+
+Otimize a copy pra discovery orgânica em cada plataforma:
+
+- **Hook com keyword na 1ª linha.** Exemplo IG/TikTok: "Como autônomo na
+  Austrália economizar 4h/mês com BAS automático" (a keyword "BAS automático
+  Austrália autônomo" está toda no hook).
+
+- **YouTube title:** keyword principal nos primeiros 60 caracteres.
+  Description: keyword nos primeiros 125 caracteres (limite do snippet).
+
+- **Hashtags estratégicas (mix obrigatório):**
+   1-2 high-volume (genéricas do nicho — ex: #abnaustralia)
+   4-5 mid-volume (específicas — ex: #tradiebusiness #BASlodgement)
+   2-3 niche/long-tail (ultra-específicas — ex: #AbnHolderTaxTips)
+  Total 7-10 hashtags. Sem #business #entrepreneur genéricas demais.
+
+- **Caption pattern pra Instagram/TikTok:**
+   Hook (com keyword) + Pain (problema concreto) + Solution (Ozly) +
+   CTA (Link na bio / Baixa Ozly) + Hashtags.
+
+- **Long-tail keywords > short-tail.** "ABN tax calculator australia" >
+  "tax calculator". Mostra intenção de busca clara.
+
+- **Evita keyword stuffing.** Se a frase ficar artificial, prefere
+  legibilidade. Google + Meta penalizam stuffing.
+
+- **NUNCA quebre o brand voice.** SEO + brand voice convivem; SEO nunca
+  vence brand voice.`;
+
+function buildSeoBlock(keywords: string): string {
+  const trimmed = keywords.trim();
+  if (!trimmed) {
+    return '\nSEO MODE ATIVO: aplique estratégia de SEO da seção "SEO mode" do system prompt. Pesquise mentalmente quais keywords seriam mais buscadas pelo público-alvo (autônomos AU) pra esse tema e use-as.\n';
+  }
+  return `\nSEO MODE ATIVO: aplique estratégia de SEO da seção "SEO mode" do system prompt.
+
+Keywords-alvo (ordene por relevância, use a primeira no hook): ${trimmed}\n`;
+}
+
+async function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result !== 'string') {
+        reject(new Error('FileReader returned non-string'));
+        return;
+      }
+      // strip "data:video/mp4;base64," prefix
+      const idx = result.indexOf(',');
+      resolve(idx >= 0 ? result.slice(idx + 1) : result);
+    };
+    reader.onerror = () => reject(reader.error ?? new Error('read failed'));
+    reader.readAsDataURL(file);
+  });
+}
+
 interface VariantResult {
   channel: AiChannel;
   text: string;
@@ -104,8 +165,13 @@ export function AiComposerPage() {
   const [brief, setBrief] = useState('');
   const [language, setLanguage] = useState<'pt' | 'en' | 'es'>('pt');
   const [selected, setSelected] = useState<Set<AiChannel>>(new Set(['org_instagram', 'org_tiktok']));
+  const [seoMode, setSeoMode] = useState(false);
+  const [keywords, setKeywords] = useState('');
+  const [video, setVideo] = useState<{ file: File; base64: string; mimeType: string } | null>(null);
+  const [videoLoading, setVideoLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [results, setResults] = useState<VariantResult[]>([]);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   function toggle(ch: AiChannel) {
     setSelected((prev) => {
@@ -116,13 +182,66 @@ export function AiComposerPage() {
     });
   }
 
+  async function handleVideoSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!ALLOWED_VIDEO_MIMES.includes(file.type)) {
+      toast({
+        variant: 'error',
+        title: 'Tipo de vídeo não suportado',
+        description: 'Use MP4, MOV (.mov) ou WebM.',
+      });
+      if (videoInputRef.current) videoInputRef.current.value = '';
+      return;
+    }
+    if (file.size > VIDEO_MAX_INLINE_BYTES) {
+      toast({
+        variant: 'error',
+        title: 'Vídeo passa do limite',
+        description: `Inline máx 20 MB pro Gemini. Seu vídeo tem ${(file.size / 1024 / 1024).toFixed(1)} MB. Encurta ou faz trim antes.`,
+      });
+      if (videoInputRef.current) videoInputRef.current.value = '';
+      return;
+    }
+
+    setVideoLoading(true);
+    try {
+      const base64 = await fileToBase64(file);
+      setVideo({ file, base64, mimeType: file.type });
+      toast({
+        variant: 'success',
+        title: 'Vídeo carregado',
+        description: `${(file.size / 1024 / 1024).toFixed(1)} MB · pronto pra análise.`,
+      });
+    } catch (err) {
+      toast({
+        variant: 'error',
+        title: 'Falha ao ler vídeo',
+        description: err instanceof Error ? err.message : 'Erro desconhecido',
+      });
+    } finally {
+      setVideoLoading(false);
+      if (videoInputRef.current) videoInputRef.current.value = '';
+    }
+  }
+
+  function clearVideo() {
+    setVideo(null);
+    if (videoInputRef.current) videoInputRef.current.value = '';
+  }
+
   async function generate() {
     if (!configured) {
       toast({ variant: 'error', title: 'Gemini não configurado' });
       return;
     }
-    if (!brief.trim()) {
-      toast({ variant: 'error', title: 'Brief obrigatório' });
+    if (!brief.trim() && !video) {
+      toast({
+        variant: 'error',
+        title: 'Brief ou vídeo obrigatório',
+        description: 'Adiciona um texto OU um vídeo (de preferência ambos pra melhor resultado).',
+      });
       return;
     }
     if (selected.size === 0) {
@@ -135,27 +254,40 @@ export function AiComposerPage() {
 
     const targets = [...selected];
     const langLabel = language === 'pt' ? 'PT-BR' : language === 'en' ? 'Aussie English' : 'Espanhol LATAM';
+    const seoBlock = seoMode ? buildSeoBlock(keywords) : '';
+    const videoBlock = video
+      ? `Você recebeu também um VÍDEO em anexo. Antes de gerar a copy:
+1. Identifica o que está sendo mostrado/dito (visual + áudio se houver).
+2. Tira o ponto principal — o "hook" é o primeiro segundo + o que fica memorável.
+3. Use isso como base pra copy. A copy deve REFLETIR o conteúdo do vídeo, não inventar coisa que não tá lá.
+`
+      : '';
 
     const promises = targets.map(async (ch): Promise<VariantResult> => {
       const channelLabel = CHANNEL_LABELS[ch as MarketingChannel] ?? ch;
       const rules = CHANNEL_RULES[ch];
-      const userPrompt = `Brief: ${brief.trim()}
+      const userPrompt = `${videoBlock}Brief: ${brief.trim() || '(use só o vídeo como referência)'}
 
 Idioma: ${langLabel}
 Canal: ${channelLabel}
 Regras do canal: ${rules}
-
+${seoBlock}
 Gere a copy seguindo TODAS as regras do canal e o brand voice. Responda APENAS com a copy final, sem comentários, sem prefixos do tipo "Aqui está:" ou "Resposta:".`;
 
       try {
+        // Use Pro for video analysis (Flash struggles with multi-modal nuance)
+        const useVideoModel = video !== null;
         const r = await generateContent({
           source: 'admin_ai_composer',
-          model: 'gemini-1.5-flash',
-          system: BRAND_VOICE,
+          model: useVideoModel ? 'gemini-1.5-pro' : 'gemini-1.5-flash',
+          system: seoMode ? `${BRAND_VOICE}\n\n${SEO_VOICE_AMENDMENT}` : BRAND_VOICE,
           prompt: userPrompt,
+          ...(video
+            ? { inlineData: [{ mimeType: video.mimeType, data: video.base64 }] }
+            : {}),
           config: {
-            temperature: 0.8,
-            maxOutputTokens: 800,
+            temperature: seoMode ? 0.6 : 0.8,
+            maxOutputTokens: 1000,
           },
         });
         return {
@@ -293,7 +425,7 @@ Gere a copy seguindo TODAS as regras do canal e o brand voice. Responda APENAS c
         <div className="mt-3 space-y-3">
           <div>
             <label className="text-[10px] font-semibold uppercase tracking-wider text-navy-400">
-              Conta o que você quer comunicar
+              Conta o que você quer comunicar (ou só anexa o vídeo abaixo)
             </label>
             <textarea
               value={brief}
@@ -302,6 +434,109 @@ Gere a copy seguindo TODAS as regras do canal e o brand voice. Responda APENAS c
               placeholder='ex: "Lançamento da feature de cálculo automático de GST. Diferencial: economiza 4h/mês. Audiência: tradies que cobram com ABN. CTA: baixar app grátis."'
               className="mt-1 w-full rounded-md border border-navy-100 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
             />
+          </div>
+
+          {/* Video upload */}
+          <div>
+            <label className="text-[10px] font-semibold uppercase tracking-wider text-navy-400">
+              Vídeo (opcional — Gemini analisa o conteúdo)
+            </label>
+            {video ? (
+              <div className="mt-1 flex items-center gap-3 rounded-md border border-navy-100 bg-navy-50/40 p-2.5">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded bg-navy-100 text-2xl">
+                  🎬
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-medium text-navy-700">
+                    {video.file.name}
+                  </div>
+                  <div className="text-[11px] text-navy-400">
+                    {(video.file.size / 1024 / 1024).toFixed(1)} MB ·{' '}
+                    {video.mimeType.replace('video/', '')} · pronto
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={clearVideo}
+                  className="rounded-md border border-navy-100 bg-white px-2 py-1 text-xs text-rose-600 hover:border-rose-300 hover:bg-rose-50"
+                >
+                  Remover
+                </button>
+              </div>
+            ) : (
+              <div className="mt-1 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => videoInputRef.current?.click()}
+                  disabled={videoLoading}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-md border border-dashed border-navy-200 bg-white px-3 py-3 text-sm text-navy-500 hover:border-brand-400 hover:text-brand-700 disabled:opacity-50"
+                >
+                  {videoLoading ? (
+                    <>
+                      <Spinner size="sm" /> Lendo vídeo…
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-base">🎬</span>
+                      <span>Selecionar vídeo (até 20 MB · MP4/MOV/WebM)</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+            <input
+              ref={videoInputRef}
+              type="file"
+              accept="video/mp4,video/quicktime,video/webm"
+              onChange={(e) => void handleVideoSelect(e)}
+              className="hidden"
+            />
+            <p className="mt-1 text-[10px] text-navy-400">
+              Quando há vídeo, usamos Gemini Pro (analisa visual + áudio). Custo
+              ~$0.001 por vídeo curto. Acima de 20 MB, dá trim primeiro — Gemini
+              inline tem cap nesse tamanho.
+            </p>
+          </div>
+
+          {/* SEO toggle + keywords */}
+          <div className="rounded-md border border-navy-100 bg-white p-3">
+            <label className="flex cursor-pointer items-start gap-2.5">
+              <input
+                type="checkbox"
+                checked={seoMode}
+                onChange={(e) => setSeoMode(e.target.checked)}
+                className="mt-0.5 h-4 w-4 cursor-pointer accent-brand-500"
+              />
+              <span className="flex-1">
+                <span className="block text-sm font-medium text-navy-700">
+                  Modo SEO
+                </span>
+                <span className="block text-[11px] text-navy-400">
+                  Otimiza copy pra discovery orgânica: hook com keyword, hashtag mix
+                  estratégico (high+mid+niche), title YouTube com keyword nos
+                  primeiros 60 chars, description nos primeiros 125 chars.
+                </span>
+              </span>
+            </label>
+            {seoMode && (
+              <div className="mt-3 pl-6">
+                <label className="text-[10px] font-semibold uppercase tracking-wider text-navy-400">
+                  Keywords-alvo (opcional — separa por vírgula)
+                </label>
+                <input
+                  type="text"
+                  value={keywords}
+                  onChange={(e) => setKeywords(e.target.value)}
+                  placeholder="ex: BAS automático Australia, ABN tax calculator, tradie tax tips"
+                  className="mt-1 w-full rounded-md border border-navy-100 bg-white px-2 py-1.5 text-sm focus:border-brand-500 focus:outline-none"
+                />
+                <p className="mt-1 text-[10px] text-navy-400">
+                  Se deixar vazio, Gemini infere as keywords mais relevantes do
+                  brief/vídeo. Long-tail (ex: "ABN tax calculator australia")
+                  funciona melhor que short-tail.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">
@@ -374,7 +609,12 @@ Gere a copy seguindo TODAS as regras do canal e o brand voice. Responda APENAS c
             <button
               type="button"
               onClick={() => void generate()}
-              disabled={!configured || generating || !brief.trim() || selected.size === 0}
+              disabled={
+                !configured ||
+                generating ||
+                (!brief.trim() && !video) ||
+                selected.size === 0
+              }
               className="rounded-md bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-600 disabled:opacity-50"
             >
               {generating ? (
@@ -466,8 +706,17 @@ Gere a copy seguindo TODAS as regras do canal e o brand voice. Responda APENAS c
         page="ai-composer"
         sources={[
           {
-            rpc: 'gemini-1.5-flash:generateContent',
-            params: { brief, language, channels: [...selected] },
+            rpc: video ? 'gemini-1.5-pro:generateContent' : 'gemini-1.5-flash:generateContent',
+            params: {
+              brief,
+              language,
+              channels: [...selected],
+              seoMode,
+              keywords: seoMode ? keywords : undefined,
+              video: video
+                ? { name: video.file.name, mime: video.mimeType, size_mb: Number((video.file.size / 1024 / 1024).toFixed(2)) }
+                : null,
+            },
             data: results,
             ...(configured ? {} : { note: 'Gemini key not configured' }),
           },
