@@ -300,7 +300,6 @@ function ActionPanel({
   const [grantEntitlement, setGrantEntitlement] = useState<Entitlement>('pro');
   const [grantDays, setGrantDays] = useState(30);
   const [grantSubmitting, setGrantSubmitting] = useState(false);
-  const [revokeSubmitting, setRevokeSubmitting] = useState(false);
   const [resyncSubmitting, setResyncSubmitting] = useState(false);
   const [exportSubmitting, setExportSubmitting] = useState(false);
 
@@ -347,28 +346,6 @@ function ActionPanel({
       toast({
         variant: 'error',
         title: 'Export failed',
-        description: result.error ?? 'Request failed',
-      });
-    }
-  }
-
-  async function handleRevokePromo() {
-    if (!targetId) return;
-    if (!window.confirm(`Revogar TODOS os promos de "${grantEntitlement}" deste usuário?`)) return;
-    setRevokeSubmitting(true);
-    const result = await revokePromo(targetId, grantEntitlement);
-    setRevokeSubmitting(false);
-    if (result.success) {
-      toast({
-        variant: 'success',
-        title: 'Promo revoked',
-        description: `${grantEntitlement} promotional grants removed`,
-      });
-      onAfterAction();
-    } else {
-      toast({
-        variant: 'error',
-        title: 'Failed to revoke promo',
         description: result.error ?? 'Request failed',
       });
     }
@@ -478,16 +455,6 @@ function ActionPanel({
               </div>
             </div>
           )}
-
-          {/* Revoke promo (revoga TODOS os promos do entitlement selecionado) */}
-          <Button
-            variant="secondary"
-            className="w-full justify-start"
-            disabled={!targetId || revokeSubmitting}
-            onClick={handleRevokePromo}
-          >
-            {revokeSubmitting ? 'Revoking…' : `Revoke promo (${grantEntitlement})`}
-          </Button>
 
           {/* Force resync */}
           <Button
@@ -612,6 +579,41 @@ export function User360Page() {
     },
     []
   );
+
+  const { toast: pageToast } = useToast();
+  const [revokingEntitlement, setRevokingEntitlement] = useState<Entitlement | null>(null);
+
+  // Per-grant revoke handler (rendered next to each manual grant row).
+  // Note: RC API only supports entitlement-level revoke (not per-grant). So
+  // clicking Revoke on any single row removes ALL promotional grants for that
+  // entitlement on this user. The toast wording and confirm prompt make that
+  // explicit.
+  async function handlePerGrantRevoke(entitlement: Entitlement) {
+    if (!id) return;
+    if (!window.confirm(
+      `Revogar TODOS os promos de "${entitlement.toUpperCase()}" deste usuário?\n\n` +
+      `RC só permite revoke a nível de entitlement (não por grant individual).`,
+    )) return;
+    setRevokingEntitlement(entitlement);
+    const result = await revokePromo(id, entitlement);
+    setRevokingEntitlement(null);
+    if (result.success) {
+      pageToast({
+        variant: 'success',
+        title: 'Promo revoked',
+        description: `Todos os promos de ${entitlement.toUpperCase()} removidos. Snapshot atualiza no próximo sync.`,
+      });
+      void fetchUser(id, piiRevealed).then((p) => setData(p));
+      void callRpc<UserGrantsPayload>('admin_user_grants', { p_target: id })
+        .then(setGrants).catch(() => null);
+    } else {
+      pageToast({
+        variant: 'error',
+        title: 'Failed to revoke promo',
+        description: result.error ?? 'Request failed',
+      });
+    }
+  }
 
   // Initial load + reload when `id` param changes.
   useEffect(() => {
@@ -1105,20 +1107,35 @@ export function User360Page() {
                       </Text>
                       {grants && grants.admin_grants.length > 0 ? (
                         <div className="space-y-1.5">
-                          {grants.admin_grants.map((g) => (
-                            <div
-                              key={g.id}
-                              className="flex items-center justify-between rounded-md border border-navy-50 bg-white px-3 py-2 text-xs"
-                            >
-                              <span className="font-medium text-navy-700">
-                                {(g.entitlement ?? 'pro').toUpperCase()}
-                                {g.days ? ` · ${g.days}d` : ''}
-                              </span>
-                              <span className="text-navy-300">
-                                {formatRelative(g.granted_at)}
-                              </span>
-                            </div>
-                          ))}
+                          {grants.admin_grants.map((g) => {
+                            const ent = (g.entitlement ?? 'pro') as Entitlement;
+                            const isRevoking = revokingEntitlement === ent;
+                            return (
+                              <div
+                                key={g.id}
+                                className="flex items-center justify-between rounded-md border border-navy-50 bg-white px-3 py-2 text-xs"
+                              >
+                                <span className="font-medium text-navy-700">
+                                  {ent.toUpperCase()}
+                                  {g.days ? ` · ${g.days}d` : ''}
+                                </span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-navy-300">
+                                    {formatRelative(g.granted_at)}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handlePerGrantRevoke(ent)}
+                                    disabled={isRevoking}
+                                    title={`Revoga TODOS os promos de ${ent.toUpperCase()} deste usuário (limitação RC API)`}
+                                    className="rounded border border-rose-200 bg-white px-2 py-0.5 text-[11px] font-medium text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                  >
+                                    {isRevoking ? '...' : 'Revoke'}
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       ) : (
                         <div className="text-xs text-navy-400">
