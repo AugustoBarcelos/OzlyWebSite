@@ -136,7 +136,7 @@ function useNavGroups(): ReadonlyArray<NavGroup> {
               to: '/growth',
               children: [
                 { label: 'Hub', to: '/growth', end: true },
-                { label: 'Sales Funnel', to: '/growth/funnel', icon: FunnelIcon, soon: true },
+                { label: 'Sales Funnel', to: '/growth/funnel', icon: FunnelIcon },
                 { label: 'Insights (GA4)', to: '/insights' },
                 { label: 'Google Ads', to: '/ads/google' },
                 { label: 'Meta Ads', to: '/ads/meta' },

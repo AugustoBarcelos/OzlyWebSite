@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Title } from '@tremor/react';
 import { callRpc } from '@/lib/rpc';
+import { callEdge } from '@/lib/edge';
 import { Spinner } from '@/components/Spinner';
+import { useToast } from '@/components/Toast';
 
 interface GrantRecent {
   id: string;
@@ -84,9 +86,12 @@ function HealthBadge({ tone, label }: { tone: 'green' | 'amber' | 'red'; label: 
 }
 
 export function SystemHealthPage() {
+  const { toast } = useToast();
   const [data, setData] = useState<HealthPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [forceSyncing, setForceSyncing] = useState(false);
+  const [testingWebhook, setTestingWebhook] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -98,6 +103,45 @@ export function SystemHealthPage() {
       setError(e instanceof Error ? e.message : 'Failed to load');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleForceSync() {
+    setForceSyncing(true);
+    const r = await callEdge<{ success?: boolean; updated?: number }>('revenuecat-sync', {
+      method: 'POST',
+      body: {},  // empty = sync all active subs
+    });
+    setForceSyncing(false);
+    if (r.ok) {
+      toast({ variant: 'success', title: 'RC sync queued', description: `Synced. Refresh in 5-10s.` });
+      setTimeout(load, 5000);
+    } else {
+      toast({ variant: 'error', title: 'Force sync failed', description: r.error });
+    }
+  }
+
+  async function handleTestWebhook() {
+    setTestingWebhook(true);
+    const r = await callEdge<{ ok: boolean; upstream_status: number; upstream_body: unknown; elapsed_ms: number }>(
+      'admin-test-webhook',
+      { method: 'POST', body: {} },
+    );
+    setTestingWebhook(false);
+    if (r.ok && r.data.ok) {
+      toast({
+        variant: 'success',
+        title: `Webhook OK (${r.data.upstream_status})`,
+        description: `Round-trip ${r.data.elapsed_ms}ms. Webhook auth + processing path verificado.`,
+      });
+    } else {
+      const status = r.ok ? r.data.upstream_status : r.status;
+      const body = r.ok ? JSON.stringify(r.data.upstream_body).slice(0, 200) : r.error;
+      toast({
+        variant: 'error',
+        title: `Webhook FAIL (${status})`,
+        description: body,
+      });
     }
   }
 
@@ -227,9 +271,29 @@ export function SystemHealthPage() {
             <div className="text-lg font-semibold text-rose-700">{data.rc_sync.stale_active_count}</div>
           </div>
         </div>
+        <div className="mt-3 flex gap-2">
+          <button
+            type="button"
+            onClick={handleTestWebhook}
+            disabled={testingWebhook}
+            className="rounded-md border border-navy-200 bg-white px-3 py-1.5 text-xs font-medium text-navy-700 hover:bg-navy-50 disabled:opacity-50"
+            title="POST sintético no nosso webhook com auth correta — testa edge fn + auth secret + processing"
+          >
+            {testingWebhook ? 'Testing…' : 'Test webhook'}
+          </button>
+          <button
+            type="button"
+            onClick={handleForceSync}
+            disabled={forceSyncing}
+            className="rounded-md border border-navy-200 bg-white px-3 py-1.5 text-xs font-medium text-navy-700 hover:bg-navy-50 disabled:opacity-50"
+            title="Pull state real da RC + atualiza todos snapshots ativos. Pode demorar alguns segundos."
+          >
+            {forceSyncing ? 'Syncing…' : 'Force RC sync'}
+          </button>
+        </div>
         {rcHealth === 'red' && (
           <p className="mt-2 text-xs text-rose-600">
-            Webhook não está processando. Confere RC dashboard → Integrations → Ozly Supabase webhook.
+            Webhook não está processando. Tenta <strong>Test webhook</strong> acima — se vier 200, RC está atrasado em retentar; se 401, secret mismatch.
           </p>
         )}
       </section>
