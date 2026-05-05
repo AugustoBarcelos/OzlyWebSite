@@ -364,10 +364,15 @@ export function AffiliateDetailPanel({
           )}
         </ul>
 
-        <div className="mt-3 rounded-md bg-navy-50/60 px-3 py-2 text-[11px] text-navy-500">
-          ⚙️ Detecção automática (Phase 2): pg_cron checa users de cada conv
-          que cruzaram 3/6/12m e ainda estão ativos no RC. Por enquanto a
-          estrutura fica salva mas o pagamento é registrado manualmente.
+        <div className="mt-3 rounded-md bg-emerald-50/60 px-3 py-2 text-[11px] text-emerald-700">
+          ✅ <strong>Detecção automática ativa</strong> — pg_cron roda diariamente às 03:00 UTC
+          (job <code className="rounded bg-white px-1 py-0.5">affiliate_retention_milestones</code>),
+          checa users que cruzaram 3/6/12m ativos no RC, e cria os
+          milestone_payouts automaticamente. Eles aparecem no painel "Pagar
+          agora" do afiliado. <br/>
+          Você só precisa fazer 2 coisas manualmente: <strong>(1)</strong> transferir o
+          valor (banco/PayPal/PIX) e <strong>(2)</strong> clicar em "Marcar como pago" pra
+          registrar.
         </div>
       </Card>
 

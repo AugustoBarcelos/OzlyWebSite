@@ -106,10 +106,10 @@ export function RetentionBonusEditor({
         (base + 3 milestones). Se cliente churna antes, paga só até onde chegou.
       </div>
 
-      <div className="rounded-md bg-navy-50/60 px-3 py-2 text-[11px] text-navy-500">
-        ⚙️ Phase 2: detecção automática via pg_cron (chega aos 3/6/12 meses,
-        verifica se user ainda assinante, registra bonus). Por enquanto a
-        estrutura fica salva mas o pagamento é manual.
+      <div className="rounded-md bg-emerald-50/60 px-3 py-2 text-[11px] text-emerald-700">
+        ✅ <strong>Cron ativo</strong> — diário 03:00 UTC, detecta milestones
+        automaticamente e cria payout entry. Você só precisa transferir o valor
+        e marcar como pago no detail do afiliado.
       </div>
     </div>
   );
