@@ -72,9 +72,13 @@ interface JobsPayload {
   body: { jobs?: Job[]; total_count?: number };
 }
 
-const REPO = 'AugustoBarcelos/OzlyWebSite';
+const REPOS = [
+  { id: 'AugustoBarcelos/OzlyWebSite', label: 'Ozly Web (admin + site público)' },
+  { id: 'AugustoBarcelos/AusClean', label: 'AusClean (Flutter app + Supabase)' },
+];
 
 export function TechCICDPage() {
+  const [repo, setRepo] = useState<string>('AugustoBarcelos/OzlyWebSite');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
@@ -88,8 +92,10 @@ export function TechCICDPage() {
     (async () => {
       setLoading(true);
       setError(null);
+      setSelectedRun(null);
+      setJobs([]);
       const r = await callEdge<SummaryPayload>('github-actions-proxy', {
-        query: { op: 'summary' },
+        query: { op: 'summary', repo },
       });
       if (cancel) return;
       if (!r.ok) {
@@ -106,7 +112,7 @@ export function TechCICDPage() {
     return () => {
       cancel = true;
     };
-  }, []);
+  }, [repo]);
 
   const stats = useMemo(() => {
     const total = runs.length;
@@ -123,7 +129,7 @@ export function TechCICDPage() {
     setJobsLoading(true);
     setJobs([]);
     const r = await callEdge<JobsPayload>('github-actions-proxy', {
-      query: { op: 'jobs', run: String(run.id) },
+      query: { op: 'jobs', run: String(run.id), repo },
     });
     if (r.ok) {
       setJobs(r.data.body.jobs ?? []);
@@ -149,16 +155,32 @@ export function TechCICDPage() {
               CI/CD — GitHub Actions
             </h1>
             <p className="mt-0.5 text-sm text-navy-400">
-              Workflow runs em <code className="font-mono text-[12px]">{REPO}</code>. Read-only via PAT no servidor.
+              Workflow runs em <code className="font-mono text-[12px]">{repo}</code>. Read-only via PAT no servidor.
             </p>
           </div>
         </div>
-        <Link
-          to="/tech"
-          className="self-start rounded-md border border-navy-100 bg-white px-3 py-1.5 text-xs font-medium text-navy-600 transition-colors hover:border-brand-200 hover:text-brand-700 md:self-end"
-        >
-          ← Tech Hub
-        </Link>
+        <div className="flex flex-wrap items-center gap-2 self-start md:self-end">
+          <label className="flex items-center gap-2 rounded-md border border-navy-100 bg-white px-2.5 py-1.5 text-xs text-navy-600 shadow-sm">
+            <span className="font-semibold uppercase tracking-wider text-navy-400">Repo</span>
+            <select
+              value={repo}
+              onChange={(e) => setRepo(e.target.value)}
+              className="cursor-pointer bg-transparent pr-1 text-xs font-medium text-navy-700 focus:outline-none"
+            >
+              {REPOS.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <Link
+            to="/tech"
+            className="rounded-md border border-navy-100 bg-white px-3 py-1.5 text-xs font-medium text-navy-600 transition-colors hover:border-brand-200 hover:text-brand-700"
+          >
+            ← Tech Hub
+          </Link>
+        </div>
       </header>
 
       {error && (
@@ -194,7 +216,7 @@ export function TechCICDPage() {
         <div className="flex items-center justify-between">
           <Title className="!text-sm !font-semibold text-navy-700">Recent runs</Title>
           <a
-            href={`https://github.com/${REPO}/actions`}
+            href={`https://github.com/${repo}/actions`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1 rounded-md border border-navy-100 bg-white px-2 py-1 text-xs font-medium text-navy-600 hover:border-brand-300 hover:text-brand-700"

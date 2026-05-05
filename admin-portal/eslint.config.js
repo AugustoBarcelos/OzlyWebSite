@@ -15,6 +15,7 @@ export default [
       'dist/**',
       'dist-node-types/**',
       'node_modules/**',
+      'supabase/**',
       '*.config.js',
       '*.config.ts',
     ],
