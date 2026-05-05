@@ -74,7 +74,8 @@ const STAGES: ReadonlyArray<Stage> = [
 ];
 
 export function SalesFunnelPage() {
-  const { periodDays } = useGlobalFilters();
+  const { filters, periodDays } = useGlobalFilters();
+  const channel = filters.channel;
   const [data, setData] = useState<AcquisitionOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -85,6 +86,7 @@ export function SalesFunnelPage() {
     setError(null);
     callRpc<AcquisitionOverview>('admin_acquisition_overview', {
       p_period_days: periodDays,
+      p_channel: channel === 'all' ? null : channel,
     })
       .then((result) => {
         if (cancelled) return;
@@ -118,7 +120,7 @@ export function SalesFunnelPage() {
     return () => {
       cancelled = true;
     };
-  }, [periodDays]);
+  }, [periodDays, channel]);
 
   const funnelRows = useMemo(() => {
     if (!data) return [];
@@ -168,6 +170,14 @@ export function SalesFunnelPage() {
       </header>
 
       <GlobalFilterBar show={['period', 'channel', 'plan']} />
+
+      {channel !== 'all' && (
+        <div className="ozly-card border-brand-200 bg-brand-50/60 p-3 text-xs text-brand-700">
+          <strong>Filtrado por canal:</strong> {channel} — funil mostra só users
+          com first-touch UTM <code className="font-mono">utm_source={channel}</code>
+          {' '}e (se aplicável) spend de <code className="font-mono">paid_{channel}</code>.
+        </div>
+      )}
 
       {error && (
         <div className="ozly-card border-amber-200 bg-amber-50/60 p-3 text-xs text-amber-700">
@@ -375,7 +385,10 @@ export function SalesFunnelPage() {
         sources={[
           {
             rpc: 'admin_acquisition_overview',
-            params: { p_period_days: periodDays },
+            params: {
+              p_period_days: periodDays,
+              p_channel: channel === 'all' ? null : channel,
+            },
             data,
             ...(error ? { note: error } : {}),
           },

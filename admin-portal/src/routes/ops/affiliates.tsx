@@ -148,6 +148,7 @@ export function AffiliatesPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<AffiliateRow | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [opening, setOpening] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'active' | 'pending_payout'>('all');
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState<
@@ -236,6 +237,34 @@ export function AffiliatesPage() {
       });
     } finally {
       setDeleting(null);
+    }
+  }
+
+  async function openAsAffiliate(row: AffiliateRow) {
+    setOpening(row.id);
+    try {
+      const result = await callRpc<{
+        ok: boolean;
+        reason?: string;
+        magic_url?: string;
+      }>('admin_open_affiliate_dashboard', { p_code: row.code });
+      if (!result.ok || !result.magic_url) {
+        toast({
+          variant: 'error',
+          title: 'Não consegui entrar',
+          description: result.reason ?? 'unknown',
+        });
+        return;
+      }
+      window.open(result.magic_url, '_blank', 'noopener,noreferrer');
+    } catch (e) {
+      toast({
+        variant: 'error',
+        title: 'Failed to open dashboard',
+        description: e instanceof RpcError ? e.message : 'Unknown error',
+      });
+    } finally {
+      setOpening(null);
     }
   }
 
@@ -714,6 +743,18 @@ export function AffiliatesPage() {
                               className="rounded-md border border-navy-100 bg-white px-2 py-1 text-xs font-medium text-rose-600 hover:border-rose-300 hover:bg-rose-50 disabled:opacity-50"
                             >
                               {deleting === a.id ? '…' : 'Del'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                void openAsAffiliate(a);
+                              }}
+                              disabled={opening === a.id}
+                              aria-label={`Entrar como ${a.code}`}
+                              title="Entrar no dashboard /me/CODE como o afiliado (magic link 5min, audit logged)"
+                              className="rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-800 hover:border-amber-500 hover:bg-amber-100 disabled:opacity-50"
+                            >
+                              {opening === a.id ? '…' : '🔑'}
                             </button>
                             <button
                               type="button"

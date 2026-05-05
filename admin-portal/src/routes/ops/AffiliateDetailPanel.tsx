@@ -481,6 +481,17 @@ export function AffiliateDetailPanel({
               <ExternalLinkIcon className="h-3 w-3" />
               Abrir landing pública
             </a>
+            <a
+              href={`https://ozly.au/me/${code}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Abre /me/CODE em outra aba — vai pedir magic link por email"
+              className="inline-flex items-center justify-center gap-1.5 rounded-md border border-navy-200 bg-white px-3 py-1.5 text-xs font-semibold text-navy-700 hover:border-brand-300 hover:text-brand-700"
+            >
+              <ExternalLinkIcon className="h-3 w-3" />
+              Dashboard dela ({`/me/${code}`})
+            </a>
+            <ImpersonateAffiliateButton code={code} />
             {phone && (
               <a
                 href={`https://wa.me/${phone.replace(/[^0-9+]/g, '').replace(/^\+/, '')}?text=${encodeURIComponent(buildWhatsAppOnboarding(code, name ?? code, shareUrl))}`}
@@ -634,4 +645,50 @@ export function affiliateRelativeActivity(
   if (last_signup_at) parts.push(`signup ${formatRelativeTime(last_signup_at)}`);
   if (last_paid_at) parts.push(`pago ${formatRelativeTime(last_paid_at)}`);
   return parts.join(' · ') || 'sem atividade';
+}
+
+function ImpersonateAffiliateButton({ code }: { code: string }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleClick() {
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await callRpc<{
+        ok: boolean;
+        reason?: string;
+        magic_url?: string;
+      }>('admin_open_affiliate_dashboard', { p_code: code });
+      if (!result.ok || !result.magic_url) {
+        setError(result.reason ?? 'unknown');
+        return;
+      }
+      window.open(result.magic_url, '_blank', 'noopener,noreferrer');
+    } catch (e) {
+      setError(e instanceof RpcError ? e.message : 'rpc_failed');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={handleClick}
+        disabled={busy}
+        title="Gera magic link de 5min e abre o dashboard logado como o afiliado. Cada uso fica no admin_audit_log."
+        className="inline-flex items-center justify-center gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 hover:border-amber-500 hover:bg-amber-100 disabled:opacity-50"
+      >
+        <span>🔑</span>
+        {busy ? 'Gerando link...' : 'Entrar como afiliado'}
+      </button>
+      {error && (
+        <span className="text-center text-[11px] text-rose-600">
+          Falhou: {error}
+        </span>
+      )}
+    </>
+  );
 }
