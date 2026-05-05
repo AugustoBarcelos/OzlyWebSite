@@ -110,6 +110,7 @@ const ALL_COMMANDS: CommandItem[] = [
 
   // Tech
   { id: 'tech-reliability', label: 'Reliability', group: 'Tech', icon: ShieldCheckIcon, to: '/reliability', keywords: ['errors', 'uptime'] },
+  { id: 'tech-system-health', label: 'System Health', group: 'Tech', icon: ShieldCheckIcon, to: '/reliability/system-health', keywords: ['grants', 'rc sync', 'referrals', 'webhook', 'qr', 'trial', 'signups'] },
   { id: 'tech-errors', label: 'Errors (Sentry/Crashlytics)', group: 'Tech', icon: BellIcon, to: '/tech/errors' },
   { id: 'tech-edge', label: 'Edge Functions', group: 'Tech', icon: ServerIcon, to: '/tech/edge-functions' },
   { id: 'tech-database', label: 'Database', group: 'Tech', icon: ServerIcon, to: '/tech/database' },
