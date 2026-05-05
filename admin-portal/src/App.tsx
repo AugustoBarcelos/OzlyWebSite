@@ -55,6 +55,9 @@ const ReliabilityPage = lazy(() =>
 const SystemHealthPage = lazy(() =>
   import('./routes/reliability/SystemHealthPage').then((m) => ({ default: m.SystemHealthPage })),
 );
+const CompliancePage = lazy(() =>
+  import('./routes/reliability/CompliancePage').then((m) => ({ default: m.CompliancePage })),
+);
 const SettingsPage = lazy(() =>
   import('./routes/settings').then((m) => ({ default: m.SettingsPage })),
 );
@@ -415,6 +418,7 @@ export function App() {
                 <Route path="/tech/cicd" element={lazyRoute(TechCICDPage)} />
                 <Route path="/reliability" element={lazyRoute(ReliabilityPage)} />
                 <Route path="/reliability/system-health" element={lazyRoute(SystemHealthPage)} />
+                <Route path="/reliability/compliance" element={lazyRoute(CompliancePage)} />
 
                 {/* Help / Glossary */}
                 <Route path="/help/glossary" element={lazyRoute(GlossaryPage)} />

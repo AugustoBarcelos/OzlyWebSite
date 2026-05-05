@@ -226,6 +226,7 @@ function useNavGroups(): ReadonlyArray<NavGroup> {
                 { label: 'Errors', to: '/tech/errors' },
                 { label: 'Reliability', to: '/reliability', icon: ShieldCheckIcon },
                 { label: 'System Health', to: '/reliability/system-health' },
+                { label: 'Compliance', to: '/reliability/compliance' },
                 { label: 'Edge Functions', to: '/tech/edge-functions' },
                 { label: 'Database', to: '/tech/database' },
                 { label: 'Cron Jobs', to: '/tech/cron' },
