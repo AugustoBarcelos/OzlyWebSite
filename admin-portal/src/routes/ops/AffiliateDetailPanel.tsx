@@ -48,6 +48,31 @@ interface FunnelResponse {
   steps: FunnelStep[];
 }
 
+interface BucketCounts {
+  total: number;
+  active: number;
+  churned: number;
+}
+
+interface RetentionBucketsResponse {
+  affiliate_id: string;
+  generated_at: string;
+  buckets: {
+    lt_1m: BucketCounts;
+    m_1_3: BucketCounts;
+    m_3_6: BucketCounts;
+    m_6_12: BucketCounts;
+    m_12_plus: BucketCounts;
+  };
+  approaching: { months_3: number; months_6: number; months_12: number };
+  milestones: {
+    total_pending_cents: number;
+    total_paid_cents: number;
+    count_pending: number;
+    count_paid: number;
+  };
+}
+
 interface TimeseriesPoint {
   date: string;
   signups: number;
@@ -127,6 +152,7 @@ export function AffiliateDetailPanel({
   const [period, setPeriod] = useState<Period>(30);
   const [funnel, setFunnel] = useState<FunnelResponse | null>(null);
   const [timeseries, setTimeseries] = useState<TimeseriesResponse | null>(null);
+  const [retention, setRetention] = useState<RetentionBucketsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -144,11 +170,15 @@ export function AffiliateDetailPanel({
         p_affiliate_id: affiliateId,
         p_period_days: period,
       }),
+      callRpc<RetentionBucketsResponse>('admin_affiliate_retention_buckets', {
+        p_affiliate_id: affiliateId,
+      }),
     ])
-      .then(([f, t]) => {
+      .then(([f, t, r]) => {
         if (!alive) return;
         setFunnel(f);
         setTimeseries(t);
+        setRetention(r);
       })
       .catch((e: unknown) => {
         if (!alive) return;
@@ -374,6 +404,62 @@ export function AffiliateDetailPanel({
           valor (banco/PayPal/PIX) e <strong>(2)</strong> clicar em "Marcar como pago" pra
           registrar.
         </div>
+
+        {/* ─── Distribuição de clientes por idade ───────────────────────── */}
+        {retention && (
+          <div className="mt-4 border-t border-navy-100 pt-4">
+            <Text className="mb-2 text-xs font-semibold uppercase tracking-wide text-navy-600">
+              Distribuição de clientes (ativo / churned)
+            </Text>
+            <div className="grid grid-cols-5 gap-2">
+              {([
+                ['lt_1m',     '<1m'],
+                ['m_1_3',     '1–3m'],
+                ['m_3_6',     '3–6m'],
+                ['m_6_12',    '6–12m'],
+                ['m_12_plus', '12m+'],
+              ] as const).map(([key, label]) => {
+                const b = retention.buckets[key];
+                return (
+                  <div
+                    key={key}
+                    className="rounded-md border border-navy-100 bg-white p-2 text-center"
+                  >
+                    <div className="text-[10px] uppercase text-navy-400">{label}</div>
+                    <div className="mt-1 text-lg font-semibold text-emerald-600">{b.active}</div>
+                    {b.churned > 0 && (
+                      <div className="text-[10px] text-rose-500">+{b.churned} churned</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Próximos milestones a cair (próximos 30 dias) */}
+            <div className="mt-3 rounded-md bg-amber-50/60 px-3 py-2 text-[11px] text-amber-800">
+              ⏳ <strong>Próximos 30d</strong> — clientes ativos prestes a cruzar milestone:{' '}
+              <strong>{retention.approaching.months_3}</strong> chegando aos <strong>3m</strong>
+              {' · '}
+              <strong>{retention.approaching.months_6}</strong> chegando aos <strong>6m</strong>
+              {' · '}
+              <strong>{retention.approaching.months_12}</strong> chegando aos <strong>12m</strong>
+            </div>
+
+            {/* Resumo de milestone payouts */}
+            {(retention.milestones.count_pending + retention.milestones.count_paid) > 0 && (
+              <div className="mt-2 flex items-center justify-between rounded-md border border-navy-100 bg-navy-50/40 px-3 py-2 text-xs">
+                <span className="text-navy-500">
+                  Milestones pagos: <strong className="text-emerald-700">{retention.milestones.count_paid}</strong>
+                  {' '}({formatMoneyCents(retention.milestones.total_paid_cents, currency)})
+                </span>
+                <span className="text-navy-500">
+                  A pagar: <strong className="text-amber-700">{retention.milestones.count_pending}</strong>
+                  {' '}({formatMoneyCents(retention.milestones.total_pending_cents, currency)})
+                </span>
+              </div>
+            )}
+          </div>
+        )}
       </Card>
 
       {/* QR + Funnel side by side */}
