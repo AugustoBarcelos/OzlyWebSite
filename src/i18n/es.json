@@ -190,7 +190,7 @@
   "privacy": {
     "title": "Política de Privacidad",
     "effectiveDate": "Fecha de Vigencia: 10 de Marzo de 2026",
-    "lastUpdated": "Última Actualización: 10 de Marzo de 2026",
+    "lastUpdated": "Última Actualización: 5 de Mayo de 2026",
     "summaryLabel": "Resumen:",
     "summary": "Ozly es una aplicación de gestión laboral y control de gastos diseñada para contractors y pequeños negocios en Australia. Solo recopilamos los datos necesarios para brindar nuestros servicios. Tus datos financieros están encriptados en tu dispositivo, y puedes solicitar la eliminación completa de tu cuenta y todos los datos asociados en cualquier momento.",
     "s1": "1. Quiénes Somos",
@@ -199,10 +199,32 @@
     "s4": "4. Cómo Usamos tu Información",
     "s5": "5. Proveedores de Servicios Terceros",
     "s6": "6. Retención de Datos",
+    "s6_p1": "Conservamos los datos de tu cuenta mientras esta se encuentre activa. Cuando solicitas la eliminación, aplicamos la política descrita en la Sección 9: la información personal no fiscal se elimina de forma permanente, y los registros fiscales se seudonimizan y se conservan durante el período exigido por la ley australiana.",
+    "s6_p2": "La legislación tributaria australiana (Income Tax Assessment Act 1936, sección 262A) nos exige conservar determinados registros — facturas, gastos, horas trabajadas y recibos asociados — durante 5 años a partir del cierre del ejercicio fiscal australiano correspondiente, incluso si eliminas tu cuenta. Estos registros se seudonimizan (tu nombre, correo electrónico, teléfono y dirección se sustituyen por un identificador no personal), pero las transacciones financieras subyacentes se mantienen. Transcurridos los 5 años, son eliminados automática y permanentemente.",
+    "s6_p3": "Las copias de seguridad operativas se conservan durante un máximo de 35 días. Los archivos cifrados de largo plazo, mantenidos para el cumplimiento del período de retención fiscal de 5 años, permanecen aislados; si en algún momento se restauran, las solicitudes de eliminación se vuelven a aplicar antes de cualquier acceso.",
+    "s6_p4": "Los datos analíticos anonimizados pueden conservarse hasta 24 meses después de la eliminación de la cuenta con el fin de mejorar nuestros servicios.",
     "s7": "7. Seguridad de los Datos",
     "s8": "8. Tus Derechos bajo la Ley de Privacidad Australiana",
     "s9": "9. Eliminación de Cuenta y Datos",
+    "s9_intro": "Puedes solicitar la eliminación de tu cuenta en cualquier momento. Dado que la legislación tributaria australiana exige la conservación de determinados registros fiscales, la eliminación se procesa en dos partes:",
+    "s9_permanent_heading": "Eliminados de forma permanente e irreversible de nuestros servidores:",
+    "s9_permanent_list": [
+      "Perfil de usuario, nombre, correo electrónico, teléfono y foto de perfil.",
+      "Credenciales de autenticación y tokens.",
+      "Registros de contacto de contractors y clientes.",
+      "Todos los eventos de analítica asociados a tu cuenta.",
+      "Vínculos con eventos de Google Calendar (Google Calendar IDs).",
+      "Registros de inferencia de IA."
+    ],
+    "s9_pseudonymised_heading": "Seudonimizados y conservados durante 5 años (cumplimiento de la ITAA s262A):",
+    "s9_pseudonymised_list": [
+      "Trabajos, horas trabajadas, facturas, gastos e imágenes de recibos.",
+      "Datos bancarios en facturas (sustituidos por marcadores redactados durante la retención)."
+    ],
+    "s9_closing": "Transcurridos los 5 años desde el cierre del ejercicio fiscal australiano correspondiente, todos los registros seudonimizados anteriores también son eliminados de forma permanente. Esta acción no puede deshacerse. Los datos locales en tu dispositivo se eliminan al cerrar sesión.",
     "s10": "10. Transferencias Internacionales de Datos",
+    "s10_p1": "Tus datos pueden procesarse en servidores ubicados fuera de Australia (por ejemplo, infraestructura de Supabase, servicios de Google Cloud). Cuando esto ocurre, garantizamos que existan las salvaguardas adecuadas conforme al APP 8 (divulgación transfronteriza de información personal).",
+    "s10_p2": "Los archivos cifrados de largo plazo (retención fiscal de 5 años) se almacenan en AWS S3 Sídney (ap-southeast-2). Estos datos no salen de Australia.",
     "s11": "11. Privacidad de Menores",
     "s12": "12. Cambios en esta Política",
     "s13": "13. Contáctanos"

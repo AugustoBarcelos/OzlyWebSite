@@ -190,7 +190,7 @@
   "privacy": {
     "title": "Política de Privacidade",
     "effectiveDate": "Data de Vigência: 10 de Março de 2026",
-    "lastUpdated": "Última Atualização: 10 de Março de 2026",
+    "lastUpdated": "Última Atualização: 5 de Maio de 2026",
     "summaryLabel": "Resumo:",
     "summary": "Ozly é um aplicativo de gestão de trabalho e controle de despesas feito para contractors e pequenos negócios na Austrália. Coletamos apenas os dados necessários para oferecer nossos serviços. Seus dados financeiros são criptografados no seu dispositivo, e você pode solicitar a exclusão completa da sua conta e todos os dados associados a qualquer momento.",
     "s1": "1. Quem Somos",
@@ -199,10 +199,32 @@
     "s4": "4. Como Usamos Suas Informações",
     "s5": "5. Provedores de Serviços Terceiros",
     "s6": "6. Retenção de Dados",
+    "s6_p1": "Mantemos os dados da sua conta enquanto ela estiver ativa. Quando você solicita a exclusão, aplicamos a política descrita na Seção 9 abaixo: as informações pessoais não fiscais são removidas permanentemente, e os registros fiscais são pseudonimizados e retidos pelo período exigido pela lei australiana.",
+    "s6_p2": "A legislação tributária australiana (Income Tax Assessment Act 1936, seção 262A) exige que retenhamos determinados registros — faturas, despesas, horas trabalhadas e recibos relacionados — por 5 anos a partir do fim do ano fiscal australiano correspondente, mesmo que você exclua a sua conta. Esses registros passam por pseudonimização (seu nome, e-mail, telefone e endereço são substituídos por um identificador não pessoal), mas as transações financeiras subjacentes permanecem. Após 5 anos, eles são automaticamente e permanentemente deletados.",
+    "s6_p3": "Backups operacionais são retidos por até 35 dias. Arquivos criptografados de longo prazo, mantidos para o período de retenção fiscal de 5 anos, ficam isolados; se algum dia forem restaurados, as solicitações de exclusão são reaplicadas antes de qualquer acesso.",
+    "s6_p4": "Dados analíticos anonimizados podem ser retidos por até 24 meses após a exclusão da conta para fins de melhoria dos nossos serviços.",
     "s7": "7. Segurança dos Dados",
     "s8": "8. Seus Direitos sob a Lei de Privacidade Australiana",
     "s9": "9. Exclusão de Conta e Dados",
+    "s9_intro": "Você pode solicitar a exclusão da sua conta a qualquer momento. Como a legislação tributária australiana exige a retenção de determinados registros fiscais, a exclusão é processada em duas partes:",
+    "s9_permanent_heading": "Excluídos permanentemente e de forma irreversível dos nossos servidores:",
+    "s9_permanent_list": [
+      "Perfil de usuário, nome, e-mail, telefone e foto de perfil.",
+      "Credenciais de autenticação e tokens.",
+      "Registros de contato de contractors e clientes.",
+      "Todos os eventos de analytics associados à sua conta.",
+      "Vínculos com eventos do Google Agenda (Google Calendar IDs).",
+      "Logs de inferência de IA."
+    ],
+    "s9_pseudonymised_heading": "Pseudonimizados e retidos por 5 anos (cumprimento da ITAA s262A):",
+    "s9_pseudonymised_list": [
+      "Jobs, horas trabalhadas, faturas, despesas e imagens de recibos.",
+      "Dados bancários em faturas (substituídos por marcadores redigidos durante a retenção)."
+    ],
+    "s9_closing": "Após 5 anos a partir do fim do ano fiscal australiano correspondente, todos os registros pseudonimizados acima também são permanentemente deletados. Esta ação não pode ser desfeita. Os dados locais no seu dispositivo são apagados ao sair da sua conta.",
     "s10": "10. Transferências Internacionais de Dados",
+    "s10_p1": "Seus dados podem ser processados em servidores localizados fora da Austrália (por exemplo, infraestrutura Supabase, serviços Google Cloud). Quando isso ocorre, garantimos que existam salvaguardas apropriadas em conformidade com o APP 8 (divulgação transfronteiriça de informações pessoais).",
+    "s10_p2": "Arquivos criptografados de longo prazo (retenção fiscal de 5 anos) são armazenados no AWS S3 Sydney (ap-southeast-2). Esses dados não saem da Austrália.",
     "s11": "11. Privacidade de Menores",
     "s12": "12. Alterações nesta Política",
     "s13": "13. Fale Conosco"

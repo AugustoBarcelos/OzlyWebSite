@@ -202,8 +202,10 @@ export default function PrivacyPolicy() {
         </Section>
 
         <Section title={p.s6}>
-          <p>We retain your data for as long as your account is active. If you delete your account, all associated data is permanently removed (see Section 9 below).</p>
-          <p>Anonymised analytics data may be retained for up to 24 months after account deletion for the purpose of improving our services.</p>
+          <p>{p.s6_p1}</p>
+          <p>{p.s6_p2}</p>
+          <p>{p.s6_p3}</p>
+          <p>{p.s6_p4}</p>
         </Section>
 
         <Section title={p.s7}>
@@ -232,7 +234,7 @@ export default function PrivacyPolicy() {
 
         <div id="data-deletion" className="bg-red-50 border-l-4 border-red-500 rounded-r-lg p-5 my-8">
           <h2 className="text-xl font-bold text-navy-500 mb-3">{p.s9}</h2>
-          <p className="text-sm text-slate-700 mb-3"><strong>You may request complete deletion of your account and all associated data at any time.</strong></p>
+          <p className="text-sm text-slate-700 mb-3">{p.s9_intro}</p>
 
           <h3 className="text-base font-semibold text-navy-500 mt-4 mb-2">How to Delete Your Account:</h3>
           <ol className="list-decimal pl-5 text-sm text-slate-700 space-y-1 mb-4">
@@ -242,18 +244,17 @@ export default function PrivacyPolicy() {
             <li>Confirm by typing <strong>&ldquo;DELETE&rdquo;</strong> when prompted.</li>
           </ol>
 
-          <h3 className="text-base font-semibold text-navy-500 mt-4 mb-2">What Happens When You Delete:</h3>
-          <p className="text-sm text-slate-700 mb-2">The following data is <strong>permanently and irreversibly</strong> deleted from our servers:</p>
+          <h3 className="text-base font-semibold text-navy-500 mt-4 mb-2">{p.s9_permanent_heading}</h3>
           <ul className="list-disc pl-5 text-sm text-slate-700 space-y-1 mb-3">
-            <li>Your user profile and authentication credentials.</li>
-            <li>All work hours, jobs, and associated calendar links.</li>
-            <li>All invoices and invoice line items.</li>
-            <li>All expenses and uploaded receipt images.</li>
-            <li>All contractor/client records.</li>
-            <li>All business records (ABN, banking details).</li>
-            <li>All analytics events associated with your account.</li>
+            {p.s9_permanent_list.map((item, i) => <li key={i}>{item}</li>)}
           </ul>
-          <p className="text-sm text-slate-700 mb-3"><strong>This action cannot be undone.</strong> Local data on your device is also cleared upon sign-out.</p>
+
+          <h3 className="text-base font-semibold text-navy-500 mt-4 mb-2">{p.s9_pseudonymised_heading}</h3>
+          <ul className="list-disc pl-5 text-sm text-slate-700 space-y-1 mb-3">
+            {p.s9_pseudonymised_list.map((item, i) => <li key={i}>{item}</li>)}
+          </ul>
+
+          <p className="text-sm text-slate-700 mb-3">{p.s9_closing}</p>
           <p className="text-sm text-slate-700 mb-3">If you are unable to access the App, you may request account deletion by emailing <strong>privacy@ozly.com.au</strong> from the email address associated with your account. We will process your request within 30 days.</p>
 
           <h3 className="text-base font-semibold text-navy-500 mt-4 mb-2">Subscription Cancellation:</h3>
@@ -261,7 +262,8 @@ export default function PrivacyPolicy() {
         </div>
 
         <Section title={p.s10}>
-          <p>Your data may be processed on servers located outside Australia (e.g., Supabase infrastructure, Google Cloud services). Where this occurs, we ensure that appropriate safeguards are in place in accordance with APP 8 (cross-border disclosure of personal information).</p>
+          <p>{p.s10_p1}</p>
+          <p>{p.s10_p2}</p>
         </Section>
 
         <Section title={p.s11}>

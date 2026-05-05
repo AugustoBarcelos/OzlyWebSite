@@ -190,7 +190,7 @@
   "privacy": {
     "title": "Privacy Policy",
     "effectiveDate": "Effective Date: 10 March 2026",
-    "lastUpdated": "Last Updated: 10 March 2026",
+    "lastUpdated": "Last Updated: 5 May 2026",
     "summaryLabel": "Summary:",
     "summary": "Ozly is a workforce-management and expense-tracking application designed for Australian contractors and small businesses. We collect only the data necessary to deliver our services. Your financial data is encrypted on your device, and you may request complete deletion of your account and all associated data at any time.",
     "s1": "1. Who We Are",
@@ -199,10 +199,32 @@
     "s4": "4. How We Use Your Information",
     "s5": "5. Third-Party Service Providers",
     "s6": "6. Data Retention",
+    "s6_p1": "We retain your account data for as long as your account is active. When you request deletion, we apply the policy described in Section 9 below: non-fiscal personal information is permanently removed, and fiscal records are pseudonymised and retained for the period required by Australian law.",
+    "s6_p2": "Australian taxation law (Income Tax Assessment Act 1936, section 262A) requires us to retain certain records — invoices, expenses, work hours, and related receipts — for 5 years from the end of the relevant Australian financial year, even if you delete your account. These records are pseudonymised (your name, email, phone, and address are replaced with a non-identifying token) but the underlying financial transactions remain. After 5 years, they are automatically and permanently deleted.",
+    "s6_p3": "Operational backups are retained for up to 35 days. Long-term encrypted archives stored for 5-year compliance are isolated; if ever restored, deletion requests are re-applied before any access.",
+    "s6_p4": "Anonymised analytics data may be retained for up to 24 months after account deletion for the purpose of improving our services.",
     "s7": "7. Data Security",
     "s8": "8. Your Rights Under Australian Privacy Law",
     "s9": "9. Account & Data Deletion",
+    "s9_intro": "You may request deletion of your account at any time. Because Australian taxation law requires us to retain certain fiscal records, deletion is processed in two parts:",
+    "s9_permanent_heading": "Permanently and irreversibly deleted from our servers:",
+    "s9_permanent_list": [
+      "User profile, name, email, phone number, and profile photo.",
+      "Authentication credentials and tokens.",
+      "Contractor and client contact records.",
+      "All analytics events associated with your account.",
+      "Calendar event links (Google Calendar IDs).",
+      "AI inference logs."
+    ],
+    "s9_pseudonymised_heading": "Pseudonymised and retained for 5 years (ITAA s262A compliance):",
+    "s9_pseudonymised_list": [
+      "Jobs, work hours, invoices, expenses, and receipt images.",
+      "Banking details on invoices (replaced with redacted placeholders on retention)."
+    ],
+    "s9_closing": "After 5 years from the end of the relevant Australian financial year, all of the above pseudonymised records are also permanently deleted. This action cannot be undone. Local data on your device is cleared upon sign-out.",
     "s10": "10. International Data Transfers",
+    "s10_p1": "Your data may be processed on servers located outside Australia (e.g., Supabase infrastructure, Google Cloud services). Where this occurs, we ensure that appropriate safeguards are in place in accordance with APP 8 (cross-border disclosure of personal information).",
+    "s10_p2": "Encrypted long-term archives (5-year tax retention) are stored in AWS S3 Sydney (ap-southeast-2). This data does not leave Australia.",
     "s11": "11. Children's Privacy",
     "s12": "12. Changes to This Policy",
     "s13": "13. Contact Us"
