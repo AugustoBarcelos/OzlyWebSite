@@ -143,8 +143,12 @@ function useNavGroups(): ReadonlyArray<NavGroup> {
                 { label: 'Apple Search Ads', to: '/ads/asa' },
                 { label: 'TikTok Ads', to: '/ads/tiktok' },
                 { label: 'Attribution / UTM', to: '/ads/attribution' },
-                { label: 'Affiliates', to: '/affiliates', icon: HandshakeIcon },
               ],
+            },
+            {
+              label: 'Affiliates',
+              icon: HandshakeIcon,
+              to: '/affiliates',
             },
             {
               label: 'Marketing',
