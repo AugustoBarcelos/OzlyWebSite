@@ -123,7 +123,7 @@ function escapeAttr(s) {
 }
 
 function render(route) {
-  const canonical = `${ORIGIN}${route.path === "/" ? "/" : route.path}`;
+  const canonical = `${ORIGIN}${route.path === "/" ? "/" : `${route.path}/`}`;
   const titleAttr = escapeAttr(route.title);
   const descAttr = escapeAttr(route.description);
 
