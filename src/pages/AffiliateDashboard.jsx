@@ -264,6 +264,11 @@ export default function AffiliateDashboard() {
     setData(null);
   }
 
+  function openWelcomeKit(lang) {
+    const url = `/kit/?code=${encodeURIComponent(code)}&lang=${lang}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+
   if (!session) {
     return <RequestLinkScreen code={code} d={d} />;
   }
@@ -363,14 +368,37 @@ export default function AffiliateDashboard() {
               {d.subtitle}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={handleSignOut}
-            title={d.signOut}
-            className="shrink-0 rounded-md border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:border-brand-300"
-          >
-            {d.signOut}
-          </button>
+          <div className="shrink-0 flex flex-col gap-1.5">
+            <div className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400 text-right font-semibold">
+              {d.welcomeKit}
+            </div>
+            <div className="flex gap-1.5">
+              <button
+                type="button"
+                onClick={() => openWelcomeKit("pt")}
+                title="Português"
+                className="rounded-md border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 px-2.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:border-brand-400 hover:text-brand-600 transition-colors"
+              >
+                PT
+              </button>
+              <button
+                type="button"
+                onClick={() => openWelcomeKit("es")}
+                title="Español"
+                className="rounded-md border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 px-2.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:border-brand-400 hover:text-brand-600 transition-colors"
+              >
+                ES
+              </button>
+              <button
+                type="button"
+                onClick={() => openWelcomeKit("en")}
+                title="English"
+                className="rounded-md border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 px-2.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:border-brand-400 hover:text-brand-600 transition-colors"
+              >
+                EN
+              </button>
+            </div>
+          </div>
         </header>
 
         {/* Hero earnings */}

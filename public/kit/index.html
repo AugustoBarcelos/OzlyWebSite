@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="page_title">Ozly — Welcome Kit</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Montserrat:wght@800&display=swap');
+
+:root {
+  --teal: #2BBB97;
+  --teal-dark: #1f8a7a;
+  --lime: #9DD760;
+  --navy: #162431;
+  --gold: #D4AF37;
+  --orange: #FF8C00;
+  --bg: #FAFBFC;
+  --text: #162431;
+  --muted: #6B7785;
+  --border: #E5E9ED;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+.toolbar {
+  position: sticky;
+  top: 0;
+  background: var(--navy);
+  color: white;
+  padding: 12px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 100;
+  font-size: 13px;
+}
+
+.toolbar .left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toolbar .logo-small {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+}
+
+.toolbar .logo-small .ly { color: var(--teal); }
+
+.toolbar .right {
+  display: flex;
+  gap: 8px;
+}
+
+.toolbar .lang-btn {
+  background: rgba(255,255,255,0.1);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.toolbar .lang-btn.active {
+  background: var(--teal);
+  color: var(--navy);
+}
+
+.toolbar .print-btn {
+  background: var(--lime);
+  color: var(--navy);
+  border: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 700;
+  margin-left: 8px;
+}
+
+.page {
+  max-width: 820px;
+  margin: 0 auto;
+  background: white;
+  padding: 0;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+}
+
+/* CAPA */
+.cover {
+  background: linear-gradient(135deg, var(--navy) 0%, #0d1620 100%);
+  color: white;
+  padding: 80px 60px 60px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.cover::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, var(--teal) 0%, transparent 70%);
+  opacity: 0.15;
+}
+
+.logo-wordmark {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+  font-size: 56px;
+  letter-spacing: -2px;
+  margin-bottom: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+.logo-wordmark .ly { color: var(--teal); }
+
+.cover .tagline {
+  color: var(--lime);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: 600;
+  margin-bottom: 60px;
+  position: relative;
+}
+
+.cover h1 {
+  font-size: 42px;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.cover .subtitle {
+  font-size: 18px;
+  color: rgba(255,255,255,0.8);
+  margin-bottom: 30px;
+  position: relative;
+}
+
+.cover .personal {
+  color: var(--lime);
+  font-size: 16px;
+  margin-bottom: 30px;
+  position: relative;
+}
+
+.cover .meta {
+  display: inline-block;
+  padding: 12px 24px;
+  background: rgba(43, 187, 151, 0.15);
+  border: 1px solid var(--teal);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--teal);
+  font-weight: 600;
+  position: relative;
+}
+
+/* SECTIONS */
+.section {
+  padding: 50px 60px;
+  border-bottom: 1px solid var(--border);
+}
+
+.section:last-child { border-bottom: none; }
+
+.section-num {
+  display: inline-block;
+  background: var(--teal);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  text-align: center;
+  line-height: 32px;
+  font-weight: 800;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.section h2 {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--navy);
+  margin-bottom: 8px;
+  line-height: 1.2;
+}
+
+.section .lede {
+  font-size: 17px;
+  color: var(--muted);
+  margin-bottom: 28px;
+}
+
+.section h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-top: 28px;
+  margin-bottom: 10px;
+}
+
+.section p { margin-bottom: 14px; }
+
+.section ul, .section ol {
+  margin: 12px 0 20px 24px;
+}
+
+.section li { margin-bottom: 8px; }
+
+.highlight {
+  background: linear-gradient(135deg, rgba(43, 187, 151, 0.08), rgba(157, 215, 96, 0.08));
+  border-left: 4px solid var(--teal);
+  padding: 20px 24px;
+  margin: 20px 0;
+  border-radius: 8px;
+}
+
+.highlight strong { color: var(--teal-dark); }
+
+.warning {
+  background: rgba(255, 140, 0, 0.08);
+  border-left: 4px solid var(--orange);
+  padding: 20px 24px;
+  margin: 20px 0;
+  border-radius: 8px;
+}
+
+.warning strong { color: var(--orange); }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  font-size: 14px;
+}
+
+th {
+  background: var(--navy);
+  color: white;
+  text-align: left;
+  padding: 12px 14px;
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+tr:nth-child(even) td { background: #FAFBFC; }
+
+td strong { color: var(--teal-dark); }
+
+.cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.card {
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  position: relative;
+}
+
+.card.featured {
+  border-color: var(--teal);
+  background: linear-gradient(135deg, rgba(43, 187, 151, 0.04), white);
+}
+
+.card.featured::before {
+  content: attr(data-badge);
+  position: absolute;
+  top: -10px;
+  left: 20px;
+  background: var(--teal);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.card .label {
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.card .price {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+  font-size: 36px;
+  color: var(--navy);
+  margin-bottom: 4px;
+}
+
+.card .price small { font-size: 14px; color: var(--muted); }
+
+.card .commission {
+  display: inline-block;
+  background: var(--lime);
+  color: var(--navy);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 14px;
+  margin-top: 12px;
+}
+
+.script {
+  background: #F8F9FB;
+  border-left: 4px solid var(--lime);
+  padding: 24px;
+  margin: 16px 0;
+  border-radius: 8px;
+  font-style: italic;
+  color: #2C3845;
+  position: relative;
+}
+
+.script::before {
+  content: '"';
+  font-family: 'Montserrat', sans-serif;
+  font-size: 60px;
+  color: var(--lime);
+  position: absolute;
+  top: 0;
+  left: 12px;
+  line-height: 1;
+}
+
+.script-content { padding-left: 28px; }
+
+.script-label {
+  display: block;
+  font-style: normal;
+  font-size: 12px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.checklist { list-style: none; margin-left: 0 !important; }
+
+.checklist li {
+  padding-left: 32px;
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.checklist li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  top: -2px;
+  width: 22px;
+  height: 22px;
+  background: var(--teal);
+  color: white;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 22px;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.code-box {
+  background: #F0FDF4;
+  color: var(--teal-dark);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-weight: 600;
+}
+
+.qr-section {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  background: linear-gradient(135deg, rgba(43, 187, 151, 0.08), rgba(157, 215, 96, 0.08));
+  padding: 24px;
+  border-radius: 12px;
+  margin: 24px 0;
+}
+
+.qr-section img {
+  width: 160px;
+  height: 160px;
+  background: white;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.qr-section .qr-text { flex: 1; }
+
+.qr-section .qr-text h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.qr-section .your-code {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--teal);
+  letter-spacing: 2px;
+  background: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  display: inline-block;
+  margin: 8px 0;
+}
+
+.faq-item {
+  border-bottom: 1px solid var(--border);
+  padding: 16px 0;
+}
+
+.faq-q {
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 8px;
+  font-size: 16px;
+}
+
+.faq-q::before {
+  content: '?';
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  background: var(--gold);
+  color: var(--navy);
+  border-radius: 50%;
+  text-align: center;
+  line-height: 22px;
+  font-weight: 800;
+  margin-right: 10px;
+}
+
+.faq-a {
+  color: var(--muted);
+  padding-left: 32px;
+}
+
+.footer {
+  background: var(--navy);
+  color: white;
+  padding: 40px 60px;
+  text-align: center;
+}
+
+.footer .signoff {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--lime);
+  margin-bottom: 8px;
+}
+
+.footer p {
+  color: rgba(255,255,255,0.7);
+  font-size: 14px;
+}
+
+.footer a {
+  color: var(--teal);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+@media print {
+  body { background: white; font-size: 11pt; }
+  .toolbar { display: none; }
+  .page { box-shadow: none; max-width: none; }
+  .section { padding: 30px 40px; page-break-inside: avoid; }
+  .cover { page-break-after: always; }
+  .footer { page-break-before: avoid; }
+}
+
+@media (max-width: 640px) {
+  .section { padding: 30px 24px; }
+  .cover { padding: 60px 24px 40px; }
+  .cards { grid-template-columns: 1fr; }
+  .qr-section { flex-direction: column; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="left">
+    <span class="logo-small">oz<span class="ly">ly</span></span>
+    <span data-i18n="toolbar_doc">Welcome Kit</span>
+  </div>
+  <div class="right">
+    <button class="lang-btn" data-lang-btn="pt">PT</button>
+    <button class="lang-btn" data-lang-btn="es">ES</button>
+    <button class="lang-btn" data-lang-btn="en">EN</button>
+    <button class="print-btn" onclick="window.print()" data-i18n="toolbar_print">Print / Save PDF</button>
+  </div>
+</div>
+
+<div class="page">
+
+  <div class="cover">
+    <div class="logo-wordmark">oz<span class="ly">ly</span></div>
+    <div class="tagline" data-i18n="cover_tagline">AFFILIATE PROGRAM · AUSTRALIA</div>
+    <h1 data-i18n="cover_title">Welcome to the Ozly Growth Team</h1>
+    <p class="subtitle" data-i18n="cover_subtitle">Everything you need to start referring Ozly and earning commissions today.</p>
+    <p class="personal" id="personal-greeting"></p>
+    <div class="meta"><span data-i18n="cover_meta">WELCOME KIT</span> · <span id="affiliate-code-display">CODE</span></div>
+  </div>
+
+  <!-- SEÇÃO 1 -->
+  <div class="section">
+    <span class="section-num">1</span>
+    <h2 data-i18n="s1_title">What is Ozly</h2>
+    <p class="lede" data-i18n="s1_lede">Tax, invoice and expense tracking app for ABN sole traders and TFN holders in Australia. Multi-language: English, Portuguese and Spanish.</p>
+
+    <h3 data-i18n="s1_h3_features">What the app does for your client</h3>
+    <ul>
+      <li data-i18n="s1_feat_1">Generate invoices in 30 seconds with GST, ABN, PAYG and payment tracking</li>
+      <li data-i18n="s1_feat_2">AI-powered receipt OCR — photo becomes categorised expense automatically</li>
+      <li data-i18n="s1_feat_3">Live calculation of GST, BAS and PAYG estimates</li>
+      <li data-i18n="s1_feat_4">Visa Shield — 48h alert for student visa holders (Department of Home Affairs compliance)</li>
+      <li data-i18n="s1_feat_5">Tax return prep with ATO-aligned deductions</li>
+      <li data-i18n="s1_feat_6">Secure iOS + Android sync with encrypted backups</li>
+    </ul>
+
+    <div class="highlight">
+      <strong data-i18n="s1_hl_strong">What this means for your client:</strong> <span data-i18n="s1_hl_text">they arrive at the accountant, migration agent or end of financial year with everything organised. No lost receipts, no forgotten deductions, no surprise tax bills.</span>
+    </div>
+  </div>
+
+  <!-- SEÇÃO 2 -->
+  <div class="section">
+    <span class="section-num">2</span>
+    <h2 data-i18n="s2_title">How you earn</h2>
+    <p class="lede" data-i18n="s2_lede">Every client of yours who subscribes using your unique affiliate code generates commission. Payment via PayID/bank transfer every 15 days.</p>
+
+    <div class="cards">
+      <div class="card">
+        <div class="label" data-i18n="s2_monthly_label">Monthly Plan</div>
+        <div class="price">$10 <small data-i18n="s2_per_client">AUD/client</small></div>
+        <p style="color: var(--muted); font-size: 13px; margin-top: 8px;" data-i18n="s2_monthly_note">Client pays $14.99 AUD/month</p>
+        <div class="commission" data-i18n="s2_monthly_pay">Paid in 14-30 days</div>
+      </div>
+
+      <div class="card featured" data-badge="★ BEST">
+        <div class="label" data-i18n="s2_annual_label">Annual Plan</div>
+        <div class="price">$25 <small data-i18n="s2_per_client">AUD/client</small></div>
+        <p style="color: var(--muted); font-size: 13px; margin-top: 8px;" data-i18n="s2_annual_note">Client pays $149.99 AUD/year</p>
+        <div class="commission" data-i18n="s2_annual_pay">Paid in 14 days</div>
+      </div>
+    </div>
+
+    <h3 data-i18n="s2_volume_title">Monthly volume bonus</h3>
+    <table>
+      <thead>
+        <tr>
+          <th data-i18n="s2_volume_th1">Conversions in the month</th>
+          <th data-i18n="s2_volume_th2">Extra bonus</th>
+          <th data-i18n="s2_volume_th3">Max total (5 annual + bonus)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><span data-i18n="s2_v5">5 clients</span></td><td><strong>+$75 AUD</strong></td><td>$200 AUD</td></tr>
+        <tr><td><span data-i18n="s2_v10">10 clients</span></td><td><strong>+$200 AUD</strong></td><td>$450 AUD</td></tr>
+        <tr><td><span data-i18n="s2_v20">20 clients</span></td><td><strong>+$500 AUD</strong></td><td>$1,000 AUD</td></tr>
+      </tbody>
+    </table>
+
+    <h3 data-i18n="s2_retention_title">Retention bonus</h3>
+    <p data-i18n="s2_retention_intro">When your client stays paying after 3, 6 or 12 months, you earn extra:</p>
+    <ul>
+      <li><strong data-i18n="s2_ret_3">3 months active</strong> → +$5 AUD</li>
+      <li><strong data-i18n="s2_ret_6">6 months active</strong> → +$10 AUD</li>
+      <li><strong data-i18n="s2_ret_12">12 months active</strong> → +$15 AUD</li>
+    </ul>
+
+    <div class="highlight">
+      <strong data-i18n="s2_example_strong">Real example:</strong> <span data-i18n="s2_example_text">you refer 5 annual clients in one month. You earn 5 × $25 = $125 + $75 volume bonus = <strong>$200 in the month</strong>. If those 5 clients stay 12 months, additional $75 retention = <strong>$275 total for those 5 referrals</strong>.</span>
+    </div>
+  </div>
+
+  <!-- SEÇÃO 3 — QR + Link -->
+  <div class="section">
+    <span class="section-num">3</span>
+    <h2 data-i18n="s3_title">Your personal kit</h2>
+    <p class="lede" data-i18n="s3_lede">Everything you need to start today. Take it, copy it, use it.</p>
+
+    <div class="qr-section">
+      <img id="qr-code" src="" alt="QR Code">
+      <div class="qr-text">
+        <h3 data-i18n="s3_qr_h3">Your unique code</h3>
+        <div class="your-code" id="your-code-display">CODE</div>
+        <p data-i18n="s3_qr_p1" style="font-size: 13px; color: var(--muted); margin: 8px 0;">Print this QR or share the link below.</p>
+        <p><strong data-i18n="s3_qr_link_label">Affiliate link:</strong> <span class="code-box" id="affiliate-link">ozly.au/v/CODE</span></p>
+        <p><strong data-i18n="s3_qr_dash_label">Your dashboard:</strong> <span class="code-box" id="dashboard-link">ozly.au/me/CODE</span></p>
+      </div>
+    </div>
+
+    <h3 data-i18n="s3_where_title">Where to share</h3>
+    <ul>
+      <li data-i18n="s3_where_1"><strong>WhatsApp:</strong> direct link to individual contacts</li>
+      <li data-i18n="s3_where_2"><strong>Instagram bio:</strong> paste link in bio + story with QR code</li>
+      <li data-i18n="s3_where_3"><strong>Email signature:</strong> "P.S. — I use Ozly for ABN/tax. 21-day free trial: ozly.au/v/CODE"</li>
+      <li data-i18n="s3_where_4"><strong>Physical office:</strong> printed QR code at reception</li>
+      <li data-i18n="s3_where_5"><strong>Workshops:</strong> final slide with QR code of your link</li>
+    </ul>
+
+    <div class="warning">
+      <strong data-i18n="s3_dont_strong">DON'T:</strong> <span data-i18n="s3_dont_text">spam Facebook groups with direct link (mods will ban you). Always engage first by answering a real question, then send link in DM.</span>
+    </div>
+  </div>
+
+  <!-- SEÇÃO 4 -->
+  <div class="section">
+    <span class="section-num">4</span>
+    <h2 data-i18n="s4_title">Who is your ideal client</h2>
+    <p class="lede" data-i18n="s4_lede">Focus on sub-contractors ABN sole traders in Australia. People who operate alone, without a formal Pty Ltd company.</p>
+
+    <h3 data-i18n="s4_profiles_title">The 4 profiles that convert most</h3>
+    <table>
+      <thead>
+        <tr>
+          <th data-i18n="s4_th_profile">Profile</th>
+          <th data-i18n="s4_th_pain">Main pain</th>
+          <th data-i18n="s4_th_why">Why Ozly</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong data-i18n="s4_p1_name">Cleaner sole trader</strong></td>
+          <td data-i18n="s4_p1_pain">Receipts scattered, no formal invoice</td>
+          <td data-i18n="s4_p1_why">Multilingual invoice, receipt OCR</td>
+        </tr>
+        <tr>
+          <td><strong data-i18n="s4_p2_name">Uber/Rideshare driver</strong></td>
+          <td data-i18n="s4_p2_pain">GST surprise, missed deductions</td>
+          <td data-i18n="s4_p2_why">Automatic calculation, km tracking</td>
+        </tr>
+        <tr>
+          <td><strong data-i18n="s4_p3_name">Tradie sole trader</strong></td>
+          <td data-i18n="s4_p3_pain">Messy Excel, expensive tax return</td>
+          <td data-i18n="s4_p3_why">All digital, 45min faster for accountant</td>
+        </tr>
+        <tr>
+          <td><strong data-i18n="s4_p4_name">Student visa worker</strong></td>
+          <td data-i18n="s4_p4_pain">48h limit + confusing tax</td>
+          <td data-i18n="s4_p4_why">Visa Shield + multilingual</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3 data-i18n="s4_not_title">Who is NOT the client</h3>
+    <ul>
+      <li data-i18n="s4_not_1">Large companies with Pty Ltd and in-house accountant (they use Xero, MYOB)</li>
+      <li data-i18n="s4_not_2">Full PAYG employees with no side income (no ABN)</li>
+      <li data-i18n="s4_not_3">Retirees with no economic activity</li>
+    </ul>
+  </div>
+
+  <!-- SEÇÃO 5 — Scripts -->
+  <div class="section">
+    <span class="section-num">5</span>
+    <h2 data-i18n="s5_title">How to present — 3 scenarios</h2>
+    <p class="lede" data-i18n="s5_lede">Don't push a sale. Present it as a useful resource. The client decides.</p>
+
+    <h3 data-i18n="s5_sc1_title">Scenario 1 — 60-second conversation (informal)</h3>
+    <div class="script">
+      <div class="script-content">
+        <span class="script-label" data-i18n="s5_sc1_label">Short pitch</span>
+        <span data-i18n="s5_sc1_text">Hey, there's an app called Ozly now for ABN here in Australia. Generates invoices, captures receipts with a photo, calculates GST and PAYG automatically. Multilingual. I recommend it to my clients because they show up with EVERYTHING organised and the tax return takes half the time. There's a 14-day free trial. If you want, I'll send you the link with my code so you get an extended trial.</span>
+      </div>
+    </div>
+
+    <h3 data-i18n="s5_sc2_title">Scenario 2 — Consultation with accountant/agent (structured)</h3>
+    <div class="script">
+      <div class="script-content">
+        <span class="script-label" data-i18n="s5_sc2_label">Consultation presentation</span>
+        <span data-i18n="s5_sc2_text">Before we finalise this year's tax return, I'd like to introduce a tool that's been helping my clients: Ozly. It's an app that automates everything day-to-day — invoicing, expense tracking, GST estimation. I'll send you the link and my referral code. Download it, try 14 days free. If you like it, next tax return I'll save time (and charge less) because the data arrives structured. Want to try?</span>
+      </div>
+    </div>
+
+    <h3 data-i18n="s5_sc3_title">Scenario 3 — Workshop or event (group)</h3>
+    <div class="script">
+      <div class="script-content">
+        <span class="script-label" data-i18n="s5_sc3_label">Group presentation</span>
+        <span data-i18n="s5_sc3_text">Most sub-contractors I work with lose money because they don't organise what they can deduct. I recommend Ozly as the basic tool — an app that captures receipts, calculates GST, generates invoices. Download it, photograph every receipt the same day, end of year you have EVERYTHING. I'll share the QR code with my affiliate code. Anyone who tries it gets an extended trial — 21 days free instead of 14.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEÇÃO 6 — Dashboard -->
+  <div class="section">
+    <span class="section-num">6</span>
+    <h2 data-i18n="s6_title">Your affiliate dashboard</h2>
+    <p class="lede"><span data-i18n="s6_lede1">Track earnings, conversions and bonuses in real time at</span> <span class="code-box" id="dashboard-link-2">ozly.au/me/CODE</span></p>
+
+    <h3 data-i18n="s6_how_title">How to access</h3>
+    <ol>
+      <li data-i18n="s6_how_1">Visit your dashboard URL above</li>
+      <li data-i18n="s6_how_2">Click "Request my access link"</li>
+      <li data-i18n="s6_how_3">Open the email you receive and click the login link</li>
+      <li data-i18n="s6_how_4">Your session is saved for 30 days</li>
+    </ol>
+
+    <h3 data-i18n="s6_what_title">What you see</h3>
+    <ul>
+      <li data-i18n="s6_what_1"><strong>Funnel:</strong> views → installs → trials → paid conversions</li>
+      <li data-i18n="s6_what_2"><strong>Recent conversions list</strong> (last 20, anonymised)</li>
+      <li data-i18n="s6_what_3"><strong>Pending earnings:</strong> commissions ready but not yet paid</li>
+      <li data-i18n="s6_what_4"><strong>Payment history:</strong> every PayID/transfer logged</li>
+      <li data-i18n="s6_what_5"><strong>Retention bonuses:</strong> tracking your referrals who keep paying</li>
+    </ul>
+  </div>
+
+  <!-- SEÇÃO 7 — FAQ -->
+  <div class="section">
+    <span class="section-num">7</span>
+    <h2 data-i18n="s7_title">Frequently asked questions</h2>
+
+    <div class="faq-item">
+      <div class="faq-q" data-i18n="s7_q1">When do I get my first commission?</div>
+      <div class="faq-a" data-i18n="s7_a1">14 days after the client pays (end of trial). Payment via PayID every 15 days (day 15 and day 30).</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" data-i18n="s7_q2">If my client cancels, do I lose the commission?</div>
+      <div class="faq-a" data-i18n="s7_a2">No, if the commission was already released (commission_ready), it's yours. Later cancellation doesn't claw it back. It only doesn't count if the client cancels within the 14-day window.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" data-i18n="s7_q3">Can I change my code later?</div>
+      <div class="faq-a" data-i18n="s7_a3">No — once created, the code is fixed to preserve historical tracking. Choose a memorable one (your brand, your initials).</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" data-i18n="s7_q4">Is there a fee to be an affiliate?</div>
+      <div class="faq-a" data-i18n="s7_a4">Zero. The program is 100% free. You also get lifetime PRO app access to use with clients.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" data-i18n="s7_q5">Client used my link but not my code — do I earn?</div>
+      <div class="faq-a" data-i18n="s7_a5">No — attribution is by the code applied in app setup. Always instruct your client: "after downloading, in setup, paste the code YOURCODE".</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" data-i18n="s7_q6">Is there a referral limit?</div>
+      <div class="faq-a" data-i18n="s7_a6">No. The more, the better. Volume bonuses scale up to 20+/month.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" data-i18n="s7_q7">Can I refer outside Australia?</div>
+      <div class="faq-a" data-i18n="s7_a7">The app works best for AU users (local tax). Referrals outside AU don't convert well — focus on AU.</div>
+    </div>
+  </div>
+
+  <!-- SEÇÃO 8 — 7 day plan -->
+  <div class="section">
+    <span class="section-num">8</span>
+    <h2 data-i18n="s8_title">First 7 days — your start plan</h2>
+    <p class="lede" data-i18n="s8_lede">Tested sequence to go from zero to your first referral in one week.</p>
+
+    <ul class="checklist">
+      <li data-i18n="s8_d1"><strong>Day 1</strong>: Receive your code + download Ozly + try 14 days of PRO free. Understand the product before selling.</li>
+      <li data-i18n="s8_d2"><strong>Day 2</strong>: Access your dashboard at ozly.au/me/YOURCODE and confirm access.</li>
+      <li data-i18n="s8_d3"><strong>Day 3</strong>: Print your QR code and put it in the office. Add link to email signature.</li>
+      <li data-i18n="s8_d4"><strong>Day 4</strong>: Identify 5 clients/contacts where Ozly makes sense. Send personal message with the 60s pitch (Scenario 1).</li>
+      <li data-i18n="s8_d5"><strong>Day 5</strong>: Post 1 Instagram story with QR code. Mention in caption: "I use this tool to organise tax — extended trial with my code".</li>
+      <li data-i18n="s8_d6"><strong>Day 6</strong>: Mention Ozly in at least 1 work consultation/conversation. Use Scenario 2 text.</li>
+      <li data-i18n="s8_d7"><strong>Day 7</strong>: Check dashboard — how many clicks, installs, trials? Adjust approach.</li>
+    </ul>
+
+    <div class="highlight">
+      <strong data-i18n="s8_goal_strong">Realistic goal for first 4 weeks:</strong> <span data-i18n="s8_goal_text">2-5 paid conversions. That already generates $50-125 AUD in commission + you learn what works with your specific audience.</span>
+    </div>
+  </div>
+
+  <!-- SEÇÃO 9 — Suporte -->
+  <div class="section">
+    <span class="section-num">9</span>
+    <h2 data-i18n="s9_title">Direct support</h2>
+    <p class="lede" data-i18n="s9_lede">Question, payment issue, code not working? Response within 24h.</p>
+
+    <table>
+      <tbody>
+        <tr>
+          <td><strong>Email</strong></td>
+          <td>affiliates@ozly.au</td>
+        </tr>
+        <tr>
+          <td><strong>WhatsApp</strong></td>
+          <td>+61 4XX XXX XXX</td>
+        </tr>
+        <tr>
+          <td><strong data-i18n="s9_website">Website</strong></td>
+          <td>ozly.au</td>
+        </tr>
+        <tr>
+          <td><strong data-i18n="s9_app_support">App technical support</strong></td>
+          <td>support@ozly.au</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    <div class="signoff" data-i18n="footer_signoff">Let's grow together.</div>
+    <p data-i18n="footer_company">Ozly Pty Ltd · Australia · 2026</p>
+    <p style="margin-top:12px;">
+      <a href="https://ozly.au">ozly.au</a> ·
+      <a href="https://ozly.au/privacy-policy" data-i18n="footer_privacy">Privacy</a> ·
+      <a href="https://ozly.au/terms-of-use" data-i18n="footer_terms">Terms</a>
+    </p>
+  </div>
+
+</div>
+
+<script>
+const TRANSLATIONS = {
+  pt: {
+    page_title: "Ozly — Kit de Boas-Vindas",
+    toolbar_doc: "Kit de Boas-Vindas",
+    toolbar_print: "Imprimir / Salvar PDF",
+    cover_tagline: "PROGRAMA DE AFILIADOS · AUSTRÁLIA",
+    cover_title: "Bem-vindo ao Time de Crescimento Ozly",
+    cover_subtitle: "Tudo o que você precisa pra começar a indicar Ozly e ganhar comissões a partir de hoje.",
+    cover_meta: "KIT DE BOAS-VINDAS",
+    s1_title: "O que é o Ozly",
+    s1_lede: "App de tax, invoice e expense tracking pra ABN sole traders e TFN holders na Austrália. Multi-idioma: inglês, português e espanhol.",
+    s1_h3_features: "O que o app faz pelo cliente",
+    s1_feat_1: "Invoice em 30 segundos com GST, ABN, PAYG e tracking de pagamento",
+    s1_feat_2: "OCR de recibos via IA — foto vira despesa categorizada automaticamente",
+    s1_feat_3: "Cálculo automático de GST, BAS e PAYG estimates ao vivo",
+    s1_feat_4: "Visa Shield — alerta 48h pra student visa holders (compliance Department of Home Affairs)",
+    s1_feat_5: "Tax return prep com deductions ATO-aligned",
+    s1_feat_6: "Sync iOS + Android seguro com backup criptografado",
+    s1_hl_strong: "O que isso significa pro seu cliente:",
+    s1_hl_text: "ele chega no contador, no agente de imigração ou no fim do ano fiscal com TUDO organizado. Não perde recibo, não esquece deduction, não toma susto com tax bill.",
+    s2_title: "Como você ganha",
+    s2_lede: "Cada cliente seu que assinar com seu código único de afiliado gera comissão. Pagamento via PayID/transferência a cada 15 dias.",
+    s2_monthly_label: "Plano Mensal",
+    s2_per_client: "AUD/cliente",
+    s2_monthly_note: "Cliente paga $14.99 AUD/mês",
+    s2_monthly_pay: "Pago em 14-30 dias",
+    s2_annual_label: "Plano Anual",
+    s2_annual_note: "Cliente paga $149.99 AUD/ano",
+    s2_annual_pay: "Pago em 14 dias",
+    s2_volume_title: "Bônus de volume (mensal)",
+    s2_volume_th1: "Conversões no mês",
+    s2_volume_th2: "Bônus extra",
+    s2_volume_th3: "Total possível (5 anuais + bônus)",
+    s2_v5: "5 clientes",
+    s2_v10: "10 clientes",
+    s2_v20: "20 clientes",
+    s2_retention_title: "Bônus de retenção",
+    s2_retention_intro: "Quando seu cliente continua pagante após 3, 6 ou 12 meses, você ganha extra:",
+    s2_ret_3: "3 meses ativos",
+    s2_ret_6: "6 meses ativos",
+    s2_ret_12: "12 meses ativos",
+    s2_example_strong: "Exemplo real:",
+    s2_example_text: "você indica 5 clientes anuais em um mês. Ganha 5 × $25 = $125 + bônus volume $75 = <strong>$200 no mês</strong>. Se esses 5 clientes ficarem 12 meses, ainda mais $75 de retenção = <strong>$275 total por essas 5 indicações</strong>.",
+    s3_title: "Seu kit pessoal",
+    s3_lede: "Tudo o que você precisa pra começar hoje. Pega, copia, usa.",
+    s3_qr_h3: "Seu código único",
+    s3_qr_p1: "Imprima esse QR ou compartilhe o link abaixo.",
+    s3_qr_link_label: "Link de afiliado:",
+    s3_qr_dash_label: "Seu dashboard:",
+    s3_where_title: "Onde compartilhar",
+    s3_where_1: "<strong>WhatsApp:</strong> link direto pra contatos individuais",
+    s3_where_2: "<strong>Instagram bio:</strong> cole o link na bio + story com QR code",
+    s3_where_3: "<strong>Email assinatura:</strong> \"P.S. — Uso Ozly pra ABN/tax. Trial 21d grátis: ozly.au/v/SEUCODIGO\"",
+    s3_where_4: "<strong>Escritório físico:</strong> QR code impresso na recepção",
+    s3_where_5: "<strong>Workshops:</strong> slide final com QR code do seu link",
+    s3_dont_strong: "NÃO faça:",
+    s3_dont_text: "spam em grupos de Facebook com link direto (mods banem). Sempre engaja primeiro respondendo dúvida real, depois manda link em DM.",
+    s4_title: "Quem é seu cliente ideal",
+    s4_lede: "Foco em sub-contractors ABN sole traders na Austrália. Pessoas que operam sozinhas, sem empresa formal Pty Ltd.",
+    s4_profiles_title: "Os 4 perfis que mais convertem",
+    s4_th_profile: "Perfil",
+    s4_th_pain: "Dor principal",
+    s4_th_why: "Por que Ozly",
+    s4_p1_name: "Cleaner sole trader",
+    s4_p1_pain: "Recibos espalhados, sem invoice formal",
+    s4_p1_why: "Invoice multilingue, OCR de recibo",
+    s4_p2_name: "Uber/Rideshare driver",
+    s4_p2_pain: "GST surpresa, deductions perdidas",
+    s4_p2_why: "Cálculo automático, tracking km",
+    s4_p3_name: "Tradie sole trader",
+    s4_p3_pain: "Excel bagunçado, tax return caro",
+    s4_p3_why: "Tudo digital, contador acelera 45min",
+    s4_p4_name: "Student visa worker",
+    s4_p4_pain: "48h limit + tax confuso",
+    s4_p4_why: "Visa Shield + multilingue",
+    s4_not_title: "Quem NÃO é cliente",
+    s4_not_1: "Empresas grandes com Pty Ltd e contador interno (eles usam Xero, MYOB)",
+    s4_not_2: "CLT puros sem nenhum side income (não têm ABN)",
+    s4_not_3: "Aposentados sem atividade econômica",
+    s5_title: "Como apresentar — 3 cenários",
+    s5_lede: "Não force venda. Apresente como recurso útil. O cliente decide.",
+    s5_sc1_title: "Cenário 1 — Conversa de 60 segundos (informal)",
+    s5_sc1_label: "Pitch curto",
+    s5_sc1_text: "Olha, tem um app agora pra ABN aqui na Austrália — Ozly. Faz invoice, captura recibo com foto, calcula GST e PAYG sozinho. Multi-idioma. Pra cliente meu, eu recomendo porque chega aqui com TUDO organizado e o tax return sai em metade do tempo. Tem trial 14 dias grátis pra testar. Se quiser, te mando o link com meu código que você ganha trial estendido.",
+    s5_sc2_title: "Cenário 2 — Consulta com contador/agente (estruturado)",
+    s5_sc2_label: "Apresentação em consulta",
+    s5_sc2_text: "Antes de a gente fechar o tax return desse ano, queria te apresentar uma ferramenta que tem ajudado meus clientes: o Ozly. É um app que automatiza tudo no dia a dia — invoice, expense tracking, GST estimation. Vou te mandar o link e meu código de indicação. Você baixa, testa 14 dias grátis. Se gostar, no próximo tax return vou economizar tempo (e cobrar menos) porque os dados já chegam estruturados. Topa testar?",
+    s5_sc3_title: "Cenário 3 — Workshop ou evento (grupo)",
+    s5_sc3_label: "Em apresentação pra grupo",
+    s5_sc3_text: "Pessoal, a maioria dos sub-contractors que eu atendo perde dinheiro porque não organiza o que deduz. Eu indico o Ozly como ferramenta básica — é um app que captura recibo, calcula GST, gera invoice. Você baixa, fotografa cada recibo no mesmo dia, no fim do ano vem com TUDO. Vou compartilhar o QR code com o meu código de afiliado. Quem topar testar, é trial estendido — 21 dias grátis ao invés de 14.",
+    s6_title: "Seu dashboard de afiliado",
+    s6_lede1: "Acompanhe ganhos, conversões e bônus em tempo real em",
+    s6_how_title: "Como acessar",
+    s6_how_1: "Acesse a URL do seu dashboard acima",
+    s6_how_2: "Clique em \"Receber meu link de acesso\"",
+    s6_how_3: "Abra o email recebido e clique no link de login",
+    s6_how_4: "Sua sessão fica salva por 30 dias",
+    s6_what_title: "O que você vê",
+    s6_what_1: "<strong>Funil:</strong> views → installs → trials → conversões pagas",
+    s6_what_2: "<strong>Lista de conversões recentes</strong> (últimas 20, anonimizadas)",
+    s6_what_3: "<strong>Ganhos pendentes:</strong> comissões liberadas mas ainda não pagas",
+    s6_what_4: "<strong>Histórico de pagamentos:</strong> cada PIX/transferência registrada",
+    s6_what_5: "<strong>Bônus de retenção:</strong> tracking dos seus indicados que continuam pagando",
+    s7_title: "Perguntas frequentes",
+    s7_q1: "Quando recebo minha primeira comissão?",
+    s7_a1: "14 dias após o cliente pagar (fim do trial). Pagamento via PayID a cada quinzena (dia 15 e dia 30).",
+    s7_q2: "Se meu cliente cancelar, perco a comissão?",
+    s7_a2: "Não, se a comissão já foi liberada (commission_ready), ela é sua. Cancelamento posterior não tira. Só não conta se o cliente cancelar dentro da janela de 14 dias.",
+    s7_q3: "Posso mudar meu código depois?",
+    s7_a3: "Não — uma vez criado, o código é fixo pra preservar tracking histórico. Escolha um memorável (sua marca, suas iniciais).",
+    s7_q4: "Tem cobrança/mensalidade pra ser afiliado?",
+    s7_a4: "Zero. O programa é 100% gratuito. Você ainda ganha acesso PRO vitalício do app pra usar com clientes.",
+    s7_q5: "Cliente entrou pelo meu link mas não usou meu código — eu ganho?",
+    s7_a5: "Não — atribuição é pelo código aplicado no setup do app. Sempre instrua o cliente: \"depois de baixar, no setup, cole o código SEUCODIGO\".",
+    s7_q6: "Tem limite de indicações?",
+    s7_a6: "Não. Quanto mais, melhor. Bônus de volume escalam até 20+/mês.",
+    s7_q7: "Posso indicar para fora da Austrália?",
+    s7_a7: "O app funciona melhor pra usuários AU (tax local). Indicação fora da AU não converte bem — foque em AU.",
+    s8_title: "Próximos 7 dias — seu plano de início",
+    s8_lede: "Sequência testada pra você sair zero a primeira indicação em uma semana.",
+    s8_d1: "<strong>Dia 1</strong>: Receber seu código + baixar Ozly + testar 14 dias do plano PRO grátis. Entender o produto antes de vender.",
+    s8_d2: "<strong>Dia 2</strong>: Acessar seu dashboard em ozly.au/me/SEUCODIGO e confirmar acesso.",
+    s8_d3: "<strong>Dia 3</strong>: Imprimir QR code do seu link e colocar no escritório. Adicionar link na assinatura de email.",
+    s8_d4: "<strong>Dia 4</strong>: Identificar 5 clientes/contatos onde Ozly faz sentido. Mandar mensagem pessoal com o pitch de 60s (Cenário 1).",
+    s8_d5: "<strong>Dia 5</strong>: Postar 1 story no Instagram com o QR code. Mencionar no caption: \"uso essa ferramenta pra organizar tax — trial estendido pelo meu código\".",
+    s8_d6: "<strong>Dia 6</strong>: Mencionar Ozly em pelo menos 1 consulta/conversa de trabalho. Texto Cenário 2.",
+    s8_d7: "<strong>Dia 7</strong>: Verificar dashboard — quantos clicks, quantos installs, quantos trials? Ajustar abordagem.",
+    s8_goal_strong: "Meta realista nas 4 primeiras semanas:",
+    s8_goal_text: "2-5 conversões pagas. Isso já gera $50-125 AUD de comissão + você aprende o que funciona com sua audiência específica.",
+    s9_title: "Suporte direto",
+    s9_lede: "Dúvida, problema com pagamento, código não funcionando? Resposta em até 24h.",
+    s9_website: "Site",
+    s9_app_support: "Suporte técnico do app",
+    footer_signoff: "Vamos crescer juntos.",
+    footer_company: "Ozly Pty Ltd · Austrália · 2026",
+    footer_privacy: "Privacidade",
+    footer_terms: "Termos",
+    personal_greeting_template: "Olá, {NAME}!",
+  },
+
+  es: {
+    page_title: "Ozly — Kit de Bienvenida",
+    toolbar_doc: "Kit de Bienvenida",
+    toolbar_print: "Imprimir / Guardar PDF",
+    cover_tagline: "PROGRAMA DE AFILIADOS · AUSTRALIA",
+    cover_title: "Bienvenido al Equipo de Crecimiento Ozly",
+    cover_subtitle: "Todo lo que necesitas para empezar a referir Ozly y ganar comisiones desde hoy.",
+    cover_meta: "KIT DE BIENVENIDA",
+    s1_title: "Qué es Ozly",
+    s1_lede: "App de tax, factura y gastos para ABN sole traders y TFN holders en Australia. Multi-idioma: inglés, portugués y español.",
+    s1_h3_features: "Lo que la app hace por tu cliente",
+    s1_feat_1: "Factura en 30 segundos con GST, ABN, PAYG y seguimiento de pago",
+    s1_feat_2: "OCR de recibos con IA — foto se convierte en gasto categorizado automáticamente",
+    s1_feat_3: "Cálculo automático de GST, BAS y estimaciones PAYG en vivo",
+    s1_feat_4: "Visa Shield — alerta de 48h para student visa holders (cumplimiento Department of Home Affairs)",
+    s1_feat_5: "Preparación de tax return con deductions alineadas con ATO",
+    s1_feat_6: "Sincronización segura iOS + Android con backup encriptado",
+    s1_hl_strong: "Qué significa esto para tu cliente:",
+    s1_hl_text: "llega al contador, agente de inmigración o final del año fiscal con TODO organizado. No pierde recibos, no olvida deductions, no se sorprende con la factura de impuestos.",
+    s2_title: "Cómo ganas",
+    s2_lede: "Cada cliente tuyo que se suscriba con tu código único de afiliado genera comisión. Pago vía PayID/transferencia cada 15 días.",
+    s2_monthly_label: "Plan Mensual",
+    s2_per_client: "AUD/cliente",
+    s2_monthly_note: "Cliente paga $14.99 AUD/mes",
+    s2_monthly_pay: "Pagado en 14-30 días",
+    s2_annual_label: "Plan Anual",
+    s2_annual_note: "Cliente paga $149.99 AUD/año",
+    s2_annual_pay: "Pagado en 14 días",
+    s2_volume_title: "Bono de volumen (mensual)",
+    s2_volume_th1: "Conversiones en el mes",
+    s2_volume_th2: "Bono extra",
+    s2_volume_th3: "Total posible (5 anuales + bono)",
+    s2_v5: "5 clientes",
+    s2_v10: "10 clientes",
+    s2_v20: "20 clientes",
+    s2_retention_title: "Bono de retención",
+    s2_retention_intro: "Cuando tu cliente sigue pagando después de 3, 6 o 12 meses, ganas extra:",
+    s2_ret_3: "3 meses activos",
+    s2_ret_6: "6 meses activos",
+    s2_ret_12: "12 meses activos",
+    s2_example_strong: "Ejemplo real:",
+    s2_example_text: "refieres 5 clientes anuales en un mes. Ganas 5 × $25 = $125 + bono volumen $75 = <strong>$200 en el mes</strong>. Si esos 5 clientes se quedan 12 meses, $75 más de retención = <strong>$275 total por esas 5 referencias</strong>.",
+    s3_title: "Tu kit personal",
+    s3_lede: "Todo lo que necesitas para empezar hoy. Toma, copia, usa.",
+    s3_qr_h3: "Tu código único",
+    s3_qr_p1: "Imprime este QR o comparte el enlace abajo.",
+    s3_qr_link_label: "Enlace de afiliado:",
+    s3_qr_dash_label: "Tu dashboard:",
+    s3_where_title: "Dónde compartir",
+    s3_where_1: "<strong>WhatsApp:</strong> enlace directo a contactos individuales",
+    s3_where_2: "<strong>Bio de Instagram:</strong> pega el enlace en la bio + story con QR",
+    s3_where_3: "<strong>Firma de email:</strong> \"P.D. — Uso Ozly para ABN/tax. Trial 21d gratis: ozly.au/v/TUCODIGO\"",
+    s3_where_4: "<strong>Oficina física:</strong> QR impreso en recepción",
+    s3_where_5: "<strong>Workshops:</strong> slide final con QR de tu enlace",
+    s3_dont_strong: "NO hagas:",
+    s3_dont_text: "spam en grupos de Facebook con enlace directo (los mods bannean). Siempre interactúa primero respondiendo una duda real, luego envía enlace en DM.",
+    s4_title: "Quién es tu cliente ideal",
+    s4_lede: "Enfoque en sub-contractors ABN sole traders en Australia. Personas que operan solas, sin empresa formal Pty Ltd.",
+    s4_profiles_title: "Los 4 perfiles que más convierten",
+    s4_th_profile: "Perfil",
+    s4_th_pain: "Dolor principal",
+    s4_th_why: "Por qué Ozly",
+    s4_p1_name: "Limpiador sole trader",
+    s4_p1_pain: "Recibos dispersos, sin factura formal",
+    s4_p1_why: "Factura multi-idioma, OCR de recibo",
+    s4_p2_name: "Conductor Uber/Rideshare",
+    s4_p2_pain: "Sorpresa con GST, deductions perdidas",
+    s4_p2_why: "Cálculo automático, tracking km",
+    s4_p3_name: "Tradie sole trader",
+    s4_p3_pain: "Excel desordenado, tax return caro",
+    s4_p3_why: "Todo digital, contador 45min más rápido",
+    s4_p4_name: "Trabajador con student visa",
+    s4_p4_pain: "Límite de 48h + tax confuso",
+    s4_p4_why: "Visa Shield + multi-idioma",
+    s4_not_title: "Quién NO es cliente",
+    s4_not_1: "Empresas grandes con Pty Ltd y contador interno (usan Xero, MYOB)",
+    s4_not_2: "Empleados PAYG puros sin ingresos extra (sin ABN)",
+    s4_not_3: "Jubilados sin actividad económica",
+    s5_title: "Cómo presentar — 3 escenarios",
+    s5_lede: "No fuerces la venta. Presenta como recurso útil. El cliente decide.",
+    s5_sc1_title: "Escenario 1 — Conversación de 60 segundos (informal)",
+    s5_sc1_label: "Pitch corto",
+    s5_sc1_text: "Mira, hay una app llamada Ozly ahora para ABN aquí en Australia. Genera facturas, captura recibos con foto, calcula GST y PAYG automáticamente. Multi-idioma. A mis clientes les recomiendo porque llegan con TODO organizado y el tax return sale en la mitad del tiempo. Tiene trial 14 días gratis. Si quieres, te envío el enlace con mi código y obtienes trial extendido.",
+    s5_sc2_title: "Escenario 2 — Consulta con contador/agente (estructurado)",
+    s5_sc2_label: "Presentación en consulta",
+    s5_sc2_text: "Antes de cerrar el tax return de este año, quería presentarte una herramienta que ayuda a mis clientes: Ozly. Es una app que automatiza todo el día a día — facturas, gastos, estimación de GST. Te envío el enlace y mi código de referido. La descargas, pruebas 14 días gratis. Si te gusta, en el próximo tax return ahorro tiempo (y cobro menos) porque los datos llegan estructurados. ¿Lo probamos?",
+    s5_sc3_title: "Escenario 3 — Workshop o evento (grupo)",
+    s5_sc3_label: "Presentación grupal",
+    s5_sc3_text: "Gente, la mayoría de los sub-contractors que atiendo pierden dinero porque no organizan lo que pueden deducir. Recomiendo Ozly como herramienta básica — es una app que captura recibos, calcula GST, genera facturas. La descargas, fotografías cada recibo el mismo día, fin de año vienes con TODO. Comparto el QR con mi código de afiliado. Quien quiera probar, trial extendido — 21 días gratis en vez de 14.",
+    s6_title: "Tu dashboard de afiliado",
+    s6_lede1: "Sigue ganancias, conversiones y bonos en tiempo real en",
+    s6_how_title: "Cómo acceder",
+    s6_how_1: "Visita la URL de tu dashboard arriba",
+    s6_how_2: "Haz click en \"Solicitar mi enlace de acceso\"",
+    s6_how_3: "Abre el email que recibes y haz click en el enlace de login",
+    s6_how_4: "Tu sesión queda guardada por 30 días",
+    s6_what_title: "Qué ves",
+    s6_what_1: "<strong>Funnel:</strong> views → installs → trials → conversiones pagadas",
+    s6_what_2: "<strong>Lista de conversiones recientes</strong> (últimas 20, anonimizadas)",
+    s6_what_3: "<strong>Ganancias pendientes:</strong> comisiones liberadas pero aún no pagadas",
+    s6_what_4: "<strong>Historial de pagos:</strong> cada PayID/transferencia registrada",
+    s6_what_5: "<strong>Bonos de retención:</strong> tracking de tus referidos que siguen pagando",
+    s7_title: "Preguntas frecuentes",
+    s7_q1: "¿Cuándo recibo mi primera comisión?",
+    s7_a1: "14 días después de que el cliente pague (fin del trial). Pago vía PayID cada quincena (día 15 y día 30).",
+    s7_q2: "Si mi cliente cancela, ¿pierdo la comisión?",
+    s7_a2: "No, si la comisión ya fue liberada (commission_ready), es tuya. Cancelación posterior no la quita. Solo no cuenta si el cliente cancela dentro de la ventana de 14 días.",
+    s7_q3: "¿Puedo cambiar mi código después?",
+    s7_a3: "No — una vez creado, el código es fijo para preservar tracking histórico. Elige uno memorable (tu marca, tus iniciales).",
+    s7_q4: "¿Hay cobro/mensualidad para ser afiliado?",
+    s7_a4: "Cero. El programa es 100% gratuito. Además recibes acceso PRO vitalicio de la app para usar con clientes.",
+    s7_q5: "Cliente entró por mi enlace pero no usó mi código — ¿gano?",
+    s7_a5: "No — atribución es por el código aplicado en el setup de la app. Siempre instruye al cliente: \"después de descargar, en el setup, pega el código TUCODIGO\".",
+    s7_q6: "¿Hay límite de referencias?",
+    s7_a6: "No. Cuanto más, mejor. Los bonos de volumen escalan hasta 20+/mes.",
+    s7_q7: "¿Puedo referir fuera de Australia?",
+    s7_a7: "La app funciona mejor para usuarios AU (tax local). Referencias fuera de AU no convierten bien — enfócate en AU.",
+    s8_title: "Primeros 7 días — tu plan de inicio",
+    s8_lede: "Secuencia probada para ir de cero a tu primera referencia en una semana.",
+    s8_d1: "<strong>Día 1</strong>: Recibe tu código + descarga Ozly + prueba 14 días del plan PRO gratis. Entiende el producto antes de vender.",
+    s8_d2: "<strong>Día 2</strong>: Accede a tu dashboard en ozly.au/me/TUCODIGO y confirma acceso.",
+    s8_d3: "<strong>Día 3</strong>: Imprime el QR de tu enlace y colócalo en la oficina. Agrega el enlace a tu firma de email.",
+    s8_d4: "<strong>Día 4</strong>: Identifica 5 clientes/contactos donde Ozly tiene sentido. Envía mensaje personal con el pitch de 60s (Escenario 1).",
+    s8_d5: "<strong>Día 5</strong>: Publica 1 story en Instagram con el QR. Menciona en caption: \"uso esta herramienta para organizar tax — trial extendido con mi código\".",
+    s8_d6: "<strong>Día 6</strong>: Menciona Ozly en al menos 1 consulta/conversación de trabajo. Texto del Escenario 2.",
+    s8_d7: "<strong>Día 7</strong>: Revisa el dashboard — ¿cuántos clicks, installs, trials? Ajusta el enfoque.",
+    s8_goal_strong: "Meta realista en las primeras 4 semanas:",
+    s8_goal_text: "2-5 conversiones pagadas. Eso ya genera $50-125 AUD de comisión + aprendes lo que funciona con tu audiencia específica.",
+    s9_title: "Soporte directo",
+    s9_lede: "¿Duda, problema con pago, código no funciona? Respuesta en 24h.",
+    s9_website: "Sitio web",
+    s9_app_support: "Soporte técnico de la app",
+    footer_signoff: "Crezcamos juntos.",
+    footer_company: "Ozly Pty Ltd · Australia · 2026",
+    footer_privacy: "Privacidad",
+    footer_terms: "Términos",
+    personal_greeting_template: "¡Hola, {NAME}!",
+  },
+
+  en: {
+    page_title: "Ozly — Welcome Kit",
+    toolbar_doc: "Welcome Kit",
+    toolbar_print: "Print / Save PDF",
+    cover_tagline: "AFFILIATE PROGRAM · AUSTRALIA",
+    cover_title: "Welcome to the Ozly Growth Team",
+    cover_subtitle: "Everything you need to start referring Ozly and earning commissions today.",
+    cover_meta: "WELCOME KIT",
+    s1_title: "What is Ozly",
+    s1_lede: "Tax, invoice and expense tracking app for ABN sole traders and TFN holders in Australia. Multi-language: English, Portuguese and Spanish.",
+    s1_h3_features: "What the app does for your client",
+    s1_feat_1: "Generate invoices in 30 seconds with GST, ABN, PAYG and payment tracking",
+    s1_feat_2: "AI-powered receipt OCR — photo becomes categorised expense automatically",
+    s1_feat_3: "Live calculation of GST, BAS and PAYG estimates",
+    s1_feat_4: "Visa Shield — 48h alert for student visa holders (Department of Home Affairs compliance)",
+    s1_feat_5: "Tax return prep with ATO-aligned deductions",
+    s1_feat_6: "Secure iOS + Android sync with encrypted backups",
+    s1_hl_strong: "What this means for your client:",
+    s1_hl_text: "they arrive at the accountant, migration agent or end of financial year with everything organised. No lost receipts, no forgotten deductions, no surprise tax bills.",
+    s2_title: "How you earn",
+    s2_lede: "Every client of yours who subscribes using your unique affiliate code generates commission. Payment via PayID/bank transfer every 15 days.",
+    s2_monthly_label: "Monthly Plan",
+    s2_per_client: "AUD/client",
+    s2_monthly_note: "Client pays $14.99 AUD/month",
+    s2_monthly_pay: "Paid in 14-30 days",
+    s2_annual_label: "Annual Plan",
+    s2_annual_note: "Client pays $149.99 AUD/year",
+    s2_annual_pay: "Paid in 14 days",
+    s2_volume_title: "Monthly volume bonus",
+    s2_volume_th1: "Conversions in the month",
+    s2_volume_th2: "Extra bonus",
+    s2_volume_th3: "Max total (5 annual + bonus)",
+    s2_v5: "5 clients",
+    s2_v10: "10 clients",
+    s2_v20: "20 clients",
+    s2_retention_title: "Retention bonus",
+    s2_retention_intro: "When your client stays paying after 3, 6 or 12 months, you earn extra:",
+    s2_ret_3: "3 months active",
+    s2_ret_6: "6 months active",
+    s2_ret_12: "12 months active",
+    s2_example_strong: "Real example:",
+    s2_example_text: "you refer 5 annual clients in one month. You earn 5 × $25 = $125 + $75 volume bonus = <strong>$200 in the month</strong>. If those 5 clients stay 12 months, additional $75 retention = <strong>$275 total for those 5 referrals</strong>.",
+    s3_title: "Your personal kit",
+    s3_lede: "Everything you need to start today. Take it, copy it, use it.",
+    s3_qr_h3: "Your unique code",
+    s3_qr_p1: "Print this QR or share the link below.",
+    s3_qr_link_label: "Affiliate link:",
+    s3_qr_dash_label: "Your dashboard:",
+    s3_where_title: "Where to share",
+    s3_where_1: "<strong>WhatsApp:</strong> direct link to individual contacts",
+    s3_where_2: "<strong>Instagram bio:</strong> paste link in bio + story with QR code",
+    s3_where_3: "<strong>Email signature:</strong> \"P.S. — I use Ozly for ABN/tax. 21-day free trial: ozly.au/v/YOURCODE\"",
+    s3_where_4: "<strong>Physical office:</strong> printed QR code at reception",
+    s3_where_5: "<strong>Workshops:</strong> final slide with QR code of your link",
+    s3_dont_strong: "DON'T:",
+    s3_dont_text: "spam Facebook groups with direct link (mods will ban you). Always engage first by answering a real question, then send link in DM.",
+    s4_title: "Who is your ideal client",
+    s4_lede: "Focus on sub-contractors ABN sole traders in Australia. People who operate alone, without a formal Pty Ltd company.",
+    s4_profiles_title: "The 4 profiles that convert most",
+    s4_th_profile: "Profile",
+    s4_th_pain: "Main pain",
+    s4_th_why: "Why Ozly",
+    s4_p1_name: "Cleaner sole trader",
+    s4_p1_pain: "Receipts scattered, no formal invoice",
+    s4_p1_why: "Multilingual invoice, receipt OCR",
+    s4_p2_name: "Uber/Rideshare driver",
+    s4_p2_pain: "GST surprise, missed deductions",
+    s4_p2_why: "Automatic calculation, km tracking",
+    s4_p3_name: "Tradie sole trader",
+    s4_p3_pain: "Messy Excel, expensive tax return",
+    s4_p3_why: "All digital, 45min faster for accountant",
+    s4_p4_name: "Student visa worker",
+    s4_p4_pain: "48h limit + confusing tax",
+    s4_p4_why: "Visa Shield + multilingual",
+    s4_not_title: "Who is NOT the client",
+    s4_not_1: "Large companies with Pty Ltd and in-house accountant (they use Xero, MYOB)",
+    s4_not_2: "Full PAYG employees with no side income (no ABN)",
+    s4_not_3: "Retirees with no economic activity",
+    s5_title: "How to present — 3 scenarios",
+    s5_lede: "Don't push a sale. Present it as a useful resource. The client decides.",
+    s5_sc1_title: "Scenario 1 — 60-second conversation (informal)",
+    s5_sc1_label: "Short pitch",
+    s5_sc1_text: "Hey, there's an app called Ozly now for ABN here in Australia. Generates invoices, captures receipts with a photo, calculates GST and PAYG automatically. Multilingual. I recommend it to my clients because they show up with EVERYTHING organised and the tax return takes half the time. There's a 14-day free trial. If you want, I'll send you the link with my code so you get an extended trial.",
+    s5_sc2_title: "Scenario 2 — Consultation with accountant/agent (structured)",
+    s5_sc2_label: "Consultation presentation",
+    s5_sc2_text: "Before we finalise this year's tax return, I'd like to introduce a tool that's been helping my clients: Ozly. It's an app that automates everything day-to-day — invoicing, expense tracking, GST estimation. I'll send you the link and my referral code. Download it, try 14 days free. If you like it, next tax return I'll save time (and charge less) because the data arrives structured. Want to try?",
+    s5_sc3_title: "Scenario 3 — Workshop or event (group)",
+    s5_sc3_label: "Group presentation",
+    s5_sc3_text: "Most sub-contractors I work with lose money because they don't organise what they can deduct. I recommend Ozly as the basic tool — an app that captures receipts, calculates GST, generates invoices. Download it, photograph every receipt the same day, end of year you have EVERYTHING. I'll share the QR code with my affiliate code. Anyone who tries it gets an extended trial — 21 days free instead of 14.",
+    s6_title: "Your affiliate dashboard",
+    s6_lede1: "Track earnings, conversions and bonuses in real time at",
+    s6_how_title: "How to access",
+    s6_how_1: "Visit your dashboard URL above",
+    s6_how_2: "Click \"Request my access link\"",
+    s6_how_3: "Open the email you receive and click the login link",
+    s6_how_4: "Your session is saved for 30 days",
+    s6_what_title: "What you see",
+    s6_what_1: "<strong>Funnel:</strong> views → installs → trials → paid conversions",
+    s6_what_2: "<strong>Recent conversions list</strong> (last 20, anonymised)",
+    s6_what_3: "<strong>Pending earnings:</strong> commissions ready but not yet paid",
+    s6_what_4: "<strong>Payment history:</strong> every PayID/transfer logged",
+    s6_what_5: "<strong>Retention bonuses:</strong> tracking your referrals who keep paying",
+    s7_title: "Frequently asked questions",
+    s7_q1: "When do I get my first commission?",
+    s7_a1: "14 days after the client pays (end of trial). Payment via PayID every 15 days (day 15 and day 30).",
+    s7_q2: "If my client cancels, do I lose the commission?",
+    s7_a2: "No, if the commission was already released (commission_ready), it's yours. Later cancellation doesn't claw it back. It only doesn't count if the client cancels within the 14-day window.",
+    s7_q3: "Can I change my code later?",
+    s7_a3: "No — once created, the code is fixed to preserve historical tracking. Choose a memorable one (your brand, your initials).",
+    s7_q4: "Is there a fee to be an affiliate?",
+    s7_a4: "Zero. The program is 100% free. You also get lifetime PRO app access to use with clients.",
+    s7_q5: "Client used my link but not my code — do I earn?",
+    s7_a5: "No — attribution is by the code applied in app setup. Always instruct your client: \"after downloading, in setup, paste the code YOURCODE\".",
+    s7_q6: "Is there a referral limit?",
+    s7_a6: "No. The more, the better. Volume bonuses scale up to 20+/month.",
+    s7_q7: "Can I refer outside Australia?",
+    s7_a7: "The app works best for AU users (local tax). Referrals outside AU don't convert well — focus on AU.",
+    s8_title: "First 7 days — your start plan",
+    s8_lede: "Tested sequence to go from zero to your first referral in one week.",
+    s8_d1: "<strong>Day 1</strong>: Receive your code + download Ozly + try 14 days of PRO free. Understand the product before selling.",
+    s8_d2: "<strong>Day 2</strong>: Access your dashboard at ozly.au/me/YOURCODE and confirm access.",
+    s8_d3: "<strong>Day 3</strong>: Print your QR code and put it in the office. Add link to email signature.",
+    s8_d4: "<strong>Day 4</strong>: Identify 5 clients/contacts where Ozly makes sense. Send personal message with the 60s pitch (Scenario 1).",
+    s8_d5: "<strong>Day 5</strong>: Post 1 Instagram story with QR code. Mention in caption: \"I use this tool to organise tax — extended trial with my code\".",
+    s8_d6: "<strong>Day 6</strong>: Mention Ozly in at least 1 work consultation/conversation. Use Scenario 2 text.",
+    s8_d7: "<strong>Day 7</strong>: Check dashboard — how many clicks, installs, trials? Adjust approach.",
+    s8_goal_strong: "Realistic goal for first 4 weeks:",
+    s8_goal_text: "2-5 paid conversions. That already generates $50-125 AUD in commission + you learn what works with your specific audience.",
+    s9_title: "Direct support",
+    s9_lede: "Question, payment issue, code not working? Response within 24h.",
+    s9_website: "Website",
+    s9_app_support: "App technical support",
+    footer_signoff: "Let's grow together.",
+    footer_company: "Ozly Pty Ltd · Australia · 2026",
+    footer_privacy: "Privacy",
+    footer_terms: "Terms",
+    personal_greeting_template: "Hi, {NAME}!",
+  }
+};
+
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const code = (params.get('code') || 'YOURCODE').toUpperCase();
+  const name = params.get('name') || '';
+  let lang = (params.get('lang') || 'pt').toLowerCase();
+
+  if (!TRANSLATIONS[lang]) lang = 'pt';
+
+  function applyLang(targetLang) {
+    const T = TRANSLATIONS[targetLang];
+    if (!T) return;
+
+    document.documentElement.lang = targetLang === 'pt' ? 'pt-BR' : targetLang === 'es' ? 'es-CO' : 'en-AU';
+
+    // text content
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (T[key] != null) {
+        if (T[key].includes('<')) el.innerHTML = T[key];
+        else el.textContent = T[key];
+      }
+    });
+
+    // page title
+    document.title = T.page_title || document.title;
+
+    // active toolbar button
+    document.querySelectorAll('[data-lang-btn]').forEach(b => {
+      b.classList.toggle('active', b.getAttribute('data-lang-btn') === targetLang);
+    });
+
+    // personal greeting (only if name provided)
+    const greeting = document.getElementById('personal-greeting');
+    if (greeting) {
+      if (name && T.personal_greeting_template) {
+        const first = name.split(/\s+/)[0] || name;
+        greeting.textContent = T.personal_greeting_template.replace('{NAME}', first);
+        greeting.style.display = 'block';
+      } else {
+        greeting.style.display = 'none';
+      }
+    }
+
+    // code substitutions in templates (replace SEUCODIGO / TUCODIGO / YOURCODE)
+    const codeRegex = /SEUCODIGO|TUCODIGO|YOURCODE/g;
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      if (el.innerHTML.match(codeRegex)) {
+        el.innerHTML = el.innerHTML.replace(codeRegex, code);
+      }
+    });
+  }
+
+  function applyCode() {
+    document.querySelectorAll('#affiliate-code-display, #your-code-display').forEach(el => {
+      el.textContent = code;
+    });
+    const affLink = document.getElementById('affiliate-link');
+    if (affLink) affLink.textContent = `ozly.au/v/${code}`;
+    const dashLink = document.getElementById('dashboard-link');
+    if (dashLink) dashLink.textContent = `ozly.au/me/${code}`;
+    const dashLink2 = document.getElementById('dashboard-link-2');
+    if (dashLink2) dashLink2.textContent = `ozly.au/me/${code}`;
+
+    // QR code via external API
+    const qr = document.getElementById('qr-code');
+    if (qr) {
+      const url = `https://ozly.au/v/${code}`;
+      qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=8&data=${encodeURIComponent(url)}`;
+      qr.alt = `QR Code: ${url}`;
+    }
+  }
+
+  applyLang(lang);
+  applyCode();
+
+  // toolbar language switching (re-renders without reload)
+  document.querySelectorAll('[data-lang-btn]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const newLang = btn.getAttribute('data-lang-btn');
+      const url = new URL(window.location);
+      url.searchParams.set('lang', newLang);
+      window.history.replaceState({}, '', url);
+      applyLang(newLang);
+      applyCode(); // re-apply because innerHTML overwrites
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
