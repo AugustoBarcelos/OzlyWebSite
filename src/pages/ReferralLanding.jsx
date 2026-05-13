@@ -149,9 +149,10 @@ export default function ReferralLanding() {
     };
   }, [code]);
 
-  // Assim que o código for validado, copia para o clipboard com prefixo
-  // `OZLY_` — o app na primeira abertura verifica o clipboard e preenche
-  // o campo de código automaticamente se encontrar esse prefixo.
+  // Tenta copiar `OZLY_<code>` no clipboard assim que o código for validado.
+  // iOS Safari (e parte dos Chrome Android) bloqueiam writes sem user gesture,
+  // então este useEffect só funciona em desktop. Em mobile dependemos do
+  // copy-on-click do botão Download (ver `copyOnDownload` abaixo).
   useEffect(() => {
     if (validation.state !== "valid") return;
     if (!navigator.clipboard?.writeText) return;
@@ -159,7 +160,7 @@ export default function ReferralLanding() {
       .writeText(`OZLY_${code}`)
       .then(() => setCopied(true))
       .catch(() => {
-        /* alguns browsers bloqueiam clipboard sem interação — sem estresse */
+        /* mobile sem gesture — o onClick do Download cobre */
       });
   }, [validation.state, code]);
 
@@ -168,6 +169,14 @@ export default function ReferralLanding() {
       ?.writeText(code)
       .then(() => setCopied(true))
       .catch(() => {});
+  };
+
+  // Click handler used by the Download buttons. The user tapping a download
+  // link IS a gesture, so the clipboard write is allowed on iOS Safari and
+  // Chrome Android — covering the mobile path where the useEffect above
+  // gets blocked. We fire-and-forget so the navigation isn't delayed.
+  const copyOnDownload = () => {
+    navigator.clipboard?.writeText(`OZLY_${code}`).catch(() => {});
   };
 
   if (validation.state === "loading") {
@@ -236,14 +245,14 @@ export default function ReferralLanding() {
       {/* Botões de download contextuais ao OS */}
       {os === "ios" && (
         <DownloadBlock
-          primary={{ url: APP_STORE_URL, label: r.iosPrimary }}
-          secondary={{ url: PLAY_STORE_URL, label: r.iosSecondary }}
+          primary={{ url: APP_STORE_URL, label: r.iosPrimary, onClick: copyOnDownload }}
+          secondary={{ url: PLAY_STORE_URL, label: r.iosSecondary, onClick: copyOnDownload }}
         />
       )}
       {os === "android" && (
         <DownloadBlock
-          primary={{ url: PLAY_STORE_URL, label: r.androidPrimary }}
-          secondary={{ url: APP_STORE_URL, label: r.androidSecondary }}
+          primary={{ url: PLAY_STORE_URL, label: r.androidPrimary, onClick: copyOnDownload }}
+          secondary={{ url: APP_STORE_URL, label: r.androidSecondary, onClick: copyOnDownload }}
         />
       )}
       {os === "desktop" && (
@@ -261,12 +270,14 @@ export default function ReferralLanding() {
           <div className="flex gap-3 justify-center mt-6">
             <a
               href={APP_STORE_URL}
+              onClick={copyOnDownload}
               className="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-semibold"
             >
               {r.appStore}
             </a>
             <a
               href={PLAY_STORE_URL}
+              onClick={copyOnDownload}
               className="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-semibold"
             >
               {r.playStore}
@@ -293,12 +304,14 @@ function DownloadBlock({ primary, secondary }) {
     <div className="flex flex-col gap-3">
       <a
         href={primary.url}
+        onClick={primary.onClick}
         className="block w-full text-center px-6 py-4 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white text-lg font-bold shadow-lg shadow-brand-500/30 transition"
       >
         {primary.label}
       </a>
       <a
         href={secondary.url}
+        onClick={secondary.onClick}
         className="block w-full text-center px-6 py-3 rounded-2xl border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-sm font-semibold"
       >
         {secondary.label}
