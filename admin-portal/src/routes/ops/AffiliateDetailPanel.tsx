@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Card, Tab, TabGroup, TabList, Title, Text } from '@tremor/react';
 import { callRpc, RpcError } from '@/lib/rpc';
+import { callEdge } from '@/lib/edge';
+import { useToast } from '@/components/Toast';
 import { Spinner } from '@/components/Spinner';
 import { QrCode } from '@/components/QrCode';
 import { ExternalLinkIcon } from '@/components/Icons';
@@ -149,12 +151,53 @@ export function AffiliateDetailPanel({
   onEdit,
   conversionsTable,
 }: Props & { conversionsTable: React.ReactNode }) {
+  const { toast } = useToast();
   const [period, setPeriod] = useState<Period>(30);
   const [funnel, setFunnel] = useState<FunnelResponse | null>(null);
   const [timeseries, setTimeseries] = useState<TimeseriesResponse | null>(null);
   const [retention, setRetention] = useState<RetentionBucketsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [resyncing, setResyncing] = useState(false);
+
+  async function handleResyncRc() {
+    if (resyncing) return;
+    setResyncing(true);
+    try {
+      const r = await callEdge<{
+        ok: boolean;
+        project_name?: string;
+        error?: string;
+      }>('affiliate-sync-rc', {
+        method: 'POST',
+        body: { affiliate_id: affiliateId },
+      });
+      if (r.ok && r.data.ok) {
+        toast({
+          variant: 'success',
+          title: 'RC sync ✓',
+          description: `Conectado ao projeto "${r.data.project_name}".`,
+        });
+      } else {
+        const detail = r.ok
+          ? r.data.error ?? 'erro desconhecido'
+          : r.error ?? 'edge fn falhou';
+        toast({
+          variant: 'error',
+          title: 'RC sync falhou',
+          description: detail,
+        });
+      }
+    } catch (e) {
+      toast({
+        variant: 'error',
+        title: 'RC sync falhou',
+        description: e instanceof Error ? e.message : 'erro inesperado',
+      });
+    } finally {
+      setResyncing(false);
+    }
+  }
 
   useEffect(() => {
     let alive = true;
@@ -233,6 +276,15 @@ export function AffiliateDetailPanel({
             </Text>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleResyncRc}
+              disabled={resyncing}
+              title="Re-verifica conexão com RevenueCat e atualiza affiliates.notes"
+              className="rounded-md border border-navy-100 bg-white px-3 py-1.5 text-xs font-medium text-navy-600 hover:border-brand-300 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {resyncing ? '⏳ Sincronizando…' : '🔄 Re-sync RC'}
+            </button>
             {onEdit && (
               <button
                 type="button"
