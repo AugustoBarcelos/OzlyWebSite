@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, Title } from '@tremor/react';
 import {
+  ActivityIcon,
   AlertTriangleIcon,
   BellIcon,
   HandshakeIcon,
@@ -21,6 +22,25 @@ interface PendingPayoutsResp {
   pending_summary: Array<{ currency: string; count: number; cents: number }>;
 }
 
+interface AnomalyRow {
+  metric: string;
+  today_value: number;
+  baseline_mean: number;
+  baseline_stddev: number;
+  z_score: number;
+  severity: 'warning' | 'critical';
+  direction: 'up' | 'down';
+}
+interface AnomalyScanResp {
+  snapshot_at: string;
+  today: string;
+  window_days: number;
+  z_warning: number;
+  z_critical: number;
+  count: number;
+  anomalies: AnomalyRow[];
+}
+
 type Severity = 'info' | 'warning' | 'critical';
 interface Alert {
   id: string;
@@ -31,24 +51,46 @@ interface Alert {
   icon: React.ComponentType<{ className?: string }>;
 }
 
+const METRIC_LABEL: Record<string, string> = {
+  signups_per_day: 'Signups (hoje)',
+  errors_per_day: 'Erros do app (hoje)',
+  new_paying_per_day: 'Novos paying (hoje)',
+  trials_starting_per_day: 'Trials iniciados (hoje)',
+};
+
+const METRIC_LINK: Record<string, string> = {
+  signups_per_day: '/growth/funnel',
+  errors_per_day: '/tech/errors',
+  new_paying_per_day: '/revenue',
+  trials_starting_per_day: '/revenue',
+};
+
 /**
- * /inbox/alerts — anomaly detection (client-side rules).
+ * /inbox/alerts — anomaly detection.
  *
- * V1 rules (no AI yet):
- *   - Pending affiliate payouts > 0 → warning
- *   - Trial→Paid conversion < 10% → warning, < 5% → critical
- *   - Churn period > 5 → warning, > 10 → critical
- *   - Error rate increased ≥ 50% vs previous period → warning, ≥ 100% → critical
- *   - Active trials about to expire (7d) but trial→paid is low → warning
+ * Two layers:
+ *   1. Client-side heuristics (hardcoded thresholds for known KPIs)
+ *      - Pending affiliate payouts > 0 → warning
+ *      - Trial→Paid conversion < 10% → warning, < 5% → critical
+ *      - Churn period > 5 → warning, > 10 → critical
+ *      - Error rate increased ≥ 50% vs previous period → warning, ≥ 100% → critical
+ *      - Active trials about to expire (7d) but trial→paid is low → warning
  *
- * V2 (AI Composer wave) replaces this with adaptive thresholds + plain-language
- * explanations.
+ *   2. Statistical anomaly detection (admin_anomaly_scan RPC)
+ *      - z-score over 28-day rolling baseline for signups, errors,
+ *        new paying, trials starting
+ *      - >2.5σ = warning, >3σ = critical
+ *      - Errors only flag UP direction (down is good)
+ *
+ * V2 (W7.5) replaces both with Gemini-driven adaptive thresholds + plain-
+ * language explanations.
  */
 export function InboxAlertsPage() {
   const [kpi, setKpi] = useState<KpiDashboardResponse | null>(null);
   const [revenue, setRevenue] = useState<RevenueSummaryResponse | null>(null);
   const [errorRate, setErrorRate] = useState<ErrorRateResponse | null>(null);
   const [payouts, setPayouts] = useState<PendingPayoutsResp | null>(null);
+  const [anomalies, setAnomalies] = useState<AnomalyScanResp | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -59,13 +101,15 @@ export function InboxAlertsPage() {
       callRpc<RevenueSummaryResponse>('admin_revenue_summary', { p_period_days: 30 }),
       callRpc<ErrorRateResponse>('admin_app_error_rate', { p_period_days: 30 }),
       callRpc<PendingPayoutsResp>('admin_affiliate_payout_planning', {}),
+      callRpc<AnomalyScanResp>('admin_anomaly_scan', {}),
     ]).then((results) => {
       if (!alive) return;
-      const [r0, r1, r2, r3] = results;
+      const [r0, r1, r2, r3, r4] = results;
       if (r0.status === 'fulfilled') setKpi(r0.value);
       if (r1.status === 'fulfilled') setRevenue(r1.value);
       if (r2.status === 'fulfilled') setErrorRate(r2.value);
       if (r3.status === 'fulfilled') setPayouts(r3.value);
+      if (r4.status === 'fulfilled') setAnomalies(r4.value);
       setLoading(false);
     });
     return () => {
@@ -176,8 +220,25 @@ export function InboxAlertsPage() {
       });
     }
 
+    // Statistical anomalies from admin_anomaly_scan (z-score over rolling baseline)
+    if (anomalies && anomalies.anomalies.length > 0) {
+      for (const a of anomalies.anomalies) {
+        const label = METRIC_LABEL[a.metric] ?? a.metric;
+        const arrow = a.direction === 'up' ? '↑' : '↓';
+        const deviation = Math.abs(a.z_score).toFixed(1);
+        out.push({
+          id: `anomaly-${a.metric}`,
+          severity: a.severity,
+          title: `${label}: ${formatNumber(a.today_value)} (${arrow} ${deviation}σ)`,
+          detail: `Baseline ${anomalies.window_days}d: μ=${a.baseline_mean.toFixed(1)}, σ=${a.baseline_stddev.toFixed(1)}. Hoje está ${deviation} desvios ${a.direction === 'up' ? 'acima' : 'abaixo'}.`,
+          to: METRIC_LINK[a.metric] ?? '/cockpit',
+          icon: ActivityIcon,
+        });
+      }
+    }
+
     return out;
-  }, [kpi, revenue, errorRate, payouts]);
+  }, [kpi, revenue, errorRate, payouts, anomalies]);
 
   const counts = {
     critical: alerts.filter((a) => a.severity === 'critical').length,
@@ -203,7 +264,7 @@ export function InboxAlertsPage() {
               Alerts
             </h1>
             <p className="mt-0.5 text-sm text-navy-400">
-              Anomalias detectadas com regras client-side. AI adaptive em V2.
+              Regras client-side + z-score statístico sobre baseline rolante.
             </p>
           </div>
         </div>
@@ -282,9 +343,11 @@ export function InboxAlertsPage() {
       )}
 
       <div className="ozly-card border-navy-100 bg-navy-50/40 p-3 text-[12px] text-navy-500">
-        <strong>V2 — AI anomaly detection:</strong> regras adaptativas com Gemini
-        analisando trend + sazonalidade. Habilita junto com o AI Composer (precisa
-        Gemini token + brand voice curado).
+        <strong>2 camadas:</strong> regras client-side (thresholds fixos) +
+        z-score sobre baseline {anomalies?.window_days ?? 28}d via{' '}
+        <code className="font-mono">admin_anomaly_scan</code>. Próximo passo
+        (W7.5): thresholds adaptativos com Gemini + explicações em
+        linguagem natural.
       </div>
 
       <RawDataPanel
@@ -294,6 +357,7 @@ export function InboxAlertsPage() {
           { rpc: 'admin_revenue_summary', params: { p_period_days: 30 }, data: revenue },
           { rpc: 'admin_app_error_rate', params: { p_period_days: 30 }, data: errorRate },
           { rpc: 'admin_affiliate_payout_planning', params: {}, data: payouts },
+          { rpc: 'admin_anomaly_scan', params: {}, data: anomalies },
         ]}
       />
     </div>

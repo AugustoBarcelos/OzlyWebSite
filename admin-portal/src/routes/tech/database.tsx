@@ -370,12 +370,7 @@ export function TechDatabasePage() {
             )}
           </Card>
 
-          <div className="ozly-card border-navy-100 bg-navy-50/40 p-3 text-[12px] text-navy-500">
-            <strong>Slow query stats em V2.</strong> Precisa de wrapper RPC sobre{' '}
-            <code className="font-mono">pg_stat_statements</code> com agg + filtro pra
-            evitar PII. Por agora, abre o Supabase Studio → Database → Performance pra
-            ver queries individuais.
-          </div>
+          <SlowQueriesCard />
         </>
       )}
 
@@ -387,6 +382,224 @@ export function TechDatabasePage() {
         ]}
       />
     </div>
+  );
+}
+
+// ─── Slow queries (pg_stat_statements wrapper) ────────────────────────────
+
+interface SlowQueryRow {
+  queryid: string;
+  query: string;
+  query_length: number;
+  calls: number;
+  total_ms: number;
+  mean_ms: number;
+  rows: number;
+  shared_blks_hit: number;
+  shared_blks_read: number;
+  cache_hit_pct: number | null;
+}
+
+interface SlowQueriesResponse {
+  available: boolean;
+  note?: string;
+  snapshot_at?: string;
+  limit?: number;
+  min_calls?: number;
+  min_mean_ms?: number;
+  rows: SlowQueryRow[];
+}
+
+function SlowQueriesCard() {
+  const { toast } = useToast();
+  const [data, setData] = useState<SlowQueriesResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [migrationPending, setMigrationPending] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  const load = useMemo(
+    () => () => {
+      setLoading(true);
+      setError(null);
+      callRpc<SlowQueriesResponse>('admin_slow_queries', {
+        p_limit: 25,
+        p_min_calls: 10,
+        p_min_mean_ms: 50,
+      })
+        .then((d) => setData(d))
+        .catch((e: unknown) => {
+          if (
+            e instanceof RpcError &&
+            (e.code === '42883' || e.message.includes('does not exist'))
+          ) {
+            setMigrationPending(true);
+          } else {
+            setError(e instanceof RpcError ? e.message : 'Erro');
+          }
+        })
+        .finally(() => setLoading(false));
+    },
+    [],
+  );
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  async function handleReset() {
+    if (
+      !window.confirm(
+        'Resetar pg_stat_statements? Apaga TODO o histórico agregado de queries (não afeta dados de usuário, só métricas).',
+      )
+    ) {
+      return;
+    }
+    setResetting(true);
+    try {
+      await callRpc('admin_slow_queries_reset', {});
+      toast({
+        variant: 'success',
+        title: 'pg_stat_statements resetado',
+        description: 'Próximas queries vão popular o agregado do zero.',
+      });
+      load();
+    } catch (e) {
+      toast({
+        variant: 'error',
+        title: 'Falha ao resetar',
+        description: e instanceof RpcError ? e.message : 'Erro inesperado',
+      });
+    } finally {
+      setResetting(false);
+    }
+  }
+
+  if (migrationPending) {
+    return (
+      <div className="ozly-card border-amber-200 bg-amber-50/60 p-3 text-[12px] text-amber-800">
+        <strong>Migration pendente:</strong> rode{' '}
+        <code className="font-mono">supabase db push</code> para aplicar{' '}
+        <code className="font-mono">admin_slow_queries</code>.
+      </div>
+    );
+  }
+
+  return (
+    <Card className="ozly-card">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <Title className="!text-sm !font-semibold text-navy-700">
+            Slow queries (mean ≥ 50ms, ≥ 10 calls)
+          </Title>
+          <p className="mt-0.5 text-xs text-navy-400">
+            Top 25 por mean exec time. Literais já normalizados pelo pg_stat_statements — sem PII.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={load}
+            disabled={loading}
+            className="rounded-md border border-navy-100 bg-white px-2.5 py-1 text-xs font-medium text-navy-600 hover:bg-navy-50 disabled:opacity-50"
+          >
+            {loading ? 'Atualizando…' : 'Refresh'}
+          </button>
+          <button
+            type="button"
+            onClick={handleReset}
+            disabled={resetting}
+            className="rounded-md border border-rose-200 bg-white px-2.5 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50 disabled:opacity-50"
+            title="Limpa o agregado do pg_stat_statements."
+          >
+            {resetting ? 'Resetando…' : 'Reset stats'}
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <div className="mt-3 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-900">
+          {error}
+        </div>
+      )}
+
+      {data && !data.available && (
+        <div className="mt-3 rounded-md border border-amber-200 bg-amber-50/60 px-3 py-2 text-xs text-amber-800">
+          {data.note ?? 'pg_stat_statements não disponível.'}
+        </div>
+      )}
+
+      {loading && !data ? (
+        <div className="mt-3 flex items-center justify-center gap-2 py-8 text-xs text-navy-400">
+          <Spinner size="sm" /> Carregando…
+        </div>
+      ) : !data || !data.available ? null : data.rows.length === 0 ? (
+        <div className="mt-3 rounded-md border border-emerald-200 bg-emerald-50/60 px-3 py-6 text-center text-sm text-emerald-700">
+          Nenhuma query devagar acima do threshold.
+        </div>
+      ) : (
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="text-[10px] font-semibold uppercase tracking-wider text-navy-300">
+              <tr className="border-b border-navy-50">
+                <th className="py-2 text-left">Query</th>
+                <th className="py-2 text-right">Mean (ms)</th>
+                <th className="py-2 text-right">Total (ms)</th>
+                <th className="py-2 text-right">Calls</th>
+                <th className="py-2 text-right">Rows</th>
+                <th className="py-2 text-right">Cache hit</th>
+              </tr>
+            </thead>
+            <tbody className="text-navy-700">
+              {data.rows.map((r) => {
+                const isOpen = expanded === r.queryid;
+                return (
+                  <tr
+                    key={r.queryid}
+                    className="cursor-pointer border-b border-navy-50/60 last:border-0 hover:bg-navy-50/40"
+                    onClick={() => setExpanded(isOpen ? null : r.queryid)}
+                  >
+                    <td className="max-w-[40rem] py-1.5 pr-3">
+                      <code
+                        className={`block font-mono text-[11px] ${
+                          isOpen ? 'whitespace-pre-wrap' : 'truncate'
+                        }`}
+                        title={r.query}
+                      >
+                        {r.query}
+                      </code>
+                      {r.query_length > 600 && (
+                        <span className="mt-0.5 inline-block text-[10px] text-navy-300">
+                          truncado em 600 chars · {r.query_length} total
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-1.5 text-right tabular-nums font-semibold">
+                      {r.mean_ms.toFixed(2)}
+                    </td>
+                    <td className="py-1.5 text-right tabular-nums text-navy-500">
+                      {formatNumber(Math.round(r.total_ms))}
+                    </td>
+                    <td className="py-1.5 text-right tabular-nums">
+                      {formatNumber(r.calls)}
+                    </td>
+                    <td className="py-1.5 text-right tabular-nums text-navy-500">
+                      {formatNumber(r.rows)}
+                    </td>
+                    <td className="py-1.5 text-right tabular-nums">
+                      {r.cache_hit_pct === null
+                        ? '—'
+                        : `${r.cache_hit_pct.toFixed(1)}%`}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Card>
   );
 }
 

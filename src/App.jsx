@@ -11,6 +11,7 @@ const TermsOfUse = lazy(() => import("./pages/TermsOfUse"));
 const ReferralLanding = lazy(() => import("./pages/ReferralLanding"));
 const AffiliateDashboard = lazy(() => import("./pages/AffiliateDashboard"));
 const AffiliateAuth = lazy(() => import("./pages/AffiliateAuth"));
+const AffiliateApply = lazy(() => import("./pages/AffiliateApply"));
 
 function RouteFallback() {
   return (
@@ -39,6 +40,8 @@ export default function App() {
             {/* Dashboard privado do afiliado — auth via magic link por email. */}
             <Route path="/me/auth" element={<AffiliateAuth />} />
             <Route path="/me/:code" element={<AffiliateDashboard />} />
+            {/* Form público de aplicação pra virar afiliado. */}
+            <Route path="/affiliates/apply" element={<AffiliateApply />} />
           </Routes>
         </Suspense>
       </main>

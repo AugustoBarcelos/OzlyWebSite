@@ -22,15 +22,15 @@ export default defineConfig(({ mode }) => {
       minify: 'esbuild',
       target: 'es2022',
       // Aim for chunks <500KB so Cloudflare Pages serves the first paint fast.
-      // Tremor + recharts + d3 are the big offenders — split them off the
-      // critical path. React/router stay together so the first paint is one
-      // small chunk.
+      // Tremor + recharts + d3 are the big offenders — split them. recharts
+      // and d3 are separately huge, so each gets its own chunk. React/router
+      // stay together so the first paint is one small chunk.
       rollupOptions: {
         output: {
           manualChunks: (id) => {
             if (id.includes('node_modules')) {
-              if (id.includes('@tremor') || id.includes('recharts') || id.includes('d3-'))
-                return 'charts';
+              if (id.includes('@tremor') || id.includes('recharts')) return 'recharts';
+              if (id.includes('d3-')) return 'd3';
               if (id.includes('@supabase')) return 'supabase';
               if (id.includes('@sentry')) return 'sentry';
               if (id.includes('posthog-js')) return 'posthog';
@@ -40,7 +40,7 @@ export default defineConfig(({ mode }) => {
           },
         },
       },
-      chunkSizeWarningLimit: 600,
+      chunkSizeWarningLimit: 700,
     },
     esbuild: isProd
       ? {

@@ -86,6 +86,22 @@ interface RefundsResponse {
   rows: RefundRowPreview[];
 }
 
+interface AppStoreLowRatingRow {
+  review_id: string;
+  rating: number;
+  title: string | null;
+  body: string | null;
+  reviewer_nickname: string | null;
+  territory: string | null;
+  created_at_apple: string;
+}
+interface AppStoreLowRatingResp {
+  count: number;
+  rows: AppStoreLowRatingRow[];
+  last_sync_at: string | null;
+  note: string | null;
+}
+
 export function InboxPage() {
   const [payouts, setPayouts] = useState<PayoutPlanning | null>(null);
   const [payoutsErr, setPayoutsErr] = useState<string | null>(null);
@@ -99,6 +115,9 @@ export function InboxPage() {
   const [refunds, setRefunds] = useState<RefundsResponse | null>(null);
   const [refundsErr, setRefundsErr] = useState<string | null>(null);
 
+  const [lowRatingReviews, setLowRatingReviews] = useState<AppStoreLowRatingResp | null>(null);
+  const [lowRatingErr, setLowRatingErr] = useState<string | null>(null);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -109,9 +128,10 @@ export function InboxPage() {
       callRpc<ErrorsResponse>('admin_top_errors', { p_period_days: 7, p_limit: 10 }),
       callRpc<ActionsResponse>('admin_recent_admin_actions', { p_limit: 25 }),
       callRpc<RefundsResponse>('admin_pending_refunds', { p_period_days: 30 }),
+      callRpc<AppStoreLowRatingResp>('admin_app_store_recent_low_rating', { p_days: 30, p_max_rating: 3 }),
     ]).then((results) => {
       if (!alive) return;
-      const [r0, r1, r2, r3] = results;
+      const [r0, r1, r2, r3, r4] = results;
       if (r0.status === 'fulfilled') setPayouts(r0.value);
       else setPayoutsErr(messageFor(r0.reason));
       if (r1.status === 'fulfilled') setErrors(r1.value.rows ?? []);
@@ -120,6 +140,8 @@ export function InboxPage() {
       else setActionsErr(messageFor(r2.reason));
       if (r3.status === 'fulfilled') setRefunds(r3.value);
       else setRefundsErr(messageFor(r3.reason));
+      if (r4.status === 'fulfilled') setLowRatingReviews(r4.value);
+      else setLowRatingErr(messageFor(r4.reason));
       setLoading(false);
     });
     return () => {
@@ -372,20 +394,68 @@ export function InboxPage() {
 
       <Section
         icon={SparklesIcon}
-        title="App Store / Play reviews"
-        subtitle="Reviews oficiais via App Store Connect + Play Developer APIs"
+        title="App Store reviews ≤ 3★ (30d)"
+        subtitle="Cache atualizado a cada 6h pelo cron appstore-reviews-cache"
         rightSlot={
           <Link
             to="/inbox/reviews"
-            className="rounded-md border border-navy-100 bg-white px-2 py-1 text-xs font-medium text-navy-600 hover:border-brand-200 hover:text-brand-700"
+            className={
+              (lowRatingReviews?.count ?? 0) > 0
+                ? 'rounded-md border border-amber-300 bg-white px-2 py-1 text-xs font-medium text-amber-800 hover:bg-amber-50'
+                : 'rounded-md border border-navy-100 bg-white px-2 py-1 text-xs font-medium text-navy-600 hover:border-brand-200 hover:text-brand-700'
+            }
           >
-            Abrir reviews →
+            Ver reviews →
           </Link>
         }
       >
-        <EmptyHint variant="info">
-          iOS e Android consolidados em <Link to="/inbox/reviews" className="text-brand-600 underline">/inbox/reviews</Link> com filtro por estrelas.
-        </EmptyHint>
+        {lowRatingErr ? (
+          <EmptyHint variant="warning">{lowRatingErr}</EmptyHint>
+        ) : !lowRatingReviews ? (
+          <SectionLoading />
+        ) : lowRatingReviews.note ? (
+          <EmptyHint variant="info">{lowRatingReviews.note}</EmptyHint>
+        ) : lowRatingReviews.rows.length === 0 ? (
+          <EmptyHint variant="ok">
+            Nenhum review ≤ 3★ nos últimos 30 dias.
+            {lowRatingReviews.last_sync_at && (
+              <> Última sync {formatRelativeTime(lowRatingReviews.last_sync_at)}.</>
+            )}
+          </EmptyHint>
+        ) : (
+          <ul className="divide-y divide-navy-50">
+            {lowRatingReviews.rows.slice(0, 5).map((r) => (
+              <li key={r.review_id} className="py-2 text-sm">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <span className="font-mono text-amber-600">
+                    {'★'.repeat(r.rating)}
+                    <span className="text-navy-200">{'★'.repeat(5 - r.rating)}</span>
+                  </span>
+                  <span className="text-[11px] text-navy-400">
+                    {r.reviewer_nickname ?? '—'} · {r.territory ?? '—'} ·{' '}
+                    {formatRelativeTime(r.created_at_apple)}
+                  </span>
+                </div>
+                {r.title && (
+                  <div className="mt-0.5 truncate font-medium text-navy-700" title={r.title}>
+                    {r.title}
+                  </div>
+                )}
+                {r.body && (
+                  <p className="mt-0.5 line-clamp-2 text-[12px] text-navy-500">{r.body}</p>
+                )}
+              </li>
+            ))}
+            {lowRatingReviews.rows.length > 5 && (
+              <li className="pt-2 text-center text-[11px] text-navy-400">
+                +{lowRatingReviews.rows.length - 5} mais —{' '}
+                <Link to="/inbox/reviews" className="text-brand-600 hover:underline">
+                  ver todos
+                </Link>
+              </li>
+            )}
+          </ul>
+        )}
       </Section>
 
       {/* ─── Refund queue (real — MVP via trials expirados) ────────────── */}
@@ -506,6 +576,12 @@ export function InboxPage() {
             params: { p_period_days: 30 },
             data: refunds,
             ...(refundsErr ? { note: refundsErr } : {}),
+          },
+          {
+            rpc: 'admin_app_store_recent_low_rating',
+            params: { p_days: 30, p_max_rating: 3 },
+            data: lowRatingReviews,
+            ...(lowRatingErr ? { note: lowRatingErr } : {}),
           },
         ]}
       />
