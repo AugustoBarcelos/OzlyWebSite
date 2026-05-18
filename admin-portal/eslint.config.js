@@ -16,6 +16,12 @@ export default [
       'dist-node-types/**',
       'node_modules/**',
       'supabase/**',
+      // Cloudflare Pages Functions live outside src/ and reference globals
+      // (PagesFunction, fetch) from @cloudflare/workers-types that aren't
+      // wired into ESLint here. Their TS is built by Pages itself at deploy
+      // time; skipping ESLint avoids "Parsing error: interface is reserved"
+      // without dragging workers-types into the lint config.
+      'functions/**',
       '*.config.js',
       '*.config.ts',
     ],
