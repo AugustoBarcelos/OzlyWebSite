@@ -21,7 +21,10 @@
 
 import { env } from './env';
 
-const SENTRY_API_BASE = 'https://sentry.io/api/0';
+// Browser hits the same-origin Pages Function which injects the auth token
+// server-side. Direct sentry.io calls are blocked by the org-level "Invalid
+// origin" check, so the proxy is mandatory.
+const SENTRY_API_BASE = '/api/sentry';
 
 export type SentryPeriod = '24h' | '14d' | '30d';
 
@@ -72,11 +75,14 @@ export function isOriginBlocked(): boolean {
   return originBlocked;
 }
 
-/** True only when token + org + project are all configured. */
+/**
+ * True when org + project are configured. The auth token lives server-side
+ * in the Pages Function (SENTRY_API_TOKEN_SERVER) and is not visible to the
+ * browser, so we don't check it here — if the Function is missing the token
+ * the proxy responds 503 and `fetchSentry` surfaces that as a normal error.
+ */
 export function isConfigured(): boolean {
-  return Boolean(
-    env.sentryApiToken && env.sentryOrg && env.sentryProject,
-  );
+  return Boolean(env.sentryOrg && env.sentryProject);
 }
 
 /**
@@ -99,19 +105,16 @@ async function fetchSentry<T>(
 ): Promise<T | null> {
   if (!isConfigured()) return null;
 
-  const token = env.sentryApiToken;
-  if (!token) return null;
-
   try {
     const init: RequestInit = {
       method: 'GET',
       headers: {
-        Authorization: `Bearer ${token}`,
         Accept: 'application/json',
       },
     };
     if (opts.signal) init.signal = opts.signal;
 
+    // Same-origin call; auth is added by /api/sentry/* Pages Function.
     const res = await fetch(`${SENTRY_API_BASE}${path}`, init);
     if (!res.ok) {
       // Surface the Sentry-provided detail so 400s are diagnosable
