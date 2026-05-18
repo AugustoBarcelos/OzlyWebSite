@@ -89,6 +89,7 @@ export function FiltersBar({ filters, onChange, loading }: Props) {
           label="Signup"
           options={[
             { value: '', label: 'Tudo' },
+            { value: '1', label: 'Últ. 24h' },
             { value: '7', label: 'Últ. 7 dias' },
             { value: '30', label: 'Últ. 30 dias' },
             { value: '90', label: 'Últ. 90 dias' },
@@ -103,6 +104,7 @@ export function FiltersBar({ filters, onChange, loading }: Props) {
           label="Atividade"
           options={[
             { value: '', label: 'Tudo' },
+            { value: 'a1', label: 'Ativo 24h' },
             { value: 'a7', label: 'Ativo 7 dias' },
             { value: 'a30', label: 'Ativo 30 dias' },
             { value: 'i', label: 'Inativo > 30 dias' },
@@ -110,15 +112,19 @@ export function FiltersBar({ filters, onChange, loading }: Props) {
           value={
             filters.inactive
               ? 'i'
-              : filters.active_within_days === 7
-                ? 'a7'
-                : filters.active_within_days === 30
-                  ? 'a30'
-                  : ''
+              : filters.active_within_days === 1
+                ? 'a1'
+                : filters.active_within_days === 7
+                  ? 'a7'
+                  : filters.active_within_days === 30
+                    ? 'a30'
+                    : ''
           }
           onChange={(v) => {
             if (v === 'i') {
               onChange({ ...filters, inactive: true, active_within_days: null });
+            } else if (v === 'a1') {
+              onChange({ ...filters, active_within_days: 1, inactive: false });
             } else if (v === 'a7') {
               onChange({ ...filters, active_within_days: 7, inactive: false });
             } else if (v === 'a30') {

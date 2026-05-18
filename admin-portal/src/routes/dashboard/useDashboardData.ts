@@ -5,6 +5,7 @@ import type {
   ActiveUsersTimeseriesResponse,
   CohortRetentionResponse,
   DbHealthResponse,
+  DownloadsByPlatformResponse,
   ErrorRateResponse,
   FeatureUsageResponse,
   FunnelResponse,
@@ -46,6 +47,7 @@ export interface DashboardData {
   trialStatus: TrialStatusResponse | null;
   activationFunnel: ActivationFunnelResponse | null;
   timeToActivation: TimeToActivationResponse | null;
+  downloadsByPlatform: DownloadsByPlatformResponse | null;
 }
 
 const EMPTY: DashboardData = {
@@ -66,6 +68,7 @@ const EMPTY: DashboardData = {
   trialStatus: null,
   activationFunnel: null,
   timeToActivation: null,
+  downloadsByPlatform: null,
 };
 
 async function safeCall<T>(
@@ -120,6 +123,7 @@ export function useDashboardData(period: Period) {
         trialStatus,
         activationFunnel,
         timeToActivation,
+        downloadsByPlatform,
       ] = await Promise.all([
         callRpc<KpiDashboardResponse>('admin_kpi_dashboard', {
           p_period_days: period,
@@ -162,6 +166,9 @@ export function useDashboardData(period: Period) {
           p_period_days: period,
         }),
         safeCall<TimeToActivationResponse>('admin_time_to_activation', {}),
+        safeCall<DownloadsByPlatformResponse>('admin_downloads_by_platform', {
+          p_period_days: period,
+        }),
       ]);
       setData({
         kpi,
@@ -181,6 +188,7 @@ export function useDashboardData(period: Period) {
         trialStatus,
         activationFunnel,
         timeToActivation,
+        downloadsByPlatform,
       });
     } catch (e) {
       const msg =

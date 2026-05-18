@@ -4,6 +4,15 @@
  * trials) can be null until that pipeline lands.
  */
 
+export interface DownloadsByPlatformResponse {
+  period_days: number;
+  ios: number;
+  android: number;
+  unknown: number;
+  total: number;
+  generated_at: string;
+}
+
 export interface PaidActiveBreakdown {
   tfn: number | null;
   abn: number | null;

@@ -246,6 +246,54 @@ export function CockpitPage() {
         </Card>
       </section>
 
+      {/* Downloads por plataforma (iOS / Android / Unknown) */}
+      <section className="grid gap-4 lg:grid-cols-3">
+        <Card className="ozly-card lg:col-span-2">
+          <div className="mb-3 flex items-center justify-between">
+            <Title className="!text-sm !font-semibold text-navy-700">
+              Downloads por plataforma
+            </Title>
+            <span className="text-xs text-navy-400">
+              {filters.period === 'custom' ? 'custom' : `últimos ${period} dias`}
+            </span>
+          </div>
+          {data.downloadsByPlatform && data.downloadsByPlatform.total > 0 ? (
+            <BarList
+              data={[
+                { name: 'iOS (App Store)', value: data.downloadsByPlatform.ios, color: 'sky' },
+                { name: 'Android (Play Store)', value: data.downloadsByPlatform.android, color: 'emerald' },
+                { name: 'Outros / desconhecido', value: data.downloadsByPlatform.unknown, color: 'navy' },
+              ]}
+              valueFormatter={formatNumber}
+              className="mt-1"
+            />
+          ) : (
+            <div className="mt-4 text-xs text-navy-300">
+              Sem signups no período (ou pipeline RC ainda não populou last_seen_platform).
+            </div>
+          )}
+        </Card>
+
+        <Card className="ozly-card">
+          <Title className="!text-sm !font-semibold text-navy-700">Split iOS×Android</Title>
+          {data.downloadsByPlatform && (data.downloadsByPlatform.ios + data.downloadsByPlatform.android) > 0 ? (
+            <DonutChart
+              data={[
+                { name: 'iOS', value: data.downloadsByPlatform.ios },
+                { name: 'Android', value: data.downloadsByPlatform.android },
+              ].filter((r) => r.value > 0)}
+              category="value"
+              index="name"
+              colors={['sky', 'emerald']}
+              valueFormatter={formatNumber}
+              className="mt-2 h-40"
+            />
+          ) : (
+            <div className="mt-4 text-xs text-navy-300">Sem dados ainda.</div>
+          )}
+        </Card>
+      </section>
+
       {/* Signups timeseries */}
       {signupsSeries.length > 1 && (
         <Card className="ozly-card">
