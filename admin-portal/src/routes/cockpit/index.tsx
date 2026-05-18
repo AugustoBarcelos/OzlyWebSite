@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AreaChart, BarList, Card, DonutChart, Title } from '@tremor/react';
 import { KpiHero } from '@/components/charts/KpiHero';
@@ -18,9 +18,17 @@ import {
   UsersIcon,
 } from '@/components/Icons';
 import { formatCurrencyAUD, formatNumber, formatPercent } from '@/lib/format';
+import { callRpc, RpcError } from '@/lib/rpc';
 import { useGlobalFilters } from '@/lib/useGlobalFilters';
 import { useDashboardData } from '@/routes/dashboard/useDashboardData';
 import type { Period } from '@/routes/dashboard/types';
+
+interface AcquisitionOverview {
+  cac_blended: number | null;
+  total_spend_aud: number;
+  new_paying: number | null;
+  top_sources: Array<{ source: string; signups: number }>;
+}
 
 /**
  * Cockpit (W2) — north star landing page for Ozly admin.
@@ -42,6 +50,47 @@ export function CockpitPage() {
   const { filters, periodDays } = useGlobalFilters();
   const period = periodDays as Period;
   const { data, loading, error, refetch } = useDashboardData(period);
+
+  const [acquisition, setAcquisition] = useState<AcquisitionOverview | null>(null);
+  const [acquisitionLoading, setAcquisitionLoading] = useState(true);
+  const [acquisitionError, setAcquisitionError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setAcquisitionLoading(true);
+    setAcquisitionError(null);
+    callRpc<AcquisitionOverview>('admin_acquisition_overview', {
+      p_period_days: periodDays,
+      p_channel: null,
+    })
+      .then((result) => {
+        if (cancelled) return;
+        setAcquisition(result);
+      })
+      .catch((e: unknown) => {
+        if (cancelled) return;
+        if (
+          e instanceof RpcError &&
+          (e.code === '42883' || e.message.includes('does not exist'))
+        ) {
+          setAcquisition(null);
+          setAcquisitionError(
+            'RPC admin_acquisition_overview não aplicada neste ambiente.',
+          );
+        } else {
+          setAcquisitionError(
+            e instanceof RpcError ? e.message : e instanceof Error ? e.message : 'Falha',
+          );
+        }
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setAcquisitionLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [periodDays]);
 
   const signupsSeries = useMemo(
     () =>
@@ -81,12 +130,13 @@ export function CockpitPage() {
     return rows;
   }, [data.funnel]);
 
-  // Top sources placeholder — until W3 RPC ships
-  const topSourcesPlaceholder = [
-    { name: 'Organic / direct', value: 0 },
-    { name: 'Paid (mixed)', value: 0 },
-    { name: 'Referral / Affiliate', value: 0 },
-  ];
+  const topSourcesRows = useMemo(() => {
+    if (!acquisition?.top_sources?.length) return [];
+    return acquisition.top_sources.map((s) => ({
+      name: s.source || 'unknown',
+      value: s.signups,
+    }));
+  }, [acquisition]);
 
   return (
     <div className="space-y-6">
@@ -173,12 +223,16 @@ export function CockpitPage() {
         />
         <KpiHero
           label="CAC blended"
-          value={null}
+          value={acquisition?.cac_blended ?? null}
           formatter={formatCurrencyAUD}
-          loading={false}
+          loading={acquisitionLoading}
           tone="neutral"
-          hint="W3 — em breve (precisa RPC admin_acquisition_overview)"
-          href="/growth"
+          hint={
+            acquisition?.total_spend_aud
+              ? `Spend ${formatCurrencyAUD(acquisition.total_spend_aud)} ÷ ${formatNumber(acquisition.new_paying)} novos paid`
+              : 'Sem spend agregado no período'
+          }
+          href="/growth/funnel"
         />
         <KpiHero
           label="Churn (período)"
@@ -217,16 +271,30 @@ export function CockpitPage() {
               Ver Growth Hub <ArrowUpRightIcon className="h-3 w-3" />
             </Link>
           </div>
-          <div className="rounded-md border border-amber-100 bg-amber-50/60 p-3 text-xs text-amber-700">
-            Aguardando RPC <code className="font-mono">admin_acquisition_overview</code> (Wave 3).
-            Preview com dados zerados pra validar layout.
-          </div>
-          <BarList
-            data={topSourcesPlaceholder}
-            color="emerald"
-            valueFormatter={formatNumber}
-            className="mt-3"
-          />
+          {acquisitionError && (
+            <div className="rounded-md border border-amber-100 bg-amber-50/60 p-3 text-xs text-amber-700">
+              <strong>Heads up:</strong> {acquisitionError}
+            </div>
+          )}
+          {acquisitionLoading ? (
+            <div className="mt-3 space-y-2">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="h-7 animate-pulse rounded-md bg-navy-50" />
+              ))}
+            </div>
+          ) : topSourcesRows.length > 0 ? (
+            <BarList
+              data={topSourcesRows}
+              color="emerald"
+              valueFormatter={formatNumber}
+              className="mt-3"
+            />
+          ) : (
+            <div className="mt-3 text-xs text-navy-300">
+              Sem signups com first-touch UTM no período — depende de{' '}
+              <code className="font-mono">marketing_utm_links_signups</code>.
+            </div>
+          )}
         </Card>
 
         <Card className="ozly-card">
@@ -386,7 +454,6 @@ export function CockpitPage() {
             to: '/inbox',
             description: 'Alerts, support tickets, refunds, system events.',
             icon: InboxIcon,
-            status: 'wip',
           },
           {
             label: 'Affiliates',
@@ -399,7 +466,6 @@ export function CockpitPage() {
             to: '/growth/funnel',
             description: 'Visão completa Impression → Retained.',
             icon: FunnelIcon,
-            status: 'wip',
           },
           {
             label: 'Revenue',
@@ -437,6 +503,12 @@ export function CockpitPage() {
           { rpc: 'admin_revenue_summary', params: { p_period_days: period }, data: data.revenue },
           { rpc: 'admin_signups_timeseries', params: { p_period_days: period }, data: data.timeseries },
           { rpc: 'admin_funnel', params: { p_period_days: period }, data: data.funnel },
+          {
+            rpc: 'admin_acquisition_overview',
+            params: { p_period_days: period, p_channel: null },
+            data: acquisition,
+            ...(acquisitionError ? { note: acquisitionError } : {}),
+          },
         ]}
       />
     </div>

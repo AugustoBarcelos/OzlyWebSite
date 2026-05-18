@@ -162,7 +162,7 @@ export function FinanceHubPage() {
           <SubPage to="/finance/forecast" icon={SparklesIcon} label="Forecast & Runway" desc="Projeção com sliders de cenário." status="live" />
           <SubPage to="/finance/pnl" icon={TrendingUpIcon} label="P&L" desc="Profit & Loss mensal e YTD." status="live" />
           <SubPage to="/finance/reconciliation" icon={ShieldCheckIcon} label="Reconciliation" desc="Diff RevenueCat × App Store × Play." status="live" />
-          <SubPage to="/finance/tax" icon={ScrollTextIcon} label="Tax & Reports" desc="GST AU, Apple Small Business, exports pro contador." status="wip" />
+          <SubPage to="/finance/tax" icon={ScrollTextIcon} label="Tax & Reports" desc="GST AU, Apple Small Business, exports pro contador." status="live" />
         </div>
       </div>
 
