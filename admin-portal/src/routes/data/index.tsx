@@ -41,6 +41,7 @@ interface KpiResp {
 interface RevenueResp {
   mrr_total?: number | null;
   mrr_by_plan?: { tfn?: number | null; abn?: number | null; pro?: number | null } | null;
+  paid_by_plan?: { tfn?: number | null; abn?: number | null; pro?: number | null } | null;
   churn_period?: number | null;
 }
 interface TimePoint { date: string; count: number; [k: string]: unknown }
@@ -58,8 +59,9 @@ interface DauByPlanResp { series?: PlanTimeSeriesPoint[] }
 interface TopErrorsResp {
   rows?: Array<{ message: string; count: number; users_affected?: number | null; last_seen?: string | null }>;
 }
-interface FeatureUsageResp {
-  rows?: Array<{ feature: string; events: number; users: number }>;
+interface FeatureAdoptionResp {
+  active_users?: number | null;
+  features?: Array<{ feature: string; users_used: number; pct: number }>;
 }
 
 interface DownloadsByPlatformResp { ios: number; android: number; unknown: number; total: number }
@@ -126,7 +128,7 @@ interface HubData {
   signupsByPlan: SignupsByPlanResp | null;
   dauByPlan: DauByPlanResp | null;
   topErrors: TopErrorsResp | null;
-  featureUsage: FeatureUsageResp | null;
+  featureAdoption: FeatureAdoptionResp | null;
   downloadsPlatform: DownloadsByPlatformResp | null;
   appVersions: AppVersionResp | null;
   affiliateRoi: AffiliateRoiResp | null;
@@ -145,7 +147,7 @@ interface HubData {
 const EMPTY: HubData = {
   kpi: null, revenue: null, jobs: null, activeUsers: null,
   signupsByPlan: null, dauByPlan: null,
-  topErrors: null, featureUsage: null,
+  topErrors: null, featureAdoption: null,
   downloadsPlatform: null, appVersions: null,
   affiliateRoi: null, topAffiliates: null,
   mrrMovement: null, cohort: null, funnel: null, acquisition: null,
@@ -175,19 +177,20 @@ function useDataHub(periodDays: number) {
     try {
       const techPeriod = Math.min(periodDays, 90);
       const dauPeriod = Math.min(periodDays, 90);
-      const prevPeriod = periodDays; // prev window of equal length, just offset
+      // Prev-period delta uses 2x window minus current. Clamp to the strictest
+      // server-side guard (RC-backed RPCs cap at 90, others at 365) so the
+      // double-window probe never raises 22023 and crashes the hub.
+      const prevWindowKpi = Math.min(periodDays * 2, 365);
+      const prevWindowMrr = Math.min(periodDays * 2, 365);
 
       const [
         kpi, revenue, jobs, activeUsers,
         signupsByPlan, dauByPlan,
-        topErrors, featureUsage,
+        topErrors, featureAdoption,
         downloadsPlatform, appVersions,
         affiliateRoi, topAffiliates,
         mrrMovement, cohort, funnel, acquisition,
         freshness,
-        // prev period (length = periodDays, offset by periodDays days back)
-        // We approximate by passing p_period_days = 2*periodDays and subtracting current values.
-        // For RPCs that don't support offset, we use 2x window and compute delta.
         prevKpi, prevRevenue, prevMrrMovement,
       ] = await Promise.all([
         safeCall<KpiResp>('admin_kpi_dashboard', { p_period_days: periodDays }),
@@ -197,7 +200,7 @@ function useDataHub(periodDays: number) {
         safeCall<SignupsByPlanResp>('admin_signups_by_plan_timeseries', { p_period_days: periodDays }),
         safeCall<DauByPlanResp>('admin_dau_by_plan_timeseries', { p_period_days: dauPeriod }),
         safeCall<TopErrorsResp>('admin_top_errors', { p_period_days: techPeriod, p_limit: 10 }),
-        safeCall<FeatureUsageResp>('admin_feature_usage_top', { p_period_days: techPeriod, p_limit: 10 }),
+        safeCall<FeatureAdoptionResp>('admin_feature_adoption', { p_period_days: techPeriod }),
         safeCall<DownloadsByPlatformResp>('admin_downloads_by_platform', { p_period_days: periodDays }),
         safeCall<AppVersionResp>('admin_downloads_by_app_version', { p_period_days: periodDays, p_limit: 10 }),
         safeCall<AffiliateRoiResp>('admin_affiliate_roi_summary', { p_period_days: periodDays }),
@@ -207,16 +210,16 @@ function useDataHub(periodDays: number) {
         safeCall<FunnelResp>('admin_funnel', { p_period_days: periodDays }),
         safeCall<AcquisitionResp>('admin_acquisition_overview', {}),
         safeCall<FreshnessResp>('admin_data_freshness', {}),
-        // Prev period — same RPC with doubled window. We'll subtract on render.
-        safeCall<KpiResp>('admin_kpi_dashboard', { p_period_days: prevPeriod * 2 }),
-        safeCall<RevenueResp>('admin_revenue_summary', { p_period_days: prevPeriod * 2 }),
-        safeCall<MrrMovementResp>('admin_mrr_movement', { p_period_days: prevPeriod * 2 }),
+        // Prev-period probes (doubled-window, see note above).
+        safeCall<KpiResp>('admin_kpi_dashboard', { p_period_days: prevWindowKpi }),
+        safeCall<RevenueResp>('admin_revenue_summary', { p_period_days: prevWindowKpi }),
+        safeCall<MrrMovementResp>('admin_mrr_movement', { p_period_days: prevWindowMrr }),
       ]);
 
       setData({
         kpi, revenue, jobs, activeUsers,
         signupsByPlan, dauByPlan,
-        topErrors, featureUsage,
+        topErrors, featureAdoption,
         downloadsPlatform, appVersions,
         affiliateRoi, topAffiliates,
         mrrMovement, cohort, funnel, acquisition,
@@ -353,21 +356,21 @@ export function DataHubPage() {
   const periodLabel = filters.period === 'custom' ? 'custom' : `últimos ${periodDays} dias`;
 
   // ── Derived: deltas (current vs prev) ──────────────────────────────────────
-  // Prev period values are computed by subtracting current from 2x window.
+  // For flow metrics (signups_period, new_mrr_aud) we approximate prev by
+  // running the same RPC with a 2x window and subtracting. Stock metrics
+  // (mrr_total, paid_active) can't be back-derived this way — admin_revenue_summary
+  // ignores p_period_days entirely — so we don't surface a Δ for MRR total.
   const deltas = useMemo(() => {
     const curSignups = data.kpi?.signups_period ?? 0;
-    const window2x = data.prevKpi?.signups_period ?? 0;
-    const prevSignups = Math.max(0, window2x - curSignups);
+    const window2xSignups = data.prevKpi?.signups_period ?? 0;
+    const prevSignups = Math.max(0, window2xSignups - curSignups);
 
-    const curMrr = data.revenue?.mrr_total ?? 0;
-    const prevMrr = data.prevRevenue?.mrr_total ?? curMrr; // MRR is point-in-time, snapshot comparison is approximate
     const curNewMrr = data.mrrMovement?.new_mrr_aud ?? 0;
     const window2xNew = data.prevMrrMovement?.new_mrr_aud ?? 0;
     const prevNewMrr = Math.max(0, window2xNew - curNewMrr);
 
     return {
       signups: computeDelta(curSignups, prevSignups),
-      mrr: computeDelta(curMrr, prevMrr),
       newMrr: computeDelta(curNewMrr, prevNewMrr),
     };
   }, [data]);
@@ -452,7 +455,7 @@ export function DataHubPage() {
   const signupsByPlanSeries = useMemo(() => data.signupsByPlan?.series ?? [], [data.signupsByPlan]);
   const dauByPlanSeries = useMemo(() => data.dauByPlan?.series ?? [], [data.dauByPlan]);
   const topErrorsRows = useMemo(() => data.topErrors?.rows ?? [], [data.topErrors]);
-  const featureRows = useMemo(() => data.featureUsage?.rows ?? [], [data.featureUsage]);
+  const featureRows = useMemo(() => data.featureAdoption?.features ?? [], [data.featureAdoption]);
   const appVersionRows = useMemo(() => data.appVersions?.rows ?? [], [data.appVersions]);
   const downloadsPlatformRows = useMemo(() => {
     const d = data.downloadsPlatform; if (!d) return [];
@@ -504,7 +507,14 @@ export function DataHubPage() {
             </p>
           </div>
         </div>
-        <button type="button" onClick={refetch} className="rounded-md border border-navy-100 bg-white px-3 py-1.5 text-xs font-medium text-navy-600 hover:border-brand-300 hover:text-brand-700">↻ Refresh</button>
+        <button
+          type="button"
+          onClick={refetch}
+          disabled={loading}
+          className="rounded-md border border-navy-100 bg-white px-3 py-1.5 text-xs font-medium text-navy-600 hover:border-brand-300 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {loading ? '↻ Refreshing…' : '↻ Refresh'}
+        </button>
       </div>
 
       {/* Data freshness banner */}
@@ -513,7 +523,7 @@ export function DataHubPage() {
           <span className="mr-2 text-[10px] font-semibold uppercase tracking-wide text-navy-400">Pipeline</span>
           <FreshnessBadge status={f.rc_sync_status}        label="RC sync"        value={lagText(f.rc_sync_lag_minutes)} />
           <FreshnessBadge status={f.kpi_snapshot_status}   label="KPI snapshot"   value={lagText(f.kpi_snapshot_lag_minutes)} />
-          {f.cron_jobs.slice(0, 4).map((c) => (
+          {f.cron_jobs.map((c) => (
             <FreshnessBadge
               key={c.jobname}
               status={c.last_status === 'succeeded' ? 'fresh' : c.last_status == null ? 'never' : 'broken'}
@@ -550,7 +560,7 @@ export function DataHubPage() {
 
         <DataCard
           title="Signups por plano"
-          subtitle={periodLabel}
+          subtitle={`${periodLabel} · plano = estado atual no RC, não no signup`}
           drillTo="/users"
           csvRows={signupsByPlanSeries}
           csvFilename={`signups_by_plan_${periodDays}d_${today}`}
@@ -635,7 +645,7 @@ export function DataHubPage() {
         >
           {data.revenue ? (
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <KpiTile label="MRR total"  value={formatCurrencyAUD(data.revenue.mrr_total ?? 0)} delta={deltas.mrr} />
+              <KpiTile label="MRR total"  value={formatCurrencyAUD(data.revenue.mrr_total ?? 0)} />
               <KpiTile label="MRR TFN"    value={formatCurrencyAUD(data.revenue.mrr_by_plan?.tfn ?? 0)} />
               <KpiTile label="MRR ABN"    value={formatCurrencyAUD(data.revenue.mrr_by_plan?.abn ?? 0)} />
               <KpiTile label="MRR PRO"    value={formatCurrencyAUD(data.revenue.mrr_by_plan?.pro ?? 0)} />
@@ -783,14 +793,26 @@ export function DataHubPage() {
         </DataCard>
 
         <DataCard
-          title="Feature adoption — top 10"
-          subtitle={periodLabel}
+          title="Feature adoption"
+          subtitle={`${periodLabel} · % de active users (≥1 session) que usaram cada feature${
+            data.featureAdoption?.active_users != null
+              ? ` · base ${formatNumber(data.featureAdoption.active_users)} users`
+              : ''
+          }`}
           drillTo="/product/engagement"
           csvRows={featureRows}
-          csvFilename={`features_${periodDays}d_${today}`}
+          csvFilename={`feature_adoption_${periodDays}d_${today}`}
         >
-          {featureRows.length > 0 ? (
-            <BarList data={featureRows.map((r) => ({ name: r.feature, value: r.events }))} color="emerald" valueFormatter={formatNumber} className="mt-1" />
+          {featureRows.length > 0 && featureRows.some((r) => r.users_used > 0) ? (
+            <BarList
+              data={featureRows.map((r) => ({
+                name: `${r.feature} · ${r.pct}%`,
+                value: r.users_used,
+              }))}
+              color="emerald"
+              valueFormatter={formatNumber}
+              className="mt-1"
+            />
           ) : <p className="text-xs text-navy-300">Sem dados.</p>}
         </DataCard>
       </section>
