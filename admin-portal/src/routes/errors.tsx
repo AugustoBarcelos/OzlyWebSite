@@ -18,6 +18,7 @@ import {
 import { KpiCard } from '@/components/KpiCard';
 import { AlertTriangleIcon, ExternalLinkIcon } from '@/components/Icons';
 import { Spinner } from '@/components/Spinner';
+import { AppTriageSection } from '@/components/AppTriageSection';
 import { formatRelativeTime } from '@/lib/format';
 import {
   fetchEventCounts,
@@ -505,6 +506,12 @@ export function ErrorsPage() {
             </div>
           )}
         </Card>
+      </section>
+
+      {/* App-side triage — populated from public.app_events with persistent
+          status per signature. Independent from Sentry. */}
+      <section aria-label="App triage">
+        <AppTriageSection />
       </section>
 
       {/* External tools row */}
