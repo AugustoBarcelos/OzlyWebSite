@@ -63,8 +63,23 @@ function adminClient() {
   );
 }
 
-async function callRpc(name: string, args: Record<string, unknown> = {}) {
-  const sb = adminClient();
+// User-scoped client preserves the caller's JWT so SECURITY DEFINER RPCs that
+// gate on auth.uid()/is_admin() can see the actual admin user. Service-role
+// would null out auth.uid() and trip the RPC's own admin check.
+function userClient(authHeader: string) {
+  return createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+    { global: { headers: { Authorization: authHeader } } },
+  );
+}
+
+async function callRpc(
+  name: string,
+  args: Record<string, unknown>,
+  authHeader: string,
+) {
+  const sb = userClient(authHeader);
   const { data, error } = await sb.rpc(name, args);
   if (error) {
     return { ok: false as const, status: 500, error: error.message ?? "rpc_failed" };
@@ -110,7 +125,7 @@ serve(async (req) => {
     const op = url.searchParams.get("op") ?? "overview";
 
     if (op === "overview") {
-      const r = await callRpc("admin_compliance_overview");
+      const r = await callRpc("admin_compliance_overview", {}, authHeader);
       return r.ok ? json({ ok: true, data: r.data }) : json({ error: r.error }, r.status);
     }
 
@@ -153,18 +168,18 @@ serve(async (req) => {
     if (op === "cohort_detail") {
       const fy = url.searchParams.get("fy");
       if (!fy) return json({ error: "fy required" }, 400);
-      const r = await callRpc("admin_archive_cohort_detail", { p_fy: fy });
+      const r = await callRpc("admin_archive_cohort_detail", { p_fy: fy }, authHeader);
       return r.ok ? json({ ok: true, data: r.data }) : json({ error: r.error }, r.status);
     }
 
     if (op === "deletion_log") {
       const days = Number(url.searchParams.get("days") ?? "30");
-      const r = await callRpc("admin_deletion_log_recent", { p_days: Number.isFinite(days) ? days : 30 });
+      const r = await callRpc("admin_deletion_log_recent", { p_days: Number.isFinite(days) ? days : 30 }, authHeader);
       return r.ok ? json({ ok: true, data: r.data }) : json({ error: r.error }, r.status);
     }
 
     if (op === "run_drill") {
-      const r = await callRpc("admin_run_drill");
+      const r = await callRpc("admin_run_drill", {}, authHeader);
       return r.ok ? json({ ok: true, data: r.data }) : json({ error: r.error }, r.status);
     }
 
