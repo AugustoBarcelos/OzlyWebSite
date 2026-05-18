@@ -25,6 +25,7 @@ import {
   fetchTopIssues,
   getLastError as sentryLastError,
   isConfigured as sentryIsConfigured,
+  isOriginBlocked as sentryOriginBlocked,
   sentryWebBase,
   type SentryEventCounts,
   type SentryIssue,
@@ -161,7 +162,12 @@ function computeDelta(counts: SentryEventCounts | null): number | undefined {
 // ---------------------------------------------------------------------------
 
 export function ErrorsPage() {
-  const configured = sentryIsConfigured();
+  // `configured` here means "we should actually try to render Sentry data".
+  // Falls back to false when Sentry returns "Invalid origin" — Personal
+  // Tokens can't be used from the browser at this org, and the UI degrades
+  // to link-only cards instead of looping a red error banner.
+  const [originBlocked, setOriginBlocked] = useState(sentryOriginBlocked());
+  const configured = sentryIsConfigured() && !originBlocked;
 
   // Hero KPIs — independent slots so a partial failure doesn't blank them all.
   const [kpi24h, setKpi24h] = useState<KpiSlotState>(EMPTY_KPI);
@@ -188,6 +194,7 @@ export function ErrorsPage() {
     setKpi24h({ data: r24, loading: false });
     setKpi7d({ data: r14, loading: false });
     setKpi30d({ data: r30, loading: false });
+    if (sentryOriginBlocked()) setOriginBlocked(true);
   }, [configured]);
 
   const fetchIssues = useCallback(
@@ -202,6 +209,14 @@ export function ErrorsPage() {
       try {
         const rows = await fetchTopIssues(p, 10);
         if (rows === null) {
+          // Origin-blocked: degrade silently to link-only mode. Flip the
+          // configured flag so the rest of the section renders the same as
+          // when no token is present.
+          if (sentryOriginBlocked()) {
+            setOriginBlocked(true);
+            setIssues(null);
+            return;
+          }
           // Surface the actual Sentry API error (e.g. "Sentry API 400 Bad
           // Request" with details) instead of a generic "check scopes" hint.
           const detail = sentryLastError();
@@ -264,27 +279,41 @@ export function ErrorsPage() {
         )}
       </div>
 
-      {/* Educational banner when not configured */}
+      {/* Educational banner when not configured (or origin-blocked) */}
       {!configured && (
         <div
           role="status"
           className="flex flex-col gap-2 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 sm:flex-row sm:items-center sm:justify-between"
         >
           <span>
-            <strong className="font-semibold">Sentry data is not wired up.</strong>{' '}
-            Add{' '}
-            <code className="rounded bg-amber-100 px-1 py-0.5 text-xs">
-              VITE_SENTRY_API_TOKEN
-            </code>
-            ,{' '}
-            <code className="rounded bg-amber-100 px-1 py-0.5 text-xs">
-              VITE_SENTRY_ORG
-            </code>{' '}
-            and{' '}
-            <code className="rounded bg-amber-100 px-1 py-0.5 text-xs">
-              VITE_SENTRY_PROJECT
-            </code>{' '}
-            to enable in-portal data. Until then, use the quick links below.
+            {originBlocked ? (
+              <>
+                <strong className="font-semibold">
+                  Sentry blocks Personal Auth Tokens from the browser.
+                </strong>{' '}
+                Use the quick links below, or proxy the REST API through a
+                Cloudflare Worker that injects the token server-side.
+              </>
+            ) : (
+              <>
+                <strong className="font-semibold">
+                  Sentry data is not wired up.
+                </strong>{' '}
+                Add{' '}
+                <code className="rounded bg-amber-100 px-1 py-0.5 text-xs">
+                  VITE_SENTRY_API_TOKEN
+                </code>
+                ,{' '}
+                <code className="rounded bg-amber-100 px-1 py-0.5 text-xs">
+                  VITE_SENTRY_ORG
+                </code>{' '}
+                and{' '}
+                <code className="rounded bg-amber-100 px-1 py-0.5 text-xs">
+                  VITE_SENTRY_PROJECT
+                </code>{' '}
+                to enable in-portal data. Until then, use the quick links below.
+              </>
+            )}
           </span>
           <a
             href="https://sentry.io/settings/account/api/auth-tokens/"

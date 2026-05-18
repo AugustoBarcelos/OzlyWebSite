@@ -47,6 +47,7 @@ export interface SentryEventCounts {
 // ---------------------------------------------------------------------------
 
 let lastErrorMessage: string | null = null;
+let originBlocked = false;
 
 function setLastError(msg: string | null): void {
   lastErrorMessage = msg;
@@ -54,6 +55,21 @@ function setLastError(msg: string | null): void {
 
 export function getLastError(): string | null {
   return lastErrorMessage;
+}
+
+/**
+ * Sentry rejects Personal Auth Tokens used from a browser fetch with a 400
+ * "Invalid origin: ...". This is enforced at the org level and can't be
+ * fixed from the token settings. When we see it once, we flip this flag so
+ * the UI degrades to "link-only" cards (same fallback as !isConfigured)
+ * instead of showing a scary red banner the operator can't act on.
+ *
+ * Fix path (separate work): proxy the Sentry REST API through a Cloudflare
+ * Worker that injects the token server-side, then point sentry-api.ts at the
+ * worker instead of api.sentry.io directly.
+ */
+export function isOriginBlocked(): boolean {
+  return originBlocked;
 }
 
 /** True only when token + org + project are all configured. */
@@ -123,6 +139,11 @@ async function fetchSentry<T>(
       const msg = detail
         ? `Sentry API ${res.status}: ${detail}`
         : `Sentry API ${res.status} ${res.statusText}`;
+      // Detect the org-level "Invalid origin" CORS rejection once so the UI
+      // can fall back to link-only mode instead of looping red banners.
+      if (res.status === 400 && /invalid origin/i.test(detail)) {
+        originBlocked = true;
+      }
       setLastError(msg);
       // Helpful for paste-in-bug-reports: keep one line in the console too.
       console.warn('[sentry-api]', path, msg);
