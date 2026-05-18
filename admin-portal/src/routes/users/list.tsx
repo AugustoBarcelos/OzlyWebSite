@@ -22,7 +22,7 @@ import { useToast } from '@/components/Toast';
 import { FiltersBar } from './FiltersBar';
 import { StatRibbon } from './StatRibbon';
 import { BulkActionsBar } from './BulkActionsBar';
-import { PlanBadge, RoleBadge, StatusBadge, StoreBadge } from './badges';
+import { PlanBadge, PlatformBadge, RoleBadge, StatusBadge, StoreBadge } from './badges';
 import {
   EMPTY_FILTERS,
   filtersToRpc,
@@ -323,7 +323,6 @@ export function UserListPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <SortPicker value={sort} onChange={setSort} />
           <Link
             to="/users/nps"
             className="inline-flex items-center gap-1.5 rounded-md border border-navy-100 bg-white px-3 py-1.5 text-xs font-medium text-navy-600 transition-colors hover:border-brand-300 hover:text-brand-700"
@@ -393,15 +392,31 @@ export function UserListPage() {
               <th scope="col" className="px-3 py-2.5">Plano</th>
               <th scope="col" className="px-3 py-2.5">Status</th>
               <th scope="col" className="px-3 py-2.5">Role</th>
-              <th scope="col" className="px-3 py-2.5">MRR</th>
-              <th scope="col" className="px-3 py-2.5">Signup</th>
-              <th scope="col" className="px-3 py-2.5">Últ. uso</th>
+              <th scope="col" className="px-3 py-2.5">Platform</th>
+              <SortableHeader
+                label="MRR"
+                column="mrr"
+                sort={sort}
+                onChange={setSort}
+              />
+              <SortableHeader
+                label="Signup"
+                column="signup"
+                sort={sort}
+                onChange={setSort}
+              />
+              <SortableHeader
+                label="Últ. uso"
+                column="last_seen"
+                sort={sort}
+                onChange={setSort}
+              />
             </tr>
           </thead>
           <tbody className="divide-y divide-navy-50 bg-white">
             {loading && rows.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-4 py-10 text-center">
+                <td colSpan={10} className="px-4 py-10 text-center">
                   <Spinner size="md" label="Carregando" />
                 </td>
               </tr>
@@ -409,7 +424,7 @@ export function UserListPage() {
 
             {!loading && rows.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-4 py-10 text-center text-sm text-navy-400">
+                <td colSpan={10} className="px-4 py-10 text-center text-sm text-navy-400">
                   Nenhum usuário bate com os filtros.
                 </td>
               </tr>
@@ -485,6 +500,12 @@ export function UserListPage() {
                     onClick={() => navigate(`/users/${row.id}`)}
                   >
                     <RoleBadge role={row.role} />
+                  </td>
+                  <td
+                    className="cursor-pointer px-3 py-2.5"
+                    onClick={() => navigate(`/users/${row.id}`)}
+                  >
+                    <PlatformBadge platform={row.last_seen_platform} />
                   </td>
                   <td
                     className="cursor-pointer px-3 py-2.5 font-mono text-xs text-navy-600"
@@ -568,27 +589,52 @@ export function UserListPage() {
   );
 }
 
-function SortPicker({
-  value,
+type SortColumn = 'signup' | 'last_seen' | 'mrr';
+
+const COLUMN_SORTS: Record<SortColumn, { asc: SortKey | null; desc: SortKey }> = {
+  signup: { asc: 'signup_asc', desc: 'signup_desc' },
+  last_seen: { asc: 'last_seen_asc', desc: 'last_seen_desc' },
+  mrr: { asc: null, desc: 'mrr_desc' }, // backend só suporta desc
+};
+
+function SortableHeader({
+  label,
+  column,
+  sort,
   onChange,
 }: {
-  value: SortKey;
+  label: string;
+  column: SortColumn;
+  sort: SortKey;
   onChange: (v: SortKey) => void;
 }) {
+  const { asc, desc } = COLUMN_SORTS[column];
+  const isDesc = sort === desc;
+  const isAsc = asc !== null && sort === asc;
+  const active = isDesc || isAsc;
+  const indicator = isDesc ? '↓' : isAsc ? '↑' : '↕';
+
+  const handleClick = () => {
+    if (isDesc && asc) onChange(asc);
+    else if (isAsc) onChange(desc);
+    else onChange(desc); // primeira click: desc por padrão
+  };
+
   return (
-    <label className="inline-flex items-center gap-1.5 rounded-md border border-navy-100 bg-white px-2 py-1.5 text-xs font-medium text-navy-600">
-      <span className="text-navy-400">Ordenar:</span>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value as SortKey)}
-        className="cursor-pointer bg-transparent pr-2 focus:outline-none"
+    <th scope="col" className="px-3 py-2.5">
+      <button
+        type="button"
+        onClick={handleClick}
+        aria-label={`Ordenar por ${label}`}
+        aria-sort={isDesc ? 'descending' : isAsc ? 'ascending' : 'none'}
+        className={[
+          'inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide transition-colors',
+          active ? 'text-brand-700' : 'text-navy-400 hover:text-navy-600',
+        ].join(' ')}
       >
-        <option value="signup_desc">Signup ↓</option>
-        <option value="signup_asc">Signup ↑</option>
-        <option value="last_seen_desc">Últ. uso ↓</option>
-        <option value="last_seen_asc">Últ. uso ↑</option>
-        <option value="mrr_desc">MRR ↓</option>
-      </select>
-    </label>
+        {label}
+        <span className={active ? 'text-brand-500' : 'text-navy-300'}>{indicator}</span>
+      </button>
+    </th>
   );
 }

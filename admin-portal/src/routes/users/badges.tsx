@@ -77,6 +77,29 @@ export function StoreBadge({ store }: { store: UserStore | null }) {
   );
 }
 
+/** Platform badge: iOS (slate) vs Android (lime). Falls back to em-dash. */
+export function PlatformBadge({ platform }: { platform: string | null }) {
+  if (!platform) return <span className="text-[11px] text-navy-300">—</span>;
+  const p = platform.toLowerCase();
+  const isIos = p === 'ios' || p === 'app_store' || p === 'macos';
+  const isAndroid = p === 'android' || p === 'play_store';
+  if (!isIos && !isAndroid) {
+    return <span className="text-[11px] text-navy-300">—</span>;
+  }
+  return (
+    <span
+      className={[
+        'inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-medium ring-1 ring-inset',
+        isIos
+          ? 'bg-slate-50 text-slate-700 ring-slate-200'
+          : 'bg-lime-50 text-lime-700 ring-lime-100',
+      ].join(' ')}
+    >
+      {isIos ? 'iOS' : 'Android'}
+    </span>
+  );
+}
+
 export function RoleBadge({ role }: { role: string }) {
   const isAdmin = role === 'admin';
   return (
