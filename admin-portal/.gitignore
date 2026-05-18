@@ -19,3 +19,6 @@ dist/
 npm-debug.log*
 yarn-debug.log*
 pnpm-debug.log*
+
+# Supabase CLI working state — created on `supabase db push`/`link`.
+supabase/.temp/

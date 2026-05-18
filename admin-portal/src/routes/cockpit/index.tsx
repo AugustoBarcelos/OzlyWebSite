@@ -37,8 +37,8 @@ interface AcquisitionOverview {
  *   1. Signups WoW
  *   2. Trial→Paid %
  *   3. MRR
- *   4. CAC blended (placeholder until W3 RPC `admin_acquisition_overview`)
- *   5. Top 3 sources (placeholder)
+ *   4. CAC blended (real, via admin_acquisition_overview — null when no spend)
+ *   5. Top 3 sources (real, via admin_acquisition_overview top_sources)
  *   6. Churn 30d
  *
  * + a signups timeseries chart, a compact funnel preview, a plan-mix donut,

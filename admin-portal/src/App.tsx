@@ -273,7 +273,7 @@ const InboxSystemPage = lazy(() =>
   import('./routes/inbox/system').then((m) => ({ default: m.InboxSystemPage })),
 );
 const InboxAffiliatesPage = lazy(() =>
-  import('./routes/_hubs').then((m) => ({ default: m.InboxAffiliatesPage })),
+  import('./routes/inbox/affiliates').then((m) => ({ default: m.InboxAffiliatesPage })),
 );
 
 function RouteFallback() {

@@ -10,14 +10,17 @@
  *   │ TabGroup:                        │  (sticky on desktop)  │
  *   │  Profile · Subscription ·        │                       │
  *   │  Activity · Sync · Referral ·    │  Status badges        │
- *   │  Errors · Audit                  │  W5 actions (disabled)│
+ *   │  Errors · Audit                  │  W5 actions (live)    │
  *   └──────────────────────────────────┴───────────────────────┘
  *
  * Hardening:
  *  - Email/phone/address default to MASKED. "Reveal PII" re-fetches with
  *    `p_include_pii=true`; the RPC server-side audit-logs a 'pii_revealed'
  *    row so we have an immutable trail of who saw what.
- *  - All destructive actions are placeholders (disabled) — Wave 5 wires them.
+ *  - Destructive actions (soft delete + ban) gated by DangerZone with typed
+ *    email confirmation + required reason (5-1000 chars). Per-grant revoke
+ *    uses window.confirm with explicit "revokes ALL" wording. Every action
+ *    audited server-side in admin_audit_log (action, payload, target, result).
  *  - We never render TFN here (it's not in the RPC payload anyway).
  */
 import { useCallback, useEffect, useState, type ReactNode } from 'react';

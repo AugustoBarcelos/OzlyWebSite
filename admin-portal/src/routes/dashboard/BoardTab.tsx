@@ -109,7 +109,7 @@ export function BoardTab({ data, loading, period }: Props) {
             colors={['emerald']}
             variant="area"
             loading={loading && !timeseries}
-            emptyMessage="Pending admin_signups_timeseries RPC"
+            emptyMessage="Sem signups no período."
           />
         </div>
         <Card>

@@ -23,7 +23,8 @@ import { formatNumber, formatRelativeTime } from '@/lib/format';
  *   - Affiliate payouts pending (real, via admin_affiliate_payout_planning)
  *   - Top errors last 7d (real, via admin_top_errors)
  *   - Recent admin actions / audit (real, via admin_recent_admin_actions)
- *   - Refunds / App Store reviews / Affiliate approvals (V2 placeholders)
+ *   - Refund queue (real, via admin_pending_refunds — proxy via trials expirados)
+ *   - App Store reviews / Anomalies / Affiliate approvals (V2 placeholders)
  *
  * Each section silently degrades if its RPC isn't deployed in this env.
  *
@@ -72,6 +73,19 @@ interface ActionsResponse {
   rows: ActionRow[];
 }
 
+interface RefundRowPreview {
+  user_id: string;
+  email: string | null;
+  full_name: string | null;
+  plan: string | null;
+  trial_ends_at: string | null;
+}
+interface RefundsResponse {
+  period_days: number;
+  count: number;
+  rows: RefundRowPreview[];
+}
+
 export function InboxPage() {
   const [payouts, setPayouts] = useState<PayoutPlanning | null>(null);
   const [payoutsErr, setPayoutsErr] = useState<string | null>(null);
@@ -82,6 +96,9 @@ export function InboxPage() {
   const [actions, setActions] = useState<ActionRow[] | null>(null);
   const [actionsErr, setActionsErr] = useState<string | null>(null);
 
+  const [refunds, setRefunds] = useState<RefundsResponse | null>(null);
+  const [refundsErr, setRefundsErr] = useState<string | null>(null);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -91,15 +108,18 @@ export function InboxPage() {
       callRpc<PayoutPlanning>('admin_affiliate_payout_planning', {}),
       callRpc<ErrorsResponse>('admin_top_errors', { p_period_days: 7, p_limit: 10 }),
       callRpc<ActionsResponse>('admin_recent_admin_actions', { p_limit: 25 }),
+      callRpc<RefundsResponse>('admin_pending_refunds', { p_period_days: 30 }),
     ]).then((results) => {
       if (!alive) return;
-      const [r0, r1, r2] = results;
+      const [r0, r1, r2, r3] = results;
       if (r0.status === 'fulfilled') setPayouts(r0.value);
       else setPayoutsErr(messageFor(r0.reason));
       if (r1.status === 'fulfilled') setErrors(r1.value.rows ?? []);
       else setErrorsErr(messageFor(r1.reason));
       if (r2.status === 'fulfilled') setActions(r2.value.rows ?? []);
       else setActionsErr(messageFor(r2.reason));
+      if (r3.status === 'fulfilled') setRefunds(r3.value);
+      else setRefundsErr(messageFor(r3.reason));
       setLoading(false);
     });
     return () => {
@@ -110,6 +130,7 @@ export function InboxPage() {
   const totalPending = payouts?.pending_summary.reduce((sum, s) => sum + s.count, 0) ?? 0;
   const totalErrors = errors?.reduce((sum, e) => sum + e.count, 0) ?? 0;
   const totalActions = actions?.length ?? 0;
+  const totalRefunds = refunds?.count ?? 0;
 
   return (
     <div className="space-y-6">
@@ -137,7 +158,7 @@ export function InboxPage() {
       </header>
 
       {/* Quick-glance counters */}
-      <section className="grid gap-3 sm:grid-cols-3">
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <CounterTile
           icon={HandshakeIcon}
           label="Payouts pendentes"
@@ -151,6 +172,13 @@ export function InboxPage() {
           count={totalErrors}
           tone={totalErrors > 0 ? 'warning' : 'lime'}
           to="/reliability"
+        />
+        <CounterTile
+          icon={ShieldCheckIcon}
+          label="Refunds (30d)"
+          count={totalRefunds}
+          tone={totalRefunds > 0 ? 'warning' : 'lime'}
+          to="/inbox/refunds"
         />
         <CounterTile
           icon={ActivityIcon}
@@ -323,44 +351,132 @@ export function InboxPage() {
         )}
       </Section>
 
-      {/* ─── Coming-soon sections ──────────────────────────────────────── */}
+      {/* ─── Quick links to specialist queues ──────────────────────────── */}
       <Section
         icon={BellIcon}
-        title="Anomalias detectadas (V2)"
-        subtitle="IA monitora KPIs e cria alerts quando algo destoa"
+        title="Anomalias detectadas"
+        subtitle="Regras client-side sobre KPIs (payouts, churn, error rate, conv)"
+        rightSlot={
+          <Link
+            to="/inbox/alerts"
+            className="rounded-md border border-navy-100 bg-white px-2 py-1 text-xs font-medium text-navy-600 hover:border-brand-200 hover:text-brand-700"
+          >
+            Abrir alerts →
+          </Link>
+        }
       >
         <EmptyHint variant="info">
-          Vai aparecer quando o W7.5 (AI anomaly detection) estiver ligado.
+          Avaliação completa em <Link to="/inbox/alerts" className="text-brand-600 underline">/inbox/alerts</Link>. AI adaptive (W7.5) entra depois.
         </EmptyHint>
       </Section>
 
       <Section
         icon={SparklesIcon}
-        title="App Store / Play reviews (V2)"
-        subtitle="Reviews novas com sentiment + prioridade de resposta"
+        title="App Store / Play reviews"
+        subtitle="Reviews oficiais via App Store Connect + Play Developer APIs"
+        rightSlot={
+          <Link
+            to="/inbox/reviews"
+            className="rounded-md border border-navy-100 bg-white px-2 py-1 text-xs font-medium text-navy-600 hover:border-brand-200 hover:text-brand-700"
+          >
+            Abrir reviews →
+          </Link>
+        }
       >
         <EmptyHint variant="info">
-          Precisa integração com App Store Connect API + Play Console.
+          iOS e Android consolidados em <Link to="/inbox/reviews" className="text-brand-600 underline">/inbox/reviews</Link> com filtro por estrelas.
         </EmptyHint>
       </Section>
 
+      {/* ─── Refund queue (real — MVP via trials expirados) ────────────── */}
       <Section
         icon={ShieldCheckIcon}
-        title="Refund requests (V2)"
-        subtitle="Pedidos de reembolso pendentes de aprovação"
+        title="Refund queue"
+        subtitle="Trials expirados últimos 30d — candidatos a win-back ou refund"
+        rightSlot={
+          totalRefunds > 0 ? (
+            <Link
+              to="/inbox/refunds"
+              className="rounded-md border border-amber-300 bg-white px-2 py-1 text-xs font-medium text-amber-800 hover:bg-amber-50"
+            >
+              Ver Refunds →
+            </Link>
+          ) : (
+            <Link
+              to="/inbox/refunds"
+              className="rounded-md border border-navy-100 bg-white px-2 py-1 text-xs font-medium text-navy-600 hover:border-brand-200 hover:text-brand-700"
+            >
+              Abrir queue →
+            </Link>
+          )
+        }
       >
-        <EmptyHint variant="info">
-          Precisa pipeline de refunds (RPC nova `admin_pending_refunds`).
-        </EmptyHint>
+        {refundsErr ? (
+          <EmptyHint variant="warning">{refundsErr}</EmptyHint>
+        ) : !refunds ? (
+          <SectionLoading />
+        ) : refunds.rows.length === 0 ? (
+          <EmptyHint variant="ok">Nenhum trial expirou nos últimos 30 dias.</EmptyHint>
+        ) : (
+          <ul className="divide-y divide-navy-50">
+            {refunds.rows.slice(0, 6).map((r) => (
+              <li
+                key={r.user_id}
+                className="flex items-center justify-between gap-3 py-2 text-sm"
+              >
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="truncate text-navy-700">
+                      {r.full_name || r.email || r.user_id.slice(0, 8)}
+                    </span>
+                    {r.plan && (
+                      <span className="rounded-full bg-navy-50 px-1.5 py-0.5 text-[10px] font-medium uppercase text-navy-500">
+                        {r.plan}
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[11px] text-navy-400">
+                    {r.email ?? '—'}
+                    {r.trial_ends_at && (
+                      <> · expirou {formatRelativeTime(r.trial_ends_at)}</>
+                    )}
+                  </div>
+                </div>
+                <Link
+                  to={`/users/${r.user_id}`}
+                  className="rounded bg-navy-50 px-2 py-0.5 text-xs text-navy-600 hover:bg-navy-100"
+                >
+                  ver
+                </Link>
+              </li>
+            ))}
+            {refunds.rows.length > 6 && (
+              <li className="pt-2 text-center text-[11px] text-navy-400">
+                +{refunds.rows.length - 6} mais —{' '}
+                <Link to="/inbox/refunds" className="text-brand-600 hover:underline">
+                  ver todos
+                </Link>
+              </li>
+            )}
+          </ul>
+        )}
       </Section>
 
       <Section
         icon={HandshakeIcon}
-        title="Aplicações de afiliado (V2)"
-        subtitle="Novos afiliados aguardando aprovação (signup self-serve)"
+        title="Aplicações de afiliado"
+        subtitle="Afiliados com status=pending aguardando aprovação"
+        rightSlot={
+          <Link
+            to="/inbox/affiliates"
+            className="rounded-md border border-navy-100 bg-white px-2 py-1 text-xs font-medium text-navy-600 hover:border-brand-200 hover:text-brand-700"
+          >
+            Abrir queue →
+          </Link>
+        }
       >
         <EmptyHint variant="info">
-          Habilita quando o onboarding self-serve for ativado.
+          Triage em <Link to="/inbox/affiliates" className="text-brand-600 underline">/inbox/affiliates</Link>. Fica vazio até o form público de signup ser ativado.
         </EmptyHint>
       </Section>
 
@@ -384,6 +500,12 @@ export function InboxPage() {
             params: { p_limit: 25 },
             data: actions,
             ...(actionsErr ? { note: actionsErr } : {}),
+          },
+          {
+            rpc: 'admin_pending_refunds',
+            params: { p_period_days: 30 },
+            data: refunds,
+            ...(refundsErr ? { note: refundsErr } : {}),
           },
         ]}
       />
