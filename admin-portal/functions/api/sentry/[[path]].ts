@@ -37,15 +37,16 @@ export const onRequestGet: PagesFunction<Env> = async (ctx) => {
     );
   }
 
-  // params.path is string | string[]; normalise to a forward-slash path.
-  const raw = ctx.params.path;
-  const subpath = Array.isArray(raw) ? raw.join('/') : raw ?? '';
-  if (!subpath) {
+  // Forward the path verbatim (preserving trailing slash, which Sentry's
+  // REST API is strict about). ctx.params.path normalises the segments and
+  // drops the trailing slash, so derive the path from the original URL
+  // instead.
+  const inUrl = new URL(ctx.request.url);
+  const sentryPath = inUrl.pathname.replace(/^\/api\/sentry/, '');
+  if (!sentryPath || sentryPath === '/') {
     return json({ detail: 'Missing sentry path' }, 400);
   }
-
-  const inUrl = new URL(ctx.request.url);
-  const upstream = `https://sentry.io/api/0/${subpath}${inUrl.search}`;
+  const upstream = `https://sentry.io/api/0${sentryPath}${inUrl.search}`;
 
   const upstreamRes = await fetch(upstream, {
     method: 'GET',
