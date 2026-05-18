@@ -37,15 +37,17 @@ export const onRequestGet: PagesFunction<Env> = async (ctx) => {
     );
   }
 
-  // Forward the path verbatim (preserving trailing slash, which Sentry's
-  // REST API is strict about). ctx.params.path normalises the segments and
-  // drops the trailing slash, so derive the path from the original URL
-  // instead.
+  // Forward the path. Both Cloudflare Pages routing and the params helper
+  // strip the trailing slash from the request URL, but Sentry's REST API
+  // returns 404 "did you forget a trailing slash?" on collection endpoints
+  // (/organizations/<org>/, /issues/, /stats_v2/, …). Every endpoint we hit
+  // from sentry-api.ts is a collection, so we unconditionally add the slash.
   const inUrl = new URL(ctx.request.url);
-  const sentryPath = inUrl.pathname.replace(/^\/api\/sentry/, '');
-  if (!sentryPath || sentryPath === '/') {
+  const stripped = inUrl.pathname.replace(/^\/api\/sentry/, '');
+  if (!stripped || stripped === '/') {
     return json({ detail: 'Missing sentry path' }, 400);
   }
+  const sentryPath = stripped.endsWith('/') ? stripped : `${stripped}/`;
   const upstream = `https://sentry.io/api/0${sentryPath}${inUrl.search}`;
 
   const upstreamRes = await fetch(upstream, {
