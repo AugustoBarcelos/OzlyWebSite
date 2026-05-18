@@ -169,21 +169,6 @@ jobs:
           fi
           echo "OK — no source maps in dist/."
 
-      # ── Bundle Pages Functions next to the static assets ────────────────
-      # Cloudflare Pages picks up `functions/` from the deployed directory.
-      # Our deploy uploads `admin-portal/dist`, so the source `functions/`
-      # tree needs to land there too — otherwise routes like /api/sentry/*
-      # silently fall through to the SPA index.html (HTTP 200 with HTML body).
-      - name: Bundle Pages Functions with dist
-        working-directory: admin-portal
-        run: |
-          if [ -d functions ]; then
-            cp -R functions dist/functions
-            echo "Bundled $(find dist/functions -type f | wc -l) Pages Function file(s)."
-          else
-            echo "No functions/ directory — skipping."
-          fi
-
       # ── Persist build for the deploy job ─────────────────────────────────
       - name: Upload dist artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -219,12 +204,17 @@ jobs:
           name: admin-portal-dist
           path: admin-portal/dist
 
+      # wrangler resolves Pages Functions from `<cwd>/functions/`, NOT from
+      # inside the static-assets directory. Pointing workingDirectory at
+      # admin-portal/ lets it pick up admin-portal/functions/ alongside the
+      # dist/ artifact we just downloaded.
       - name: Publish to Cloudflare Pages
         uses: cloudflare/pages-action@v1
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
           projectName: ozly-admin
-          directory: admin-portal/dist
+          directory: dist
+          workingDirectory: admin-portal
           branch: main
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
