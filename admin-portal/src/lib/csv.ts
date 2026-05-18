@@ -6,7 +6,7 @@
  * dataset without clicking through to its source page.
  */
 
-type CsvRow = Record<string, string | number | boolean | null | undefined>;
+type CsvRow = Record<string, unknown>;
 
 function escapeCell(v: unknown): string {
   if (v === null || v === undefined) return '';
