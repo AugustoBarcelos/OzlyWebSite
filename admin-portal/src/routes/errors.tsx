@@ -19,17 +19,22 @@ import { KpiCard } from '@/components/KpiCard';
 import { AlertTriangleIcon, ExternalLinkIcon } from '@/components/Icons';
 import { Spinner } from '@/components/Spinner';
 import { AppTriageSection } from '@/components/AppTriageSection';
+import { useToast } from '@/components/Toast';
 import { formatRelativeTime } from '@/lib/format';
 import {
   fetchEventCounts,
+  fetchRecentReleases,
   fetchTopIssues,
   getLastError as sentryLastError,
   isConfigured as sentryIsConfigured,
   isOriginBlocked as sentryOriginBlocked,
   sentryWebBase,
+  updateIssueStatus,
+  type IssueMutation,
   type SentryEventCounts,
   type SentryIssue,
   type SentryPeriod,
+  type SentryRelease,
 } from '@/lib/sentry-api';
 
 /**
@@ -180,6 +185,13 @@ export function ErrorsPage() {
   const [issuesLoading, setIssuesLoading] = useState<boolean>(false);
   const [issuesError, setIssuesError] = useState<string | null>(null);
 
+  // Recent Sentry releases — used as suggestions when the operator picks
+  // "Resolve in release". Loaded once when configured; failures are silent
+  // because the fallback is "type the release name".
+  const [releases, setReleases] = useState<SentryRelease[]>([]);
+  const [mutatingIssueId, setMutatingIssueId] = useState<string | null>(null);
+  const { toast } = useToast();
+
   const fetchAllKpis = useCallback(async () => {
     if (!configured) return;
     setKpi24h({ data: null, loading: true });
@@ -247,6 +259,86 @@ export function ErrorsPage() {
   useEffect(() => {
     void fetchIssues(period);
   }, [fetchIssues, period]);
+
+  // Hydrate the recent-releases list. Done lazily and tolerantly — used only
+  // as a hint when the operator clicks "Resolve in release".
+  useEffect(() => {
+    if (!configured) return;
+    let cancelled = false;
+    void (async () => {
+      const rows = await fetchRecentReleases(15);
+      if (!cancelled && rows) setReleases(rows);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [configured]);
+
+  /**
+   * Mutate a single Sentry issue. For `resolveInRelease` we prompt the
+   * operator with the most recent releases as a hint — they paste / pick one.
+   * Other actions go through without confirmation.
+   */
+  const handleMutate = useCallback(
+    async (issue: SentryIssue, action: IssueMutation['action']) => {
+      let mutation: IssueMutation;
+      if (action === 'resolveInRelease') {
+        const hint = releases
+          .slice(0, 5)
+          .map((r) => r.shortVersion)
+          .join('\n');
+        const defaultRelease = releases[0]?.version ?? '';
+        const input = window.prompt(
+          hint
+            ? `Release name (recent):\n${hint}\n\nPaste/type the full release identifier:`
+            : 'Release name (full identifier, e.g. com.augusto.ozly@1.0.18+411):',
+          defaultRelease,
+        );
+        if (input === null) return;
+        const release = input.trim();
+        if (!release) {
+          toast({ title: 'Release name required', variant: 'error' });
+          return;
+        }
+        mutation = { action: 'resolveInRelease', release };
+      } else if (action === 'resolve') {
+        mutation = { action: 'resolve' };
+      } else if (action === 'ignore') {
+        mutation = { action: 'ignore' };
+      } else {
+        mutation = { action: 'reopen' };
+      }
+
+      setMutatingIssueId(issue.id);
+      try {
+        const ok = await updateIssueStatus(issue.id, mutation);
+        if (!ok) {
+          const detail = sentryLastError();
+          toast({
+            title: 'Sentry mutation failed',
+            ...(detail ? { description: detail } : {}),
+            variant: 'error',
+          });
+          return;
+        }
+        toast({
+          title: `Issue ${
+            mutation.action === 'reopen'
+              ? 'reopened'
+              : mutation.action === 'ignore'
+                ? 'ignored'
+                : 'resolved'
+          }`,
+          description: issue.shortId || issue.id,
+          variant: 'success',
+        });
+        await fetchIssues(period);
+      } finally {
+        setMutatingIssueId(null);
+      }
+    },
+    [releases, fetchIssues, period, toast],
+  );
 
   const periodIndex = PERIODS.findIndex((p) => p.key === period);
   const sentryQuickLinks = useMemo(buildSentryQuickLinks, []);
@@ -469,6 +561,7 @@ export function ErrorsPage() {
               <Table>
                 <TableHead>
                   <TableRow>
+                    <TableHeaderCell>Status</TableHeaderCell>
                     <TableHeaderCell>Severity</TableHeaderCell>
                     <TableHeaderCell>Title</TableHeaderCell>
                     <TableHeaderCell>Culprit</TableHeaderCell>
@@ -479,57 +572,126 @@ export function ErrorsPage() {
                       Users
                     </TableHeaderCell>
                     <TableHeaderCell>Last seen</TableHeaderCell>
+                    <TableHeaderCell>Actions</TableHeaderCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {issues.map((issue) => (
-                    <TableRow key={issue.id}>
-                      <TableCell>
-                        <Badge color={severityColor(issue.level)} size="xs">
-                          {issue.level || 'error'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="max-w-xs">
-                        {issue.permalink ? (
-                          <a
-                            href={issue.permalink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block truncate text-brand-600 hover:underline"
-                            title={issue.title}
-                          >
-                            {issue.shortId
-                              ? `${issue.shortId} · ${issue.title}`
-                              : issue.title}
-                          </a>
-                        ) : (
+                  {issues.map((issue) => {
+                    const busy = mutatingIssueId === issue.id;
+                    const statusBadgeColor =
+                      issue.status === 'resolved'
+                        ? 'emerald'
+                        : issue.status === 'ignored'
+                          ? 'gray'
+                          : 'red';
+                    return (
+                      <TableRow key={issue.id}>
+                        <TableCell>
+                          <Badge color={statusBadgeColor} size="xs">
+                            {issue.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge color={severityColor(issue.level)} size="xs">
+                            {issue.level || 'error'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="max-w-xs">
+                          {issue.permalink ? (
+                            <a
+                              href={issue.permalink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block truncate text-brand-600 hover:underline"
+                              title={issue.title}
+                            >
+                              {issue.shortId
+                                ? `${issue.shortId} · ${issue.title}`
+                                : issue.title}
+                            </a>
+                          ) : (
+                            <span
+                              className="block truncate text-navy-600"
+                              title={issue.title}
+                            >
+                              {issue.title}
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell className="max-w-xs">
                           <span
-                            className="block truncate text-navy-600"
-                            title={issue.title}
+                            className="block truncate text-navy-400"
+                            title={issue.culprit}
                           >
-                            {issue.title}
+                            {issue.culprit || '—'}
                           </span>
-                        )}
-                      </TableCell>
-                      <TableCell className="max-w-xs">
-                        <span
-                          className="block truncate text-navy-400"
-                          title={issue.culprit}
-                        >
-                          {issue.culprit || '—'}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {issue.count.toLocaleString('en-AU')}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {issue.userCount.toLocaleString('en-AU')}
-                      </TableCell>
-                      <TableCell className="text-navy-400">
-                        {formatRelativeTime(issue.lastSeen)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {issue.count.toLocaleString('en-AU')}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {issue.userCount.toLocaleString('en-AU')}
+                        </TableCell>
+                        <TableCell className="text-navy-400">
+                          {formatRelativeTime(issue.lastSeen)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {issue.status !== 'resolved' && (
+                              <>
+                                <button
+                                  type="button"
+                                  disabled={busy}
+                                  onClick={() => {
+                                    void handleMutate(issue, 'resolveInRelease');
+                                  }}
+                                  className="rounded border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
+                                  title="Mark resolved against a specific Sentry release; auto-reopens if newer build still throws this"
+                                >
+                                  Resolve (release)
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={busy}
+                                  onClick={() => {
+                                    void handleMutate(issue, 'resolve');
+                                  }}
+                                  className="rounded border border-emerald-200 bg-white px-2 py-0.5 text-xs text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
+                                  title="Mark resolved without release tracking"
+                                >
+                                  Resolve
+                                </button>
+                              </>
+                            )}
+                            {issue.status !== 'ignored' && (
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() => {
+                                  void handleMutate(issue, 'ignore');
+                                }}
+                                className="rounded border border-navy-200 bg-white px-2 py-0.5 text-xs text-navy-600 hover:bg-navy-50 disabled:opacity-50"
+                              >
+                                Ignore
+                              </button>
+                            )}
+                            {issue.status !== 'unresolved' && (
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() => {
+                                  void handleMutate(issue, 'reopen');
+                                }}
+                                className="rounded border border-amber-300 bg-amber-50 px-2 py-0.5 text-xs text-amber-800 hover:bg-amber-100 disabled:opacity-50"
+                              >
+                                Reopen
+                              </button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>

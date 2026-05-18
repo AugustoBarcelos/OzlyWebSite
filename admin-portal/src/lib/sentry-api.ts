@@ -28,6 +28,8 @@ const SENTRY_API_BASE = '/api/sentry';
 
 export type SentryPeriod = '24h' | '14d' | '30d';
 
+export type SentryIssueStatus = 'unresolved' | 'resolved' | 'ignored';
+
 export interface SentryIssue {
   id: string;
   shortId: string;
@@ -38,11 +40,24 @@ export interface SentryIssue {
   userCount: number;
   lastSeen: string;
   permalink: string;
+  status: SentryIssueStatus;
 }
 
 export interface SentryEventCounts {
   count: number;
   previous: number;
+}
+
+/**
+ * Release in the Sentry sense — a distinct build of the app the SDK has
+ * tagged events with. Flutter Sentry SDK names them `<package>@<version>+<build>`
+ * automatically (e.g. `com.augusto.ozly@1.0.18+411`).
+ */
+export interface SentryRelease {
+  version: string;        // full release identifier
+  shortVersion: string;   // display name
+  dateCreated: string;
+  lastEvent: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -97,6 +112,8 @@ export function sentryWebBase(): string {
 
 interface FetchOptions {
   signal?: AbortSignal;
+  method?: 'GET' | 'PUT' | 'POST';
+  body?: unknown;
 }
 
 async function fetchSentry<T>(
@@ -106,13 +123,18 @@ async function fetchSentry<T>(
   if (!isConfigured()) return null;
 
   try {
-    const init: RequestInit = {
-      method: 'GET',
-      headers: {
-        Accept: 'application/json',
-      },
+    const method = opts.method ?? 'GET';
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
     };
+    if (method !== 'GET') {
+      headers['Content-Type'] = 'application/json';
+    }
+    const init: RequestInit = { method, headers };
     if (opts.signal) init.signal = opts.signal;
+    if (opts.body !== undefined && method !== 'GET') {
+      init.body = JSON.stringify(opts.body);
+    }
 
     // Same-origin call; auth is added by /api/sentry/* Pages Function.
     const res = await fetch(`${SENTRY_API_BASE}${path}`, init);
@@ -265,6 +287,76 @@ export async function fetchTopIssues(
   return data.map(parseIssue).filter((x): x is SentryIssue => x !== null);
 }
 
+/**
+ * Recent releases for the org (Sentry-side). The Flutter SDK auto-tags every
+ * event with `<package>@<version>+<build>`, so a release row maps cleanly to
+ * a specific app build the user can target with "resolve in release".
+ *
+ * Uses `/api/0/organizations/{org}/releases/?per_page=N&sort=date`.
+ */
+export async function fetchRecentReleases(
+  limit = 15,
+  opts: FetchOptions = {},
+): Promise<SentryRelease[] | null> {
+  if (!isConfigured()) return null;
+  const org = env.sentryOrg;
+  if (!org) return null;
+  const data = await fetchSentry<unknown[]>(
+    `/organizations/${encodeURIComponent(org)}/releases/?per_page=${limit}`,
+    opts,
+  );
+  if (!data || !Array.isArray(data)) return null;
+  return data
+    .map(parseRelease)
+    .filter((x): x is SentryRelease => x !== null);
+}
+
+export type IssueMutation =
+  | { action: 'resolve' }
+  | { action: 'resolveInRelease'; release: string }
+  | { action: 'ignore' }
+  | { action: 'reopen' };
+
+/**
+ * Change the status of a single issue. Returns true on success.
+ *
+ * Endpoint: PUT `/api/0/issues/{issue_id}/`. Sentry's bulk update is also
+ * available via PUT `/projects/{org}/{project}/issues/?id=...` but the
+ * single-issue endpoint is simpler and we only ever mutate one at a time.
+ */
+export async function updateIssueStatus(
+  issueId: string,
+  mutation: IssueMutation,
+  opts: FetchOptions = {},
+): Promise<boolean> {
+  if (!isConfigured()) return false;
+
+  let body: Record<string, unknown>;
+  switch (mutation.action) {
+    case 'resolve':
+      body = { status: 'resolved' };
+      break;
+    case 'resolveInRelease':
+      body = {
+        status: 'resolved',
+        statusDetails: { inRelease: mutation.release },
+      };
+      break;
+    case 'ignore':
+      body = { status: 'ignored' };
+      break;
+    case 'reopen':
+      body = { status: 'unresolved' };
+      break;
+  }
+
+  const result = await fetchSentry<unknown>(
+    `/issues/${encodeURIComponent(issueId)}/`,
+    { ...opts, method: 'PUT', body },
+  );
+  return result !== null;
+}
+
 // ---------------------------------------------------------------------------
 // Parsing helpers — defensive: never trust the wire shape blindly.
 // ---------------------------------------------------------------------------
@@ -308,11 +400,30 @@ function asNumber(v: unknown, fallback = 0): number {
   return fallback;
 }
 
+function parseRelease(raw: unknown): SentryRelease | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const r = raw as Record<string, unknown>;
+  const version = asString(r['version']);
+  if (!version) return null;
+  return {
+    version,
+    shortVersion: asString(r['shortVersion'], version),
+    dateCreated: asString(r['dateCreated']),
+    lastEvent:
+      typeof r['lastEvent'] === 'string' ? (r['lastEvent'] as string) : null,
+  };
+}
+
 function parseIssue(raw: unknown): SentryIssue | null {
   if (!raw || typeof raw !== 'object') return null;
   const r = raw as Record<string, unknown>;
   const id = asString(r['id']);
   if (!id) return null;
+  const rawStatus = asString(r['status'], 'unresolved');
+  const status: SentryIssueStatus =
+    rawStatus === 'resolved' || rawStatus === 'ignored'
+      ? rawStatus
+      : 'unresolved';
   return {
     id,
     shortId: asString(r['shortId'], id),
@@ -323,5 +434,6 @@ function parseIssue(raw: unknown): SentryIssue | null {
     userCount: asNumber(r['userCount']),
     lastSeen: asString(r['lastSeen']),
     permalink: asString(r['permalink']),
+    status,
   };
 }

@@ -13,11 +13,17 @@
  *   `SENTRY_API_TOKEN_SERVER` — note no `VITE_` prefix on purpose. Server-only
  *   env in Cloudflare Pages → it never ends up in the JS bundle. Set it under
  *   Settings → Variables and Secrets → Production for the `ozly-admin` Pages
- *   project. The existing `VITE_SENTRY_API_TOKEN` becomes dead weight; safe
- *   to delete it once this is live.
+ *   project.
+ *
+ * Methods:
+ *   - GET  — read endpoints (orgs, projects, issues list, stats, releases).
+ *   - PUT  — mutate issue status (resolve / ignore / reopen), optionally
+ *            with `statusDetails.inRelease` for "fixed in release".
+ *   - POST — used to create releases on demand.
+ *   Other methods → 405.
  *
  * Security:
- *   - Method restricted to GET (everything Sentry-read we use is GET).
+ *   - Auth token is injected server-side and never reaches the browser.
  *   - Path is forwarded as-is; no command injection vector because we slot
  *     into a URL not a shell.
  *   - Errors from upstream are passed through with their original status so
@@ -28,7 +34,14 @@ interface Env {
   SENTRY_API_TOKEN_SERVER?: string;
 }
 
-export const onRequestGet: PagesFunction<Env> = async (ctx) => {
+const ALLOWED_METHODS = new Set(['GET', 'PUT', 'POST']);
+
+async function proxy(ctx: Parameters<PagesFunction<Env>>[0]): Promise<Response> {
+  const method = ctx.request.method.toUpperCase();
+  if (!ALLOWED_METHODS.has(method)) {
+    return new Response('Method not allowed', { status: 405 });
+  }
+
   const token = ctx.env.SENTRY_API_TOKEN_SERVER;
   if (!token) {
     return json(
@@ -41,7 +54,7 @@ export const onRequestGet: PagesFunction<Env> = async (ctx) => {
   // strip the trailing slash from the request URL, but Sentry's REST API
   // returns 404 "did you forget a trailing slash?" on collection endpoints
   // (/organizations/<org>/, /issues/, /stats_v2/, …). Every endpoint we hit
-  // from sentry-api.ts is a collection, so we unconditionally add the slash.
+  // is a collection or accepts a trailing slash, so always append it.
   const inUrl = new URL(ctx.request.url);
   const stripped = inUrl.pathname.replace(/^\/api\/sentry/, '');
   if (!stripped || stripped === '/') {
@@ -50,34 +63,39 @@ export const onRequestGet: PagesFunction<Env> = async (ctx) => {
   const sentryPath = stripped.endsWith('/') ? stripped : `${stripped}/`;
   const upstream = `https://sentry.io/api/0${sentryPath}${inUrl.search}`;
 
-  const upstreamRes = await fetch(upstream, {
-    method: 'GET',
+  const init: RequestInit = {
+    method,
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: 'application/json',
       // No `Origin` header forwarded — that's what triggers Sentry's reject.
     },
-  });
+  };
 
+  // Forward the body for PUT/POST. We re-read as text so we can also set
+  // Content-Type explicitly (browser fetch sometimes omits it for short
+  // bodies). Sentry expects JSON for all the endpoints we hit.
+  if (method === 'PUT' || method === 'POST') {
+    const body = await ctx.request.text();
+    init.body = body;
+    (init.headers as Record<string, string>)['Content-Type'] = 'application/json';
+  }
+
+  const upstreamRes = await fetch(upstream, init);
   const body = await upstreamRes.text();
   return new Response(body, {
     status: upstreamRes.status,
     headers: {
       'Content-Type':
         upstreamRes.headers.get('Content-Type') ?? 'application/json',
-      // Surface paging metadata if Sentry sent it (used by some endpoints).
       ...(upstreamRes.headers.get('Link')
         ? { Link: upstreamRes.headers.get('Link') as string }
         : {}),
     },
   });
-};
+}
 
-// Any non-GET → 405 (Sentry-read is GET only here).
-export const onRequest: PagesFunction<Env> = (ctx) => {
-  if (ctx.request.method === 'GET') return onRequestGet(ctx);
-  return new Response('Method not allowed', { status: 405 });
-};
+export const onRequest: PagesFunction<Env> = (ctx) => proxy(ctx);
 
 function json(payload: unknown, status: number): Response {
   return new Response(JSON.stringify(payload), {
