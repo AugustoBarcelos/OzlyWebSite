@@ -169,6 +169,21 @@ jobs:
           fi
           echo "OK — no source maps in dist/."
 
+      # ── Bundle Pages Functions next to the static assets ────────────────
+      # Cloudflare Pages picks up `functions/` from the deployed directory.
+      # Our deploy uploads `admin-portal/dist`, so the source `functions/`
+      # tree needs to land there too — otherwise routes like /api/sentry/*
+      # silently fall through to the SPA index.html (HTTP 200 with HTML body).
+      - name: Bundle Pages Functions with dist
+        working-directory: admin-portal
+        run: |
+          if [ -d functions ]; then
+            cp -R functions dist/functions
+            echo "Bundled $(find dist/functions -type f | wc -l) Pages Function file(s)."
+          else
+            echo "No functions/ directory — skipping."
+          fi
+
       # ── Persist build for the deploy job ─────────────────────────────────
       - name: Upload dist artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
