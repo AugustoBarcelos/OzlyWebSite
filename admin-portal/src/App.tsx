@@ -15,6 +15,9 @@ import { OAuthPopupCallbackPage } from './routes/oauth/popup-callback';
 const CockpitPage = lazy(() =>
   import('./routes/cockpit').then((m) => ({ default: m.CockpitPage })),
 );
+const DataHubPage = lazy(() =>
+  import('./routes/data').then((m) => ({ default: m.DataHubPage })),
+);
 
 // ─── Help / Glossary ────────────────────────────────────────────────────────
 const GlossaryPage = lazy(() =>
@@ -332,6 +335,7 @@ export function App() {
                 {/* Cockpit (home) */}
                 <Route path="/" element={<Navigate to="/cockpit" replace />} />
                 <Route path="/cockpit" element={lazyRoute(CockpitPage)} />
+                <Route path="/data" element={lazyRoute(DataHubPage)} />
 
                 {/* Legacy /dashboard kept reachable for back-compat */}
                 <Route path="/dashboard" element={lazyRoute(DashboardPage)} />

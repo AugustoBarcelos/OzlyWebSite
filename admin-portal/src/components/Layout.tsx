@@ -13,6 +13,7 @@ import {
   HandshakeIcon,
   HomeIcon,
   InboxIcon,
+  LayoutDashboardIcon,
   LogOutIcon,
   MailIcon,
   MegaphoneIcon,
@@ -124,6 +125,7 @@ function useNavGroups(): ReadonlyArray<NavGroup> {
         {
           items: [
             { label: 'Cockpit', to: '/cockpit', icon: HomeIcon, end: true },
+            { label: 'Data Hub', to: '/data', icon: LayoutDashboardIcon },
             { label: 'Inbox', to: '/inbox', icon: InboxIcon },
           ],
         },
