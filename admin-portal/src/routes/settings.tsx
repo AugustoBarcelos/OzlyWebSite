@@ -18,7 +18,7 @@ const TIMEZONES = [
   'UTC',
 ] as const;
 
-const PERIODS = [7, 30, 90, 365] as const;
+const PERIODS = [1, 7, 30, 90, 365] as const;
 
 /**
  * /settings — preferências do admin (persistidas em admin_preferences via RPCs).
@@ -126,7 +126,7 @@ export function SettingsPage() {
                       : 'rounded-md border border-navy-100 bg-white px-3 py-1.5 text-xs font-medium text-navy-600 hover:border-brand-300 hover:text-brand-700'
                   }
                 >
-                  {d === 365 ? '12m' : `${d}d`}
+                  {d === 1 ? '24h' : d === 365 ? '12m' : `${d}d`}
                 </button>
               ))}
             </div>

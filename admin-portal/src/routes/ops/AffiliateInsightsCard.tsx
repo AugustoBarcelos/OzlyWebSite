@@ -83,7 +83,7 @@ interface InsightsResponse {
   earnings: { pending_commission_cents: number };
 }
 
-const PERIODS = [7, 30, 90] as const;
+const PERIODS = [1, 7, 30, 90] as const;
 
 function formatNumber(n: number): string {
   return n.toLocaleString('en-AU');
@@ -200,7 +200,7 @@ export function AffiliateInsightsCard({ affiliateId }: Props) {
           >
             <TabList variant="solid">
               {PERIODS.map((p) => (
-                <Tab key={p}>{p}d</Tab>
+                <Tab key={p}>{p === 1 ? '24h' : `${p}d`}</Tab>
               ))}
             </TabList>
           </TabGroup>

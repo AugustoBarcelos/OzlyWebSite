@@ -3,6 +3,7 @@ import type { ChannelValue, PeriodValue, PlanValue } from '@/lib/useGlobalFilter
 import { FilterIcon } from './Icons';
 
 const PERIOD_OPTIONS: ReadonlyArray<{ value: PeriodValue; label: string }> = [
+  { value: '1', label: '24h' },
   { value: '7', label: '7d' },
   { value: '14', label: '14d' },
   { value: '30', label: '30d' },

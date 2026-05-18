@@ -27,6 +27,7 @@ interface SnapshotResponse {
 }
 
 const RANGE_OPTIONS: Array<{ days: number; label: string }> = [
+  { days: 1, label: '24h' },
   { days: 7, label: '7d' },
   { days: 30, label: '30d' },
   { days: 90, label: '90d' },

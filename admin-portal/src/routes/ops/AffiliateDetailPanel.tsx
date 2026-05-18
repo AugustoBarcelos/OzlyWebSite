@@ -87,7 +87,7 @@ interface TimeseriesResponse {
   series: TimeseriesPoint[];
 }
 
-const PERIODS = [7, 30, 90] as const;
+const PERIODS = [1, 7, 30, 90] as const;
 type Period = (typeof PERIODS)[number];
 
 /**
@@ -300,7 +300,7 @@ export function AffiliateDetailPanel({
             >
               <TabList variant="solid">
                 {PERIODS.map((p) => (
-                  <Tab key={p}>{p}d</Tab>
+                  <Tab key={p}>{p === 1 ? '24h' : `${p}d`}</Tab>
                 ))}
               </TabList>
             </TabGroup>
@@ -567,7 +567,7 @@ export function AffiliateDetailPanel({
         {/* Funnel */}
         <Card className="lg:col-span-2">
           <div className="flex items-center justify-between">
-            <Title className="!text-sm">Funil · {period}d</Title>
+            <Title className="!text-sm">Funil · {period === 1 ? '24h' : `${period}d`}</Title>
             {loading && <Spinner size="sm" />}
           </div>
           <Text className="mt-0.5 text-xs text-navy-300">
@@ -586,7 +586,7 @@ export function AffiliateDetailPanel({
 
       {/* Timeseries */}
       <Card>
-        <Title className="!text-sm">Atividade diária · {period}d</Title>
+        <Title className="!text-sm">Atividade diária · {period === 1 ? '24h' : `${period}d`}</Title>
         <Text className="mt-0.5 text-xs text-navy-300">
           Signups · trials · renewals por dia.
         </Text>

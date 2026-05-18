@@ -2,6 +2,7 @@ import { useSearchParams } from 'react-router-dom';
 
 /** Periods available across Growth tabs. Mirrors dashboard convention. */
 export const GROWTH_PERIODS = [
+  { days: 1, label: '24h' },
   { days: 7, label: '7d' },
   { days: 30, label: '30d' },
   { days: 90, label: '90d' },

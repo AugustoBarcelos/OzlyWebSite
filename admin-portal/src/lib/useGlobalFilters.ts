@@ -14,7 +14,7 @@ import { useSearchParams } from 'react-router-dom';
  *   setFilter('period', '30');
  */
 
-export type PeriodValue = '7' | '14' | '30' | '90' | 'custom';
+export type PeriodValue = '1' | '7' | '14' | '30' | '90' | 'custom';
 export type ChannelValue = 'all' | 'organic' | 'google' | 'meta' | 'asa' | 'tiktok' | 'referral' | 'affiliate';
 export type PlanValue = 'all' | 'tfn' | 'abn' | 'pro';
 
@@ -32,7 +32,7 @@ const DEFAULTS: GlobalFilters = {
   geo: 'all',
 };
 
-const VALID_PERIODS: ReadonlyArray<PeriodValue> = ['7', '14', '30', '90', 'custom'];
+const VALID_PERIODS: ReadonlyArray<PeriodValue> = ['1', '7', '14', '30', '90', 'custom'];
 const VALID_CHANNELS: ReadonlyArray<ChannelValue> = [
   'all',
   'organic',
