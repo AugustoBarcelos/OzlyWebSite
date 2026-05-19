@@ -11,6 +11,7 @@ import {
 import { Spinner } from '@/components/Spinner';
 import { RawDataPanel } from '@/components/RawDataPanel';
 import { callRpc } from '@/lib/rpc';
+import { callEdge } from '@/lib/edge';
 import { formatCurrencyAUD, formatNumber } from '@/lib/format';
 import type {
   ErrorRateResponse,
@@ -39,6 +40,16 @@ interface AnomalyScanResp {
   z_critical: number;
   count: number;
   anomalies: AnomalyRow[];
+}
+
+interface AnomalyExplainResp {
+  ok: boolean;
+  anomalies: Array<AnomalyRow & {
+    explanation: string;
+    explanation_source: 'gemini' | 'fallback';
+  }>;
+  model: string;
+  errors?: string[];
 }
 
 type Severity = 'info' | 'warning' | 'critical';
@@ -91,6 +102,8 @@ export function InboxAlertsPage() {
   const [errorRate, setErrorRate] = useState<ErrorRateResponse | null>(null);
   const [payouts, setPayouts] = useState<PendingPayoutsResp | null>(null);
   const [anomalies, setAnomalies] = useState<AnomalyScanResp | null>(null);
+  const [explanations, setExplanations] = useState<Map<string, string>>(new Map());
+  const [explanationsSource, setExplanationsSource] = useState<'gemini' | 'fallback' | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -109,7 +122,27 @@ export function InboxAlertsPage() {
       if (r1.status === 'fulfilled') setRevenue(r1.value);
       if (r2.status === 'fulfilled') setErrorRate(r2.value);
       if (r3.status === 'fulfilled') setPayouts(r3.value);
-      if (r4.status === 'fulfilled') setAnomalies(r4.value);
+      if (r4.status === 'fulfilled') {
+        setAnomalies(r4.value);
+        // Fire-and-forget Gemini explanation pass — falls back gracefully
+        // if GEMINI_API_KEY missing or network blip.
+        if (r4.value.anomalies.length > 0) {
+          callEdge<AnomalyExplainResp>('anomaly-explain', {
+            method: 'POST',
+            body: { anomalies: r4.value.anomalies },
+          }).then((res) => {
+            if (!alive || !res.ok || !res.data?.anomalies) return;
+            const map = new Map<string, string>();
+            let source: 'gemini' | 'fallback' = 'fallback';
+            for (const a of res.data.anomalies) {
+              map.set(a.metric, a.explanation);
+              if (a.explanation_source === 'gemini') source = 'gemini';
+            }
+            setExplanations(map);
+            setExplanationsSource(source);
+          });
+        }
+      }
       setLoading(false);
     });
     return () => {
@@ -226,11 +259,15 @@ export function InboxAlertsPage() {
         const label = METRIC_LABEL[a.metric] ?? a.metric;
         const arrow = a.direction === 'up' ? '↑' : '↓';
         const deviation = Math.abs(a.z_score).toFixed(1);
+        const aiExplanation = explanations.get(a.metric);
+        const statsDetail = `Baseline ${anomalies.window_days}d: μ=${a.baseline_mean.toFixed(1)}, σ=${a.baseline_stddev.toFixed(1)}. Hoje está ${deviation} desvios ${a.direction === 'up' ? 'acima' : 'abaixo'}.`;
         out.push({
           id: `anomaly-${a.metric}`,
           severity: a.severity,
           title: `${label}: ${formatNumber(a.today_value)} (${arrow} ${deviation}σ)`,
-          detail: `Baseline ${anomalies.window_days}d: μ=${a.baseline_mean.toFixed(1)}, σ=${a.baseline_stddev.toFixed(1)}. Hoje está ${deviation} desvios ${a.direction === 'up' ? 'acima' : 'abaixo'}.`,
+          detail: aiExplanation
+            ? `${aiExplanation} · ${statsDetail}`
+            : statsDetail,
           to: METRIC_LINK[a.metric] ?? '/cockpit',
           icon: ActivityIcon,
         });
@@ -238,7 +275,7 @@ export function InboxAlertsPage() {
     }
 
     return out;
-  }, [kpi, revenue, errorRate, payouts, anomalies]);
+  }, [kpi, revenue, errorRate, payouts, anomalies, explanations]);
 
   const counts = {
     critical: alerts.filter((a) => a.severity === 'critical').length,
@@ -343,11 +380,21 @@ export function InboxAlertsPage() {
       )}
 
       <div className="ozly-card border-navy-100 bg-navy-50/40 p-3 text-[12px] text-navy-500">
-        <strong>2 camadas:</strong> regras client-side (thresholds fixos) +
+        <strong>3 camadas:</strong> regras client-side (thresholds fixos) +
         z-score sobre baseline {anomalies?.window_days ?? 28}d via{' '}
-        <code className="font-mono">admin_anomaly_scan</code>. Próximo passo
-        (W7.5): thresholds adaptativos com Gemini + explicações em
-        linguagem natural.
+        <code className="font-mono">admin_anomaly_scan</code>
+        {explanationsSource === 'gemini' && (
+          <> + explicações em linguagem natural via Gemini (W7.5).</>
+        )}
+        {explanationsSource === 'fallback' && (
+          <>. Explicações Gemini desativadas (precisa <code className="font-mono">GEMINI_API_KEY</code>); usando fallback estatístico.</>
+        )}
+        {explanationsSource === null && anomalies && anomalies.anomalies.length > 0 && (
+          <>. Carregando explicações…</>
+        )}
+        {explanationsSource === null && (!anomalies || anomalies.anomalies.length === 0) && (
+          <>. Próximo passo (W7.5): thresholds adaptativos + explicações em linguagem natural via Gemini.</>
+        )}
       </div>
 
       <RawDataPanel
