@@ -62,6 +62,12 @@ import {
   EyeIcon,
   LockOpenIcon,
 } from '@/components/Icons';
+import { LifecycleBadge } from './badges';
+import {
+  LIFECYCLE_HINT,
+  deriveLifecycleState,
+  type LifecycleState,
+} from './types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types — mirror the RPC payload contract documented in the briefing.
@@ -925,6 +931,11 @@ export function User360Page() {
                 {/* SUBSCRIPTION */}
                 <TabPanel>
                   <div className="mt-3 space-y-3">
+                    {/* Lifecycle banner — visible regardless of subscription state.
+                        Tells the operator immediately what bucket this user is in
+                        and (via the LIFECYCLE_HINT tooltip) the recommended next move. */}
+                    <LifecycleSummary subscription={sub} />
+
                     {sub?.status === 'never_synced' ? (
                       <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
                         Not yet synced from RevenueCat. The cron runs hourly.
@@ -1380,6 +1391,28 @@ export function User360Page() {
           />
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LifecycleSummary — small banner at top of Subscription tab. Renders the
+// derived lifecycle_state with the standard LifecycleBadge + a one-line
+// recommended action so admins know what to do without reading the SQL.
+// ─────────────────────────────────────────────────────────────────────────────
+function LifecycleSummary({ subscription }: { subscription: User360Subscription | null }) {
+  const lifecycle: LifecycleState = deriveLifecycleState({
+    has_rc_row: !!subscription && subscription.status !== 'never_synced',
+    status: subscription?.status,
+    is_active: subscription?.is_active,
+    store: subscription?.store,
+    trial_started_at: subscription?.trial_started_at,
+    total_revenue: subscription?.total_revenue_usd,
+  });
+  return (
+    <div className="flex items-start gap-3 rounded-md border border-navy-100 bg-navy-50/40 p-3">
+      <LifecycleBadge state={lifecycle} />
+      <p className="text-xs text-navy-600">{LIFECYCLE_HINT[lifecycle]}</p>
     </div>
   );
 }

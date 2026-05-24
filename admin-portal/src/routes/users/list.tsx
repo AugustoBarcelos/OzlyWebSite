@@ -22,7 +22,7 @@ import { useToast } from '@/components/Toast';
 import { FiltersBar } from './FiltersBar';
 import { StatRibbon } from './StatRibbon';
 import { BulkActionsBar } from './BulkActionsBar';
-import { PlanBadge, PlatformBadge, RoleBadge, StatusBadge, StoreBadge } from './badges';
+import { LifecycleBadge, PlanBadge, PlatformBadge, RoleBadge, StoreBadge } from './badges';
 import {
   EMPTY_FILTERS,
   filtersToRpc,
@@ -32,8 +32,8 @@ import {
   type UserFilters,
   type UserListResponse,
   type UserListRow,
+  type LifecycleState,
   type UserPlan,
-  type UserStatus,
   type UserStore,
 } from './types';
 
@@ -81,6 +81,7 @@ function rowsToCsv(rows: UserListRow[]): string {
     'role',
     'plan',
     'status',
+    'lifecycle_state',
     'is_active',
     'monthly_price_aud',
     'signup_date',
@@ -100,6 +101,7 @@ function rowsToCsv(rows: UserListRow[]): string {
       r.role,
       r.plan,
       r.status,
+      r.lifecycle_state,
       r.is_active,
       r.monthly_price_aud ?? '',
       r.signup_date,
@@ -242,13 +244,13 @@ export function UserListPage() {
     });
   };
 
-  const toggleStatus = (s: UserStatus) => {
-    const has = filters.statuses.includes(s);
+  const toggleLifecycle = (lc: LifecycleState) => {
+    const has = filters.lifecycles.includes(lc);
     setFilters({
       ...filters,
-      statuses: has
-        ? filters.statuses.filter((x) => x !== s)
-        : [...filters.statuses, s],
+      lifecycles: has
+        ? filters.lifecycles.filter((x) => x !== lc)
+        : [...filters.lifecycles, lc],
     });
   };
   const togglePlan = (p: UserPlan) => {
@@ -354,7 +356,7 @@ export function UserListPage() {
           totalFiltered={totalFiltered}
           stats={data.stats}
           filters={filters}
-          onToggleStatus={toggleStatus}
+          onToggleLifecycle={toggleLifecycle}
           onTogglePlan={togglePlan}
           onToggleStore={toggleStore}
         />
@@ -390,7 +392,7 @@ export function UserListPage() {
               <th scope="col" className="px-3 py-2.5">User</th>
               <th scope="col" className="px-3 py-2.5">Email</th>
               <th scope="col" className="px-3 py-2.5">Plano</th>
-              <th scope="col" className="px-3 py-2.5">Status</th>
+              <th scope="col" className="px-3 py-2.5">Lifecycle</th>
               <th scope="col" className="px-3 py-2.5">Role</th>
               <th scope="col" className="px-3 py-2.5">Platform</th>
               <SortableHeader
@@ -491,8 +493,10 @@ export function UserListPage() {
                     onClick={() => navigate(`/users/${row.id}`)}
                   >
                     <div className="flex flex-wrap items-center gap-1">
-                      <StatusBadge status={row.status} />
-                      {row.store === 'promotional' && <StoreBadge store={row.store} />}
+                      <LifecycleBadge state={row.lifecycle_state} />
+                      {row.store === 'promotional' && row.lifecycle_state !== 'promo' && (
+                        <StoreBadge store={row.store} />
+                      )}
                     </div>
                   </td>
                   <td

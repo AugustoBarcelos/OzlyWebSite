@@ -1,11 +1,11 @@
-import type { UserListStats, UserFilters, UserStatus, UserPlan, UserStore } from './types';
+import type { LifecycleState, UserFilters, UserListStats, UserPlan, UserStore } from './types';
 
 interface Props {
   totalUnfiltered: number;
   totalFiltered: number;
   stats: UserListStats;
   filters: UserFilters;
-  onToggleStatus: (status: UserStatus) => void;
+  onToggleLifecycle: (state: LifecycleState) => void;
   onTogglePlan: (plan: UserPlan) => void;
   onToggleStore?: (store: UserStore) => void;
 }
@@ -19,7 +19,7 @@ export function StatRibbon({
   totalFiltered,
   stats,
   filters,
-  onToggleStatus,
+  onToggleLifecycle,
   onTogglePlan,
   onToggleStore,
 }: Props) {
@@ -43,31 +43,45 @@ export function StatRibbon({
         <div className="flex flex-wrap items-center gap-1.5">
           <Chip
             label="Pagando"
-            value={stats.paying}
-            tone="brand"
-            active={filters.statuses.includes('paying')}
-            onClick={() => onToggleStatus('paying')}
+            value={stats.lc_paying}
+            tone="emerald"
+            active={filters.lifecycles.includes('paying')}
+            onClick={() => onToggleLifecycle('paying')}
           />
           <Chip
             label="Trial"
-            value={stats.trial}
+            value={stats.lc_trial}
             tone="amber"
-            active={filters.statuses.includes('trial')}
-            onClick={() => onToggleStatus('trial')}
+            active={filters.lifecycles.includes('trial')}
+            onClick={() => onToggleLifecycle('trial')}
           />
           <Chip
-            label="Cancelou"
-            value={stats.churned}
+            label="Promo"
+            value={stats.lc_promo}
+            tone="violet"
+            active={filters.lifecycles.includes('promo')}
+            onClick={() => onToggleLifecycle('promo')}
+          />
+          <Chip
+            label="Trial expirou"
+            value={stats.lc_trial_expired}
+            tone="orange"
+            active={filters.lifecycles.includes('trial_expired')}
+            onClick={() => onToggleLifecycle('trial_expired')}
+          />
+          <Chip
+            label="Churn"
+            value={stats.lc_churned}
             tone="rose"
-            active={filters.statuses.includes('churned')}
-            onClick={() => onToggleStatus('churned')}
+            active={filters.lifecycles.includes('churned')}
+            onClick={() => onToggleLifecycle('churned')}
           />
           <Chip
-            label="Nunca pagou"
-            value={stats.never}
+            label="Nunca engajou"
+            value={stats.lc_never_engaged}
             tone="slate"
-            active={filters.statuses.includes('never')}
-            onClick={() => onToggleStatus('never')}
+            active={filters.lifecycles.includes('never_engaged')}
+            onClick={() => onToggleLifecycle('never_engaged')}
           />
         </div>
 
@@ -123,7 +137,7 @@ export function StatRibbon({
   );
 }
 
-type Tone = 'brand' | 'amber' | 'rose' | 'slate' | 'sky' | 'violet' | 'emerald';
+type Tone = 'brand' | 'amber' | 'orange' | 'rose' | 'slate' | 'sky' | 'violet' | 'emerald';
 
 function Chip({
   label,
@@ -146,6 +160,10 @@ function Chip({
     amber: {
       on: 'bg-amber-500 text-white ring-amber-500',
       off: 'bg-amber-50 text-amber-700 ring-amber-100 hover:bg-amber-100',
+    },
+    orange: {
+      on: 'bg-orange-500 text-white ring-orange-500',
+      off: 'bg-orange-50 text-orange-700 ring-orange-100 hover:bg-orange-100',
     },
     rose: {
       on: 'bg-rose-500 text-white ring-rose-500',

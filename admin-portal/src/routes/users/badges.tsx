@@ -1,4 +1,5 @@
-import type { UserPlan, UserStatus, UserStore } from './types';
+import type { LifecycleState, UserPlan, UserStatus, UserStore } from './types';
+import { LIFECYCLE_HINT, LIFECYCLE_LABEL } from './types';
 
 /** Status badge: paying=green, trial=amber, churned=red, never=slate. */
 export function StatusBadge({ status }: { status: UserStatus }) {
@@ -48,6 +49,31 @@ export function PlanBadge({ plan }: { plan: UserPlan }) {
       ].join(' ')}
     >
       {labels[plan]}
+    </span>
+  );
+}
+
+/** Lifecycle badge — six buckets distinguishing signup-only / trial-lapsed /
+ *  churned-paying / etc. Replaces the ambiguous StatusBadge. Hovering shows
+ *  the LIFECYCLE_HINT line so the operator knows what to do next. */
+export function LifecycleBadge({ state }: { state: LifecycleState }) {
+  const styles: Record<LifecycleState, string> = {
+    paying: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
+    trial: 'bg-amber-50 text-amber-700 ring-amber-100',
+    promo: 'bg-violet-50 text-violet-700 ring-violet-100',
+    trial_expired: 'bg-orange-50 text-orange-700 ring-orange-100',
+    churned: 'bg-rose-50 text-rose-700 ring-rose-100',
+    never_engaged: 'bg-navy-50 text-navy-500 ring-navy-100',
+  };
+  return (
+    <span
+      title={LIFECYCLE_HINT[state]}
+      className={[
+        'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset',
+        styles[state],
+      ].join(' ')}
+    >
+      {LIFECYCLE_LABEL[state]}
     </span>
   );
 }

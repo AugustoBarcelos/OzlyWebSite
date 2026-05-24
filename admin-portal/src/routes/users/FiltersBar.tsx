@@ -2,13 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import {
   AU_STATES,
   EMPTY_FILTERS,
+  LIFECYCLE_LABEL,
   PLAN_LABEL,
-  STATUS_LABEL,
   STORE_LABEL,
   countActiveFilters,
+  type LifecycleState,
   type UserFilters,
   type UserPlan,
-  type UserStatus,
   type UserStore,
 } from './types';
 import { SearchIcon, XIcon } from '@/components/Icons';
@@ -64,14 +64,21 @@ export function FiltersBar({ filters, onChange, loading }: Props) {
           onChange={(v) => set('plans', v as UserPlan[])}
         />
 
-        {/* Status */}
+        {/* Lifecycle (replaces Status — see migration 20260524104427) */}
         <MultiSelect
-          label="Status"
-          options={(['paying', 'trial', 'churned', 'never'] as UserStatus[]).map(
-            (s) => ({ value: s, label: STATUS_LABEL[s] }),
-          )}
-          values={filters.statuses}
-          onChange={(v) => set('statuses', v as UserStatus[])}
+          label="Lifecycle"
+          options={(
+            [
+              'paying',
+              'trial',
+              'promo',
+              'trial_expired',
+              'churned',
+              'never_engaged',
+            ] as LifecycleState[]
+          ).map((s) => ({ value: s, label: LIFECYCLE_LABEL[s] }))}
+          values={filters.lifecycles}
+          onChange={(v) => set('lifecycles', v as LifecycleState[])}
         />
 
         {/* Store */}
