@@ -4,6 +4,7 @@ import { Card } from '@tremor/react';
 import {
   ActivityIcon,
   AlertTriangleIcon,
+  ArrowDownRightIcon,
   BellIcon,
   HandshakeIcon,
   InboxIcon,
@@ -102,6 +103,25 @@ interface AppStoreLowRatingResp {
   note: string | null;
 }
 
+interface PendingCancellationRow {
+  user_id: string;
+  email: string | null;
+  full_name: string | null;
+  plan: string | null;
+  store: string | null;
+  period_type: string | null;
+  monthly_price_aud: number | null;
+  current_period_end: string;
+  days_until_end: number;
+  last_seen_at: string | null;
+}
+interface PendingCancellationsResp {
+  window_days: number;
+  count: number;
+  potential_mrr_loss_aud: number;
+  rows: PendingCancellationRow[];
+}
+
 export function InboxPage() {
   const [payouts, setPayouts] = useState<PayoutPlanning | null>(null);
   const [payoutsErr, setPayoutsErr] = useState<string | null>(null);
@@ -118,6 +138,9 @@ export function InboxPage() {
   const [lowRatingReviews, setLowRatingReviews] = useState<AppStoreLowRatingResp | null>(null);
   const [lowRatingErr, setLowRatingErr] = useState<string | null>(null);
 
+  const [cancellations, setCancellations] = useState<PendingCancellationsResp | null>(null);
+  const [cancellationsErr, setCancellationsErr] = useState<string | null>(null);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -129,9 +152,10 @@ export function InboxPage() {
       callRpc<ActionsResponse>('admin_recent_admin_actions', { p_limit: 25 }),
       callRpc<RefundsResponse>('admin_pending_refunds', { p_period_days: 30 }),
       callRpc<AppStoreLowRatingResp>('admin_app_store_recent_low_rating', { p_days: 30, p_max_rating: 3 }),
+      callRpc<PendingCancellationsResp>('admin_pending_cancellations', { p_window_days: 30 }),
     ]).then((results) => {
       if (!alive) return;
-      const [r0, r1, r2, r3, r4] = results;
+      const [r0, r1, r2, r3, r4, r5] = results;
       if (r0.status === 'fulfilled') setPayouts(r0.value);
       else setPayoutsErr(messageFor(r0.reason));
       if (r1.status === 'fulfilled') setErrors(r1.value.rows ?? []);
@@ -142,6 +166,8 @@ export function InboxPage() {
       else setRefundsErr(messageFor(r3.reason));
       if (r4.status === 'fulfilled') setLowRatingReviews(r4.value);
       else setLowRatingErr(messageFor(r4.reason));
+      if (r5.status === 'fulfilled') setCancellations(r5.value);
+      else setCancellationsErr(messageFor(r5.reason));
       setLoading(false);
     });
     return () => {
@@ -153,6 +179,8 @@ export function InboxPage() {
   const totalErrors = errors?.reduce((sum, e) => sum + e.count, 0) ?? 0;
   const totalActions = actions?.length ?? 0;
   const totalRefunds = refunds?.count ?? 0;
+  const totalCancellations = cancellations?.count ?? 0;
+  const mrrAtRisk = cancellations?.potential_mrr_loss_aud ?? 0;
 
   return (
     <div className="space-y-6">
@@ -180,7 +208,14 @@ export function InboxPage() {
       </header>
 
       {/* Quick-glance counters */}
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <CounterTile
+          icon={ArrowDownRightIcon}
+          label="Cancelando (30d)"
+          count={totalCancellations}
+          tone={totalCancellations > 0 ? 'warning' : 'lime'}
+          to="#cancellations-pending"
+        />
         <CounterTile
           icon={HandshakeIcon}
           label="Payouts pendentes"
@@ -458,6 +493,100 @@ export function InboxPage() {
         )}
       </Section>
 
+      {/* ─── Cancellations pending (save-me queue) ──────────────────────── */}
+      <Section
+        icon={ArrowDownRightIcon}
+        title="Cancelando — janela de save (30d)"
+        subtitle={
+          totalCancellations > 0
+            ? `${totalCancellations} pagante${totalCancellations === 1 ? '' : 's'} desligou auto-renew · A$${mrrAtRisk.toFixed(2)} de MRR em risco`
+            : 'Pagantes que desligaram auto-renew mas ainda têm acesso até o fim do período.'
+        }
+        rightSlot={
+          totalCancellations > 0 ? (
+            <span className="rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-800">
+              MRR em risco: A${mrrAtRisk.toFixed(2)}
+            </span>
+          ) : null
+        }
+      >
+        {cancellationsErr ? (
+          <EmptyHint variant="warning">{cancellationsErr}</EmptyHint>
+        ) : !cancellations ? (
+          <SectionLoading />
+        ) : cancellations.rows.length === 0 ? (
+          <EmptyHint variant="ok">
+            Ninguém desligando renovação nos próximos 30d. Bom sinal.
+          </EmptyHint>
+        ) : (
+          <ul id="cancellations-pending" className="divide-y divide-navy-50">
+            {cancellations.rows.slice(0, 8).map((r) => {
+              const days = Math.max(0, Math.round(r.days_until_end));
+              const urgency =
+                days <= 3 ? 'critical' : days <= 7 ? 'warning' : 'soft';
+              return (
+                <li
+                  key={r.user_id}
+                  className="flex items-center justify-between gap-3 py-2 text-sm"
+                >
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="truncate text-navy-700">
+                        {r.full_name || r.email || r.user_id.slice(0, 8)}
+                      </span>
+                      {r.plan && (
+                        <span className="rounded-full bg-navy-50 px-1.5 py-0.5 text-[10px] font-medium uppercase text-navy-500">
+                          {r.plan}
+                        </span>
+                      )}
+                      <span
+                        className={
+                          urgency === 'critical'
+                            ? 'rounded-full bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-800'
+                            : urgency === 'warning'
+                              ? 'rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800'
+                              : 'rounded-full bg-navy-50 px-1.5 py-0.5 text-[10px] font-medium text-navy-500'
+                        }
+                      >
+                        {days === 0
+                          ? 'vence hoje'
+                          : days === 1
+                            ? 'vence amanhã'
+                            : `vence em ${days}d`}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-navy-400">
+                      {r.email ?? '—'}
+                      {r.monthly_price_aud != null && (
+                        <> · A${r.monthly_price_aud.toFixed(2)}/mo</>
+                      )}
+                      {r.store && <> · {r.store.replace('_', ' ')}</>}
+                    </div>
+                  </div>
+                  <Link
+                    to={`/users/${r.user_id}`}
+                    className="rounded bg-navy-50 px-2 py-0.5 text-xs text-navy-600 hover:bg-navy-100"
+                  >
+                    save →
+                  </Link>
+                </li>
+              );
+            })}
+            {cancellations.rows.length > 8 && (
+              <li className="pt-2 text-center text-[11px] text-navy-400">
+                +{cancellations.rows.length - 8} mais —{' '}
+                <Link
+                  to="/users?lifecycle=paying"
+                  className="text-brand-600 hover:underline"
+                >
+                  ver na lista
+                </Link>
+              </li>
+            )}
+          </ul>
+        )}
+      </Section>
+
       {/* ─── Refund queue (real — MVP via trials expirados) ────────────── */}
       <Section
         icon={ShieldCheckIcon}
@@ -582,6 +711,12 @@ export function InboxPage() {
             params: { p_days: 30, p_max_rating: 3 },
             data: lowRatingReviews,
             ...(lowRatingErr ? { note: lowRatingErr } : {}),
+          },
+          {
+            rpc: 'admin_pending_cancellations',
+            params: { p_window_days: 30 },
+            data: cancellations,
+            ...(cancellationsErr ? { note: cancellationsErr } : {}),
           },
         ]}
       />
