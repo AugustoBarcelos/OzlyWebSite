@@ -21,9 +21,11 @@ export default function GuideContentPt({ SectionCard, SubSection, StepList, Bull
               </BulletList>
             </li>
             <li>Preencha <B>Confirmar Senha</B> — check verde = coincidem, X vermelho = não coincidem</li>
+            <li><B>Código de indicação</B> (opcional) — cole o código de um amigo para creditar a ele. Se você veio de um link de indicação (<code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded">ozly.au/refer/?code=XXX</code>) o campo já vem <B>preenchido e bloqueado</B> (cinza, com cadeado pequeno) — o código se aplica automaticamente ao finalizar o cadastro.</li>
             <li>Toque em <B>"Sign Up"</B> (botão grande verde)</li>
             <li>Pronto! Você será direcionado para a tela de Setup</li>
           </StepList>
+          <Tip>O código que você usou aparece depois no <B>Dashboard de Indicação</B> para você confirmar que foi aplicado.</Tip>
         </SubSection>
 
         <SubSection title="Criar conta com Google">
@@ -255,6 +257,16 @@ export default function GuideContentPt({ SectionCard, SubSection, StepList, Bull
             <li><B>Skip Invoice</B> — checkbox se não precisa de fatura</li>
             <li>Toque <B>"Save"</B></li>
           </StepList>
+          <Tip><B>Aviso de feriado:</B> se a data escolhida cair em um <B>feriado público australiano do seu estado</B>, um dialog aparece — "A(s) data(s) abaixo caem em feriado público em [ESTADO]. Criar o job mesmo assim?" — com <B>Continuar</B> ou <B>Cancelar</B>. Funciona tanto em Add Job quanto em Edit Job. Se seu estado não estiver preenchido no perfil, o Ozly deduz pelo CEP (postcode).</Tip>
+        </SubSection>
+
+        <SubSection title="Jobs Recorrentes (Recorrência Custom)">
+          <P>Ao criar um job, toque em <B>Recorrência → Custom</B> para abrir o picker.</P>
+          <BulletList>
+            <li><B>Repete a cada</B> — 1 semana, 2 semanas, 3 semanas ou 4 semanas</li>
+            <li><B>Termina em</B> — 1 mês, 6 meses, 12 meses ou escolha uma <B>data final personalizada</B></li>
+          </BulletList>
+          <P>O Ozly cria todas as ocorrências de uma vez, então elas aparecem no calendário e nas horas do Visa Shield. Cada ocorrência ainda pode ser editada ou cancelada individualmente.</P>
         </SubSection>
 
         <SubSection title="Interagir com um Job">
@@ -548,6 +560,15 @@ export default function GuideContentPt({ SectionCard, SubSection, StepList, Bull
           />
         </SubSection>
 
+        <SubSection title="Mark Paid / Mark Unpaid (toggle)">
+          <P>Abra qualquer invoice em <B>Financial</B> (toque para expandir o detalhe). O botão principal de ação é um <B>toggle</B>:</P>
+          <BulletList>
+            <li>Se a invoice <B>ainda não foi paga</B> → o botão diz <B>"Mark as Paid"</B>. Tocando, o status vira <B>Paid</B> com a animação de confete/celebração de sempre.</li>
+            <li>Se a invoice <B>já está Paid</B> → o botão muda para <B>"Mark Unpaid"</B> (com um ícone de desfazer). Tocando, o status volta para <B>Sent</B> — sem animação de celebração desta vez.</li>
+          </BulletList>
+          <Tip>Útil quando você tocou em "Paid" sem querer ou um pagamento foi estornado e a invoice precisa voltar para a lista de pendentes.</Tip>
+        </SubSection>
+
         <SubSection title="Meta de Receita">
           <P>Defina uma meta com <B>"Set Goal"</B>. Acompanhe o progresso com barra visual e <B>"Edit Goal"</B> para ajustar.</P>
         </SubSection>
@@ -747,6 +768,15 @@ export default function GuideContentPt({ SectionCard, SubSection, StepList, Bull
           </StepList>
         </SubSection>
 
+        <SubSection title="Auto-sync ao abrir o app">
+          <P>Dentro de <B>Settings → Integrations → Google Calendar</B> tem um toggle novo: <B>"Auto-sync on app open"</B>. Ele vem <B>ligado por padrão</B> assim que você conecta o Google Calendar.</P>
+          <BulletList>
+            <li>Toda vez que o app volta do segundo plano (você reabre ou troca de outro app), o Ozly puxa silenciosamente os novos eventos do Google Calendar.</li>
+            <li>Se eventos novos foram importados e você está na <B>aba Dashboard</B>, aparece um snackbar discreto embaixo: <B>"✓ N events synced"</B>. Em outras abas, nada é mostrado.</li>
+            <li>Desligue o toggle se preferir importar só manualmente pela tela de Jobs.</li>
+          </BulletList>
+        </SubSection>
+
         <SubSection title="Desconectar">
           <P>Settings → <B>"Disconnect"</B> (botão vermelho). Jobs já importados permanecem.</P>
         </SubSection>
@@ -832,8 +862,19 @@ export default function GuideContentPt({ SectionCard, SubSection, StepList, Bull
           </BulletList>
         </SubSection>
 
+        <SubSection title="Lembretes de Job (customizáveis)">
+          <P>Dentro de <B>Settings → Notifications</B> tem um card dedicado: <B>"Job reminders"</B>. Escolha um ou mais presets — o Ozly dispara uma notificação local antes de cada job futuro:</P>
+          <BulletList>
+            <li>15 min, 30 min, 1 hora, 2 horas, 4 horas antes</li>
+            <li>1 dia, 3 dias, 1 semana antes</li>
+            <li><B>Custom</B> → abre um diálogo onde você digita qualquer número de horas</li>
+          </BulletList>
+          <P><B>Padrões</B> (pré-selecionados na primeira vez): <B>1 hora</B> + <B>1 dia</B> antes.</P>
+          <Tip>Toda vez que você muda a seleção, o Ozly <B>reagenda TODOS os jobs futuros</B> — não só os novos. Ou seja: ligar "3 dias antes" hoje cria esse lembrete instantaneamente para cada job já marcado no seu calendário.</Tip>
+        </SubSection>
+
         <SubSection title="Integrations">
-          <P>Google Calendar — veja seção 16.</P>
+          <P>Google Calendar — veja seção 16. O toggle <B>"Auto-sync on app open"</B> também fica aqui (ligado por padrão depois que você conecta).</P>
         </SubSection>
 
         <SubSection title="Help">
@@ -960,6 +1001,14 @@ export default function GuideContentPt({ SectionCard, SubSection, StepList, Bull
           <li>Envie via WhatsApp, SMS, Email, Telegram ou qualquer app</li>
         </StepList>
         <InfoBox>A mensagem está no idioma do app (PT, EN ou ES).</InfoBox>
+
+        <SubSection title="Como os amigos aplicam seu código">
+          <BulletList>
+            <li><B>Deep link</B> — quem toca em <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded">ozly.au/refer/?code=XXX</code> cai direto na tela de Sign Up com o campo já preenchido e <B>bloqueado</B> (cinza + cadeado). O código é aplicado automaticamente quando o cadastro é finalizado.</li>
+            <li><B>Manual</B> — também dá para digitar seu código no campo <B>"Código de indicação"</B> na tela de Sign Up.</li>
+          </BulletList>
+          <P>O crédito aparece no seu Dashboard de Indicação assim que a pessoa ativar a conta.</P>
+        </SubSection>
       </SectionCard>
 
       {/* ─── 19. NOTIFICAÇÕES ─── */}
@@ -1057,6 +1106,21 @@ export default function GuideContentPt({ SectionCard, SubSection, StepList, Bull
             <li>Dashboard → Notificações → toque na invoice → "Mark as Paid"</li>
             <li>Dashboard → "Overdue" → notificações → "Mark as Paid"</li>
           </StepList>
+          <Tip>O mesmo botão vira <B>"Mark Unpaid"</B> no detalhe da invoice se precisar reverter.</Tip>
+        </SubSection>
+
+        <SubSection title="Novidades da versão 1.0.18">
+          <BulletList>
+            <li><B>Lembretes de Job</B> customizáveis em Settings → Notifications.</li>
+            <li><B>Auto-sync do Google Calendar</B> quando o app volta do segundo plano.</li>
+            <li>Toggle <B>Mark Paid / Mark Unpaid</B> nas invoices.</li>
+            <li><B>Aviso de feriado público</B> ao criar job em data de feriado australiano.</li>
+            <li>Intervalos de <B>recorrência custom</B> (1 a 4 semanas) e fim (1 / 6 / 12 meses ou data custom).</li>
+            <li><B>Campo de código de indicação</B> no Sign Up (preenchido e travado quando vem de link de indicação).</li>
+            <li>Carregamento de imagens mais rápido em todas as telas.</li>
+            <li>Correção: diálogo de <B>Share</B> funciona corretamente no iPad e outros layouts iOS.</li>
+            <li>Versão do app: <B>1.0.18+411</B> — visível em Settings → Help.</li>
+          </BulletList>
         </SubSection>
       </SectionCard>
 

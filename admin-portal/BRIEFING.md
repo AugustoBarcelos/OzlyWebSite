@@ -502,6 +502,21 @@ select cron.schedule('admin-audit-retention', '0 3 * * 0',
 );
 ```
 
+### 8.1 Tabelas adicionadas (sprints 2026-05-18 → 2026-05-24)
+
+Aplicadas via migrations padrão `supabase/migrations/`. Cada uma tem RLS habilitada com policy `service_role_all_*`; acesso de cliente é exclusivamente via RPC admin.
+
+| Tabela | Propósito | Migration | PII? |
+|---|---|---|---|
+| `revenuecat_refunds` | Ledger real de refunds vindos do RC webhook (event REFUND + CANCELLATION com `cancel_reason ∈ (CUSTOMER_SUPPORT, UNKNOWN)`). Idempotente por `event_id`. Substitui o proxy de expired-trials usado antes em `admin_pending_refunds`. | `20260519122606_revenuecat_refunds_table.sql` | não (só amounts/refs) |
+| `supabase_usage_snapshot` | Snapshot diário de egress / edge invocations / MAU vindos da Supabase Management API. Alimenta `admin_finance_costs_overview` v3 com markers `source=measured\|backfilled\|not_measured` por campo. | `20260519123027_supabase_usage_snapshot.sql` | não |
+| `app_store_reviews_cache` | Cache de reviews ASC polled a cada 6h. Coluna `alert_sent_at` evita re-email pra baixas avaliações já notificadas. Service-role-only via RPC `app_store_reviews_cache_upsert`. | `20260518213017_app_store_reviews_cache.sql` | rating + author name |
+| `error_signatures` | Agrupa erros recorrentes (substitui leitura crua de error_logs). Trigger auto-reopen: ao chegar erro novo com signature `status='closed'`, flipa pra `open` automaticamente. | `20260517_error_signatures.sql` (commit `e50f089`) | não |
+
+**Coluna nova em `affiliates`:** estado `status='pending'` (default `'active'`) pra suportar a fila de candidaturas vinda do formulário público `/affiliates/apply`. Ver § 11 e `AFFILIATES_SYSTEM_STATE.md`.
+
+**Coluna nova em `profiles` (derivada):** `admin_list_users` v2 deriva `lifecycle_state` (6 buckets: `never_engaged`, `promo`, `paying`, `trial`, `churned`, `trial_expired`) sem persistir — pura projeção via CASE. Migration: `20260524104427_admin_list_users_lifecycle.sql`.
+
 ---
 
 ## 9. RPCs admin
@@ -589,6 +604,27 @@ revoke all on function admin_grant_promo from public;
 grant execute on function admin_grant_promo to authenticated;
 ```
 
+### 9.1 RPCs adicionadas (sprints 2026-05-18 → 2026-05-24)
+
+Todas seguem o mesmo template (is_admin gate + rate limit + audit). Listadas em ordem cronológica de migration.
+
+| RPC | Args | Função | Migration |
+|---|---|---|---|
+| `admin_slow_queries` | `p_limit int default 25` | Top queries por mean exec via pg_stat_statements. PII-safe (literais já substituídos por pg). Filtra ruído interno/admin. Expõe cache-hit ratio. | `20260518212524_admin_slow_queries.sql` |
+| `admin_slow_queries_reset` | — | Helper companion pra zerar contadores de pg_stat_statements. | mesma migration |
+| `admin_anomaly_scan` | — | Z-score sobre baseline rolling de 28d em signups / errors (UP only) / new_paying / trials_starting. Severity `warning ≥ 2.5σ`, `critical ≥ 3σ`. Inclui `direction`. Stat-only MVP. | `20260518212716_admin_anomaly_scan.sql` |
+| `app_store_reviews_cache_upsert` | `p_reviews jsonb` | Service-role-only writer (idempotente). | `20260518213017_app_store_reviews_cache.sql` |
+| `admin_app_store_recent_low_rating` | `p_window_days int default 7` | Reader pra contador de `/inbox` — feeds badge "X reviews ≤2★". | mesma migration |
+| `app_store_review_mark_alerted` | `p_review_id text` | Idempotente; marca `alert_sent_at` pós Resend pra evitar re-email. | commit `bb9b207` |
+| `revenuecat_refunds_insert` | `payload jsonb` | Service-role-only insert idempotente (chamado pelo webhook RC). | `20260519122606_revenuecat_refunds_table.sql` |
+| `admin_pending_refunds` v2 | `p_window_days int default 30` | Lê de `revenuecat_refunds` com fallback ao proxy expired-trials. Campo `note` na resposta diz qual fonte foi usada (`real_ledger` vs `expired_trials_proxy`). | mesma migration |
+| `admin_finance_costs_overview` v3 | `p_period_days int` | Backfill de cost fields (egress / edge_invocations / MAU) com último snapshot de `supabase_usage_snapshot`. Cada campo retorna marker `source ∈ (measured, backfilled, not_measured)`. | `20260519123027_supabase_usage_snapshot.sql` |
+| `admin_pending_cancellations` | `p_window_days int default 14` | Save-me queue: paying users com `auto_renew=false AND is_active=true AND current_period_end IN (now, now+window]`. Retorna `count`, `potential_mrr_loss_aud` (exclui promocionais), rows com email/name/plan/store/price/end/days_until/last_seen. | `20260524113033_admin_pending_cancellations.sql` |
+| `admin_list_users` v2 | `(filters jsonb)` — agora aceita `lifecycles[]` | Deriva bucket `lifecycle_state` (`never_engaged`, `promo`, `paying`, `trial`, `churned`, `trial_expired`) sem persistir. Stats ganha `lc_*` counters. Legacy `status`/counters preservados pra back-compat. | `20260524104427_admin_list_users_lifecycle.sql` |
+| `admin_kpi_dashboard` (fix) | `p_period_days int` | Agora todas as métricas respeitam `p_period_days` (antes algumas eram hardcoded). | commit `f803351` |
+| `admin_downloads_by_platform` | `p_period_days int` | Breakdown iOS / Android pro Cockpit. | commit `48b3cdc` |
+| `admin_data_hub_*` (8 RPCs) | vários | Feeders do hub `/data`: per-plan MRR, trials/paid funnel, freshness audit, etc. | commits `cacdaf3` (iter 1, 2 RPCs), `b8bc00b` (iter 2, 5 RPCs), `3c967df` (freshness fix) |
+
 ---
 
 ## 10. Edge Functions (Deno)
@@ -606,6 +642,19 @@ grant execute on function admin_grant_promo to authenticated;
 - [ ] Logs sanitizados (nunca dump do payload completo)
 - [ ] Timeout: 10s max
 - [ ] Retry com exponential backoff em chamadas externas
+
+### 10.1 Edge functions adicionadas (sprints 2026-05-18 → 2026-05-24)
+
+| Function | Trigger | Função | Notas |
+|---|---|---|---|
+| `appstore-reviews-cache` | pg_cron a cada 6h via `net.http_post` (mesmo padrão de `revenuecat-sync`) | Polla ASC, upserta em `app_store_reviews_cache`. Em insert novo com rating ≤ 2★, dispara Resend pra `APP_STORE_REVIEW_NOTIFY_ADDRESS` (fallback `AFFILIATE_NOTIFY_ADDRESS` → `augusto@ozly.au`). `RESEND_API_KEY` ausente → skip silencioso. Marca `alert_sent_at`. | Reusa JWT signing ES256 de `appstore-connect-proxy` (TODO: extrair pra `_shared/asc-client.ts`) |
+| `supabase-usage-snapshot` | pg_cron diário `23 3 * * *` (03:23 UTC) | Bate na Supabase Management API com `SUPABASE_ACCESS_TOKEN` (account PAT) pra egress / edge_invocations / MAU. Upsert daily em `supabase_usage_snapshot`. Token ausente → retorna 200 com skip; RPC v3 mostra `not_measured`. | Custos visíveis em `/finance/costs` via overview v3 |
+| `anomaly-explain` | POST admin-gated (chamado da UI de Inbox > Anomalies) | Recebe array de anomalies de `admin_anomaly_scan`, pede explicação one-liner ao Gemini 2.0 Flash, retorna array augmentado. Erro Gemini / key ausente → fallback pra sentença estatística determinística. | Roadmap UX W7.5 MVP — primeiro uso de Gemini gated por admin |
+| `public-apply-affiliate` | POST anônimo (público, com rate limit) | Powers `/affiliates/apply` no site público. Server-side: validação name/email/code/length/format, rate limit 24h por email, uniqueness check de code, `INSERT affiliates(status='pending')`. Envia confirmação ao candidato + admin via Resend (skip graceful sem key). Captura IP/UA pra auditoria. | Ver `AFFILIATES_SYSTEM_STATE.md` fluxo E |
+| `revenuecat-webhook` (extensão) | mesmo webhook RC | Agora também trata event `REFUND` + detecta `CANCELLATION` com `cancel_reason ∈ (CUSTOMER_SUPPORT, UNKNOWN)` como refund. Idempotente em `event_id`. Insere via `revenuecat_refunds_insert` com service-role. Lógica de afiliado preservada (additive). | — |
+| `admin-grant-promo` (migrado) | mesmo (RPC via pg_notify) | Migrado RC v1 → **RC v2 `grant_entitlement`** endpoint. Auth do trigger mudou de string-equality de secret pra **JWT decode**. Header de cron secret corrigido (estava checando o errado). | Commits `267059f`, `5a6f715`, `00c7c29` |
+
+**Backup workflow (GitHub Actions) — DR fix (commit `eb36b4e`):** o dump agora inclui schemas `auth` e `storage` além de `public`. Antes da fix, restore-from-scratch deixaria todos os users irrecuperáveis (gap de DR fechado).
 
 ---
 
@@ -691,6 +740,30 @@ Snapshot local + iframe RevenueCat dashboard.
 
 ### 11.9 `/unauthorized` e `/maintenance`
 Pages estáticas pra fail-secure (kill switch, role inválida).
+
+### 11.10 Inbox unificada — novas seções (`/inbox`)
+Sprints 2026-05-18 → 2026-05-24 ligaram seções V2 que estavam como placeholder:
+
+- **Save-me queue** — usa `admin_pending_cancellations`. Cada row mostra plano, store, end date e badge "vence em Nd" com tom (cinza > amarelo > vermelho conforme `days_until` diminui). Header destaca `potential_mrr_loss_aud`.
+- **Low-rating ASC reviews** — counter alimentado por `admin_app_store_recent_low_rating`; lista lê de `app_store_reviews_cache`. Cross-link pro review na App Store + status do email (alert_sent_at).
+- **Refunds** — passa a ler `admin_pending_refunds` v2; o campo `note` é exibido como pill discreta (`real_ledger` vs `expired_trials_proxy`) pra deixar claro a fonte.
+- **Anomalies** — lista vinda de `admin_anomaly_scan` com botão "Explain" que chama `anomaly-explain` (Gemini one-liner). Fallback determinístico exibido inline se LLM falhar.
+
+### 11.11 `/affiliates/applications`
+Fila de candidaturas vinda do form público `/affiliates/apply` (site público, edge `public-apply-affiliate`). Lista rows com `status='pending'`, mostra IP/UA capturados, botões Approve / Reject. Approve flipa pra `status='active'` (reusa lógica de `admin_create_affiliate`). Ver § 9 em `AFFILIATES_SYSTEM_STATE.md` fluxo E.
+
+### 11.12 `/data` (Data Hub)
+Hub novo alimentado por ~8 RPCs (`admin_downloads_by_platform`, per-plan MRR, trials/paid funnel, freshness audit). Cards de cockpit + drill-down 5 níveis. Commits `48b3cdc`, `cacdaf3`, `b8bc00b`, `3c967df`.
+
+### 11.13 `/users` (lifecycle filters)
+Search/lista atualizada pra usar `admin_list_users` v2:
+- Stats chip strip ganha 6 contadores `lc_*` (`lc_never_engaged`, `lc_promo`, `lc_paying`, `lc_trial`, `lc_churned`, `lc_trial_expired`).
+- Filter param `lifecycles[]` permite multi-select (ex: `lifecycles=trial,churned` pra winback list).
+- Filter legacy `status` continua funcionando (back-compat).
+
+### 11.14 `/tech/slow-queries` e `/tech/errors`
+- **Slow queries** — lista top-25 de `admin_slow_queries` (mean exec, cache hit), com botão "Reset" que chama `admin_slow_queries_reset`.
+- **Error signatures** — fila triada (substitui error logs crus). Coluna `status` (`open`/`closed`/`muted`); auto-reopen via trigger quando erro novo chega numa signature fechada.
 
 ---
 
@@ -780,6 +853,16 @@ jobs:
 | WAF bloqueou >100 req/h de IP único | Médio |
 | Edge Function error rate > 5% | Médio |
 | Backup diário falhou | Alto |
+| **App Store review com rating ≤ 2★** (novo, 2026-05-18) | Alto |
+| **Anomaly scan: severity `critical`** (≥3σ via `admin_anomaly_scan`) | Alto |
+| **Anomaly scan: severity `warning`** (≥2.5σ) | Médio |
+| **Save-me queue ganhou row** (auto-renew off & end <7d) | Médio |
+| **Refund event vindo do RC webhook** (real ledger, não proxy) | Alto |
+
+**Novas wiring notes:**
+- Low-rating ASC alerts: disparo direto da edge `appstore-reviews-cache` (não passa pelo `notify-admin-action`). Dest: `APP_STORE_REVIEW_NOTIFY_ADDRESS` → fallback `AFFILIATE_NOTIFY_ADDRESS` → `augusto@ozly.au`. `app_store_review_mark_alerted` previne re-envio.
+- Anomaly alerts: hoje são surfaced em `/inbox` (Anomalies section); roadmap V2 enche `notify-admin-action` quando `severity='critical'` repete 2x consecutivos (anti-noise).
+- Save-me queue: alimentada por `admin_pending_cancellations` (cron de polling planejado, hoje on-demand via UI).
 
 ### Incident Response Runbook (`SECURITY.md`)
 - **Account takeover suspeito:** revoke sessions + force password reset + notify user + audit revisão
