@@ -59,7 +59,7 @@ const routes = [
       <h2>Get started with Ozly in 2 minutes</h2>
       <p>Install Ozly on your phone, sign up with Apple, Google, or email, add your ABN, and send your first invoice before the kettle boils. No credit card required, no demo call, no trial timer.</p>
       <p><a href="https://apps.apple.com/app/ozly/id6760398649">Download Ozly on the App Store</a> · <a href="https://play.google.com/store/apps/details?id=com.augusto.ozly">Get Ozly on Google Play</a></p>
-      <p>Need more detail? Read the full <a href="/guide">Ozly user guide</a>, browse the <a href="/support">Support &amp; FAQ</a>, or review our <a href="/privacy-policy">Privacy Policy</a> and <a href="/terms-of-use">Terms of Use</a>.</p>
+      <p>Need more detail? Read the full <a href="/guide/">Ozly user guide</a>, browse the <a href="/support/">Support &amp; FAQ</a>, or review our <a href="/privacy-policy/">Privacy Policy</a> and <a href="/terms-of-use/">Terms of Use</a>.</p>
     `,
   },
   {
@@ -82,7 +82,7 @@ const routes = [
       </ul>
 
       <h2>Need personal help?</h2>
-      <p>Email us at <a href="mailto:support@ozly.com.au">support@ozly.com.au</a> or check the full <a href="/guide">Ozly user guide</a> for step-by-step instructions.</p>
+      <p>Email us at <a href="mailto:support@ozly.com.au">support@ozly.com.au</a> or check the full <a href="/guide/">Ozly user guide</a> for step-by-step instructions.</p>
     `,
   },
   {
@@ -107,7 +107,7 @@ const routes = [
       </ul>
 
       <h2>Questions?</h2>
-      <p>Visit the <a href="/support">Support &amp; FAQ</a> page or email <a href="mailto:support@ozly.com.au">support@ozly.com.au</a>.</p>
+      <p>Visit the <a href="/support/">Support &amp; FAQ</a> page or email <a href="mailto:support@ozly.com.au">support@ozly.com.au</a>.</p>
     `,
   },
 ];
