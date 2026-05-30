@@ -220,6 +220,7 @@ function useNavGroups(): ReadonlyArray<NavGroup> {
                 { label: 'Releases', to: '/operations/releases' },
                 { label: 'Runbooks', to: '/operations/runbooks' },
                 { label: 'Grants', to: '/ops/grants' },
+                { label: 'Organisations', to: '/ops/orgs' },
                 { label: 'Audit', to: '/ops/audit' },
               ],
             },

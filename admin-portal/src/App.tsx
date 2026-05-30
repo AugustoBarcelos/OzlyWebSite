@@ -40,6 +40,9 @@ const UsersNpsPage = lazy(() =>
 const GrantsPage = lazy(() =>
   import('./routes/ops/grants').then((m) => ({ default: m.GrantsPage })),
 );
+const OrgsAdminPage = lazy(() =>
+  import('./routes/ops/orgs').then((m) => ({ default: m.OrgsAdminPage })),
+);
 const AuditPage = lazy(() =>
   import('./routes/ops/audit').then((m) => ({ default: m.AuditPage })),
 );
@@ -411,6 +414,7 @@ export function App() {
                 <Route path="/operations/releases" element={lazyRoute(OperationsReleasesPage)} />
                 <Route path="/operations/runbooks" element={lazyRoute(OperationsRunbooksPage)} />
                 <Route path="/ops/grants" element={lazyRoute(GrantsPage)} />
+                <Route path="/ops/orgs" element={lazyRoute(OrgsAdminPage)} />
                 <Route path="/ops/audit" element={lazyRoute(AuditPage)} />
 
                 {/* Tech Hub */}

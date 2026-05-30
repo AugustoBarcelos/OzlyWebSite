@@ -124,6 +124,7 @@ const ALL_COMMANDS: CommandItem[] = [
   { id: 'ops-releases', label: 'Releases', group: 'Operations', icon: PackageIcon, to: '/operations/releases' },
   { id: 'ops-runbooks', label: 'Runbooks', group: 'Operations', icon: ScrollTextIcon, to: '/operations/runbooks' },
   { id: 'ops-grants', label: 'Grants', group: 'Operations', icon: ScrollTextIcon, to: '/ops/grants' },
+  { id: 'ops-orgs', label: 'Organisations', group: 'Operations', icon: ScrollTextIcon, to: '/ops/orgs' },
   { id: 'ops-audit', label: 'Audit', group: 'Operations', icon: ScrollTextIcon, to: '/ops/audit' },
 
   // Quick actions
