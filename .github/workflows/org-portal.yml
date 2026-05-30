@@ -1,0 +1,195 @@
+name: org-portal CI
+
+# Security pipeline + Cloudflare Pages deploy for the Ozly Org Portal.
+# Mirrors the admin-portal pattern so the bar is identical.
+#
+# Hard gates (any failure blocks deploy):
+#   A) Secret scanning (TruffleHog, only verified)
+#   B) Dependency vulnerabilities (npm audit --audit-level=high)
+#   C) SAST (Semgrep — TS + React + OWASP top 10)
+#   D) Lint, tsc, vitest
+#   1) No service_role / hardcoded keys / Stripe secrets in src/
+#   2) No console.log in src/
+#   3) No source maps in dist/
+#   5) CSP header present in public/_headers
+#
+# Deploy step is gated by repo variable ENABLE_ORG_PORTAL_DEPLOY=true so the
+# pipeline runs on every push without auto-publishing until you flip the bit
+# in Settings → Variables → Actions.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'org-portal/**'
+      - '.github/workflows/org-portal.yml'
+  pull_request:
+    paths:
+      - 'org-portal/**'
+      - '.github/workflows/org-portal.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: org-portal-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  security:
+    name: Security & build gates
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # TruffleHog needs full history to diff against base.
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: org-portal/package-lock.json
+
+      # ── Gate A: secret scanning ──────────────────────────────────────────
+      - name: Secret scanning (TruffleHog)
+        uses: trufflesecurity/trufflehog@main
+        with:
+          extra_args: --only-verified
+
+      # ── Install ──────────────────────────────────────────────────────────
+      - name: Install dependencies
+        working-directory: org-portal
+        run: npm ci
+
+      # ── Gate B: dependency vulnerabilities ───────────────────────────────
+      - name: Dependency audit (high+ severity blocks)
+        working-directory: org-portal
+        run: npm audit --audit-level=high
+
+      # ── Gate C: SAST ─────────────────────────────────────────────────────
+      - name: SAST (Semgrep)
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: 'p/typescript p/react p/owasp-top-ten'
+
+      # ── Gate D: code quality ─────────────────────────────────────────────
+      - name: Lint
+        working-directory: org-portal
+        run: npm run lint
+
+      - name: Type check
+        working-directory: org-portal
+        run: npx tsc -b --noEmit
+
+      - name: Test (Vitest)
+        working-directory: org-portal
+        run: npm test -- --run
+
+      # ── Gate 1: no service_role or hardcoded payment secrets in src/ ─────
+      - name: Verify no service_role / payment secrets in source
+        working-directory: org-portal
+        run: |
+          if grep -rE "(service_role|SUPABASE_SERVICE_ROLE|sk_live_|sk_test_|whsec_|rk_live_)" src/; then
+            echo "::error::Found a service-role or Stripe secret reference in org-portal/src/. These must NEVER ship to the client."
+            exit 1
+          fi
+          echo "OK — no service-role / payment secrets in src/."
+
+      # ── Gate 5: CSP header present in _headers ───────────────────────────
+      - name: Verify CSP in public/_headers
+        working-directory: org-portal
+        run: |
+          if [ ! -f public/_headers ]; then
+            echo "::error::org-portal/public/_headers is missing."
+            exit 1
+          fi
+          if ! grep -qi "^[[:space:]]*Content-Security-Policy:" public/_headers; then
+            echo "::error::Content-Security-Policy header not found in public/_headers."
+            exit 1
+          fi
+          echo "OK — CSP header present in _headers."
+
+      # ── Build ────────────────────────────────────────────────────────────
+      - name: Build
+        working-directory: org-portal
+        run: npm run build
+        env:
+          # Build-time env from repo secrets — Vite inlines these into the
+          # bundle. ONLY anon/public keys belong here.
+          VITE_SUPABASE_URL: ${{ secrets.ORG_PORTAL_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.ORG_PORTAL_SUPABASE_ANON_KEY }}
+          # Optional — leave secret unset and the SDK init self-skips.
+          VITE_SENTRY_DSN: ${{ secrets.ORG_PORTAL_SENTRY_DSN }}
+
+      # ── Gate 2: no console.log in OUR source ─────────────────────────────
+      # We check src/ (our code) rather than dist/, because vendored bundles
+      # (Supabase, etc.) have legitimate internal logs we can't strip.
+      - name: Verify no console.log in org-portal/src
+        working-directory: org-portal
+        run: |
+          if grep -rE "console\.log\(" src/ --include="*.ts" --include="*.tsx"; then
+            echo "::error::console.log present in org-portal/src/. Remove or replace with console.error/warn."
+            exit 1
+          fi
+          echo "OK — no console.log in src/."
+
+      # ── Gate 3: no source maps in dist ───────────────────────────────────
+      - name: Verify no source maps in dist
+        working-directory: org-portal
+        run: |
+          if find dist -type f -name "*.map" | grep -q .; then
+            echo "::error::Source maps present in org-portal/dist/. Set vite.config.ts build.sourcemap=false."
+            find dist -type f -name "*.map"
+            exit 1
+          fi
+          echo "OK — no source maps in dist/."
+
+      # ── Persist artifact for deploy ──────────────────────────────────────
+      - name: Upload dist artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: org-portal-dist
+          path: org-portal/dist
+          retention-days: 7
+
+  deploy:
+    name: Deploy to Cloudflare Pages
+    needs: security
+    # Gated by repo variable: set ENABLE_ORG_PORTAL_DEPLOY=true once
+    # CF_API_TOKEN + CF_ACCOUNT_ID secrets are in place AND the Pages
+    # project `ozly-org-portal` has been created (one-time `wrangler pages
+    # project create ozly-org-portal` or via Dashboard).
+    if: |
+      github.event_name == 'push'
+      && github.ref == 'refs/heads/main'
+      && vars.ENABLE_ORG_PORTAL_DEPLOY == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download dist artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: org-portal-dist
+          path: org-portal/dist
+
+      - name: Publish to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          projectName: ozly-org-portal
+          directory: dist
+          workingDirectory: org-portal
+          branch: main
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}

@@ -40,6 +40,35 @@ updates:
     # Major updates land as individual PRs (default behaviour when not in a group).
     ignore: []
 
+  # ── Org portal (B2B SaaS — anon key only in browser, but RC-fast updates) ─
+  - package-ecosystem: "npm"
+    directory: "/org-portal"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Australia/Sydney"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "org-portal"
+      - "security-review"
+    commit-message:
+      prefix: "deps(org-portal)"
+      prefix-development: "deps-dev(org-portal)"
+      include: "scope"
+    rebase-strategy: "auto"
+    groups:
+      org-portal-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+      org-portal-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+
   # ── Public site (kept separate to avoid mixing dep trees) ──────────────
   - package-ecosystem: "npm"
     directory: "/"
