@@ -1,0 +1,97 @@
+// DB row shapes (subset) — mirror 20260528130000_org_portal_v0.sql.
+
+export type BillingPlan = 'free' | 'starter' | 'growth';
+
+// Who (if anyone) is paying for a member's ABN access. 'none' → greyed out
+// everywhere (member card + their invoices + their jobs).
+export type PayState = 'company' | 'self' | 'none';
+export type MembershipRole = 'owner' | 'admin' | 'member' | 'accountant';
+export type MembershipStatus = 'pending' | 'accepted' | 'declined' | 'removed';
+export type InvoiceStatus = 'draft' | 'sent' | 'overdue' | 'paid';
+
+export interface Organization {
+  id: string;
+  name: string;
+  abn: string | null;
+  admin_email: string;
+  billing_plan: BillingPlan;
+  trial_ends_at: string | null;
+  created_at: string;
+  period_frequency: 'weekly' | 'fortnightly' | 'monthly';
+  period_anchor: string | null;
+}
+
+export interface OrgMembership {
+  id: string;
+  org_id: string;
+  user_id: string;
+  role: MembershipRole;
+  status: MembershipStatus;
+  invited_at: string | null;
+  accepted_at: string | null;
+  billing_frequency: 'weekly' | 'fortnightly' | 'monthly';
+  billing_anchor: string | null;
+  /** When true, the daily cron schedules an invoice request at the configured
+   *  cadence. Defaults to false until the admin turns it on per member. */
+  auto_invoice_request?: boolean;
+  /** Admin-only free-form labels. Never surfaced to the member. */
+  admin_tags?: string[];
+  /** Admin-only free-form note about this member. Same visibility scope. */
+  admin_notes?: string;
+}
+
+export interface OrgInvitation {
+  id: string;
+  org_id: string;
+  email_or_phone: string;
+  token: string;
+  role: MembershipRole;
+  expires_at: string;
+  delivery_status: 'pending' | 'sent' | 'failed' | 'skipped';
+  accepted_at: string | null;
+  created_at: string;
+}
+
+export interface InvoiceRow {
+  id: string;
+  invoice_number: string;
+  issue_date: string;
+  due_date: string;
+  status: InvoiceStatus;
+  subtotal: number;
+  tax_rate: number;
+  tax_amount: number;
+  total: number;
+  notes: string | null;
+  sent_at: string | null;
+  paid_at: string | null;
+  payment_confirmed_at: string | null;
+  user_id: string;
+  org_visible_id: string | null;
+  // The sub-contractor who issued the invoice (invoices.user_id → profiles).
+  // This is the member the org cares about — NOT contractors (that row is the
+  // org itself, from the member's address book).
+  issuer: { full_name: string; email: string } | null;
+}
+
+export type JobStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
+
+export interface JobRow {
+  id: string;
+  user_id: string;
+  title: string;
+  start_datetime: string;
+  end_datetime: string;
+  status: JobStatus;
+  location: string;
+  hourly_rate: number;
+  unpaid_break_minutes: number;
+  // jobs.user_id → profiles (the member who owns/confirmed the work)
+  issuer: { full_name: string; email: string } | null;
+}
+
+export const SEAT_LIMIT: Record<BillingPlan, number | null> = {
+  free: null, // unlimited members on Free in v0 (paid plans not sold yet)
+  starter: 5,
+  growth: 25,
+};

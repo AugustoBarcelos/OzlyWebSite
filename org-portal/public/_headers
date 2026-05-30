@@ -1,0 +1,43 @@
+# Cloudflare Pages / Netlify-style headers for ozly.app (Org Portal).
+#
+# CSP rationale:
+#   - default-src 'none'         : deny by default; whitelist below.
+#   - script-src 'self'          : Vite bundles everything; no third-party JS.
+#   - style-src 'self' 'unsafe-inline' fonts.googleapis.com
+#                                : Tailwind utility classes + the
+#                                  Google Fonts stylesheet referenced in
+#                                  index.html.
+#   - font-src 'self' fonts.gstatic.com data:
+#                                : Google Fonts files (Inter + Montserrat).
+#   - img-src 'self' data: https:
+#                                : avatars / org logos / inline data URIs.
+#   - connect-src 'self' supabase.co + wss
+#                                : Supabase REST API + Realtime websockets.
+#                                  Tighten to your specific project host if
+#                                  you want belt-and-braces.
+#   - frame-ancestors 'none'     : block clickjacking.
+#   - base-uri 'none'            : kills <base href> injection vectors.
+#   - form-action 'self'         : blocks login forms posting cross-origin.
+#   - object-src 'none'          : no Flash/plugins.
+#   - upgrade-insecure-requests  : silently rewrite http:// → https://
+# COEP/COOP NOT enforced here because the Google Fonts CDN doesn't send the
+# matching CORP/CORS headers; revisit if you self-host fonts.
+/*
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Permissions-Policy: accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=(), interest-cohort=()
+  Cache-Control: no-store, no-cache, must-revalidate, private
+
+# Apple Universal Links require apple-app-site-association to be served as
+# application/json (no extension on the file). Android App Links accept
+# assetlinks.json either way, but we set it explicitly for consistency.
+/.well-known/apple-app-site-association
+  Content-Type: application/json
+  Cache-Control: public, max-age=86400
+
+/.well-known/assetlinks.json
+  Content-Type: application/json
+  Cache-Control: public, max-age=86400
