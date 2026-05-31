@@ -41,6 +41,7 @@ interface MemberCard {
   autoInvoiceRequest?: boolean;
   adminTags?: string[];
   adminNotes?: string;
+  rateOverride?: number | null;
 }
 
 export function MembersPage() {
@@ -66,7 +67,7 @@ export function MembersPage() {
     const [{ data: mem }, { data: inv }] = await Promise.all([
       supabase
         .from('org_memberships')
-        .select('id, org_id, user_id, role, status, invited_at, accepted_at, billing_frequency, billing_anchor, auto_invoice_request, admin_tags, admin_notes')
+        .select('id, org_id, user_id, role, status, invited_at, accepted_at, billing_frequency, billing_anchor, auto_invoice_request, admin_tags, admin_notes, rate_override')
         .eq('org_id', orgId),
       supabase
         .from('org_invitations')
@@ -123,6 +124,7 @@ export function MembersPage() {
         autoInvoiceRequest: m.auto_invoice_request ?? false,
         adminTags: m.admin_tags ?? [],
         adminNotes: m.admin_notes ?? '',
+        rateOverride: m.rate_override ?? null,
       };
     });
     const pendingCards: MemberCard[] = pending.map((i) => ({
@@ -278,6 +280,27 @@ function MemberDetailModal(props: {
   const [notes, setNotes] = useState<string>(member.adminNotes ?? '');
   const [tagDraft, setTagDraft] = useState('');
   const [savingMeta, setSavingMeta] = useState(false);
+  const [rateOverride, setRateOverride] = useState(
+    member.rateOverride != null ? String(member.rateOverride) : '',
+  );
+  const [savingRate, setSavingRate] = useState(false);
+
+  async function saveRate() {
+    const value = rateOverride.trim() === '' ? null : Number(rateOverride);
+    if (value != null && (Number.isNaN(value) || value < 0)) {
+      return notify('Enter a valid rate or leave blank to use the org default.', 'error');
+    }
+    setSavingRate(true);
+    const { error } = await supabase
+      .from('org_memberships')
+      .update({ rate_override: value })
+      .eq('org_id', orgId)
+      .eq('user_id', userId);
+    setSavingRate(false);
+    if (error) return notify(friendlyError(error), 'error');
+    notify(value != null ? 'Member rate saved' : 'Member rate cleared (uses org default)', 'success');
+    onChanged();
+  }
 
   function addTag() {
     const t = tagDraft.trim().slice(0, 24);
@@ -374,6 +397,33 @@ function MemberDetailModal(props: {
           <button onClick={onClose} className="text-navy-300 hover:text-navy-500" aria-label="Close">
             ✕
           </button>
+        </div>
+
+        {/* Rate override */}
+        <div className="mt-5">
+          <div className={sectionLabel}>Hourly rate</div>
+          <p className="mt-1 text-[11px] text-navy-400">
+            Used when you offer work to {member.name}. Leave blank to use the org default rate.
+          </p>
+          <div className="mt-2 flex items-center gap-2">
+            <span className="text-navy-400">$</span>
+            <input
+              type="number"
+              min="0"
+              step="0.50"
+              value={rateOverride}
+              onChange={(e) => setRateOverride(e.target.value)}
+              placeholder="org default"
+              className="w-32 rounded-md border border-navy-100 bg-white px-3 py-2 text-sm text-navy-700 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+            />
+            <button
+              onClick={() => void saveRate()}
+              disabled={savingRate}
+              className="rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-500 disabled:bg-brand-300"
+            >
+              {savingRate ? 'Saving…' : 'Save rate'}
+            </button>
+          </div>
         </div>
 
         {/* ABN coverage */}

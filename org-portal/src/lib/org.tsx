@@ -49,20 +49,23 @@ const SELECTED_KEY = 'ozly-org-portal-selected-org';
 async function selectOrgs(): Promise<Organization[]> {
   const v2 = await supabase
     .from('organizations')
-    .select('id, name, abn, admin_email, billing_email, billing_plan, trial_ends_at, created_at, period_frequency, period_anchor')
+    .select('id, name, abn, admin_email, billing_email, billing_plan, trial_ends_at, created_at, period_frequency, period_anchor, default_hourly_rate')
     .order('created_at', { ascending: true });
   if (!v2.error) {
-    return (v2.data ?? []) as Organization[];
+    return (v2.data ?? []).map((r) => ({
+      ...(r as Organization),
+      default_hourly_rate: (r as { default_hourly_rate?: number }).default_hourly_rate ?? 0,
+    }));
   }
   const code = (v2.error as { code?: string }).code;
   if (code === '42703') {
-    // V2 column missing — fall back to V0 + null out billing_email.
+    // V2 column missing — fall back to V0 + null out billing_email + zero rate.
     const v0 = await supabase
       .from('organizations')
       .select('id, name, abn, admin_email, billing_plan, trial_ends_at, created_at, period_frequency, period_anchor')
       .order('created_at', { ascending: true });
-    const rows = (v0.data ?? []) as Array<Omit<Organization, 'billing_email'>>;
-    return rows.map((r) => ({ ...r, billing_email: null }));
+    const rows = (v0.data ?? []) as Array<Omit<Organization, 'billing_email' | 'default_hourly_rate'>>;
+    return rows.map((r) => ({ ...r, billing_email: null, default_hourly_rate: 0 }));
   }
   // Real error: surface to Sentry and propagate empty list (auth errors
   // should produce "No org linked" anyway; RLS/network deserve telemetry).

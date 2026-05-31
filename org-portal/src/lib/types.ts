@@ -22,6 +22,9 @@ export interface Organization {
   created_at: string;
   period_frequency: 'weekly' | 'fortnightly' | 'monthly';
   period_anchor: string | null;
+  /** Default hourly rate applied when offering work, unless a member has a
+   *  rate_override. 0 means "no default set". */
+  default_hourly_rate: number;
 }
 
 export type InboxStatus = 'queued' | 'sent' | 'bounced' | 'failed';
@@ -54,6 +57,8 @@ export interface OrgMembership {
   accepted_at: string | null;
   billing_frequency: 'weekly' | 'fortnightly' | 'monthly';
   billing_anchor: string | null;
+  /** Per-member override of the org default hourly rate. Null = use org default. */
+  rate_override?: number | null;
   /** When true, the daily cron schedules an invoice request at the configured
    *  cadence. Defaults to false until the admin turns it on per member. */
   auto_invoice_request?: boolean;
@@ -91,10 +96,37 @@ export interface InvoiceRow {
   payment_confirmed_at: string | null;
   user_id: string;
   org_visible_id: string | null;
+  // Divergence: the member edited the invoice after it became visible to the
+  // org. divergence_status drives the warning column + confirm/reject flow.
+  is_edited: boolean;
+  divergence_status: 'none' | 'pending' | 'confirmed' | 'rejected';
+  last_edit_comment: string | null;
+  last_edited_at: string | null;
   // The sub-contractor who issued the invoice (invoices.user_id → profiles).
   // This is the member the org cares about — NOT contractors (that row is the
   // org itself, from the member's address book).
   issuer: { full_name: string; email: string } | null;
+}
+
+export interface ThreadMessageRow {
+  id: string;
+  subject_type: 'invoice' | 'job';
+  subject_id: string;
+  org_id: string | null;
+  sender_user_id: string | null;
+  sender_role: 'member' | 'org';
+  body: string;
+  created_at: string;
+}
+
+export interface InvoiceChangeRow {
+  id: string;
+  invoice_id: string;
+  field: string;
+  old_value: string | null;
+  new_value: string | null;
+  comment: string;
+  created_at: string;
 }
 
 export type JobStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
@@ -109,6 +141,10 @@ export interface JobRow {
   location: string;
   hourly_rate: number;
   unpaid_break_minutes: number;
+  // A change the org proposed that awaits the member's confirmation in the app.
+  pending_changes: Record<string, unknown> | null;
+  change_status: 'none' | 'pending' | 'confirmed' | 'rejected';
+  change_comment: string | null;
   // jobs.user_id → profiles (the member who owns/confirmed the work)
   issuer: { full_name: string; email: string } | null;
 }

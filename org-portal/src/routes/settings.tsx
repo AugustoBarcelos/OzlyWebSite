@@ -29,13 +29,39 @@ export function SettingsPage() {
   const [billingEmail, setBillingEmail] = useState(currentOrg?.billing_email ?? '');
   const [savingBillingEmail, setSavingBillingEmail] = useState(false);
 
+  const [defaultRate, setDefaultRate] = useState(
+    currentOrg?.default_hourly_rate ? String(currentOrg.default_hourly_rate) : '',
+  );
+  const [savingRate, setSavingRate] = useState(false);
+
   useEffect(() => {
     setName(currentOrg?.name ?? '');
     setAbn(currentOrg?.abn ?? '');
     setPeriodFreq(currentOrg?.period_frequency ?? 'fortnightly');
     setPeriodAnchor(currentOrg?.period_anchor ?? '');
     setBillingEmail(currentOrg?.billing_email ?? '');
-  }, [currentOrg?.id, currentOrg?.name, currentOrg?.abn, currentOrg?.billing_email, currentOrg?.period_frequency, currentOrg?.period_anchor]);
+    setDefaultRate(currentOrg?.default_hourly_rate ? String(currentOrg.default_hourly_rate) : '');
+  }, [currentOrg?.id, currentOrg?.name, currentOrg?.abn, currentOrg?.billing_email, currentOrg?.period_frequency, currentOrg?.period_anchor, currentOrg?.default_hourly_rate]);
+
+  async function saveDefaultRate() {
+    if (!orgId) return;
+    const value = defaultRate.trim() === '' ? 0 : Number(defaultRate);
+    if (Number.isNaN(value) || value < 0) {
+      notify('Enter a valid rate (e.g. 45) or leave blank.', 'error');
+      return;
+    }
+    setSavingRate(true);
+    const { error } = await supabase
+      .from('organizations')
+      .update({ default_hourly_rate: value })
+      .eq('id', orgId);
+    if (error) notify(friendlyError(error), 'error');
+    else {
+      notify('Default rate saved', 'success');
+      await refresh();
+    }
+    setSavingRate(false);
+  }
 
   async function saveBillingEmail() {
     if (!orgId) return;
@@ -292,6 +318,37 @@ export function SettingsPage() {
           className="mt-4 rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-500 disabled:bg-brand-300"
         >
           {savingPeriod ? 'Saving…' : 'Save period'}
+        </button>
+      </section>
+
+      {/* Default rate */}
+      <section className="ozly-card mb-4 p-5">
+        <h2 className="text-sm font-semibold text-navy-700">Default hourly rate</h2>
+        <p className="mt-1 text-xs text-navy-400">
+          Pre-fills the rate when you offer work. You can override it per member (Members → Rate) or
+          per shift. Leave blank for no default.
+        </p>
+        <label className="mt-4 block text-xs font-medium text-navy-600">
+          Rate (AUD/hour)
+          <div className="mt-1 flex items-center gap-2">
+            <span className="text-navy-400">$</span>
+            <input
+              type="number"
+              min="0"
+              step="0.50"
+              value={defaultRate}
+              onChange={(e) => setDefaultRate(e.target.value)}
+              placeholder="45.00"
+              className="w-40 rounded-md border border-navy-100 bg-white px-3 py-2 text-sm text-navy-700 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+            />
+          </div>
+        </label>
+        <button
+          onClick={() => void saveDefaultRate()}
+          disabled={savingRate}
+          className="mt-4 rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-500 disabled:bg-brand-300"
+        >
+          {savingRate ? 'Saving…' : 'Save default rate'}
         </button>
       </section>
 

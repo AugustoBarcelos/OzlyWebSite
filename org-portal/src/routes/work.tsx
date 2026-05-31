@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useOrg } from '@/lib/org';
+import { ThreadPanel } from '@/components/ThreadPanel';
 import { useToast } from '@/components/Toast';
 import { Spinner } from '@/components/Spinner';
 import { PageHeader } from '@/components/PageHeader';
@@ -34,7 +35,7 @@ type ColKey = keyof typeof COLS;
 type SetCol = 'sub' | 'title' | 'status'; // columns using the checklist filter (When uses a date range)
 
 const JOB_SELECT =
-  'id, user_id, title, start_datetime, end_datetime, status, location, hourly_rate, unpaid_break_minutes, issuer:profiles!jobs_user_id_fkey(full_name,email), contractors!inner(org_id)';
+  'id, user_id, title, start_datetime, end_datetime, status, location, hourly_rate, unpaid_break_minutes, pending_changes, change_status, change_comment, issuer:profiles!jobs_user_id_fkey(full_name,email), contractors!inner(org_id)';
 const PAGE_SIZES = [10, 20, 50, 100];
 
 function netHours(j: JobRow): number {
@@ -645,6 +646,7 @@ export function WorkPage() {
         <OfferWorkModal
           orgId={orgId}
           members={members}
+          defaultRate={currentOrg?.default_hourly_rate ?? 0}
           onClose={() => setModalOpen(false)}
           onSent={() => {
             setModalOpen(false);
@@ -690,6 +692,7 @@ function JobDetailModal(props: {
   const [start, setStart] = useState(toLocalInput(job.start_datetime));
   const [end, setEnd] = useState(toLocalInput(job.end_datetime));
   const [location, setLocation] = useState(job.location ?? '');
+  const [rate, setRate] = useState(job.hourly_rate ? String(job.hourly_rate) : '');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -718,6 +721,7 @@ function JobDetailModal(props: {
     e.preventDefault();
     if (!title.trim() || !start || !end || new Date(end) <= new Date(start)) return;
     setSaving(true);
+    const rateNum = rate.trim() === '' ? null : Number(rate);
     const { data, error } = await supabase.rpc('org_update_job', {
       p_job_id: job.id,
       p_title: title.trim(),
@@ -725,16 +729,18 @@ function JobDetailModal(props: {
       p_end: new Date(end).toISOString(),
       p_location: location.trim() || null,
       p_notes: notes.trim() || null,
+      p_hourly_rate: rateNum != null && !Number.isNaN(rateNum) ? rateNum : null,
+      p_comment: notes.trim() || null,
     });
     if (error) {
       notify(friendlyError(error), 'error');
       setSaving(false);
       return;
     }
-    // org_update_job returns the new status; 'pending' after an accepted job
-    // means it bounced back for the member to re-confirm.
-    if (data === 'pending' && job.status !== 'pending') {
-      notify(`Updated — sent to ${issuerName(job)} to re-confirm`, 'info');
+    // org_update_job returns 'pending_confirmation' when the change was staged
+    // and awaits the member's confirmation in the app (it does NOT apply yet).
+    if (data === 'pending_confirmation') {
+      notify(`Change sent to ${issuerName(job)} to confirm in the app`, 'info');
     } else {
       notify('Work updated', 'success');
     }
@@ -777,17 +783,24 @@ function JobDetailModal(props: {
                 <input type="datetime-local" value={end} onChange={(e) => setEnd(e.target.value)} className={field} />
               </label>
             </div>
-            <label className="mt-3 block text-xs font-medium text-navy-600">
-              Location <span className="text-navy-300">(optional)</span>
-              <input value={location} onChange={(e) => setLocation(e.target.value)} className={field} />
-            </label>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <label className="block text-xs font-medium text-navy-600">
+                Location <span className="text-navy-300">(optional)</span>
+                <input value={location} onChange={(e) => setLocation(e.target.value)} className={field} />
+              </label>
+              <label className="block text-xs font-medium text-navy-600">
+                Rate $/h <span className="text-navy-300">(optional)</span>
+                <input type="number" min="0" step="0.50" value={rate} onChange={(e) => setRate(e.target.value)} className={field} />
+              </label>
+            </div>
             <label className="mt-3 block text-xs font-medium text-navy-600">
               Note about the change <span className="text-navy-300">(optional)</span>
               <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className={field} />
             </label>
             {(job.status === 'confirmed' || job.status === 'completed') && (
               <p className="mt-3 rounded-md bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-amber-700">
-                {issuerName(job)} already confirmed this. Saving sends it back for them to re-confirm.
+                {issuerName(job)} already confirmed this. The change won't take effect until they
+                confirm it in the app — nothing is changed on their side without their OK.
               </p>
             )}
             <div className="mt-4 flex justify-end gap-2">
@@ -858,6 +871,15 @@ function JobDetailModal(props: {
               </div>
             )}
 
+            {job.change_status === 'pending' && (
+              <p className="mt-4 rounded-md bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-amber-700">
+                A change is waiting for {issuerName(job)} to confirm in the app. It won't take effect
+                until they accept it.
+              </p>
+            )}
+
+            <ThreadPanel subjectType="job" subjectId={job.id} memberName={issuerName(job)} notify={notify} />
+
             <div className="mt-5 flex items-center justify-between border-t border-navy-50 pt-4">
               <div className="text-xs">
                 {!checkedInvoice ? (
@@ -888,16 +910,18 @@ function JobDetailModal(props: {
 function OfferWorkModal(props: {
   orgId: string;
   members: MemberOption[];
+  defaultRate: number;
   onClose: () => void;
   onSent: () => void;
   notify: (m: string, k?: 'success' | 'error' | 'info') => void;
 }) {
-  const { orgId, members, onClose, onSent, notify } = props;
+  const { orgId, members, defaultRate, onClose, onSent, notify } = props;
   const [member, setMember] = useState(members[0]?.user_id ?? '');
   const [title, setTitle] = useState('');
   const [start, setStart] = useState('');
   const [end, setEnd] = useState('');
   const [location, setLocation] = useState('');
+  const [rate, setRate] = useState('');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -910,6 +934,7 @@ function OfferWorkModal(props: {
     e.preventDefault();
     if (!valid) return;
     setSubmitting(true);
+    const rateNum = rate.trim() === '' ? null : Number(rate);
     const { error } = await supabase.rpc('org_offer_work', {
       p_org_id: orgId,
       p_member: member,
@@ -918,6 +943,7 @@ function OfferWorkModal(props: {
       p_end: new Date(end).toISOString(),
       p_location: location.trim() || null,
       p_notes: notes.trim() || null,
+      p_hourly_rate: rateNum != null && !Number.isNaN(rateNum) ? rateNum : null,
     });
     if (error) {
       notify(friendlyError(error), 'error');
@@ -941,8 +967,8 @@ function OfferWorkModal(props: {
           </button>
         </div>
         <p className="mt-2 text-xs leading-relaxed text-navy-400">
-          This sends an offer the sub-contractor accepts (or declines) in the Ozly app, where they
-          set their own rate. It does not assign or schedule them.
+          This sends an offer the sub-contractor accepts (or declines) in the Ozly app. Leave the
+          rate blank to use their agreed rate (or your org default); set one to suggest it.
         </p>
 
         <form onSubmit={onSubmit} className="mt-4">
@@ -973,10 +999,24 @@ function OfferWorkModal(props: {
             </label>
           </div>
 
-          <label className="mt-3 block text-xs font-medium text-navy-600">
-            Location <span className="text-navy-300">(optional)</span>
-            <input value={location} onChange={(e) => setLocation(e.target.value)} className={field} />
-          </label>
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            <label className="block text-xs font-medium text-navy-600">
+              Location <span className="text-navy-300">(optional)</span>
+              <input value={location} onChange={(e) => setLocation(e.target.value)} className={field} />
+            </label>
+            <label className="block text-xs font-medium text-navy-600">
+              Rate $/h <span className="text-navy-300">(optional)</span>
+              <input
+                type="number"
+                min="0"
+                step="0.50"
+                value={rate}
+                onChange={(e) => setRate(e.target.value)}
+                placeholder={defaultRate > 0 ? defaultRate.toFixed(2) : 'agreed rate'}
+                className={field}
+              />
+            </label>
+          </div>
 
           <label className="mt-3 block text-xs font-medium text-navy-600">
             Brief / notes <span className="text-navy-300">(optional)</span>
