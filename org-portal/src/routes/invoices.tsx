@@ -15,17 +15,18 @@ import { logOrgEvent } from '@/lib/telemetry';
 import { fetchPayState, isUnpaid } from '@/lib/payments';
 import { recentPeriods, relativeLabel } from '@/lib/period';
 import type { BillingConfig, Period } from '@/lib/period';
-import type { InvoiceRow, PayState } from '@/lib/types';
+import type { InvoiceRow, InvoiceChangeRow, PayState } from '@/lib/types';
 import { friendlyError } from '@/lib/errors';
 import { ColumnFilter, DateColumnFilter, type DateRange, type Option, type SortDir } from '@/components/ColumnFilter';
 import { GettingStarted } from '@/components/GettingStarted';
 import { toCsv, downloadCsv, timestampSuffix, toXeroBillsCsv, type XeroBillRow } from '@/lib/csv';
 import { generateAbaFile, downloadAbaFile, type AbaPaymentRow } from '@/lib/aba';
 import { openInvoiceReceipt } from '@/lib/invoice-receipt';
+import { ThreadPanel } from '@/components/ThreadPanel';
 import { listPresets, savePreset, deletePreset, type Preset } from '@/lib/filter-presets';
 
 const INVOICE_SELECT =
-  'id, invoice_number, issue_date, due_date, status, subtotal, tax_rate, tax_amount, total, notes, sent_at, paid_at, payment_confirmed_at, user_id, org_visible_id, issuer:profiles!invoices_user_id_fkey(full_name,email)';
+  'id, invoice_number, issue_date, due_date, status, subtotal, tax_rate, tax_amount, total, notes, sent_at, paid_at, payment_confirmed_at, user_id, org_visible_id, is_edited, divergence_status, last_edit_comment, last_edited_at, issuer:profiles!invoices_user_id_fkey(full_name,email)';
 
 const PAGE_SIZES = [10, 20, 50, 100];
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -67,6 +68,76 @@ interface LineItem {
 
 function issuerName(r: InvoiceRow): string {
   return r.issuer?.full_name?.trim() || r.issuer?.email || '—';
+}
+
+// Reconciliation — sanity checks that don't need external data: date order,
+// total = subtotal + GST, and duplicate invoice numbers from the same issuer
+// (within the loaded set). Returns human-readable warnings (empty = all good).
+function reconcileInvoice(r: InvoiceRow, all: InvoiceRow[]): string[] {
+  const warnings: string[] = [];
+  if (r.due_date && r.issue_date && r.due_date < r.issue_date) {
+    warnings.push('Due date is before the issue date');
+  }
+  const expected = (r.subtotal ?? 0) + (r.tax_amount ?? 0);
+  if (Math.abs(expected - (r.total ?? 0)) > 0.01) {
+    warnings.push('Total doesn’t equal subtotal + GST');
+  }
+  if (r.invoice_number) {
+    const dupes = all.filter(
+      (x) => x.id !== r.id && x.user_id === r.user_id && x.invoice_number === r.invoice_number,
+    );
+    if (dupes.length > 0) warnings.push(`Duplicate invoice number (${r.invoice_number})`);
+  }
+  return warnings;
+}
+
+function ReconBadge({ warnings }: { warnings: string[] }) {
+  if (warnings.length === 0) return null;
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-medium text-rose-700"
+      title={warnings.join('\n')}
+    >
+      ⚑ Check {warnings.length > 1 ? `(${warnings.length})` : ''}
+    </span>
+  );
+}
+
+// Compact chip that flags an invoice the member edited after it became visible
+// to the org. Pending = needs the admin to confirm/reject the change.
+function DivergenceBadge({ invoice }: { invoice: InvoiceRow }) {
+  if (!invoice.is_edited && invoice.divergence_status === 'none') return null;
+  const s = invoice.divergence_status;
+  if (s === 'pending') {
+    return (
+      <span
+        className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700"
+        title={invoice.last_edit_comment ?? 'The sub-contractor edited this invoice'}
+      >
+        ⚠ Edited — review
+      </span>
+    );
+  }
+  if (s === 'confirmed') {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+        ✓ Change accepted
+      </span>
+    );
+  }
+  if (s === 'rejected') {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-medium text-rose-700">
+        ✕ Change rejected
+      </span>
+    );
+  }
+  // edited but not (yet) a divergence (e.g. edited before org visibility)
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-navy-100 px-2 py-0.5 text-[11px] font-medium text-navy-600">
+      Edited
+    </span>
+  );
 }
 
 interface Kpis {
@@ -329,6 +400,24 @@ export function InvoicesPage() {
       void refreshTotals();
     }
     setMarking(null);
+  }
+
+  // Confirm or reject a divergence (invoice the member edited). Notifies the
+  // member by push (server-side) and records the org's note in the thread.
+  async function resolveDivergence(id: string, action: 'confirm' | 'reject', comment?: string) {
+    const { error } = await supabase.rpc('org_resolve_invoice_divergence', {
+      p_invoice_id: id,
+      p_action: action,
+      p_comment: comment?.trim() || null,
+    });
+    if (error) {
+      notify(friendlyError(error), 'error');
+      return;
+    }
+    const next = action === 'confirm' ? 'confirmed' : 'rejected';
+    patchInvoice(id, { divergence_status: next });
+    setDetail((d) => (d && d.id === id ? { ...d, divergence_status: next } : d));
+    notify(action === 'confirm' ? 'Change accepted' : 'Change flagged to the sub-contractor', 'success');
   }
 
   const setColFilter = (k: SetCol) => (next: Set<string>) => setFilters((prev) => ({ ...prev, [k]: next }));
@@ -1007,7 +1096,11 @@ export function InvoicesPage() {
                     <td className="px-4 py-3 text-navy-500">{formatPeriod(r.issue_date, r.due_date)}</td>
                     <td className="px-4 py-3 text-right font-medium text-navy-700">{formatMoney(r.total)}</td>
                     <td className="px-4 py-3">
-                      <InvoiceStatusBadge status={r.status} />
+                      <div className="flex flex-col items-start gap-1">
+                        <InvoiceStatusBadge status={r.status} />
+                        <DivergenceBadge invoice={r} />
+                        <ReconBadge warnings={reconcileInvoice(r, rows)} />
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-navy-500">{formatDate(r.due_date)}</td>
                     <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
@@ -1064,6 +1157,9 @@ export function InvoicesPage() {
           onClose={() => setDetail(null)}
           onMarkPaid={() => setConfirmingPay(detail)}
           onUnmark={() => void unmarkPaid(detail.id)}
+          onResolveDivergence={(action, comment) => resolveDivergence(detail.id, action, comment)}
+          notify={notify}
+          reconWarnings={reconcileInvoice(detail, rows)}
         />
       )}
 
@@ -1109,8 +1205,11 @@ function InvoiceDetailModal(props: {
   onClose: () => void;
   onMarkPaid: () => void;
   onUnmark: () => void;
+  onResolveDivergence: (action: 'confirm' | 'reject', comment?: string) => void | Promise<void>;
+  notify: (m: string, k?: 'success' | 'error' | 'info') => void;
+  reconWarnings: string[];
 }) {
-  const { invoice, marking, orgName, orgAbn, onClose, onMarkPaid, onUnmark } = props;
+  const { invoice, marking, orgName, orgAbn, onClose, onMarkPaid, onUnmark, onResolveDivergence, notify, reconWarnings } = props;
   const [items, setItems] = useState<LineItem[] | null>(null);
   const onPrintReceipt = () => {
     const ok = openInvoiceReceipt({
@@ -1210,6 +1309,28 @@ function InvoiceDetailModal(props: {
           <div className="mt-4 rounded-md bg-navy-50 px-3 py-2 text-xs text-navy-500">{invoice.notes}</div>
         )}
 
+        {reconWarnings.length > 0 && (
+          <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50/60 p-3">
+            <div className="text-sm font-semibold text-rose-800">⚑ Reconciliation checks</div>
+            <ul className="mt-1 list-disc pl-5 text-xs text-rose-700">
+              {reconWarnings.map((w) => (
+                <li key={w}>{w}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {(invoice.is_edited || invoice.divergence_status !== 'none') && (
+          <DivergencePanel invoice={invoice} onResolve={onResolveDivergence} />
+        )}
+
+        <ThreadPanel
+          subjectType="invoice"
+          subjectId={invoice.id}
+          memberName={issuerName(invoice)}
+          notify={notify}
+        />
+
         <InvoiceAuditTimeline invoice={invoice} />
 
         <div className="mt-5 flex items-center justify-between border-t border-navy-50 pt-4">
@@ -1255,6 +1376,116 @@ function InvoiceDetailModal(props: {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Divergence panel — shows the field-level diff + the member's mandatory
+// comment for an edited invoice, and lets the admin confirm or reject it.
+// ─────────────────────────────────────────────────────────────────────────────
+const FIELD_LABELS: Record<string, string> = {
+  issue_date: 'Issue date',
+  due_date: 'Due date',
+  invoice_number: 'Invoice number',
+  tax_rate: 'GST rate',
+  notes: 'Notes',
+  total: 'Total',
+};
+
+function DivergencePanel({
+  invoice,
+  onResolve,
+}: {
+  invoice: InvoiceRow;
+  onResolve: (action: 'confirm' | 'reject', comment?: string) => void | Promise<void>;
+}) {
+  const [changes, setChanges] = useState<InvoiceChangeRow[] | null>(null);
+  const [note, setNote] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const { data } = await supabase
+        .from('invoice_changes')
+        .select('id, invoice_id, field, old_value, new_value, comment, created_at')
+        .eq('invoice_id', invoice.id)
+        .order('created_at', { ascending: true });
+      if (active) setChanges((data ?? []) as InvoiceChangeRow[]);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [invoice.id]);
+
+  const pending = invoice.divergence_status === 'pending';
+  const comment = invoice.last_edit_comment ?? changes?.[0]?.comment ?? null;
+
+  const act = async (action: 'confirm' | 'reject') => {
+    setBusy(true);
+    await onResolve(action, note);
+    setBusy(false);
+  };
+
+  return (
+    <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50/60 p-3">
+      <div className="flex items-center gap-2 text-sm font-semibold text-amber-800">
+        ⚠ Sub-contractor edited this invoice
+      </div>
+      {comment && (
+        <p className="mt-1 text-xs italic text-navy-600">“{comment}”</p>
+      )}
+
+      {changes === null ? (
+        <div className="mt-2"><Spinner size="sm" /></div>
+      ) : changes.length > 0 ? (
+        <div className="mt-2 divide-y divide-amber-100 rounded-md border border-amber-100 bg-white">
+          {changes.map((c) => (
+            <div key={c.id} className="flex items-center justify-between gap-2 px-2.5 py-1.5 text-xs">
+              <span className="font-medium text-navy-600">{FIELD_LABELS[c.field] ?? c.field}</span>
+              <span className="text-navy-500">
+                <span className="text-rose-500 line-through">{c.old_value || '—'}</span>
+                <span className="mx-1 text-navy-300">→</span>
+                <span className="font-medium text-emerald-700">{c.new_value || '—'}</span>
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {pending ? (
+        <div className="mt-3">
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            rows={2}
+            placeholder="Optional note back to the sub-contractor…"
+            className="w-full rounded-md border border-amber-200 px-2.5 py-1.5 text-xs focus:border-amber-400 focus:outline-none"
+          />
+          <div className="mt-2 flex justify-end gap-2">
+            <button
+              disabled={busy}
+              onClick={() => void act('reject')}
+              className="rounded-md px-3 py-1.5 text-xs font-medium text-rose-600 ring-1 ring-rose-200 hover:bg-rose-50 disabled:opacity-50"
+            >
+              Reject change
+            </button>
+            <button
+              disabled={busy}
+              onClick={() => void act('confirm')}
+              className="rounded-md bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-500 disabled:opacity-50"
+            >
+              Accept change
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-2 text-xs font-medium text-navy-500">
+          {invoice.divergence_status === 'confirmed' && '✓ You accepted this change.'}
+          {invoice.divergence_status === 'rejected' && '✕ You rejected this change.'}
+        </div>
+      )}
     </div>
   );
 }

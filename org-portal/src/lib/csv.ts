@@ -52,6 +52,68 @@ export function timestampSuffix(d: Date = new Date()): string {
 }
 
 /**
+ * Robust RFC-4180-ish CSV parser (import side). Handles quoted fields,
+ * escaped `""` quotes, embedded commas/newlines, a leading UTF-8 BOM and both
+ * CRLF and LF line endings. Returns a matrix of string cells. We keep this tiny
+ * and dependency-free rather than pulling a parser library — the import flow
+ * only needs "good enough" tabular splitting; the AI step tolerates messiness.
+ */
+export function parseCsv(text: string): string[][] {
+  const src = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text; // strip BOM
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let field = '';
+  let inQuotes = false;
+  let i = 0;
+  const pushField = () => { row.push(field); field = ''; };
+  const pushRow = () => { pushField(); rows.push(row); row = []; };
+  while (i < src.length) {
+    const c = src[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (src[i + 1] === '"') { field += '"'; i += 2; continue; }
+        inQuotes = false; i += 1; continue;
+      }
+      field += c; i += 1; continue;
+    }
+    if (c === '"') { inQuotes = true; i += 1; continue; }
+    if (c === ',') { pushField(); i += 1; continue; }
+    if (c === '\r') { if (src[i + 1] === '\n') i += 1; pushRow(); i += 1; continue; }
+    if (c === '\n') { pushRow(); i += 1; continue; }
+    field += c; i += 1;
+  }
+  // Flush the trailing field/row unless the file ended on a clean newline.
+  if (field.length > 0 || row.length > 0) pushRow();
+  return rows;
+}
+
+/**
+ * Turns a parsed matrix into an array of row objects keyed by the (de-duplicated,
+ * non-empty) header row. Blank trailing rows are dropped.
+ */
+export function rowsToObjects(matrix: string[][]): { headers: string[]; rows: Record<string, string>[] } {
+  const headerRow = matrix[0];
+  if (!headerRow) return { headers: [], rows: [] };
+  const rawHeaders = headerRow.map((h, i) => (h.trim() || `Column ${i + 1}`));
+  // De-dupe header collisions so object keys don't clobber each other.
+  const seen = new Map<string, number>();
+  const headers = rawHeaders.map((h) => {
+    const n = seen.get(h) ?? 0;
+    seen.set(h, n + 1);
+    return n === 0 ? h : `${h} (${n + 1})`;
+  });
+  const rows = matrix
+    .slice(1)
+    .filter((r) => r.some((c) => c.trim().length > 0))
+    .map((r) => {
+      const obj: Record<string, string> = {};
+      headers.forEach((h, i) => { obj[h] = (r[i] ?? '').trim(); });
+      return obj;
+    });
+  return { headers, rows };
+}
+
+/**
  * Xero "Bills" CSV format. Pasted into Xero via Business → Bills to pay →
  * Import. Minimum-required column set that Xero accepts — accountant adjusts
  * AccountCode + TrackingOptions on their side.

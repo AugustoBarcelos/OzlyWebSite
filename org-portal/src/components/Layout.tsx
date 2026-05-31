@@ -41,6 +41,7 @@ const NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
       { to: '/invoices', label: 'Invoices', icon: <FileTextIcon /> },
       { to: '/inbox',    label: 'Inbox',    icon: <InboxIcon /> },
       { to: '/work',     label: 'Work',     icon: <BriefcaseIcon /> },
+      { to: '/import',   label: 'Import',   icon: <FileTextIcon /> },
       { to: '/members',  label: 'Members',  icon: <UsersIcon /> },
     ],
   },
