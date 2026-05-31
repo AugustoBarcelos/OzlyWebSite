@@ -66,7 +66,7 @@ describe('escapeCell', () => {
       expect(escapeCell(-50)).toBe("'-50");
     });
 
-    it('survives quote + formula combo: =\"foo\"', () => {
+    it("survives quote + formula combo: =\"foo\"", () => {
       const out = escapeCell('="x"');
       // guard adds apostrophe, then quote-wrap engages because of embedded "
       expect(out).toBe('"\'=""x"""');

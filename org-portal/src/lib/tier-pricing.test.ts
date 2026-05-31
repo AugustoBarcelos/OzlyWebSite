@@ -6,8 +6,8 @@ import {
 } from './tier-pricing';
 
 describe('TIERS catalog', () => {
-  it('has 4 tiers with strictly increasing ranks', () => {
-    expect(TIERS).toHaveLength(4);
+  it('has 5 tiers with strictly increasing ranks (4 self-serve + 1 custom)', () => {
+    expect(TIERS).toHaveLength(5);
     TIERS.forEach((t, i) => expect(t.rank).toBe(i + 1));
   });
 
@@ -17,37 +17,47 @@ describe('TIERS catalog', () => {
     }
   });
 
-  it('annual is monthly × 10 (≈17% off)', () => {
-    TIERS.forEach((t) => {
+  it('annual is monthly × 10 (≈17% off) for self-serve tiers', () => {
+    TIERS.filter((t) => !t.contactSales).forEach((t) => {
       expect(t.unitAnnualPerYear).toBeCloseTo(t.unitMonthly * 10, 1);
     });
   });
 
-  it('confirmed V2 prices', () => {
-    expect(TIERS.map((t) => t.unitMonthly)).toEqual([12.99, 10.99, 8.99, 6.99]);
+  it('custom tier has zero price + contactSales flag', () => {
+    const custom = TIERS[4]!;
+    expect(custom.key).toBe('org_custom');
+    expect(custom.unitMonthly).toBe(0);
+    expect(custom.unitAnnualPerYear).toBe(0);
+    expect(custom.contactSales).toBe(true);
+    expect(custom.monthlyLookupKey).toBeNull();
+    expect(custom.annualLookupKey).toBeNull();
+  });
+
+  it('confirmed V2 prices (middle-ground self-serve)', () => {
+    expect(TIERS.map((t) => t.unitMonthly)).toEqual([14.99, 12.99, 9.99, 7.99, 0]);
   });
 });
 
 describe('tierForSeats', () => {
-  it('maps small orgs to Tier 1', () => {
+  it('maps small orgs to Tier 1 (Crew)', () => {
     [1, 2, 3, 4, 5].forEach((n) => expect(tierForSeats(n).key).toBe('org_t1'));
   });
-  it('Tier 2 covers 6–15', () => {
+  it('Tier 2 (Squad) covers 6–15', () => {
     [6, 10, 15].forEach((n) => expect(tierForSeats(n).key).toBe('org_t2'));
   });
-  it('Tier 3 covers 16–30', () => {
+  it('Tier 3 (Fleet) covers 16–30', () => {
     [16, 25, 30].forEach((n) => expect(tierForSeats(n).key).toBe('org_t3'));
   });
-  it('Tier 4 covers 31–100', () => {
+  it('Tier 4 (Operation) covers 31–100', () => {
     [31, 75, 100].forEach((n) => expect(tierForSeats(n).key).toBe('org_t4'));
   });
   it('zero or negative seats fall to Tier 1 (least surprise)', () => {
     expect(tierForSeats(0).key).toBe('org_t1');
     expect(tierForSeats(-5).key).toBe('org_t1');
   });
-  it('>100 seats fall to Tier 4 (custom is sales-led)', () => {
-    expect(tierForSeats(101).key).toBe('org_t4');
-    expect(tierForSeats(500).key).toBe('org_t4');
+  it('>100 seats land on Custom (sales-led)', () => {
+    expect(tierForSeats(101).key).toBe('org_custom');
+    expect(tierForSeats(500).key).toBe('org_custom');
   });
 });
 
@@ -84,19 +94,19 @@ describe('isAnnual / intervalFromKey', () => {
 
 describe('unitMonthlyPrice', () => {
   it('returns unitMonthly for monthly interval', () => {
-    expect(unitMonthlyPrice(TIERS[0]!, 'month')).toBe(12.99);
+    expect(unitMonthlyPrice(TIERS[0]!, 'month')).toBe(14.99);
   });
   it('returns annual / 12 for annual interval', () => {
-    expect(unitMonthlyPrice(TIERS[0]!, 'year')).toBeCloseTo(129.90 / 12, 2);
+    expect(unitMonthlyPrice(TIERS[0]!, 'year')).toBeCloseTo(149.90 / 12, 2);
   });
 });
 
 describe('totalAmount', () => {
   it('rounds to 2dp', () => {
-    expect(totalAmount(5, TIERS[0]!, 'month')).toBe(64.95);
+    expect(totalAmount(5, TIERS[0]!, 'month')).toBe(74.95);
   });
   it('matches per-seat math at boundaries', () => {
-    expect(totalAmount(6, TIERS[1]!, 'month')).toBeCloseTo(65.94, 2);
+    expect(totalAmount(6, TIERS[1]!, 'month')).toBeCloseTo(77.94, 2);
   });
 });
 
@@ -105,8 +115,11 @@ describe('nextTier', () => {
     expect(nextTier(TIERS[0]!)?.key).toBe('org_t2');
     expect(nextTier(TIERS[2]!)?.key).toBe('org_t4');
   });
-  it('returns null at the top', () => {
-    expect(nextTier(TIERS[3]!)).toBeNull();
+  it('returns Custom from Tier 4', () => {
+    expect(nextTier(TIERS[3]!)?.key).toBe('org_custom');
+  });
+  it('returns null at the top (Custom)', () => {
+    expect(nextTier(TIERS[4]!)).toBeNull();
   });
 });
 
@@ -120,8 +133,11 @@ describe('savingsAtNextTier', () => {
     const r = savingsAtNextTier(6, TIERS[0]!, 'month');
     expect(r?.seatsNeeded).toBe(0);
   });
-  it('returns null at top tier', () => {
+  it('returns null when next tier is Custom (sales-led, no price math)', () => {
     expect(savingsAtNextTier(75, TIERS[3]!, 'month')).toBeNull();
+  });
+  it('returns null at Custom (already top)', () => {
+    expect(savingsAtNextTier(200, TIERS[4]!, 'month')).toBeNull();
   });
 });
 

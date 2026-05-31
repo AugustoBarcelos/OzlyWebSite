@@ -84,7 +84,7 @@ jobs:
 
       - name: Type check
         working-directory: org-portal
-        run: npx tsc -b --noEmit
+        run: npx tsc --noEmit
 
       - name: Test (Vitest)
         working-directory: org-portal

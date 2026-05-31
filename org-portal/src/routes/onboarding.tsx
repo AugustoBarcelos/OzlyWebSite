@@ -36,7 +36,7 @@ export function OnboardingPage() {
     try {
       const { data, error } = await supabase.functions.invoke('abn-verify', { body: { abn } });
       if (error) throw error;
-      // deno-lint-ignore no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const r = data as any;
       if (r?.ok) {
         setAbnInfo({ legal_name: r.legal_name, is_active: r.is_active });

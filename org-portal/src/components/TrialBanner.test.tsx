@@ -59,9 +59,12 @@ describe('TrialBanner', () => {
     expect(screen.getByText(/Trial ends in 1 day/)).toBeDefined();
   });
 
-  it('shows the urgent (rose) styling under 3 days', () => {
+  it('shows the urgent (danger token) styling under 3 days', () => {
     mockTrialEndsAt = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString();
     const { container } = setup();
-    expect(container.innerHTML).toContain('rose');
+    // The component flips from --warn-* to --danger-* tokens under 3 days.
+    // We assert the CSS-var name rather than a Tailwind class so the
+    // theme-aware refactor doesn't break the test.
+    expect(container.innerHTML).toContain('--danger-bg');
   });
 });

@@ -1119,7 +1119,7 @@ function InvoiceDetailModal(props: {
       orgAbn,
       items: items ?? [],
     });
-    if (!ok) alert('Allow popups for ozly.app to download the receipt PDF.');
+    if (!ok) alert('Allow popups for ozly.au to download the receipt PDF.');
   };
 
   useEffect(() => {

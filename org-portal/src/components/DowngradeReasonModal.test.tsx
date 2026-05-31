@@ -16,8 +16,9 @@ describe('DowngradeReasonModal', () => {
       />,
     );
     expect(screen.getByText(/Before you go/i)).toBeDefined();
-    expect(screen.getByText(/Tier 2/i)).toBeDefined();
-    expect(screen.getByText(/Tier 1/i)).toBeDefined();
+    // Tier 1 = Crew, Tier 2 = Squad after the V2 rename.
+    expect(screen.getByText(/Squad/i)).toBeDefined();
+    expect(screen.getByText(/Crew/i)).toBeDefined();
   });
 
   it('disables Confirm button until a reason is picked', () => {
