@@ -7,7 +7,11 @@ import Home from "./pages/Home";
 const Support = lazy(() => import("./pages/Support"));
 const Guide = lazy(() => import("./pages/Guide"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const PrivacyPolicyBusiness = lazy(() => import("./pages/PrivacyPolicyBusiness"));
 const TermsOfUse = lazy(() => import("./pages/TermsOfUse"));
+const TermsBusiness = lazy(() => import("./pages/TermsBusiness"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
+const BusinessLanding = lazy(() => import("./pages/BusinessLanding"));
 const ReferralLanding = lazy(() => import("./pages/ReferralLanding"));
 const AffiliateDashboard = lazy(() => import("./pages/AffiliateDashboard"));
 const AffiliateAuth = lazy(() => import("./pages/AffiliateAuth"));
@@ -32,7 +36,11 @@ export default function App() {
             <Route path="/support" element={<Support />} />
             <Route path="/guide" element={<Guide />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/privacy-policy/business" element={<PrivacyPolicyBusiness />} />
             <Route path="/terms-of-use" element={<TermsOfUse />} />
+            <Route path="/terms-of-use/business" element={<TermsBusiness />} />
+            <Route path="/terms-of-service" element={<TermsOfService />} />
+            <Route path="/business" element={<BusinessLanding />} />
             {/* Landing pública do programa de afiliados — entrada do QR code.
                 `/v/` = vendedor. `/refer` (estático, em public/) fica
                 para o marketing antigo genérico e é intocado. */}

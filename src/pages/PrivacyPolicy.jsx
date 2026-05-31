@@ -1,3 +1,11 @@
+// ⚠️ CANONICAL SOURCE NOTICE — READ BEFORE EDITING
+// This React route (/privacy-policy) is NOT what users hard-load. The version
+// actually served at https://ozly.au/privacy-policy is the static file
+// `public/privacy-policy/index.html` (a real file → the server returns it
+// directly; the SPA 404-fallback never fires for this path). This component
+// only renders on client-side <Link> navigation, so the two can silently drift.
+// If you change legal text, edit `public/privacy-policy/index.html` (canonical)
+// AND this file to keep them in sync.
 import { useEffect } from "react";
 import { useI18n } from "../i18n";
 
@@ -17,7 +25,7 @@ export default function PrivacyPolicy() {
         </div>
 
         <Section title={p.s1}>
-          <p>Ozly (&ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;) is operated by Ozly Ltd (ABN 51 824 753 556), based in Australia. This Privacy Policy explains how we collect, use, disclose, and protect your personal information when you use the Ozly mobile application (the &ldquo;App&rdquo;) available on the Apple App Store and Google Play Store.</p>
+          <p>Ozly (&ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;) is a sole-trader business (ABN 72 203 548 158) based in Australia. This Privacy Policy explains how we collect, use, disclose, and protect your personal information when you use the Ozly mobile application (the &ldquo;App&rdquo;) available on the Apple App Store and Google Play Store.</p>
           <p>We are committed to complying with the <strong>Australian Privacy Act 1988 (Cth)</strong> and the <strong>Australian Privacy Principles (APPs)</strong>, as well as the privacy requirements of Apple and Google.</p>
           <p>For any privacy-related enquiry, please contact us at: <strong>privacy@ozly.com.au</strong></p>
         </Section>

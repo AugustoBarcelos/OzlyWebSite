@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Help · Ozly</title>
+  <meta name="description" content="Help center for Ozly — guides, FAQ, and troubleshooting." />
+  <link rel="icon" href="/favicon.ico" />
+  <style>
+    :root {
+      --navy: #162431; --navy-50: #f6f8fa; --navy-100: #e8edf1;
+      --navy-400: #7d8a98; --navy-700: #2c3e50;
+      --brand: #1aa78a; --bg: #fafbfc;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', Helvetica, Arial, sans-serif; color: var(--navy); background: var(--bg); line-height: 1.6; }
+    .container { max-width: 760px; margin: 0 auto; padding: 48px 24px; }
+    header { display: flex; align-items: center; gap: 12px; margin-bottom: 36px; }
+    .logo { width: 32px; height: 32px; background: var(--brand); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; }
+    h1 { font-size: 28px; font-weight: 700; }
+    h2 { font-size: 18px; font-weight: 700; margin-top: 28px; margin-bottom: 12px; }
+    .card { background: white; border: 1px solid var(--navy-100); border-radius: 12px; padding: 20px; margin-bottom: 12px; }
+    details { padding: 12px 16px; border: 1px solid var(--navy-100); border-radius: 8px; margin-bottom: 6px; background: white; }
+    summary { font-weight: 600; cursor: pointer; outline: none; }
+    summary::-webkit-details-marker { display: none; }
+    summary::before { content: '+'; display: inline-block; margin-right: 8px; color: var(--brand); font-weight: 800; }
+    details[open] summary::before { content: '−'; }
+    details p { margin-top: 8px; color: var(--navy-700); font-size: 14px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+    @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+    .pill { display: inline-block; padding: 4px 10px; border-radius: 12px; background: rgba(26,167,138,0.1); color: var(--brand); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+    .pill-card { padding: 16px; border-radius: 10px; background: white; border: 1px solid var(--navy-100); }
+    .pill-card h3 { font-size: 14px; font-weight: 700; margin-top: 6px; margin-bottom: 6px; }
+    .pill-card p { font-size: 13px; color: var(--navy-400); }
+    .footer { margin-top: 60px; text-align: center; color: var(--navy-400); font-size: 12px; }
+    .footer a { color: var(--brand); text-decoration: none; }
+    a { color: var(--brand); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">O</div>
+      <h1>Help center</h1>
+    </header>
+
+    <section class="card">
+      <strong>Looking for something specific?</strong>
+      <p style="margin-top:8px; color:var(--navy-400); font-size:14px">
+        Email <a href="mailto:augusto@ozly.app">augusto@ozly.app</a> — first reply usually within 24h.
+      </p>
+    </section>
+
+    <div class="grid">
+      <div class="pill-card">
+        <span class="pill">For sub-contractors</span>
+        <h3>The Ozly app</h3>
+        <p>Track jobs, emit ABN invoices, monitor your tax position and visa hours.</p>
+      </div>
+      <div class="pill-card">
+        <span class="pill">For organisations</span>
+        <h3>The Org Portal</h3>
+        <p>Invite sub-contractors, receive invoices, cover ABN access, manage billing.</p>
+      </div>
+    </div>
+
+    <h2>Frequently asked</h2>
+
+    <details>
+      <summary>How does the &ldquo;cover ABN&rdquo; thing work?</summary>
+      <p>When your organisation covers a sub-contractor's ABN access, their Ozly subscription is paid through your seat fee — they don't pay anything. In return, their invoices on Ozly are limited to your organisation only. If they want to also bill other clients, they can add a $5/month personal top-up in the app (still on your cover).</p>
+    </details>
+
+    <details>
+      <summary>Can a sub-contractor be in more than one organisation?</summary>
+      <p>Yes. They can be a member of multiple orgs. The org-portal selector in their app lets them pick which one to bill. The "cover ABN" lock applies to the union of all covering orgs.</p>
+    </details>
+
+    <details>
+      <summary>What happens at the end of the 14-day trial?</summary>
+      <p>If you've added a payment method, billing starts automatically at your active tier (auto-detected from your accepted member count). If not, your members lose ABN cover after a 7-day grace period. You can re-subscribe at any time and they pick up where they left off.</p>
+    </details>
+
+    <details>
+      <summary>How do I export invoices for BAS / quarterly tax?</summary>
+      <p>In the Org Portal: Reports → BAS quarterly. Pick the fiscal year (Jul→Jun) and quarter, then Export CSV. The columns map directly to the ATO portal fields. The free CSV export covers most BAS lodgements; the Xero / MYOB integration (Phase 3) auto-pushes the same data.</p>
+    </details>
+
+    <details>
+      <summary>How do I upgrade or downgrade my tier?</summary>
+      <p>Only the org owner can change tiers (admins are read-only on Billing). Go to Billing → pick the new tier → confirm. Upgrades are immediate with Stripe-prorated billing. Downgrades go through a brief exit-interview flow and take effect at the next renewal.</p>
+    </details>
+
+    <details>
+      <summary>How do I send an invoice directly to an org from the app?</summary>
+      <p>When creating an invoice, pick the org from the "Your companies" group in the Bill-to picker. The "Send directly to org" toggle is on by default — confirm and emit. The PDF goes straight to the org's inbox in the portal. Tick "Email me a copy" to also receive it.</p>
+    </details>
+
+    <details>
+      <summary>What's the difference between &ldquo;ABN&rdquo; and &ldquo;PRO&rdquo;?</summary>
+      <p>ABN access = invoice your clients with your ABN on every invoice. PRO = ABN + tax tools (visa-conditional Medicare Levy, fiscal year planner). Both are $14.99/mo and $19.99/mo respectively when paying individually. Org-cover users can add $5 or $9 top-ups to upgrade incrementally.</p>
+    </details>
+
+    <details>
+      <summary>What if a member leaves the org?</summary>
+      <p>Their membership is marked &ldquo;removed&rdquo;. Your seat count drops automatically at the next billing cycle. Their personal Ozly app continues working with whatever billing they had before joining you — your data flow stops, theirs continues.</p>
+    </details>
+
+    <details>
+      <summary>How is Ozly compliant with Fair Work / ATO?</summary>
+      <p>Ozly never creates an employment relationship. All language, retention, and behaviour is built around the sub-contractor/engagement framework. We don't capture TFNs, we don't sign engagement contracts, and we don't dictate work patterns. See our <a href="/terms-of-use/business">Business Terms</a> for the full clause.</p>
+    </details>
+
+    <h2>Still stuck?</h2>
+    <p style="color:var(--navy-700); font-size:14px">
+      Email <a href="mailto:augusto@ozly.app">augusto@ozly.app</a> with screenshots if possible. We aim to reply within 24 hours on business days.
+    </p>
+
+    <div class="footer">
+      <p><a href="/">Home</a> · <a href="/privacy-policy">Privacy</a> · <a href="/terms-of-use">Terms</a> · <a href="https://status.ozly.app">Status</a></p>
+    </div>
+  </div>
+</body>
+</html>

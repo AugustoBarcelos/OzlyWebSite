@@ -1,0 +1,42 @@
+name: help CI
+
+# Deploys the static help center (help.ozly.app) to Cloudflare Pages.
+# Mirror of status.yml — plain HTML for now, MDX rendering lands in P1.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'help/**'
+      - '.github/workflows/help.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: help-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          test -f help/index.html || { echo "::error::help/index.html missing"; exit 1; }
+          grep -q '<html' help/index.html || { echo "::error::no <html> tag"; exit 1; }
+
+  deploy:
+    needs: validate
+    if: vars.ENABLE_HELP_DEPLOY == 'true' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          projectName: ozly-help
+          directory: help
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}

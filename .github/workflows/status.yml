@@ -1,0 +1,51 @@
+name: status CI
+
+# Deploys the static status page (status.ozly.app) to Cloudflare Pages.
+# The status page is plain HTML — no build step. CI just validates the
+# files exist + uploads them.
+#
+# Gated by repo variable ENABLE_STATUS_DEPLOY=true so the workflow runs but
+# doesn't publish until you're ready.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'status/**'
+      - '.github/workflows/status.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: status-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify required files
+        run: |
+          test -f status/index.html || { echo "::error::status/index.html missing"; exit 1; }
+          # Reject anything obviously broken in the HTML (very rough check).
+          grep -q '<html' status/index.html || { echo "::error::no <html> tag"; exit 1; }
+          grep -q 'Ozly' status/index.html || { echo "::error::Brand reference missing"; exit 1; }
+
+  deploy:
+    needs: validate
+    if: vars.ENABLE_STATUS_DEPLOY == 'true' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          projectName: ozly-status
+          directory: status
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}

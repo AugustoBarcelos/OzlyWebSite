@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ozly status</title>
+  <meta name="description" content="Real-time status of Ozly app, portals and backend." />
+  <link rel="icon" href="/favicon.ico" />
+  <style>
+    :root {
+      --navy: #162431;
+      --navy-50: #f6f8fa;
+      --navy-100: #e8edf1;
+      --navy-400: #7d8a98;
+      --navy-700: #2c3e50;
+      --brand: #1aa78a;
+      --warn: #e8a93b;
+      --error: #d4514c;
+      --bg: #fafbfc;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', Helvetica, Arial, sans-serif;
+      color: var(--navy);
+      background: var(--bg);
+      line-height: 1.5;
+    }
+    .container { max-width: 720px; margin: 0 auto; padding: 48px 24px; }
+    header { display: flex; align-items: center; gap: 12px; margin-bottom: 36px; }
+    .logo { width: 32px; height: 32px; background: var(--brand); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; }
+    h1 { font-size: 22px; font-weight: 700; }
+    .pulse {
+      background: white; border: 1px solid var(--navy-100); border-radius: 12px;
+      padding: 24px; text-align: center; margin-bottom: 24px;
+    }
+    .pulse .badge {
+      display: inline-block; padding: 6px 14px; border-radius: 20px;
+      background: rgba(26, 167, 138, 0.1); color: var(--brand);
+      font-weight: 700; font-size: 13px;
+    }
+    .pulse h2 { margin-top: 12px; font-size: 24px; font-weight: 700; }
+    .pulse p { color: var(--navy-400); font-size: 13px; margin-top: 6px; }
+    .services { background: white; border: 1px solid var(--navy-100); border-radius: 12px; overflow: hidden; }
+    .service { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--navy-100); }
+    .service:last-child { border-bottom: none; }
+    .service-name { font-weight: 600; }
+    .service-meta { color: var(--navy-400); font-size: 12px; margin-top: 2px; }
+    .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; vertical-align: middle; }
+    .dot.ok { background: var(--brand); }
+    .dot.warn { background: var(--warn); }
+    .dot.error { background: var(--error); }
+    .status-pill { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 10px; }
+    .status-pill.ok { background: rgba(26, 167, 138, 0.1); color: var(--brand); }
+    .status-pill.warn { background: rgba(232, 169, 59, 0.1); color: var(--warn); }
+    .status-pill.error { background: rgba(212, 81, 76, 0.1); color: var(--error); }
+    footer { margin-top: 48px; text-align: center; font-size: 12px; color: var(--navy-400); }
+    footer a { color: var(--brand); text-decoration: none; }
+    section + section { margin-top: 24px; }
+    h3 { font-size: 14px; font-weight: 600; color: var(--navy-400); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
+    .incident { background: white; border: 1px solid var(--navy-100); border-radius: 8px; padding: 14px; margin-bottom: 8px; }
+    .incident-date { color: var(--navy-400); font-size: 11px; margin-bottom: 4px; }
+    .incident-title { font-weight: 600; font-size: 14px; }
+    .empty { padding: 24px; text-align: center; color: var(--navy-400); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">O</div>
+      <h1>Ozly Status</h1>
+    </header>
+
+    <section class="pulse">
+      <span class="badge">● All systems operational</span>
+      <h2>Everything's running smoothly</h2>
+      <p>Last checked: <span id="last-checked">just now</span></p>
+    </section>
+
+    <section>
+      <h3>Services</h3>
+      <div class="services">
+        <div class="service">
+          <div>
+            <div class="service-name"><span class="dot ok"></span>Mobile app (iOS + Android)</div>
+            <div class="service-meta">App Store + Play Store distribution</div>
+          </div>
+          <span class="status-pill ok">Operational</span>
+        </div>
+        <div class="service">
+          <div>
+            <div class="service-name"><span class="dot ok"></span>Org Portal (app.ozly.app)</div>
+            <div class="service-meta">B2B web portal for organisations</div>
+          </div>
+          <span class="status-pill ok">Operational</span>
+        </div>
+        <div class="service">
+          <div>
+            <div class="service-name"><span class="dot ok"></span>API + Database (Supabase)</div>
+            <div class="service-meta">Authentication, data, real-time, edge functions</div>
+          </div>
+          <span class="status-pill ok">Operational</span>
+        </div>
+        <div class="service">
+          <div>
+            <div class="service-name"><span class="dot ok"></span>Billing (Stripe)</div>
+            <div class="service-meta">Subscription management + invoicing</div>
+          </div>
+          <span class="status-pill ok">Operational</span>
+        </div>
+        <div class="service">
+          <div>
+            <div class="service-name"><span class="dot ok"></span>In-app purchases (RevenueCat)</div>
+            <div class="service-meta">App Store + Play Store entitlements</div>
+          </div>
+          <span class="status-pill ok">Operational</span>
+        </div>
+        <div class="service">
+          <div>
+            <div class="service-name"><span class="dot ok"></span>Email delivery (Resend)</div>
+            <div class="service-meta">Transactional emails for invites, invoices, alerts</div>
+          </div>
+          <span class="status-pill ok">Operational</span>
+        </div>
+        <div class="service">
+          <div>
+            <div class="service-name"><span class="dot ok"></span>Push notifications (Firebase)</div>
+            <div class="service-meta">Mobile push delivery</div>
+          </div>
+          <span class="status-pill ok">Operational</span>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h3>Recent incidents</h3>
+      <div class="empty">No incidents in the last 7 days.</div>
+    </section>
+
+    <footer>
+      <p>Updates: follow <a href="https://twitter.com/ozly_app" target="_blank">@ozly_app</a> · Contact <a href="mailto:augusto@ozly.app">augusto@ozly.app</a></p>
+      <p style="margin-top:8px">Maintained manually for now — full dashboard with auto-checks lands in P1.</p>
+    </footer>
+  </div>
+  <script>
+    document.getElementById('last-checked').textContent = new Date().toLocaleString('en-AU', {
+      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+    });
+  </script>
+</body>
+</html>
