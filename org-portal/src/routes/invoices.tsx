@@ -2,12 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useOrg } from '@/lib/org';
 import { useToast } from '@/components/Toast';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Spinner } from '@/components/Spinner';
 import { PageHeader } from '@/components/PageHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { FileTextIcon } from '@/components/Icons';
 import { InvoiceStatusBadge } from '@/components/StatusBadge';
+import { Avatar } from '@/components/Avatar';
+import { KpiCard, type KpiTone } from '@/components/KpiCard';
 import { formatMoney, formatDate, formatPeriod } from '@/lib/format';
 import { logOrgEvent } from '@/lib/telemetry';
 import { fetchPayState, isUnpaid } from '@/lib/payments';
@@ -18,6 +20,7 @@ import { friendlyError } from '@/lib/errors';
 import { ColumnFilter, DateColumnFilter, type DateRange, type Option, type SortDir } from '@/components/ColumnFilter';
 import { GettingStarted } from '@/components/GettingStarted';
 import { toCsv, downloadCsv, timestampSuffix, toXeroBillsCsv, type XeroBillRow } from '@/lib/csv';
+import { generateAbaFile, downloadAbaFile, type AbaPaymentRow } from '@/lib/aba';
 import { openInvoiceReceipt } from '@/lib/invoice-receipt';
 import { listPresets, savePreset, deletePreset, type Preset } from '@/lib/filter-presets';
 
@@ -185,6 +188,25 @@ export function InvoicesPage() {
     };
   }, [orgId]);
 
+  // Hydrate the status filter from `?status=...` on first mount. Lets the
+  // dashboard (and anywhere else) deep-link into a pre-filtered invoice view.
+  // Strips the param after applying so a manual filter change doesn't fight
+  // with the URL.
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    const raw = searchParams.get('status');
+    if (!raw) return;
+    const valid = new Set(['draft', 'sent', 'overdue', 'paid']);
+    const wanted = raw.split(',').map((s) => s.trim()).filter((s) => valid.has(s));
+    if (wanted.length === 0) return;
+    setFilters((prev) => ({ ...prev, status: new Set(wanted) }));
+    // Remove the param so refresh doesn't re-apply on top of a user edit.
+    const next = new URLSearchParams(searchParams);
+    next.delete('status');
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function refreshTotals() {
     if (!orgId) return;
     const { data } = await supabase.rpc('org_invoice_totals', { p_org_id: orgId, p_from: periodFrom, p_to: periodTo });
@@ -238,23 +260,45 @@ export function InvoicesPage() {
     }
   }, [orgId, loading, total]);
 
+  // Pin `load` in a ref so the realtime effect depends only on `orgId`.
+  // Without this, every filter/sort/page change torn down + re-created the
+  // channel — slow, race-prone, and could miss events during the reconnect
+  // window. With the ref, the channel lives for the lifetime of the org
+  // selection and just invokes the latest `load`.
+  const loadRef = useRef(load);
+  useEffect(() => { loadRef.current = load; }, [load]);
+
   useEffect(() => {
     if (!orgId) return;
+    // Debounce reload bursts (e.g. a bulk mark-paid fires N postgres_changes
+    // events in rapid succession; we only need one reload).
+    let pending: number | null = null;
+    const scheduleReload = () => {
+      if (bulkBusyRef.current) return; // skip — our own bulk is in flight
+      if (pending !== null) window.clearTimeout(pending);
+      pending = window.setTimeout(() => {
+        pending = null;
+        void loadRef.current();
+      }, 350);
+    };
     const channel = supabase
       .channel(`org-invoices-${orgId}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'invoices', filter: `org_visible_id=eq.${orgId}` },
         (payload) => {
-          if (payload.eventType === 'INSERT') notify('New invoice received', 'info');
-          void load();
+          if (payload.eventType === 'INSERT' && !bulkBusyRef.current) {
+            notify('New invoice received', 'info');
+          }
+          scheduleReload();
         },
       )
       .subscribe();
     return () => {
+      if (pending !== null) window.clearTimeout(pending);
       void supabase.removeChannel(channel);
     };
-  }, [orgId, load, notify]);
+  }, [orgId, notify]);
 
   function patchInvoice(id: string, patch: Partial<InvoiceRow>) {
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
@@ -369,6 +413,11 @@ export function InvoicesPage() {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+  // Mirror to a ref so the realtime channel callback (subscribed once per
+  // orgId) can ignore events that fire DURING our own bulk mark-paid sweep,
+  // avoiding a thundering-herd of reloads.
+  const bulkBusyRef = useRef(false);
+  useEffect(() => { bulkBusyRef.current = bulkBusy; }, [bulkBusy]);
 
   // Saved views — localStorage-backed presets of (period + filters + sort).
   interface InvoicePreset {
@@ -430,6 +479,87 @@ export function InvoicesPage() {
     setSelectedIds(new Set());
     setSelectMode(false);
   }
+
+  /**
+   * Build an ABA bank-batch file from the selected (unpaid) invoices.
+   * The bank account info comes from each sub's `user_businesses` row.
+   * If a sub is missing BSB or account, we skip them and notify which.
+   */
+  async function bulkExportAba(): Promise<void> {
+    if (!orgId || selectedIds.size === 0) return;
+    setBulkBusy(true);
+    try {
+      const selected = rows.filter((r) => selectedIds.has(r.id) && r.status !== 'paid');
+      if (selected.length === 0) {
+        notify('Pick at least one unpaid invoice.', 'info');
+        return;
+      }
+
+      // Fetch each sub's business banking once. We could batch this in a
+      // single .in() query — doing that for performance.
+      const userIds = [...new Set(selected.map((r) => r.user_id))];
+      const { data: businesses } = await supabase
+        .from('user_businesses')
+        .select('user_id, bsb, account_number, company_name')
+        .in('user_id', userIds);
+      const bankByUser = new Map<string, { bsb: string; account_number: string; company_name: string }>();
+      ((businesses ?? []) as { user_id: string; bsb: string; account_number: string; company_name: string }[]).forEach((b) => {
+        bankByUser.set(b.user_id, b);
+      });
+
+      // Build rows + collect missing.
+      const skipped: string[] = [];
+      const payments: AbaPaymentRow[] = [];
+      for (const inv of selected) {
+        const bank = bankByUser.get(inv.user_id);
+        const issuerName = inv.issuer?.full_name?.trim() || inv.issuer?.email || 'Sub-contractor';
+        if (!bank || !bank.bsb || !bank.account_number) {
+          skipped.push(issuerName);
+          continue;
+        }
+        payments.push({
+          bsb: bank.bsb,
+          accountNumber: bank.account_number,
+          accountName: (bank.company_name?.trim() || issuerName),
+          amountAud: Number(inv.total ?? 0),
+          lodgementReference: (inv.invoice_number ?? inv.id.slice(0, 8)).slice(0, 18),
+        });
+      }
+
+      if (payments.length === 0) {
+        notify('None of the selected subs have BSB + account on file.', 'error');
+        return;
+      }
+
+      const orgAbn = currentOrg?.abn?.replace(/\D/g, '').slice(0, 12) ?? '';
+      const content = generateAbaFile(
+        {
+          // Sender details — placeholder. Org should fill these in Settings →
+          // Bank details, then we'd read from there. For now we leave blank
+          // and let the banking app fill on import.
+          senderBsb: '000000',
+          senderAccount: '000000000',
+          senderName: (currentOrg?.name ?? 'Org').slice(0, 26),
+          bankCode: 'ANZ',
+          description: 'OZLYPAY',
+          processingDate: new Date().toISOString().slice(0, 10),
+        },
+        payments,
+      );
+      const fn = `ozly-aba-${orgAbn || 'pay'}-${timestampSuffix()}.aba`;
+      downloadAbaFile(fn, content);
+
+      const totalCents = payments.reduce((s, p) => s + Math.round(p.amountAud * 100), 0);
+      const totalAud = (totalCents / 100).toFixed(2);
+      const skipMsg = skipped.length > 0 ? ` · Skipped ${skipped.length} (no BSB on file): ${skipped.slice(0, 3).join(', ')}${skipped.length > 3 ? '…' : ''}` : '';
+      notify(`ABA file ready — ${payments.length} payment${payments.length === 1 ? '' : 's'}, $${totalAud}.${skipMsg}`, payments.length > 0 && skipped.length > 0 ? 'info' : 'success');
+    } catch (e) {
+      notify(friendlyError(e, 'Could not generate ABA file.'), 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
   async function bulkMarkPaid() {
     if (selectedIds.size === 0) return;
     setBulkBusy(true);
@@ -441,21 +571,35 @@ export function InvoicesPage() {
       const results = await Promise.allSettled(
         ids.map((id) => supabase.rpc('org_mark_invoice_paid', { p_invoice_id: id })),
       );
-      const failed = results.filter((r) => r.status === 'rejected' || (r.status === 'fulfilled' && r.value.error));
-      const ok = ids.length - failed.length;
-      // Optimistically patch local rows + refresh totals.
+      // Build the set of FAILED ids so the optimistic patch only marks
+      // genuinely-succeeded rows. Without this, the UI lies — "marked as paid"
+      // for rows that the server rejected, until the next full reload.
+      const failedIds = new Set<string>();
+      results.forEach((r, i) => {
+        const id = ids[i]!;
+        if (r.status === 'rejected') failedIds.add(id);
+        else if (r.status === 'fulfilled' && r.value.error) failedIds.add(id);
+      });
+      const ok = ids.length - failedIds.size;
+      const nowIso = new Date().toISOString();
       setRows((prev) =>
         prev.map((r) =>
-          selectedIds.has(r.id) ? { ...r, status: 'paid', paid_at: new Date().toISOString() } : r,
+          selectedIds.has(r.id) && !failedIds.has(r.id)
+            ? { ...r, status: 'paid', paid_at: nowIso }
+            : r,
         ),
       );
       void refreshTotals();
       clearSelection();
-      if (failed.length === 0) {
+      if (failedIds.size === 0) {
         notify(`Marked ${ok} invoice${ok === 1 ? '' : 's'} as paid.`, 'success');
+      } else if (ok === 0) {
+        notify(`All ${failedIds.size} mark-paid attempts failed.`, 'error');
       } else {
-        notify(`Marked ${ok} as paid · ${failed.length} failed.`, 'info');
+        notify(`Marked ${ok} as paid · ${failedIds.size} failed.`, 'info');
       }
+    } catch (e) {
+      notify(friendlyError(e, 'Bulk mark-paid failed.'), 'error');
     } finally {
       setBulkBusy(false);
     }
@@ -554,6 +698,7 @@ export function InvoicesPage() {
   return (
     <div>
       <PageHeader
+        kicker="Operations"
         title="Invoices"
         subtitle={`What your sub-contractors have billed ${currentOrg?.name ?? ''} — click a row to see the work`}
       />
@@ -660,11 +805,27 @@ export function InvoicesPage() {
       </div>
 
       {selectMode && selectedIds.size > 0 && (
-        <div className="mb-3 flex items-center justify-between rounded-lg border border-brand-200 bg-brand-50/60 px-4 py-2">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-brand-200 bg-brand-50/60 px-4 py-2">
           <span className="text-sm font-medium text-brand-700">
             {selectedIds.size} invoice{selectedIds.size === 1 ? '' : 's'} selected
+            {' · '}
+            <span className="text-brand-600">
+              {formatMoney(
+                rows
+                  .filter((r) => selectedIds.has(r.id) && r.status !== 'paid')
+                  .reduce((sum, r) => sum + Number(r.total ?? 0), 0),
+              )} payable
+            </span>
           </span>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => void bulkExportAba()}
+              disabled={bulkBusy}
+              className="rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-brand-700 ring-1 ring-brand-200 hover:bg-brand-50 disabled:opacity-50"
+              title="Generate an ABA bank-batch file to upload in your internet banking"
+            >
+              💸 Generate ABA file
+            </button>
             <button
               onClick={() => void bulkMarkPaid()}
               disabled={bulkBusy}
@@ -684,26 +845,24 @@ export function InvoicesPage() {
 
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {([
-          ['outstanding', 'Outstanding', formatMoney(kpis.outstanding), undefined],
-          ['overdue', 'Overdue', formatMoney(kpis.overdue), kpis.overdue > 0 ? '#e11d48' : undefined],
-          ['paid', 'Paid', formatMoney(kpis.paid), undefined],
-          ['awaiting', 'Awaiting confirmation', String(kpis.awaiting), undefined],
-        ] as [KpiKey, string, string, string | undefined][]).map(([key, label, value, color]) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => toggleKpi(key)}
-            aria-pressed={kpiActive(key)}
-            className={`kpi text-left transition-shadow hover:ring-2 hover:ring-brand-100 ${
-              kpiActive(key) ? 'ring-2 ring-brand-400' : ''
-            }`}
-          >
-            <div className="kpi-label">{label}</div>
-            <div className="kpi-value" style={{ color }}>
-              {value}
-            </div>
-          </button>
-        ))}
+          ['outstanding', 'Outstanding',           formatMoney(kpis.outstanding), 'navy'  as KpiTone],
+          ['overdue',     'Overdue',               formatMoney(kpis.overdue),     'rose'  as KpiTone],
+          ['paid',        'Paid',                  formatMoney(kpis.paid),        'brand' as KpiTone],
+          ['awaiting',    'Awaiting confirmation', String(kpis.awaiting),         'lime'  as KpiTone],
+        ] as [KpiKey, string, string, KpiTone][]).map(([key, label, value, tone]) => {
+          const valueColor = key === 'overdue' && kpis.overdue > 0 ? '#e11d48' : undefined;
+          return (
+            <KpiCard
+              key={key}
+              tone={tone}
+              label={label}
+              value={value}
+              {...(valueColor ? { valueColor } : {})}
+              onClick={() => toggleKpi(key)}
+              active={kpiActive(key)}
+            />
+          );
+        })}
       </div>
 
       {loading ? (
@@ -814,7 +973,7 @@ export function InvoicesPage() {
                     } ${selectMode && selectedIds.has(r.id) ? 'bg-brand-50/60' : ''}`}
                   >
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2.5">
                         {selectMode && (
                           <input
                             type="checkbox"
@@ -826,16 +985,23 @@ export function InvoicesPage() {
                             title={r.status === 'paid' ? 'Already paid' : 'Select'}
                           />
                         )}
-                        <div className="font-medium text-navy-700">{issuerName(r)}</div>
-                      </div>
-                      {isUnpaid(payState, r.user_id) && (
-                        <div
-                          className="text-[11px] italic text-amber-600"
-                          title="No one is covering this sub-contractor's ABN plan, so their invoices won't include an ABN. Cover it for them or ask them to subscribe."
-                        >
-                          Needs ABN cover
+                        <Avatar
+                          name={r.issuer?.full_name?.trim() ?? null}
+                          email={r.issuer?.email ?? null}
+                          size="sm"
+                        />
+                        <div className="min-w-0">
+                          <div className="truncate font-semibold text-navy-800">{issuerName(r)}</div>
+                          {isUnpaid(payState, r.user_id) && (
+                            <div
+                              className="text-[11px] italic text-amber-600"
+                              title="No one is covering this sub-contractor's ABN plan, so their invoices won't include an ABN. Cover it for them or ask them to subscribe."
+                            >
+                              Needs ABN cover
+                            </div>
+                          )}
                         </div>
-                      )}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-navy-500">{r.invoice_number || '—'}</td>
                     <td className="px-4 py-3 text-navy-500">{formatPeriod(r.issue_date, r.due_date)}</td>
@@ -1044,6 +1210,8 @@ function InvoiceDetailModal(props: {
           <div className="mt-4 rounded-md bg-navy-50 px-3 py-2 text-xs text-navy-500">{invoice.notes}</div>
         )}
 
+        <InvoiceAuditTimeline invoice={invoice} />
+
         <div className="mt-5 flex items-center justify-between border-t border-navy-50 pt-4">
           <div className="text-xs">
             {invoice.status === 'paid' ? (
@@ -1090,3 +1258,108 @@ function InvoiceDetailModal(props: {
     </div>
   );
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Audit timeline for an invoice — chronological log of who did what when.
+// Reads org_events filtered to this invoice. Always renders a synthetic
+// 'created' entry so the timeline isn't empty for invoices issued before
+// org_events captured every state change.
+// ─────────────────────────────────────────────────────────────────────────────
+interface AuditEntry {
+  at: string;
+  icon: string;
+  label: string;
+  detail?: string;
+  tone: 'brand' | 'navy' | 'amber';
+}
+
+function InvoiceAuditTimeline({ invoice }: { invoice: InvoiceRow }) {
+  const [events, setEvents] = useState<AuditEntry[] | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const { data } = await supabase
+        .from('org_events')
+        .select('event_name, metadata, created_at')
+        .filter('metadata->>invoice_id', 'eq', invoice.id)
+        .order('created_at', { ascending: true })
+        .limit(20);
+
+      const out: AuditEntry[] = [
+        { at: invoice.issue_date,    icon: '✎', label: 'Invoice issued',  tone: 'navy',  detail: `by ${invoice.issuer?.full_name?.trim() || invoice.issuer?.email || 'Sub-contractor'}` },
+      ];
+      if (invoice.sent_at) {
+        out.push({ at: invoice.sent_at, icon: '→', label: 'Sent to your inbox', tone: 'navy' });
+      }
+      (data ?? []).forEach((e: { event_name: string; created_at: string; metadata: unknown }) => {
+        switch (e.event_name) {
+          case 'org_invoice_marked_paid':
+            out.push({ at: e.created_at, icon: '✓', label: 'Marked paid by admin', tone: 'brand' });
+            break;
+          case 'org_invoice_unmarked_paid':
+            out.push({ at: e.created_at, icon: '↶', label: 'Mark-paid undone',     tone: 'amber' });
+            break;
+          case 'org_payment_confirmed_by_member':
+            out.push({ at: e.created_at, icon: '✓', label: 'Member confirmed payment received', tone: 'brand' });
+            break;
+          default:
+            out.push({ at: e.created_at, icon: '·', label: e.event_name.replace(/_/g, ' '), tone: 'navy' });
+        }
+      });
+
+      // Fold in non-event state we know about
+      if (invoice.paid_at && !out.some((e) => e.label === 'Marked paid by admin')) {
+        out.push({ at: invoice.paid_at, icon: '✓', label: 'Marked paid', tone: 'brand' });
+      }
+      if (invoice.payment_confirmed_at && !out.some((e) => e.label.includes('confirmed payment'))) {
+        out.push({ at: invoice.payment_confirmed_at, icon: '✓', label: 'Member confirmed payment received', tone: 'brand' });
+      }
+
+      out.sort((a, b) => a.at.localeCompare(b.at));
+      if (active) setEvents(out);
+    })();
+    return () => { active = false; };
+  }, [invoice.id, invoice.issue_date, invoice.sent_at, invoice.paid_at, invoice.payment_confirmed_at, invoice.issuer?.full_name, invoice.issuer?.email]);
+
+  if (!events) return null;
+
+  const TONES: Record<AuditEntry['tone'], { bg: string; ring: string; fg: string }> = {
+    brand: { bg: 'rgba(43, 187, 151, 0.14)', ring: 'rgba(43, 187, 151, 0.36)', fg: 'var(--color-brand-700)' },
+    navy:  { bg: 'rgba(20, 36, 47, 0.06)',  ring: 'rgba(20, 36, 47, 0.18)',   fg: 'var(--ink-secondary)' },
+    amber: { bg: 'rgba(245, 158, 11, 0.16)', ring: 'rgba(245, 158, 11, 0.36)', fg: '#92400e' },
+  };
+
+  return (
+    <details className="mt-5 rounded-lg border border-navy-100 bg-navy-50/30">
+      <summary className="cursor-pointer list-none px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-navy-500">
+        <span className="mr-1.5">📜</span>
+        Audit trail · {events.length} event{events.length === 1 ? '' : 's'}
+        <span className="ml-2 text-navy-300">▾</span>
+      </summary>
+      <ol className="space-y-2 px-3 pb-3 pt-1">
+        {events.map((e, i) => {
+          const t = TONES[e.tone];
+          return (
+            <li key={i} className="flex items-start gap-2.5">
+              <span
+                className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
+                style={{ background: t.bg, color: t.fg, boxShadow: `inset 0 0 0 1px ${t.ring}` }}
+              >
+                {e.icon}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="text-[12.5px] font-medium text-navy-800">{e.label}</div>
+                {e.detail && <div className="text-[11px] text-navy-400">{e.detail}</div>}
+              </div>
+              <div className="text-[10.5px] text-navy-400 shrink-0">
+                {new Date(e.at).toLocaleString('en-AU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+    </details>
+  );
+}
+
