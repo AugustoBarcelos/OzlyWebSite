@@ -12,6 +12,30 @@
       rel="stylesheet"
     />
     <title>Ozly for Organisations</title>
+    <!--
+      No-flash theme init. Runs synchronously BEFORE the React bundle so the
+      <html data-theme> attribute is set before first paint — otherwise dark-
+      mode users would see a white flash before React mounts and applies it.
+
+      Mirrors getStoredTheme() + resolveTheme() in src/lib/theme.ts. If you
+      change the storage key or the logic, update both.
+    -->
+    <script>
+      (function () {
+        try {
+          var KEY = 'ozly.org.theme';
+          var stored = localStorage.getItem(KEY);
+          var pref = stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'system';
+          var resolved =
+            pref === 'system'
+              ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+              : pref;
+          document.documentElement.setAttribute('data-theme', resolved);
+        } catch (_) {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

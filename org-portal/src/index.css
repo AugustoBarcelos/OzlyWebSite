@@ -1,7 +1,12 @@
 @import 'tailwindcss';
 
+/* Tailwind v4 class-based dark mode — we toggle [data-theme="dark"] on <html>
+   so `dark:bg-navy-800` etc work without depending on system preference. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
 /* ── Ozly brand tokens ────────────────────────────────────────────────────── */
 @theme {
+  /* Teal — primary brand. The recogniseable "Ozly green". */
   --color-brand-50: #e8f8f3;
   --color-brand-100: #c5ede2;
   --color-brand-200: #8edbc5;
@@ -13,6 +18,7 @@
   --color-brand-800: #166d57;
   --color-brand-900: #0f5443;
 
+  /* Lime — primary action / energy accent. */
   --color-lime-50: #f4fbe8;
   --color-lime-100: #e6f5cc;
   --color-lime-200: #cdeb99;
@@ -22,6 +28,7 @@
   --color-lime-600: #6fa83d;
   --color-lime-700: #55872c;
 
+  /* Navy — surfaces (dark mode) + ink (light mode). The midnightNavy anchor. */
   --color-navy-50: #eef1f4;
   --color-navy-100: #d4dbe2;
   --color-navy-200: #9fb0bf;
@@ -33,12 +40,169 @@
   --color-navy-800: #0e1a23;
   --color-navy-900: #08121a;
 
+  /* Sand — PRO tier exclusively. Don't use for normal accents. */
+  --color-sand-50: #fbf7ee;
+  --color-sand-100: #f5ead0;
+  --color-sand-200: #e9d398;
+  --color-sand-300: #d9b85f;
+  --color-sand-400: #c9a43c;
+
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-display: 'Montserrat', 'Inter', sans-serif;
 }
 
-:root {
+/* ── Semantic tokens (themed) ─────────────────────────────────────────────
+   Every surface, ink and border references one of these. To add/remove dark
+   mode is one block of overrides — components don't have to know. */
+
+:root,
+:root[data-theme='light'] {
   color-scheme: light;
+
+  /* Canvas — very faint teal tint instead of beige. Brand-anchored ivory. */
+  --canvas: #f4f7f5;
+  --canvas-tint:
+    radial-gradient(at 0% 0%, rgba(43, 187, 151, 0.06), transparent 35%),
+    radial-gradient(at 100% 0%, rgba(157, 215, 96, 0.05), transparent 30%);
+
+  /* Surface stack */
+  --surface:           #ffffff;
+  --surface-elevated:  #ffffff;
+  --surface-soft:      #f8fbf9;
+  --surface-sidebar:   #fbfdfc;
+
+  /* Ink */
+  --ink-primary:    #0e1a23;
+  --ink-secondary:  #243b4f;
+  --ink-tertiary:   #607387;
+  --ink-muted:      #9fb0bf;
+
+  /* Borders + hairlines */
+  --border-hairline: rgba(20, 36, 47, 0.07);
+  --border-soft:     rgba(20, 36, 47, 0.10);
+  --border-strong:   rgba(20, 36, 47, 0.18);
+
+  /* Shadows */
+  --shadow-card:  0 1px 0 rgba(20, 36, 47, 0.02), 0 2px 6px -3px rgba(20, 36, 47, 0.06);
+  --shadow-pop:   0 8px 20px -10px rgba(20, 36, 47, 0.18);
+  --shadow-brand: 0 4px 12px -4px rgba(43, 187, 151, 0.4);
+
+  /* Hover tints — picked up by tables, list rows, nav items */
+  --hover-surface: rgba(43, 187, 151, 0.045);
+  --row-zebra:     rgba(20, 36, 47, 0.014);
+
+  /* Hero gradient — teal + lime, anchored. */
+  --hero-bg:
+    radial-gradient(ellipse at 100% 0%, rgba(157, 215, 96, 0.14), transparent 50%),
+    linear-gradient(135deg, #ffffff 0%, #f4faf7 100%);
+
+  /* KPI per-tone gradients (light) */
+  --kpi-brand:  linear-gradient(180deg, #f0faf6 0%, #ffffff 90%);
+  --kpi-lime:   linear-gradient(180deg, #f6fbe9 0%, #ffffff 90%);
+  --kpi-sand:   linear-gradient(180deg, #fbf6e7 0%, #ffffff 90%);
+  --kpi-rose:   linear-gradient(180deg, #fdf2f3 0%, #ffffff 90%);
+  --kpi-navy:   linear-gradient(180deg, #f0f3f6 0%, #ffffff 90%);
+
+  --kpi-brand-border: rgba(43, 187, 151, 0.22);
+  --kpi-lime-border:  rgba(157, 215, 96, 0.28);
+  --kpi-sand-border:  rgba(201, 164, 60, 0.22);
+  --kpi-rose-border:  rgba(225, 29, 72, 0.18);
+  --kpi-navy-border:  rgba(20, 36, 47, 0.12);
+
+  /* Warn / Danger banner tokens — designed to hit WCAG AA on the actual
+     paint colour. Light mode uses dark text on cream; dark mode uses light
+     text on a tinted backdrop. */
+  --warn-bg:          rgba(245, 158, 11, 0.10);
+  --warn-border:      rgba(245, 158, 11, 0.32);
+  --warn-text-strong: #b45309;  /* amber-700 */
+  --warn-text-body:   #78350f;  /* amber-900 */
+  --warn-link:        #92400e;  /* amber-800 */
+
+  --danger-bg:          rgba(225, 29, 72, 0.08);
+  --danger-border:      rgba(225, 29, 72, 0.32);
+  --danger-text-strong: #be123c; /* rose-700 */
+  --danger-text-body:   #881337; /* rose-900 */
+  --danger-link:        #9f1239; /* rose-800 */
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* Canvas — midnightNavy core with brand-tinted highlights. */
+  --canvas: #08121a;
+  --canvas-tint:
+    radial-gradient(at 0% 0%, rgba(43, 187, 151, 0.10), transparent 40%),
+    radial-gradient(at 100% 100%, rgba(157, 215, 96, 0.06), transparent 35%);
+
+  /* Surface stack — climbs from canvas to elevated */
+  --surface:           #14242f;
+  --surface-elevated:  #1b2e3f;
+  --surface-soft:      #0e1a23;
+  --surface-sidebar:   #0a1620;
+
+  /* Ink — calibrated for WCAG AA against --surface (#14242f). Bumped from
+     navy-200/300 because dates + meta text were reading as dim greys. */
+  --ink-primary:    #ffffff;
+  --ink-secondary:  #e5ebf0;
+  --ink-tertiary:   #b3c0cc;
+  --ink-muted:      #8395a6;
+
+  /* Borders — slightly stronger so cards have actual edges in dark mode */
+  --border-hairline: rgba(207, 224, 235, 0.10);
+  --border-soft:     rgba(207, 224, 235, 0.16);
+  --border-strong:   rgba(207, 224, 235, 0.26);
+
+  /* Shadows — softer in dark mode (no big drop shadows in black) */
+  --shadow-card:  0 1px 0 rgba(0, 0, 0, 0.4), 0 8px 20px -16px rgba(0, 0, 0, 0.6);
+  --shadow-pop:   0 12px 28px -16px rgba(0, 0, 0, 0.8);
+  --shadow-brand: 0 8px 24px -8px rgba(43, 187, 151, 0.55);
+
+  --hover-surface: rgba(43, 187, 151, 0.10);
+  --row-zebra:     rgba(207, 224, 235, 0.025);
+
+  /* Hero gradient — navy depth with teal/lime glow */
+  --hero-bg:
+    radial-gradient(ellipse at 100% 0%, rgba(157, 215, 96, 0.10), transparent 50%),
+    radial-gradient(ellipse at 0% 100%, rgba(43, 187, 151, 0.10), transparent 50%),
+    linear-gradient(135deg, #1b2e3f 0%, #14242f 100%);
+
+  /* KPI per-tone — flip to navy bases with branded glow */
+  --kpi-brand:  linear-gradient(180deg, rgba(43, 187, 151, 0.18) 0%, rgba(20, 36, 47, 0.6) 90%);
+  --kpi-lime:   linear-gradient(180deg, rgba(157, 215, 96, 0.16) 0%, rgba(20, 36, 47, 0.6) 90%);
+  --kpi-sand:   linear-gradient(180deg, rgba(201, 164, 60, 0.18) 0%, rgba(20, 36, 47, 0.6) 90%);
+  --kpi-rose:   linear-gradient(180deg, rgba(225, 29, 72, 0.16) 0%, rgba(20, 36, 47, 0.6) 90%);
+  --kpi-navy:   linear-gradient(180deg, rgba(207, 224, 235, 0.05) 0%, rgba(20, 36, 47, 0.6) 90%);
+
+  --kpi-brand-border: rgba(43, 187, 151, 0.40);
+  --kpi-lime-border:  rgba(157, 215, 96, 0.42);
+  --kpi-sand-border:  rgba(201, 164, 60, 0.38);
+  --kpi-rose-border:  rgba(225, 29, 72, 0.36);
+  --kpi-navy-border:  rgba(207, 224, 235, 0.18);
+
+  /* Dark mode flip — light text on tinted backdrop */
+  --warn-bg:          rgba(245, 158, 11, 0.14);
+  --warn-border:      rgba(245, 158, 11, 0.36);
+  --warn-text-strong: #fde68a;   /* amber-200 */
+  --warn-text-body:   #e5ebf0;
+  --warn-link:        #fcd34d;   /* amber-300 */
+
+  --danger-bg:          rgba(225, 29, 72, 0.14);
+  --danger-border:      rgba(225, 29, 72, 0.36);
+  --danger-text-strong: #fecdd3; /* rose-200 */
+  --danger-text-body:   #e5ebf0;
+  --danger-link:        #fda4af; /* rose-300 */
+}
+
+/* Avoid theme transition flash when toggling. */
+.theme-fade,
+.theme-fade *,
+.theme-fade *::before,
+.theme-fade *::after {
+  transition:
+    background 240ms ease,
+    background-color 240ms ease,
+    border-color 240ms ease,
+    color 240ms ease !important;
 }
 
 html,
@@ -49,9 +213,10 @@ body,
 
 body {
   margin: 0;
-  /* Clean, flat near-white canvas — financial tools read calmer without washes. */
-  background-color: #f7f8fa;
-  color: var(--color-navy-700);
+  background-color: var(--canvas);
+  background-image: var(--canvas-tint);
+  background-attachment: fixed;
+  color: var(--ink-secondary);
   font-family: var(--font-sans);
   font-size: 14px;
   font-feature-settings: 'cv11', 'ss01';
@@ -59,60 +224,174 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Display type for headings + the wordmark. */
 h1,
 h2,
 .font-display {
   font-family: var(--font-display);
   letter-spacing: -0.015em;
-  color: var(--color-navy-800);
+  color: var(--ink-primary);
 }
 
-/* Tabular figures everywhere money/dates live so columns align. */
 .ozly-card,
 table {
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum';
 }
 
-/* Card surface — crisp hairline + barely-there shadow. Not a floaty rounded blob. */
+/* ── Cards ────────────────────────────────────────────────────────────── */
 .ozly-card {
-  background: #ffffff;
-  border: 1px solid rgba(16, 26, 35, 0.09);
-  border-radius: 12px;
-  box-shadow: 0 1px 2px rgba(16, 26, 35, 0.03);
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-hairline);
+  border-radius: 14px;
+  box-shadow: var(--shadow-card);
+  color: var(--ink-secondary);
+}
+.ozly-card-soft {
+  background: var(--surface-soft);
+  border: 1px solid var(--border-hairline);
+  border-radius: 14px;
+}
+.ozly-card-hero {
+  background: var(--hero-bg);
+  border: 1px solid var(--border-hairline);
+  border-radius: 18px;
+  box-shadow: var(--shadow-card);
 }
 
-/* KPI tile for the summary strip. */
+/* ── KPI ──────────────────────────────────────────────────────────────── */
 .kpi {
-  background: #ffffff;
-  border: 1px solid rgba(16, 26, 35, 0.09);
-  border-radius: 12px;
+  position: relative;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-hairline);
+  border-radius: 14px;
   padding: 14px 16px;
+  text-align: left;
+  color: var(--ink-secondary);
+  transition: transform 120ms ease, box-shadow 160ms ease, border-color 160ms ease;
 }
+.kpi:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-pop);
+}
+.kpi.kpi-tone-brand { background: var(--kpi-brand); border-color: var(--kpi-brand-border); }
+.kpi.kpi-tone-lime  { background: var(--kpi-lime);  border-color: var(--kpi-lime-border);  }
+.kpi.kpi-tone-sand  { background: var(--kpi-sand);  border-color: var(--kpi-sand-border);  }
+.kpi.kpi-tone-rose  { background: var(--kpi-rose);  border-color: var(--kpi-rose-border);  }
+.kpi.kpi-tone-navy  { background: var(--kpi-navy);  border-color: var(--kpi-navy-border);  }
+.kpi[aria-pressed='true'] {
+  box-shadow: 0 0 0 2px var(--color-brand-400);
+}
+
 .kpi-value {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 1.35rem;
-  letter-spacing: -0.02em;
-  color: var(--color-navy-800);
+  font-size: 1.65rem;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  color: var(--ink-primary);
 }
 .kpi-label {
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.04em;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: var(--color-navy-300);
+  color: var(--ink-tertiary);
+  margin-bottom: 4px;
+}
+.kpi-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 9999px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.kpi-trend-up   { background: rgba(43, 187, 151, 0.14); color: var(--color-brand-500); }
+.kpi-trend-down { background: rgba(225, 29, 72, 0.12);  color: #f43f5e; }
+.kpi-trend-flat { background: rgba(20, 36, 47, 0.06);   color: var(--ink-tertiary); }
+
+/* ── Page hero ────────────────────────────────────────────────────────── */
+.page-hero {
+  position: relative;
+  padding: 22px 26px;
+  border-radius: 18px;
+  background: var(--hero-bg);
+  border: 1px solid var(--border-hairline);
+  overflow: hidden;
+}
+.page-hero::after {
+  content: '';
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--color-brand-500);
+  box-shadow: 0 0 0 4px rgba(43, 187, 151, 0.18);
+}
+.page-hero-kicker {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-brand-500);
+  margin-bottom: 4px;
+}
+.page-hero-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.6rem;
+  letter-spacing: -0.025em;
+  color: var(--ink-primary);
+  line-height: 1.2;
+}
+.page-hero-sub {
+  margin-top: 4px;
+  font-size: 13.5px;
+  color: var(--ink-tertiary);
+  max-width: 60ch;
 }
 
-/* Sidebar active item: neutral graphite pill + accent bar (teal reserved for
-   primary actions + status, not chrome). */
-.nav-active {
-  position: relative;
-  background: var(--color-navy-50);
-  color: var(--color-navy-800);
+/* ── Sidebar ──────────────────────────────────────────────────────────── */
+.sidebar-surface {
+  background: var(--surface-sidebar);
+  border-right: 1px solid var(--border-hairline);
 }
-.nav-active::before {
+.sidebar-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  padding: 0 12px;
+  margin: 14px 0 4px;
+}
+.nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-tertiary);
+  transition: background 120ms ease, color 120ms ease;
+}
+.nav-item:hover {
+  background: var(--hover-surface);
+  color: var(--ink-primary);
+}
+.nav-item.nav-active {
+  background: linear-gradient(90deg, rgba(43, 187, 151, 0.18) 0%, rgba(43, 187, 151, 0.05) 100%);
+  color: var(--ink-primary);
+  font-weight: 600;
+}
+.nav-item.nav-active::before {
   content: '';
   position: absolute;
   left: -3px;
@@ -120,33 +399,207 @@ table {
   bottom: 7px;
   width: 3px;
   border-radius: 3px;
-  background: var(--color-navy-500);
+  background: linear-gradient(180deg, var(--color-brand-500) 0%, var(--color-lime-400) 100%);
 }
 
-/* Dense, ledger-style tables (Xero/QuickBooks feel). */
-.ozly-card table thead th {
-  padding-top: 10px;
-  padding-bottom: 10px;
-  font-size: 10px;
+/* Wordmark — brand gradient stays the same in both modes (signature). */
+.wordmark-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--color-brand-500) 0%, var(--color-lime-400) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  color: #ffffff;
+  box-shadow: 0 4px 10px -4px rgba(43, 187, 151, 0.45);
+}
+
+/* ── Avatars ──────────────────────────────────────────────────────────── */
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  color: #ffffff;
   font-weight: 600;
-  letter-spacing: 0.05em;
+  font-size: 11px;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
-  color: var(--color-navy-300);
+  flex-shrink: 0;
 }
-.ozly-card table tbody td {
-  padding-top: 10px;
-  padding-bottom: 10px;
-}
-.ozly-card table tbody tr:nth-child(2n) {
-  background: rgba(16, 26, 35, 0.018);
-}
+.avatar-sm { width: 22px; height: 22px; font-size: 9.5px; }
+.avatar-lg { width: 40px; height: 40px; font-size: 14px; }
 
-/* Status dot used inside badges. */
+/* ── Tables ───────────────────────────────────────────────────────────── */
 .dot {
   width: 6px;
   height: 6px;
   border-radius: 9999px;
   display: inline-block;
+}
+
+.ozly-card table thead th {
+  padding-top: 11px;
+  padding-bottom: 11px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  background: var(--surface-soft);
+}
+.ozly-card table tbody td {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  color: var(--ink-secondary);
+}
+.ozly-card table tbody tr {
+  transition: background 120ms ease;
+}
+.ozly-card table tbody tr:nth-child(2n) {
+  background: var(--row-zebra);
+}
+.ozly-card table tbody tr:hover {
+  background: var(--hover-surface);
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────────── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(180deg, var(--color-brand-500) 0%, var(--color-brand-600) 100%);
+  color: #ffffff;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.25) inset, var(--shadow-brand);
+  transition: transform 120ms ease, box-shadow 160ms ease;
+}
+.btn-primary:hover {
+  transform: translateY(-1px);
+}
+.btn-primary:disabled {
+  opacity: 0.55;
+  transform: none;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-elevated);
+  color: var(--ink-secondary);
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 0 0 1px var(--border-soft);
+  transition: background 120ms ease, box-shadow 160ms ease;
+}
+.btn-secondary:hover {
+  background: var(--surface-soft);
+  box-shadow: 0 0 0 1px var(--border-strong);
+}
+
+/* ── Theme override layer ─────────────────────────────────────────────────
+   Tailwind utility classes used throughout the routes don't auto-flip in
+   dark mode (`bg-white`, `text-navy-700`, etc are literal colour classes).
+   Rather than touch every route, we override the most-common patterns here.
+   Caveat: only edit this block if you know what's downstream — these are
+   global. */
+[data-theme='dark'] .bg-white                  { background-color: var(--surface-elevated); }
+[data-theme='dark'] .bg-navy-50                { background-color: var(--surface-soft); }
+[data-theme='dark'] .bg-navy-50\/40            { background-color: rgba(207, 224, 235, 0.035); }
+[data-theme='dark'] .bg-navy-50\/50            { background-color: rgba(207, 224, 235, 0.04); }
+[data-theme='dark'] .bg-navy-50\/60            { background-color: rgba(207, 224, 235, 0.05); }
+[data-theme='dark'] .bg-navy-100               { background-color: rgba(207, 224, 235, 0.08); }
+
+/* Status pills — more saturated bg so they read at a glance on dark cards. */
+[data-theme='dark'] .bg-brand-50               { background-color: rgba(43, 187, 151, 0.16); }
+[data-theme='dark'] .bg-brand-50\/60           { background-color: rgba(43, 187, 151, 0.18); }
+[data-theme='dark'] .bg-brand-50\/50           { background-color: rgba(43, 187, 151, 0.15); }
+[data-theme='dark'] .bg-brand-100              { background-color: rgba(43, 187, 151, 0.22); }
+[data-theme='dark'] .bg-amber-50               { background-color: rgba(245, 158, 11, 0.18); }
+[data-theme='dark'] .bg-rose-50                { background-color: rgba(225, 29, 72, 0.16); }
+[data-theme='dark'] .bg-blue-50                { background-color: rgba(59, 130, 246, 0.18); }
+[data-theme='dark'] .bg-blue-100               { background-color: rgba(59, 130, 246, 0.25); }
+
+/* Ink ladder kept distinct in dark mode — collapsing them all to tertiary
+   makes dates + meta indistinguishable from body copy. */
+[data-theme='dark'] .text-navy-800             { color: var(--ink-primary); }
+[data-theme='dark'] .text-navy-700             { color: var(--ink-secondary); }
+[data-theme='dark'] .text-navy-600             { color: var(--ink-secondary); }
+[data-theme='dark'] .text-navy-500             { color: #c8d2dc; }   /* dates, list meta */
+[data-theme='dark'] .text-navy-400             { color: var(--ink-tertiary); }
+[data-theme='dark'] .text-navy-300             { color: var(--ink-muted); }
+[data-theme='dark'] .text-white                { color: #ffffff; }
+
+/* Rows greyed because the sub has no ABN cover. The opacity-50 from light
+   mode reads as "this row is dead" in dark mode where the canvas is already
+   dark. Lift the floor so they still register as data. */
+[data-theme='dark'] tbody tr.opacity-50        { opacity: 0.78; }
+[data-theme='dark'] .opacity-60                { opacity: 0.8; }
+[data-theme='dark'] .opacity-50                { opacity: 0.7; }
+
+[data-theme='dark'] .border-navy-50            { border-color: var(--border-hairline); }
+[data-theme='dark'] .border-navy-100           { border-color: var(--border-soft); }
+[data-theme='dark'] .border-navy-200           { border-color: var(--border-strong); }
+[data-theme='dark'] .border-brand-200          { border-color: rgba(43, 187, 151, 0.40); }
+[data-theme='dark'] .border-amber-200          { border-color: rgba(245, 158, 11, 0.40); }
+[data-theme='dark'] .border-rose-200           { border-color: rgba(225, 29, 72, 0.40); }
+[data-theme='dark'] .border-blue-200           { border-color: rgba(59, 130, 246, 0.40); }
+
+[data-theme='dark'] .ring-navy-100             { --tw-ring-color: var(--border-soft); }
+[data-theme='dark'] .ring-brand-100            { --tw-ring-color: rgba(43, 187, 151, 0.30); }
+[data-theme='dark'] .ring-brand-400            { --tw-ring-color: var(--color-brand-400); }
+[data-theme='dark'] .ring-brand-200            { --tw-ring-color: rgba(43, 187, 151, 0.40); }
+
+[data-theme='dark'] .hover\:bg-navy-50:hover   { background-color: var(--surface-soft); }
+[data-theme='dark'] .hover\:bg-navy-100:hover  { background-color: rgba(207, 224, 235, 0.06); }
+[data-theme='dark'] .hover\:bg-brand-50:hover  { background-color: rgba(43, 187, 151, 0.10); }
+[data-theme='dark'] .hover\:text-navy-700:hover { color: var(--ink-primary); }
+[data-theme='dark'] .hover\:text-brand-700:hover { color: var(--color-brand-300); }
+[data-theme='dark'] .hover\:text-brand-600:hover { color: var(--color-brand-300); }
+
+[data-theme='dark'] .text-brand-800            { color: var(--color-brand-200); }
+[data-theme='dark'] .text-brand-700            { color: var(--color-brand-300); }
+[data-theme='dark'] .text-brand-600            { color: var(--color-brand-300); }
+[data-theme='dark'] .text-brand-500            { color: var(--color-brand-300); }
+[data-theme='dark'] .text-amber-900            { color: #fde68a; }
+[data-theme='dark'] .text-amber-800            { color: #fcd34d; }
+[data-theme='dark'] .text-amber-700            { color: #fde68a; }
+[data-theme='dark'] .text-amber-600            { color: #fcd34d; }
+[data-theme='dark'] .text-rose-900             { color: #fecaca; }
+[data-theme='dark'] .text-rose-800             { color: #fda4af; }
+[data-theme='dark'] .text-rose-700             { color: #fecdd3; }
+[data-theme='dark'] .text-rose-600             { color: #fda4af; }
+[data-theme='dark'] .text-blue-700             { color: #bfdbfe; }
+[data-theme='dark'] .text-blue-900             { color: #dbeafe; }
+
+[data-theme='dark'] .placeholder\:text-navy-300::placeholder { color: var(--ink-muted); }
+[data-theme='dark'] input,
+[data-theme='dark'] select,
+[data-theme='dark'] textarea {
+  color-scheme: dark;
+}
+
+[data-theme='dark'] code {
+  background-color: var(--surface-soft);
+  color: var(--ink-secondary);
+}
+
+/* Bg gradient swap for the auth screens — those use `bg-[#f7f8fa]` inline. */
+[data-theme='dark'] main.bg-\[\#f7f8fa\] {
+  background-color: var(--canvas);
 }
 
 ::-webkit-scrollbar {
@@ -161,5 +614,13 @@ table {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(96, 115, 135, 0.45);
+  background-clip: content-box;
+}
+[data-theme='dark'] ::-webkit-scrollbar-thumb {
+  background: rgba(207, 224, 235, 0.15);
+  background-clip: content-box;
+}
+[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(207, 224, 235, 0.30);
   background-clip: content-box;
 }

@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { CheckIcon, AlertIcon, InfoIcon } from '@/components/Icons';
 
 type ToastKind = 'success' | 'error' | 'info';
@@ -30,11 +30,27 @@ const KIND_ICON: Record<ToastKind, ReactNode> = {
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  // Monotonic counter for guaranteed-unique ids (previous Date.now()+Math.random()
+  // had a non-zero chance of float collision and triggers React key warnings).
+  const idCounterRef = useRef(0);
+  // Track pending dismiss timers so we can clear them on unmount — prevents
+  // setState-after-unmount warnings + leaks in dev StrictMode.
+  const timersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+
+  useEffect(() => () => {
+    timersRef.current.forEach((t) => clearTimeout(t));
+    timersRef.current.clear();
+  }, []);
 
   const notify = useCallback((message: string, kind: ToastKind = 'info') => {
-    const id = Date.now() + Math.random();
+    idCounterRef.current += 1;
+    const id = idCounterRef.current;
     setToasts((prev) => [...prev, { id, kind, message }]);
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4000);
+    const timer = setTimeout(() => {
+      timersRef.current.delete(timer);
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 4000);
+    timersRef.current.add(timer);
   }, []);
 
   const value = useMemo(() => ({ notify }), [notify]);
