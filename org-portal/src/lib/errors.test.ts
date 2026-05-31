@@ -1,9 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+vi.mock('./sentry', () => ({
+  captureException: vi.fn(),
+}));
+
 import { friendlyError } from './errors';
+import { captureException } from './sentry';
 
 beforeEach(() => {
   // Silence the console.error log the helper emits for visibility.
   vi.spyOn(console, 'error').mockImplementation(() => {});
+  vi.clearAllMocks();
 });
 
 describe('friendlyError', () => {
@@ -71,5 +78,44 @@ describe('friendlyError', () => {
     const spy = vi.spyOn(console, 'error');
     friendlyError({ code: '42501', message: 'permission denied for schema public' });
     expect(spy).toHaveBeenCalled();
+  });
+
+  describe('Sentry forwarding', () => {
+    it('forwards Error instances', () => {
+      const e = new Error('boom');
+      friendlyError(e);
+      expect(captureException).toHaveBeenCalledWith(e, expect.any(Object));
+    });
+
+    it('forwards unknown PG errors (e.g. server-class)', () => {
+      friendlyError({ code: '53300', message: 'too many connections' });
+      expect(captureException).toHaveBeenCalled();
+    });
+
+    it('skips user-input violations (23505/23514/42501/pgrst204)', () => {
+      friendlyError({ code: '23505', message: 'duplicate' });
+      friendlyError({ code: '23514', message: 'check' });
+      friendlyError({ code: '42501', message: 'denied' });
+      friendlyError({ code: 'PGRST204' });
+      expect(captureException).not.toHaveBeenCalled();
+    });
+
+    it('skips network failures', () => {
+      friendlyError({ message: 'Failed to fetch' });
+      friendlyError({ message: 'NetworkError when attempting' });
+      expect(captureException).not.toHaveBeenCalled();
+    });
+
+    it('skips auth-surface errors', () => {
+      friendlyError({ message: 'Invalid login' });
+      friendlyError({ message: 'User already registered' });
+      friendlyError({ message: 'rate limit' });
+      expect(captureException).not.toHaveBeenCalled();
+    });
+
+    it('skips plain strings', () => {
+      friendlyError('just text');
+      expect(captureException).not.toHaveBeenCalled();
+    });
   });
 });
