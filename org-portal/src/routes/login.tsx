@@ -46,10 +46,14 @@ export function LoginPage() {
       <aside
         className="relative hidden flex-col justify-between overflow-hidden p-10 text-white lg:flex"
         style={{
+          // Darker base + tighter radials so the text always sits on a
+          // dim-enough field. The previous tuning had the lime/teal radials
+          // covering ~55% of the panel which pushed the heading onto a
+          // mid-luminance zone (legibility regression).
           background:
-            'radial-gradient(at 0% 100%, #2BBB97 0%, transparent 55%), ' +
-            'radial-gradient(at 100% 0%, #9DD760 0%, transparent 50%), ' +
-            'linear-gradient(135deg, #14242f 0%, #08121a 100%)',
+            'radial-gradient(at 0% 100%, rgba(43, 187, 151, 0.85) 0%, transparent 38%), ' +
+            'radial-gradient(at 100% 0%, rgba(157, 215, 96, 0.7) 0%, transparent 32%), ' +
+            'linear-gradient(135deg, #0a1820 0%, #050b11 100%)',
         }}
       >
         {/* Decorative grid of dots — gives the panel texture without an image asset. */}
@@ -62,29 +66,42 @@ export function LoginPage() {
             backgroundSize: '24px 24px',
           }}
         />
+        {/* Subtle bottom-up shade so the heading/copy always have a darker
+            backdrop, regardless of where the radial highlights land. */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0"
+          style={{
+            background:
+              'linear-gradient(180deg, transparent 0%, transparent 30%, rgba(5, 11, 17, 0.45) 100%)',
+          }}
+        />
         <div className="relative z-10 flex items-center gap-3">
-          <img src="/OSLY.svg" alt="Ozly" width={40} height={40} className="shrink-0" />
-          <div className="font-display text-[19px] font-bold tracking-tight text-white">
+          <img src="/OSLY.svg" alt="Ozly" width={40} height={40} className="shrink-0 drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)]" />
+          <div className="font-display text-[19px] font-bold tracking-tight text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.4)]">
             oz<span className="text-lime-300">·</span>ly
           </div>
         </div>
 
         <div className="relative z-10 max-w-md">
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[10.5px] font-semibold uppercase tracking-[0.18em] text-lime-200 backdrop-blur">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-[10.5px] font-semibold uppercase tracking-[0.18em] text-lime-100 backdrop-blur">
             <span className="h-1.5 w-1.5 rounded-full bg-lime-300" />
             For Organisations
           </div>
-          <h2 className="font-display text-[2.6rem] font-bold leading-[1.05] tracking-tight text-white">
+          <h2
+            className="font-display text-[2.6rem] font-bold leading-[1.05] tracking-tight text-white"
+            style={{ textShadow: '0 2px 12px rgba(0, 0, 0, 0.35)' }}
+          >
             Every sub<span className="text-lime-300">·</span>contractor's invoice,<br />
             in one calm inbox.
           </h2>
-          <p className="mt-4 max-w-sm text-[15px] leading-relaxed text-white/70">
+          <p className="mt-4 max-w-sm text-[15px] leading-relaxed text-white/90">
             Engage cleaners, surface what they billed, reconcile in one click.
             Built for Australian cleaning companies that hate spreadsheets.
           </p>
         </div>
 
-        <div className="relative z-10 grid max-w-md grid-cols-3 gap-3 text-[11px] text-white/60">
+        <div className="relative z-10 grid max-w-md grid-cols-3 gap-3 text-[11.5px] text-white/80">
           <div>
             <div className="font-display text-xl font-bold text-white">14d</div>
             free trial
