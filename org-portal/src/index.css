@@ -224,9 +224,13 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-h1,
-h2,
-.font-display {
+/* `:where()` zeroes the selector's specificity so Tailwind utility
+   classes like `.text-white` can override the global heading colour
+   without needing !important. Without this, h1/h2/.font-display win
+   on specificity (0,1,1 > 0,1,0), making `text-white` a no-op on
+   headings — which broke the dark-panel headings on /login + /signup
+   in light mode. */
+:where(h1, h2, .font-display) {
   font-family: var(--font-display);
   letter-spacing: -0.015em;
   color: var(--ink-primary);
