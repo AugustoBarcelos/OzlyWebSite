@@ -43,6 +43,21 @@ const GrantsPage = lazy(() =>
 const OrgsAdminPage = lazy(() =>
   import('./routes/ops/orgs').then((m) => ({ default: m.OrgsAdminPage })),
 );
+const OrgsSubscriptionsHealthPage = lazy(() =>
+  import('./routes/ops/orgs-subscriptions').then((m) => ({ default: m.OrgsSubscriptionsHealthPage })),
+);
+const OrgsMixedBillingPage = lazy(() =>
+  import('./routes/ops/orgs-mixed-billing').then((m) => ({ default: m.OrgsMixedBillingPage })),
+);
+const OrgsDowngradeAlertsPage = lazy(() =>
+  import('./routes/ops/orgs-downgrade-alerts').then((m) => ({ default: m.OrgsDowngradeAlertsPage })),
+);
+const AddonsCatalogPage = lazy(() =>
+  import('./routes/ops/orgs-addons').then((m) => ({ default: m.AddonsCatalogPage })),
+);
+const OrgAddonsDetailPage = lazy(() =>
+  import('./routes/ops/org-addons-detail').then((m) => ({ default: m.OrgAddonsDetailPage })),
+);
 const AuditPage = lazy(() =>
   import('./routes/ops/audit').then((m) => ({ default: m.AuditPage })),
 );
@@ -415,6 +430,11 @@ export function App() {
                 <Route path="/operations/runbooks" element={lazyRoute(OperationsRunbooksPage)} />
                 <Route path="/ops/grants" element={lazyRoute(GrantsPage)} />
                 <Route path="/ops/orgs" element={lazyRoute(OrgsAdminPage)} />
+                <Route path="/ops/orgs/subscriptions" element={lazyRoute(OrgsSubscriptionsHealthPage)} />
+                <Route path="/ops/orgs/mixed-billing" element={lazyRoute(OrgsMixedBillingPage)} />
+                <Route path="/ops/orgs/downgrade-alerts" element={lazyRoute(OrgsDowngradeAlertsPage)} />
+                <Route path="/ops/orgs/addons" element={lazyRoute(AddonsCatalogPage)} />
+                <Route path="/ops/orgs/:id/addons" element={lazyRoute(OrgAddonsDetailPage)} />
                 <Route path="/ops/audit" element={lazyRoute(AuditPage)} />
 
                 {/* Tech Hub */}
