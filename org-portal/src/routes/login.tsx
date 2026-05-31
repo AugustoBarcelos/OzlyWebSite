@@ -41,80 +41,140 @@ export function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-[100dvh] items-center justify-center bg-[#f7f8fa] p-6">
-      <section className="w-full max-w-md rounded-2xl border border-navy-100 bg-white p-8 shadow-[0_12px_50px_-16px_rgba(14,26,35,0.25)]">
-        <div className="mb-7 flex items-center gap-2.5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500 font-display text-lg font-bold text-white">
-            O
-          </div>
-          <div className="leading-tight">
-            <div className="font-display text-lg font-bold tracking-tight text-navy-800">
-              oz<span className="text-brand-500">·</span>ly
-            </div>
-            <div className="text-[11px] font-medium uppercase tracking-wide text-navy-300">
-              for Organisations
-            </div>
+    <main className="grid min-h-[100dvh] lg:grid-cols-[1.05fr_1fr]">
+      {/* Brand panel — gradient, big quote, decorative dots. Hidden on small screens. */}
+      <aside
+        className="relative hidden flex-col justify-between overflow-hidden p-10 text-white lg:flex"
+        style={{
+          background:
+            'radial-gradient(at 0% 100%, #2BBB97 0%, transparent 55%), ' +
+            'radial-gradient(at 100% 0%, #9DD760 0%, transparent 50%), ' +
+            'linear-gradient(135deg, #14242f 0%, #08121a 100%)',
+        }}
+      >
+        {/* Decorative grid of dots — gives the panel texture without an image asset. */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 opacity-[0.07]"
+          style={{
+            backgroundImage:
+              'radial-gradient(rgba(255,255,255,0.7) 1px, transparent 1px)',
+            backgroundSize: '24px 24px',
+          }}
+        />
+        <div className="relative z-10 flex items-center gap-3">
+          <img src="/OSLY.svg" alt="Ozly" width={40} height={40} className="shrink-0" />
+          <div className="font-display text-[19px] font-bold tracking-tight text-white">
+            oz<span className="text-lime-300">·</span>ly
           </div>
         </div>
 
-        <form onSubmit={onSubmit} noValidate>
-          <h1 className="text-xl font-semibold text-navy-800">Sign in</h1>
-          <p className="mt-1 text-sm text-navy-400">Your sub-contractors' invoices, in one place.</p>
-
-          <label htmlFor="email" className="mt-6 block text-xs font-medium text-navy-600">
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={submitting}
-            className="mt-1 w-full rounded-md border border-navy-100 bg-white px-3 py-2 text-sm text-navy-700 placeholder:text-navy-300 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
-            placeholder="you@company.com.au"
-          />
-
-          <div className="mt-4 flex items-baseline justify-between">
-            <label htmlFor="password" className="block text-xs font-medium text-navy-600">
-              Password
-            </label>
-            <Link to="/forgot-password" className="text-xs font-medium text-brand-600 hover:text-brand-700">
-              Forgot password?
-            </Link>
+        <div className="relative z-10 max-w-md">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[10.5px] font-semibold uppercase tracking-[0.18em] text-lime-200 backdrop-blur">
+            <span className="h-1.5 w-1.5 rounded-full bg-lime-300" />
+            For Organisations
           </div>
-          <input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={submitting}
-            className="mt-1 w-full rounded-md border border-navy-100 bg-white px-3 py-2 text-sm text-navy-700 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
-          />
+          <h2 className="font-display text-[2.6rem] font-bold leading-[1.05] tracking-tight text-white">
+            Every sub<span className="text-lime-300">·</span>contractor's invoice,<br />
+            in one calm inbox.
+          </h2>
+          <p className="mt-4 max-w-sm text-[15px] leading-relaxed text-white/70">
+            Engage cleaners, surface what they billed, reconcile in one click.
+            Built for Australian cleaning companies that hate spreadsheets.
+          </p>
+        </div>
 
-          {error && (
-            <p role="alert" className="mt-3 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
-              {error}
+        <div className="relative z-10 grid max-w-md grid-cols-3 gap-3 text-[11px] text-white/60">
+          <div>
+            <div className="font-display text-xl font-bold text-white">14d</div>
+            free trial
+          </div>
+          <div>
+            <div className="font-display text-xl font-bold text-white">ATO</div>
+            BAS export
+          </div>
+          <div>
+            <div className="font-display text-xl font-bold text-white">Xero</div>
+            CSV ready
+          </div>
+        </div>
+      </aside>
+
+      {/* Form panel */}
+      <section className="flex items-center justify-center p-6 sm:p-10">
+        <div className="w-full max-w-sm">
+          <div className="mb-7 flex items-center gap-2.5 lg:hidden">
+            <img src="/OSLY.svg" alt="Ozly" width={36} height={36} className="shrink-0" />
+            <div className="leading-tight">
+              <div className="font-display text-lg font-bold tracking-tight text-navy-800">
+                oz<span className="text-brand-500">·</span>ly
+              </div>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-brand-700">
+                for Organisations
+              </div>
+            </div>
+          </div>
+
+          <form onSubmit={onSubmit} noValidate>
+            <div className="page-hero-kicker mb-1">Welcome back</div>
+            <h1 className="font-display text-[1.7rem] font-bold leading-tight tracking-tight text-navy-800">
+              Sign in to your workspace
+            </h1>
+            <p className="mt-1.5 text-sm text-navy-400">
+              Your sub-contractors' invoices, ready when you are.
             </p>
-          )}
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="mt-5 flex w-full items-center justify-center gap-2 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-500 disabled:bg-brand-300"
-          >
-            {submitting && <Spinner size="sm" label="Signing in" />}
-            {submitting ? 'Signing in…' : 'Sign in'}
-          </button>
-        </form>
+            <label htmlFor="email" className="mt-7 block text-[11px] font-semibold uppercase tracking-wider text-navy-500">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={submitting}
+              className="mt-1.5 w-full rounded-lg border border-navy-100 bg-white px-3.5 py-2.5 text-sm text-navy-700 placeholder:text-navy-300 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+              placeholder="you@company.com.au"
+            />
 
-        <p className="mt-6 text-sm text-navy-500">
-          New here?{' '}
-          <Link to="/signup" className="font-medium text-brand-600 hover:text-brand-700">
-            Create an organisation
-          </Link>
-        </p>
+            <div className="mt-4 flex items-baseline justify-between">
+              <label htmlFor="password" className="block text-[11px] font-semibold uppercase tracking-wider text-navy-500">
+                Password
+              </label>
+              <Link to="/forgot-password" className="text-[11px] font-semibold text-brand-700 hover:text-brand-600">
+                Forgot?
+              </Link>
+            </div>
+            <input
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={submitting}
+              className="mt-1.5 w-full rounded-lg border border-navy-100 bg-white px-3.5 py-2.5 text-sm text-navy-700 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+            />
+
+            {error && (
+              <p role="alert" className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+                {error}
+              </p>
+            )}
+
+            <button type="submit" disabled={submitting} className="btn-primary mt-6 w-full justify-center">
+              {submitting && <Spinner size="sm" label="Signing in" />}
+              {submitting ? 'Signing in…' : 'Sign in'}
+            </button>
+          </form>
+
+          <p className="mt-6 text-sm text-navy-500">
+            New here?{' '}
+            <Link to="/signup" className="font-semibold text-brand-700 hover:text-brand-600">
+              Create an organisation →
+            </Link>
+          </p>
+        </div>
       </section>
     </main>
   );

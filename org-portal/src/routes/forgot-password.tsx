@@ -38,20 +38,33 @@ export function ForgotPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-navy-50 px-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm">
-        <h1 className="text-xl font-semibold text-navy-700">Reset your password</h1>
+    <main className="flex min-h-[100dvh] items-center justify-center p-6">
+      <section className="ozly-card-hero w-full max-w-md p-8">
+        <div className="mb-6 flex items-center gap-2.5">
+          <img src="/OSLY.svg" alt="Ozly" width={36} height={36} className="shrink-0" />
+          <div className="leading-tight">
+            <div className="font-display text-lg font-bold tracking-tight text-navy-800">
+              oz<span className="text-brand-500">·</span>ly
+            </div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-brand-700">
+              for Organisations
+            </div>
+          </div>
+        </div>
+
+        <div className="page-hero-kicker mb-1">Account recovery</div>
+        <h1 className="font-display text-[1.6rem] font-bold leading-tight tracking-tight text-navy-800">
+          Reset your password
+        </h1>
+
         {sent ? (
           <>
-            <p className="mt-3 text-sm text-navy-500">
+            <p className="mt-3 text-sm leading-relaxed text-navy-500">
               If an account exists for that email, we've sent a reset link. Check your inbox
               (and spam folder) — the link is valid for one hour.
             </p>
-            <Link
-              to="/login"
-              className="mt-6 inline-block rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-500"
-            >
-              Back to sign in
+            <Link to="/login" className="btn-primary mt-6 inline-flex">
+              Back to sign in →
             </Link>
           </>
         ) : (
@@ -61,37 +74,33 @@ export function ForgotPasswordPage() {
             </p>
             <form onSubmit={onSubmit} className="mt-6 space-y-4">
               <div>
-                <label className="text-xs font-medium text-navy-600">Email</label>
+                <label className="text-[11px] font-semibold uppercase tracking-wider text-navy-500">Email</label>
                 <input
                   type="email"
                   autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-navy-100 bg-white px-3 py-2 text-sm text-navy-700 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                  className="mt-1.5 w-full rounded-lg border border-navy-100 bg-white px-3.5 py-2.5 text-sm text-navy-700 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
                   placeholder="you@example.com"
                   required
                 />
               </div>
               {error && (
-                <p className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
+                <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
               )}
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-500 disabled:bg-brand-300"
-              >
+              <button type="submit" disabled={submitting} className="btn-primary w-full justify-center">
                 {submitting ? 'Sending…' : 'Send reset link'}
               </button>
             </form>
             <div className="mt-4 text-sm text-navy-500">
               Remembered it?{' '}
-              <Link to="/login" className="font-medium text-brand-600 hover:text-brand-700">
-                Back to sign in
+              <Link to="/login" className="font-semibold text-brand-700 hover:text-brand-600">
+                Back to sign in →
               </Link>
             </div>
           </>
         )}
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }

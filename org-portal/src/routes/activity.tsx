@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useOrg } from '@/lib/org';
+import { useToast } from '@/components/Toast';
 import { PageHeader } from '@/components/PageHeader';
 import { Spinner } from '@/components/Spinner';
-import { EmptyState } from '@/components/EmptyState';
 import { formatDate, formatMoney } from '@/lib/format';
 import { toCsv, downloadCsv, timestampSuffix } from '@/lib/csv';
+import { friendlyError } from '@/lib/errors';
+import { useSeqGuard } from '@/lib/use-seq-guard';
 
 interface ActivityRow {
   id: string;
@@ -119,26 +121,90 @@ function formatRelative(iso: string): string {
   return formatDate(iso);
 }
 
+// Demo timeline shown when the org has zero real events yet. Lets the user
+// see what Activity WILL look like as they use the product, instead of an
+// "empty" screen that reads as "broken". Tagged so we can render the demo
+// banner above it. Times are anchored relative to render so they always
+// look fresh.
+function buildDemoActivity(): ActivityRow[] {
+  const now = Date.now();
+  const mins = (n: number) => new Date(now - n * 60_000).toISOString();
+  return [
+    {
+      id: 'demo-1', event_name: 'org_invoice_marked_paid', user_id: null,
+      metadata: { invoice_number: 'INV-3046', total: 3589 },
+      created_at: mins(8),
+      actor: { full_name: 'Lucas Ribeiro', email: 'lucas.ribeiro@example.com' },
+    },
+    {
+      id: 'demo-2', event_name: 'org_invite_accepted', user_id: null,
+      metadata: null, created_at: mins(95),
+      actor: { full_name: 'Sofia Santos', email: 'sofia.santos@example.com' },
+    },
+    {
+      id: 'demo-3', event_name: 'org_invoice_marked_paid', user_id: null,
+      metadata: { invoice_number: 'INV-3043', total: 2190 },
+      created_at: mins(180),
+      actor: { full_name: 'Maria Pereira', email: 'maria.pereira@example.com' },
+    },
+    {
+      id: 'demo-4', event_name: 'org_invoice_requested', user_id: null,
+      metadata: null, created_at: mins(720),
+      actor: { full_name: 'João Trades', email: 'joao.trades@example.com' },
+    },
+    {
+      id: 'demo-5', event_name: 'org_member_subsidy_changed', user_id: null,
+      metadata: { on: true }, created_at: mins(1_440),
+      actor: { full_name: 'Akira Tanaka', email: 'akira.tanaka@example.com' },
+    },
+    {
+      id: 'demo-6', event_name: 'org_invite_sent', user_id: null,
+      metadata: { role: 'member' }, created_at: mins(2_880),
+      actor: null,
+    },
+    {
+      id: 'demo-7', event_name: 'org_billing_plan_changed', user_id: null,
+      metadata: { from: 'starter', to: 'growth' },
+      created_at: mins(5_760), actor: null,
+    },
+    {
+      id: 'demo-8', event_name: 'org_signup', user_id: null,
+      metadata: null, created_at: mins(11_520), actor: null,
+    },
+  ];
+}
+
 export function ActivityPage() {
   const { currentOrg } = useOrg();
   const orgId = currentOrg?.id ?? null;
   const [rows, setRows] = useState<ActivityRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const seq = useSeqGuard();
+  const { notify } = useToast();
 
   const load = useCallback(async () => {
     if (!orgId) return;
     setLoading(true);
+    const token = seq.start();
     // Read org_events for this org. RLS restricts to org admins, but we also
     // pass org_id explicitly to take advantage of the index.
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('org_events')
       .select('id, event_name, user_id, metadata, created_at, actor:profiles!org_events_user_id_fkey(full_name, email)')
       .eq('org_id', orgId)
       .order('created_at', { ascending: false })
       .limit(200);
-    setRows((data ?? []) as unknown as ActivityRow[]);
+    if (!seq.isCurrent(token)) return;
+    if (error) {
+      notify(friendlyError(error), 'error');
+      const { captureException } = await import('@/lib/sentry');
+      captureException(error, { source: 'activity.load' });
+      setRows([]);
+    } else {
+      setRows((data ?? []) as unknown as ActivityRow[]);
+    }
     setLoading(false);
-  }, [orgId]);
+  }, [orgId, seq, notify]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -147,6 +213,7 @@ export function ActivityPage() {
   return (
     <div>
       <PageHeader
+        kicker="Insights"
         title="Activity"
         subtitle="What happened in your organisation"
         action={rows.length > 0 ? (
@@ -160,32 +227,46 @@ export function ActivityPage() {
       />
       {loading ? (
         <div className="flex justify-center py-16"><Spinner size="lg" /></div>
-      ) : rows.length === 0 ? (
-        <EmptyState title="No activity yet" description="Once you invite members and mark invoices paid, the timeline appears here." />
       ) : (
-        <div className="ozly-card divide-y divide-navy-50">
-          {rows.map((r) => {
-            const cfg = EVENT_PRESENTATION[r.event_name];
-            const line = cfg ? cfg.line(r) : `${r.event_name.replace(/_/g, ' ')}${actorName(r) ? ` · ${actorName(r)}` : ''}`;
-            const icon = cfg?.icon ?? '·';
-            const tone = cfg?.tone ?? 'info';
-            const toneCls =
-              tone === 'positive' ? 'bg-brand-50 text-brand-700'
-              : tone === 'warning' ? 'bg-amber-50 text-amber-700'
-              : 'bg-navy-50 text-navy-500';
-            return (
-              <div key={r.id} className="flex items-start gap-3 px-5 py-3">
-                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-base ${toneCls}`}>
-                  {icon}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm text-navy-700">{line}</div>
-                  <div className="mt-0.5 text-[11px] text-navy-400">{formatRelative(r.created_at)}</div>
-                </div>
+        <>
+          {rows.length === 0 && (
+            <div
+              className="mb-4 flex items-start gap-3 rounded-xl border border-navy-100 bg-navy-50/50 px-4 py-3 text-[12.5px] text-navy-500"
+              role="note"
+            >
+              <span aria-hidden="true" className="text-base leading-none">👋</span>
+              <div>
+                <span className="font-semibold text-navy-700">Preview timeline.</span>{' '}
+                Your org has no events yet. The entries below are examples — real activity will
+                replace them automatically as you invite members, mark invoices paid, and offer work.
               </div>
-            );
-          })}
-        </div>
+            </div>
+          )}
+          <div className="ozly-card divide-y divide-navy-50">
+            {(rows.length === 0 ? buildDemoActivity() : rows).map((r) => {
+              const cfg = EVENT_PRESENTATION[r.event_name];
+              const line = cfg ? cfg.line(r) : `${r.event_name.replace(/_/g, ' ')}${actorName(r) ? ` · ${actorName(r)}` : ''}`;
+              const icon = cfg?.icon ?? '·';
+              const tone = cfg?.tone ?? 'info';
+              const toneCls =
+                tone === 'positive' ? 'bg-brand-50 text-brand-700'
+                : tone === 'warning' ? 'bg-amber-50 text-amber-700'
+                : 'bg-navy-50 text-navy-500';
+              const isDemo = rows.length === 0;
+              return (
+                <div key={r.id} className={`flex items-start gap-3 px-5 py-3 ${isDemo ? 'opacity-85' : ''}`}>
+                  <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-base ${toneCls}`}>
+                    {icon}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm text-navy-700">{line}</div>
+                    <div className="mt-0.5 text-[11px] text-navy-400">{formatRelative(r.created_at)}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   );
