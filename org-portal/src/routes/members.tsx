@@ -7,9 +7,15 @@ import { PageHeader } from '@/components/PageHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { UsersIcon } from '@/components/Icons';
 import { MemberStatusBadge } from '@/components/StatusBadge';
+import { Avatar } from '@/components/Avatar';
+import { ComplianceCluster } from '@/components/ComplianceBadge';
+import { mockComplianceFor } from '@/lib/compliance';
 import { formatDate } from '@/lib/format';
 import { logOrgEvent } from '@/lib/telemetry';
 import { fetchPayState } from '@/lib/payments';
+import { fetchMixedBillingByMember, type BillingSource } from '@/lib/orgMembers';
+import { MixedBillingBadge } from '@/components/MixedBillingBadge';
+import { useSeqGuard } from '@/lib/use-seq-guard';
 import { cycleSummary } from '@/lib/period';
 import type { BillingConfig, Frequency } from '@/lib/period';
 import { env } from '@/lib/env';
@@ -50,10 +56,13 @@ export function MembersPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [detailMember, setDetailMember] = useState<MemberCard | null>(null);
   const [payStatus, setPayStatus] = useState<Record<string, PayState>>({});
+  const [mixedBilling, setMixedBilling] = useState<Record<string, BillingSource>>({});
+  const seq = useSeqGuard();
 
   const load = useCallback(async () => {
     if (!orgId) return;
     setLoading(true);
+    const token = seq.start();
     const [{ data: mem }, { data: inv }] = await Promise.all([
       supabase
         .from('org_memberships')
@@ -66,27 +75,35 @@ export function MembersPage() {
         .is('accepted_at', null),
     ]);
 
+    if (!seq.isCurrent(token)) return;
     const memberships = (mem ?? []) as OrgMembership[];
     setMembers(memberships);
     setPending((inv ?? []) as typeof pending);
 
     // org_memberships → auth.users has no FK to profiles, so fetch names separately.
     const ids = memberships.map((m) => m.user_id);
+    let profileMap: Record<string, ProfileLite> = {};
     if (ids.length > 0) {
       const { data: profs } = await supabase
         .from('profiles')
         .select('id, full_name, email')
         .in('id', ids);
-      const map: Record<string, ProfileLite> = {};
-      for (const p of (profs ?? []) as ProfileLite[]) map[p.id] = p;
-      setProfiles(map);
+      for (const p of (profs ?? []) as ProfileLite[]) profileMap[p.id] = p;
     }
+    if (!seq.isCurrent(token)) return;
+    setProfiles(profileMap);
 
     // Who's actually paying for each member (company subsidy OR self-pay)?
-    setPayStatus(await fetchPayState(orgId));
+    const payState = await fetchPayState(orgId);
+    if (!seq.isCurrent(token)) return;
+    setPayStatus(payState);
+    // V2: granular mixed-billing breakdown (org-only / +ABN topup / +PRO topup / self / none).
+    const mixed = await fetchMixedBillingByMember(orgId);
+    if (!seq.isCurrent(token)) return;
+    setMixedBilling(mixed);
 
     setLoading(false);
-  }, [orgId]);
+  }, [orgId, seq]);
 
   useEffect(() => {
     void load();
@@ -125,13 +142,11 @@ export function MembersPage() {
   return (
     <div>
       <PageHeader
+        kicker="Operations"
         title="Members"
         subtitle={`Sub-contractors engaged by ${currentOrg?.name ?? ''}`}
         action={
-          <button
-            onClick={() => setModalOpen(true)}
-            className="shrink-0 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-500"
-          >
+          <button onClick={() => setModalOpen(true)} className="btn-primary shrink-0">
             Invite member
           </button>
         }
@@ -168,21 +183,36 @@ export function MembersPage() {
                 className={`ozly-card p-4 ${accepted ? 'cursor-pointer transition-shadow hover:shadow-md' : ''}`}
               >
                 <div className={`flex items-start justify-between gap-2 ${dim ? 'opacity-60' : ''}`}>
-                  <div className="min-w-0">
-                    <div className="truncate font-medium text-navy-700">{c.name}</div>
-                    <div className="mt-0.5 text-xs capitalize text-navy-400">{c.role}</div>
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <Avatar name={c.name} />
+                    <div className="min-w-0">
+                      <div className="truncate font-semibold text-navy-800">{c.name}</div>
+                      <div className="mt-0.5 text-xs capitalize text-navy-400">{c.role}</div>
+                    </div>
                   </div>
                   <MemberStatusBadge status={c.status} />
                 </div>
                 {accepted ? (
-                  <div className="mt-3 flex items-center justify-between">
-                    <span
-                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${PAY_LABEL[pay].cls}`}
-                    >
-                      {PAY_LABEL[pay].text}
-                    </span>
-                    <span className="text-[11px] text-navy-300">Manage →</span>
-                  </div>
+                  <>
+                    {/* Compliance cluster — mock-derived. Real ABR/insurance
+                        verification happens in mobile; portal just renders. */}
+                    <div className="mt-3">
+                      <ComplianceCluster c={mockComplianceFor({ email: c.name })} />
+                    </div>
+                    <div className="mt-3 flex items-center justify-between gap-2">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span
+                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${PAY_LABEL[pay].cls}`}
+                        >
+                          {PAY_LABEL[pay].text}
+                        </span>
+                        {c.userId && mixedBilling[c.userId] && mixedBilling[c.userId] !== 'none' && (
+                          <MixedBillingBadge source={mixedBilling[c.userId]!} />
+                        )}
+                      </div>
+                      <span className="text-[11px] text-navy-300">Manage →</span>
+                    </div>
+                  </>
                 ) : (
                   <div className="mt-3 text-xs text-navy-400">Invited {formatDate(c.date)}</div>
                 )}
@@ -570,7 +600,8 @@ function InviteModal(props: {
         .insert({ org_id: orgId, email_or_phone: value.trim(), role })
         .select('id, token')
         .single();
-      if (error || !data) throw new Error(error?.message ?? 'Could not create invitation');
+      // Throw original error so friendlyError can map RLS / 23505 / etc.
+      if (error || !data) throw error ?? new Error('Could not create invitation');
 
       setShareLink(`${env.inviteBaseUrl}/invite/${data.token}`);
 
@@ -581,7 +612,10 @@ function InviteModal(props: {
       if (fnErr) notify('Invitation created — email delivery failed, share the link.', 'info');
       else notify('Invitation sent', 'success');
     } catch (err) {
-      notify(err instanceof Error ? err.message : 'Something went wrong', 'error');
+      notify(friendlyError(err, 'Could not send invitation.'), 'error');
+    } finally {
+      // Always reset; previous version only reset on error which left the
+      // button locked when the user opened the modal from another flow.
       setSubmitting(false);
     }
   }

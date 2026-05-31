@@ -5,12 +5,15 @@ import { useOrg } from '@/lib/org';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/components/Toast';
 import { PageHeader } from '@/components/PageHeader';
+import { NotificationPreferences } from '@/components/NotificationPreferences';
 import { formatDate } from '@/lib/format';
 import { SEAT_LIMIT } from '@/lib/types';
 import { friendlyError } from '@/lib/errors';
+import { useSeqGuard } from '@/lib/use-seq-guard';
 
 export function SettingsPage() {
   const { currentOrg, refresh } = useOrg();
+  const { user } = useAuth();
   const { notify } = useToast();
   const orgId = currentOrg?.id ?? null;
 
@@ -23,12 +26,46 @@ export function SettingsPage() {
   const [periodAnchor, setPeriodAnchor] = useState(currentOrg?.period_anchor ?? '');
   const [savingPeriod, setSavingPeriod] = useState(false);
 
+  const [billingEmail, setBillingEmail] = useState(currentOrg?.billing_email ?? '');
+  const [savingBillingEmail, setSavingBillingEmail] = useState(false);
+
   useEffect(() => {
     setName(currentOrg?.name ?? '');
     setAbn(currentOrg?.abn ?? '');
     setPeriodFreq(currentOrg?.period_frequency ?? 'fortnightly');
     setPeriodAnchor(currentOrg?.period_anchor ?? '');
-  }, [currentOrg?.id, currentOrg?.name, currentOrg?.abn, currentOrg?.period_frequency, currentOrg?.period_anchor]);
+    setBillingEmail(currentOrg?.billing_email ?? '');
+  }, [currentOrg?.id, currentOrg?.name, currentOrg?.abn, currentOrg?.billing_email, currentOrg?.period_frequency, currentOrg?.period_anchor]);
+
+  async function saveBillingEmail() {
+    if (!orgId) return;
+    const trimmed = billingEmail.trim();
+    if (trimmed.length > 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      notify('Enter a valid email or leave blank.', 'error');
+      return;
+    }
+    setSavingBillingEmail(true);
+    const { error } = await supabase
+      .from('organizations')
+      .update({ billing_email: trimmed || null })
+      .eq('id', orgId);
+    if (error) {
+      // PG error 42703 = column does not exist (migration 20260602100000
+      // not applied yet). Surface a clear message instead of a generic one.
+      if ((error as { code?: string }).code === '42703') {
+        notify(
+          "Inbox feature isn't enabled on this DB yet. Apply migration 20260602100000 to use it.",
+          'error',
+        );
+      } else {
+        notify(friendlyError(error), 'error');
+      }
+    } else {
+      notify(trimmed ? 'Inbox email saved' : 'Inbox email cleared', 'success');
+      await refresh();
+    }
+    setSavingBillingEmail(false);
+  }
 
   async function savePeriod() {
     if (!orgId) return;
@@ -48,15 +85,18 @@ export function SettingsPage() {
     setSavingPeriod(false);
   }
 
+  const countSeq = useSeqGuard();
   const loadCount = useCallback(async () => {
     if (!orgId) return;
+    const token = countSeq.start();
     const { count } = await supabase
       .from('org_memberships')
       .select('id', { count: 'exact', head: true })
       .eq('org_id', orgId)
       .eq('status', 'accepted');
+    if (!countSeq.isCurrent(token)) return;
     setMemberCount(count ?? 0);
-  }, [orgId]);
+  }, [orgId, countSeq]);
 
   useEffect(() => {
     void loadCount();
@@ -64,10 +104,16 @@ export function SettingsPage() {
 
   async function saveOrg() {
     if (!orgId) return;
+    const trimmedAbn = abn.trim();
+    // Validate ABN format: 11 digits (with optional spacing). Reject "12345" / "abc".
+    if (trimmedAbn.length > 0 && !/^\d{11}$/.test(trimmedAbn.replace(/\s/g, ''))) {
+      notify('ABN must be 11 digits (e.g. 12 345 678 901) or left blank.', 'error');
+      return;
+    }
     setSaving(true);
     const { error } = await supabase
       .from('organizations')
-      .update({ name: name.trim(), abn: abn.trim() || null })
+      .update({ name: name.trim(), abn: trimmedAbn || null })
       .eq('id', orgId);
     if (error) notify(friendlyError(error), 'error');
     else {
@@ -85,9 +131,63 @@ export function SettingsPage() {
 
   return (
     <>
-      <PageHeader title="Settings" subtitle="Organisation, plan and members" />
+      <PageHeader kicker="Account" title="Settings" subtitle="Organisation, plan and members" />
 
       <div className="max-w-2xl">
+      {/* Onboarding guide — print-ready PDF for handing to team / customers. */}
+      <Link
+        to="/print/onboarding"
+        target="_blank"
+        rel="noopener"
+        className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-navy-100 bg-white p-4 transition-colors hover:border-brand-200 hover:bg-brand-50/20"
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-lg"
+            style={{
+              background: 'linear-gradient(135deg, var(--color-brand-500) 0%, var(--color-lime-400) 100%)',
+              color: '#ffffff',
+            }}
+            aria-hidden="true"
+          >
+            📖
+          </div>
+          <div>
+            <div className="text-sm font-semibold text-navy-800">Onboarding guide (PDF)</div>
+            <div className="text-[12px] text-navy-500">
+              6-page setup walkthrough — open + print to share with your team.
+            </div>
+          </div>
+        </div>
+        <span className="text-[11px] font-semibold text-brand-700">Open →</span>
+      </Link>
+
+      {/* Integrations entry-point — full UI lives at /settings/integrations. */}
+      <Link
+        to="/settings/integrations"
+        className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-navy-100 bg-white p-4 transition-colors hover:border-brand-200 hover:bg-brand-50/20"
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-lg"
+            style={{
+              background: 'linear-gradient(135deg, var(--color-brand-500) 0%, var(--color-lime-400) 100%)',
+              color: '#ffffff',
+            }}
+            aria-hidden="true"
+          >
+            🔌
+          </div>
+          <div>
+            <div className="text-sm font-semibold text-navy-800">Integrations</div>
+            <div className="text-[12px] text-navy-500">
+              Sync with Xero, MYOB, Google Calendar and more.
+            </div>
+          </div>
+        </div>
+        <span className="text-[11px] font-semibold text-brand-700">Open →</span>
+      </Link>
+
       {/* Organization */}
       <section className="ozly-card mb-4 p-5">
         <h2 className="text-sm font-semibold text-navy-700">Organisation</h2>
@@ -120,6 +220,37 @@ export function SettingsPage() {
           className="mt-4 rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-500 disabled:bg-brand-300"
         >
           {saving ? 'Saving…' : 'Save changes'}
+        </button>
+      </section>
+
+      {/* Inbox email */}
+      <section id="billing-email" className="ozly-card mb-4 p-5">
+        <h2 className="text-sm font-semibold text-navy-700">Inbox email</h2>
+        <p className="mt-1 text-xs text-navy-400">
+          Where invoices sent directly by members will arrive (and where you'll see them surface in the{' '}
+          <Link to="/inbox" className="text-brand-600 hover:underline">Inbox</Link>). Leave blank to disable direct delivery.
+        </p>
+        <label className="mt-4 block text-xs font-medium text-navy-600">
+          Email
+          <input
+            type="email"
+            value={billingEmail}
+            onChange={(e) => setBillingEmail(e.target.value)}
+            placeholder={currentOrg.admin_email}
+            className="mt-1 w-full rounded-md border border-navy-100 bg-white px-3 py-2 text-sm text-navy-700 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+          />
+        </label>
+        {billingEmail.trim() && billingEmail.trim() !== (currentOrg.billing_email ?? '') && (
+          <p className="mt-2 text-[11px] text-navy-400">
+            Tip: use a shared inbox like <code className="rounded bg-navy-50 px-1">invoices@yourdomain.com</code> so multiple admins see it.
+          </p>
+        )}
+        <button
+          onClick={() => void saveBillingEmail()}
+          disabled={savingBillingEmail || billingEmail.trim() === (currentOrg.billing_email ?? '')}
+          className="mt-4 rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-500 disabled:bg-brand-300"
+        >
+          {savingBillingEmail ? 'Saving…' : 'Save inbox email'}
         </button>
       </section>
 
@@ -216,6 +347,8 @@ export function SettingsPage() {
           Manage members
         </Link>
       </section>
+
+      {user?.id && <NotificationPreferences userKey={user.id} />}
 
       <DangerZone />
       </div>

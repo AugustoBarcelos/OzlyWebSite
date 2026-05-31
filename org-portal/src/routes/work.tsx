@@ -4,6 +4,7 @@ import { useOrg } from '@/lib/org';
 import { useToast } from '@/components/Toast';
 import { Spinner } from '@/components/Spinner';
 import { PageHeader } from '@/components/PageHeader';
+import { KpiCard } from '@/components/KpiCard';
 import { EmptyState } from '@/components/EmptyState';
 import { BriefcaseIcon } from '@/components/Icons';
 import { formatDate, formatMoney } from '@/lib/format';
@@ -231,6 +232,63 @@ export function WorkPage() {
     setPage(0);
   }, [effectiveKey, filters, whenRange, sort, pageSize]);
 
+  // ── Bulk select state — mirrors the Invoices pattern. Single-table action
+  // for now: "Export selected to CSV", since jobs.UPDATE isn't allowed under
+  // org-admin RLS and we don't want to ship a write RPC for this without
+  // explicit user request.
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+
+  function toggleSelected(id: string): void {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+  function clearSelection(): void {
+    setSelectedIds(new Set());
+    setSelectMode(false);
+  }
+  function selectAllOnPage(): void {
+    setSelectedIds(new Set(jobs.map((j) => j.id)));
+  }
+
+  async function bulkExportSelected(): Promise<void> {
+    if (selectedIds.size === 0) return;
+    setBulkBusy(true);
+    try {
+      const selected = jobs.filter((j) => selectedIds.has(j.id));
+      const headers = [
+        'Sub-contractor', 'Email', 'Title',
+        'Start', 'End', 'Hours (net)',
+        'Hourly rate', 'Value', 'Location', 'Status',
+      ];
+      const csvRows = selected.map((j) => [
+        j.issuer?.full_name?.trim() ?? '',
+        j.issuer?.email ?? '',
+        j.title ?? '',
+        j.start_datetime,
+        j.end_datetime,
+        netHours(j).toFixed(2),
+        j.hourly_rate ?? 0,
+        jobValue(j).toFixed(2),
+        j.location ?? '',
+        j.status,
+      ]);
+      const csv = toCsv(headers, csvRows);
+      downloadCsv(`ozly-work-selected-${timestampSuffix()}.csv`, csv);
+      notify(`Exported ${selected.length} job${selected.length === 1 ? '' : 's'}`, 'success');
+      clearSelection();
+    } catch (e) {
+      notify(friendlyError(e, 'Could not export selection.'), 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
   const setColFilter = (k: SetCol) => (next: Set<string>) => setFilters((prev) => ({ ...prev, [k]: next }));
   const onSort = (k: ColKey) => (dir: 'asc' | 'desc') => setSort({ field: COLS[k].sort, dir });
   const sortDirFor = (k: ColKey): SortDir => (sort.field === COLS[k].sort ? sort.dir : null);
@@ -301,6 +359,7 @@ export function WorkPage() {
   return (
     <div>
       <PageHeader
+        kicker="Operations"
         title="Work"
         subtitle={`Work confirmed for ${currentOrg?.name ?? ''} — offers are accepted in the Ozly app`}
         action={
@@ -358,6 +417,16 @@ export function WorkPage() {
             </button>
           )}
           <button
+            onClick={() => { setSelectMode((v) => !v); setSelectedIds(new Set()); }}
+            className={`rounded-md px-3 py-1.5 text-xs font-medium ${
+              selectMode
+                ? 'bg-brand-600 text-white hover:bg-brand-500'
+                : 'text-navy-700 ring-1 ring-navy-100 hover:bg-navy-50'
+            }`}
+          >
+            {selectMode ? 'Done' : 'Select'}
+          </button>
+          <button
             onClick={() => void exportCsv()}
             disabled={exporting}
             className="rounded-md px-3 py-1.5 text-xs font-medium text-navy-700 ring-1 ring-navy-100 hover:bg-navy-50 disabled:opacity-50"
@@ -367,23 +436,46 @@ export function WorkPage() {
         </div>
       </div>
 
+      {selectMode && (
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-brand-200 bg-brand-50/60 px-4 py-2">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-brand-700">
+              {selectedIds.size === 0
+                ? 'Nothing selected'
+                : `${selectedIds.size} job${selectedIds.size === 1 ? '' : 's'} selected`}
+            </span>
+            {jobs.length > 0 && selectedIds.size < jobs.length && (
+              <button
+                onClick={selectAllOnPage}
+                className="text-[11px] font-semibold text-brand-700 hover:text-brand-600"
+              >
+                Select all on page ({jobs.length})
+              </button>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => void bulkExportSelected()}
+              disabled={bulkBusy || selectedIds.size === 0}
+              className="rounded-md bg-brand-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-500 disabled:bg-brand-300"
+            >
+              {bulkBusy ? 'Exporting…' : `Export ${selectedIds.size || ''} to CSV`}
+            </button>
+            <button
+              onClick={clearSelection}
+              className="rounded-md px-3 py-1.5 text-xs font-medium text-navy-500 hover:bg-navy-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="kpi">
-          <div className="kpi-label">Total value</div>
-          <div className="kpi-value">{formatMoney(kpis.value)}</div>
-        </div>
-        <div className="kpi">
-          <div className="kpi-label">Hours</div>
-          <div className="kpi-value">{Math.round(kpis.hours).toLocaleString('en-AU')}h</div>
-        </div>
-        <div className="kpi">
-          <div className="kpi-label">Jobs</div>
-          <div className="kpi-value">{kpis.jobs.toLocaleString('en-AU')}</div>
-        </div>
-        <div className="kpi">
-          <div className="kpi-label">Completed</div>
-          <div className="kpi-value">{kpis.completed.toLocaleString('en-AU')}</div>
-        </div>
+        <KpiCard tone="brand" label="Total value" value={formatMoney(kpis.value)} />
+        <KpiCard tone="lime"  label="Hours"       value={`${Math.round(kpis.hours).toLocaleString('en-AU')}h`} />
+        <KpiCard tone="navy"  label="Jobs"        value={kpis.jobs.toLocaleString('en-AU')} />
+        <KpiCard tone="brand" label="Completed"   value={kpis.completed.toLocaleString('en-AU')} />
       </div>
 
       {loading ? (
@@ -466,21 +558,34 @@ export function WorkPage() {
                 {jobs.map((j) => (
                   <tr
                     key={j.id}
-                    onClick={() => setJobDetail(j)}
+                    onClick={() => selectMode ? toggleSelected(j.id) : setJobDetail(j)}
                     className={`cursor-pointer border-b border-navy-50 last:border-0 hover:bg-navy-50/40 ${
                       isUnpaid(payState, j.user_id) ? 'opacity-50' : ''
-                    }`}
+                    } ${selectMode && selectedIds.has(j.id) ? 'bg-brand-50/60' : ''}`}
                   >
                     <td className="px-4 py-3">
-                      <div className="font-medium text-navy-700">{issuerName(j)}</div>
-                      {isUnpaid(payState, j.user_id) && (
-                        <div
-                          className="text-[11px] italic text-amber-600"
-                          title="No one is covering this sub-contractor's ABN plan, so their invoices won't include an ABN. Cover it for them or ask them to subscribe."
-                        >
-                          Needs ABN cover
+                      <div className="flex items-center gap-2">
+                        {selectMode && (
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(j.id)}
+                            onChange={() => toggleSelected(j.id)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="h-3.5 w-3.5 rounded border-navy-200 text-brand-600 focus:ring-brand-200"
+                          />
+                        )}
+                        <div className="min-w-0">
+                          <div className="font-medium text-navy-700">{issuerName(j)}</div>
+                          {isUnpaid(payState, j.user_id) && (
+                            <div
+                              className="text-[11px] italic text-amber-600"
+                              title="No one is covering this sub-contractor's ABN plan, so their invoices won't include an ABN. Cover it for them or ask them to subscribe."
+                            >
+                              Needs ABN cover
+                            </div>
+                          )}
                         </div>
-                      )}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-navy-600">{j.title || '—'}</td>
                     <td className="px-4 py-3 text-navy-500">{formatDate(j.start_datetime)}</td>
