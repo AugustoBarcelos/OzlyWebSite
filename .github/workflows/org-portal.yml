@@ -89,6 +89,12 @@ jobs:
       - name: Test (Vitest)
         working-directory: org-portal
         run: npm test -- --run
+        env:
+          # Tests don't hit Supabase — but src/lib/env.ts asserts presence
+          # at import time, so any test that pulls in supabase.ts needs
+          # a non-empty value. Placeholders are fine; never the real URL.
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: placeholder-anon-key
 
       # ── Gate 1: no service_role or hardcoded payment secrets in src/ ─────
       - name: Verify no service_role / payment secrets in source
