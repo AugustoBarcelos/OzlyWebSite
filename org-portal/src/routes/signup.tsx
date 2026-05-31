@@ -211,42 +211,62 @@ export function SignupPage() {
               'linear-gradient(180deg, transparent 0%, transparent 30%, rgba(5, 11, 17, 0.45) 100%)',
           }}
         />
+        {/* Wordmark + logo. Inline color to win specificity over the
+            global :where(.font-display) rule. */}
         <div className="relative z-10 flex items-center gap-3">
           <img src="/OSLY.svg" alt="Ozly" width={40} height={40} className="shrink-0 drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)]" />
-          <div className="font-display text-[19px] font-bold tracking-tight text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.4)]">
-            oz<span className="text-lime-300">·</span>ly
+          <div
+            className="font-display text-[19px] font-bold tracking-tight drop-shadow-[0_1px_3px_rgba(0,0,0,0.4)]"
+            style={{ color: '#ffffff' }}
+          >
+            oz<span style={{ color: '#d9f99d' }}>·</span>ly
           </div>
         </div>
 
         <div className="relative z-10 max-w-md">
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-[10.5px] font-semibold uppercase tracking-[0.18em] text-lime-100 backdrop-blur">
-            <span className="h-1.5 w-1.5 rounded-full bg-lime-300" />
+          <div
+            className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-[10.5px] font-semibold uppercase tracking-[0.18em] backdrop-blur"
+            style={{ color: '#ecfccb' }}
+          >
+            <span className="h-1.5 w-1.5 rounded-full" style={{ background: '#d9f99d' }} />
             14 days, no card
           </div>
           <h2
-            className="font-display text-[2.6rem] font-bold leading-[1.05] tracking-tight text-white"
-            style={{ textShadow: '0 2px 12px rgba(0, 0, 0, 0.35)' }}
+            className="font-display text-[2.6rem] font-bold leading-[1.05] tracking-tight"
+            style={{
+              color: '#ffffff',
+              textShadow: '0 2px 14px rgba(0, 0, 0, 0.55)',
+            }}
           >
             Stop chasing<br />invoices on WhatsApp.
           </h2>
-          <p className="mt-4 max-w-sm text-[15px] leading-relaxed text-white/90">
-            Every sub-contractor on Ozly sends ATO-compliant invoices directly to your inbox.
-            Reconcile, export to Xero, BAS-ready at year end.
+          {/* Honest copy: no Xero/ATO claims until those integrations
+              actually ship + are tested. */}
+          <p
+            className="mt-4 max-w-sm text-[15px] leading-relaxed"
+            style={{ color: 'rgba(255, 255, 255, 0.92)' }}
+          >
+            Every sub-contractor on Ozly sends their invoice straight to your
+            inbox. One workspace for who you engage, what they billed, and
+            what you've paid.
           </p>
         </div>
 
-        <div className="relative z-10 grid max-w-md grid-cols-3 gap-3 text-[11.5px] text-white/80">
+        <div
+          className="relative z-10 grid max-w-md grid-cols-3 gap-3 text-[11.5px]"
+          style={{ color: 'rgba(255, 255, 255, 0.85)' }}
+        >
           <div>
-            <div className="font-display text-xl font-bold text-white">3 min</div>
+            <div className="font-display text-xl font-bold" style={{ color: '#ffffff' }}>3 min</div>
             to first invoice
           </div>
           <div>
-            <div className="font-display text-xl font-bold text-white">$0</div>
+            <div className="font-display text-xl font-bold" style={{ color: '#ffffff' }}>$0</div>
             until you grow
           </div>
           <div>
-            <div className="font-display text-xl font-bold text-white">AU</div>
-            built for here
+            <div className="font-display text-xl font-bold" style={{ color: '#ffffff' }}>AU</div>
+            built local
           </div>
         </div>
       </aside>

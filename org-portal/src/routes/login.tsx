@@ -76,43 +76,62 @@ export function LoginPage() {
               'linear-gradient(180deg, transparent 0%, transparent 30%, rgba(5, 11, 17, 0.45) 100%)',
           }}
         />
+        {/* Wordmark + logo. Inline `color` here (not `text-white`) so the
+            global `:where(.font-display)` rule can never reclaim it. */}
         <div className="relative z-10 flex items-center gap-3">
           <img src="/OSLY.svg" alt="Ozly" width={40} height={40} className="shrink-0 drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)]" />
-          <div className="font-display text-[19px] font-bold tracking-tight text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.4)]">
-            oz<span className="text-lime-300">·</span>ly
+          <div
+            className="font-display text-[19px] font-bold tracking-tight drop-shadow-[0_1px_3px_rgba(0,0,0,0.4)]"
+            style={{ color: '#ffffff' }}
+          >
+            oz<span style={{ color: '#d9f99d' }}>·</span>ly
           </div>
         </div>
 
         <div className="relative z-10 max-w-md">
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-[10.5px] font-semibold uppercase tracking-[0.18em] text-lime-100 backdrop-blur">
-            <span className="h-1.5 w-1.5 rounded-full bg-lime-300" />
+          <div
+            className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-[10.5px] font-semibold uppercase tracking-[0.18em] backdrop-blur"
+            style={{ color: '#ecfccb' }}
+          >
+            <span className="h-1.5 w-1.5 rounded-full" style={{ background: '#d9f99d' }} />
             For Organisations
           </div>
           <h2
-            className="font-display text-[2.6rem] font-bold leading-[1.05] tracking-tight text-white"
-            style={{ textShadow: '0 2px 12px rgba(0, 0, 0, 0.35)' }}
+            className="font-display text-[2.6rem] font-bold leading-[1.05] tracking-tight"
+            style={{
+              color: '#ffffff',
+              textShadow: '0 2px 14px rgba(0, 0, 0, 0.55)',
+            }}
           >
-            Every sub<span className="text-lime-300">·</span>contractor's invoice,<br />
+            Every sub<span style={{ color: '#d9f99d' }}>·</span>contractor's invoice,<br />
             in one calm inbox.
           </h2>
-          <p className="mt-4 max-w-sm text-[15px] leading-relaxed text-white/90">
+          <p
+            className="mt-4 max-w-sm text-[15px] leading-relaxed"
+            style={{ color: 'rgba(255, 255, 255, 0.92)' }}
+          >
             Engage cleaners, surface what they billed, reconcile in one click.
             Built for Australian cleaning companies that hate spreadsheets.
           </p>
         </div>
 
-        <div className="relative z-10 grid max-w-md grid-cols-3 gap-3 text-[11.5px] text-white/80">
+        {/* Honest claims only — keep until integrations are real & tested.
+            No Xero/ATO claims here because we haven't shipped either yet. */}
+        <div
+          className="relative z-10 grid max-w-md grid-cols-3 gap-3 text-[11.5px]"
+          style={{ color: 'rgba(255, 255, 255, 0.85)' }}
+        >
           <div>
-            <div className="font-display text-xl font-bold text-white">14d</div>
+            <div className="font-display text-xl font-bold" style={{ color: '#ffffff' }}>14d</div>
             free trial
           </div>
           <div>
-            <div className="font-display text-xl font-bold text-white">ATO</div>
-            BAS export
+            <div className="font-display text-xl font-bold" style={{ color: '#ffffff' }}>$0</div>
+            no card to start
           </div>
           <div>
-            <div className="font-display text-xl font-bold text-white">Xero</div>
-            CSV ready
+            <div className="font-display text-xl font-bold" style={{ color: '#ffffff' }}>AU</div>
+            built local
           </div>
         </div>
       </aside>
