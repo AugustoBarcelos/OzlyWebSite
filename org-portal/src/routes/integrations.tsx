@@ -16,7 +16,7 @@
 // with a Supabase-backed store when the real backend lands.
 
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useOrg } from '@/lib/org';
 import { useToast } from '@/components/Toast';
 import { PageHeader } from '@/components/PageHeader';
@@ -45,6 +45,10 @@ interface Integration {
   state: IntegrationState;
   /** Sync scopes the integration could enable. Used by the wizard. */
   scopes: { key: string; label: string; description: string; defaultOn: boolean }[];
+  /** If set, clicking the card navigates to this route instead of opening the
+   *  wizard panel. Used for integrations that have a real, dedicated UI
+   *  elsewhere in the portal (e.g. CSV upload lives at /import). */
+  linkTo?: string;
   /** Populated when state === 'connected'. */
   connectedAt?: string;
   lastSyncAt?: string;
@@ -65,84 +69,8 @@ function relativeFromNow(iso: string): string {
   return `${d}d ago`;
 }
 
-function isoMinutesAgo(min: number): string {
-  return new Date(Date.now() - min * 60_000).toISOString();
-}
-
 const INITIAL_INTEGRATIONS: Integration[] = [
-  // ── JOB SOURCES — the primary integration category ────────────────────
-  {
-    key: 'servicem8',
-    name: 'ServiceM8',
-    category: 'Job sources',
-    monogram: 'S8',
-    tone: '#ff6c00', toneEnd: '#c44d00',
-    oneliner: 'Pull scheduled jobs into Ozly, offer to subs in one click.',
-    longDescription:
-      'When a job is scheduled in ServiceM8 (status: queued or scheduled), it auto-appears in Ozly\'s Work inbox. You pick a sub, hit Offer, and the sub gets a push to accept. No re-typing job details, location or customer notes.',
-    state: 'connected',
-    scopes: [
-      { key: 'jobs_pull',  label: 'Scheduled jobs → Work inbox', description: 'New / scheduled ServiceM8 jobs appear in Ozly\'s Work list.',        defaultOn: true },
-      { key: 'customer',   label: 'Customer notes + address',     description: 'Include customer info so subs know what they\'re walking into.',     defaultOn: true },
-      { key: 'attachments',label: 'Photos + attachments',         description: 'Pull site photos / quote PDFs the dispatcher uploaded.',             defaultOn: false },
-      { key: 'jobs_push',  label: 'Status back to ServiceM8',      description: 'When a sub completes a job, mark it complete in ServiceM8 too.',     defaultOn: true },
-    ],
-    connectedAt: isoMinutesAgo(60 * 24 * 11), // 11 days ago
-    lastSyncAt:  isoMinutesAgo(4),
-    syncFrequency: 'Every 5 minutes',
-    syncCount: 2,
-    activityLog: [
-      { at: isoMinutesAgo(4),   message: '2 new jobs pulled — Bondi + Surry Hills',  status: 'ok' },
-      { at: isoMinutesAgo(9),   message: '1 job status pushed back — completed',     status: 'ok' },
-      { at: isoMinutesAgo(14),  message: '3 new jobs pulled — CBD office round',     status: 'ok' },
-      { at: isoMinutesAgo(19),  message: 'No changes',                                status: 'ok' },
-      { at: isoMinutesAgo(24),  message: '1 new job pulled — Parramatta carpets',    status: 'ok' },
-    ],
-  },
-  {
-    key: 'tradify',
-    name: 'Tradify',
-    category: 'Job sources',
-    monogram: 'T',
-    tone: '#1e88e5', toneEnd: '#1565c0',
-    oneliner: 'AU/NZ trades scheduler — jobs flow into Ozly automatically.',
-    longDescription:
-      'Tradify users dispatch from a calendar; Ozly listens and pulls each scheduled job into Work the moment it lands. Quotes still live in Tradify — we only sync the dispatched job.',
-    state: 'available',
-    scopes: [
-      { key: 'jobs',     label: 'Scheduled jobs → Work inbox', description: 'Each Tradify job becomes an Ozly job to offer.',         defaultOn: true },
-      { key: 'customer', label: 'Customer + site details',     description: 'Pull the customer record + site address.',               defaultOn: true },
-      { key: 'status',   label: 'Status writeback',             description: 'When subs complete, mark the Tradify job done.',         defaultOn: true },
-    ],
-  },
-  {
-    key: 'google_calendar',
-    name: 'Google Calendar',
-    category: 'Job sources',
-    monogram: 'G',
-    tone: '#4285f4', toneEnd: '#1a73e8',
-    oneliner: 'Calendar events → job offers. Two-way sync with subs.',
-    longDescription:
-      'Pick a calendar — every new event becomes an Ozly job ready to offer. Confirmed jobs also push back to the sub-contractor\'s primary calendar so they don\'t double-book.',
-    state: 'available',
-    scopes: [
-      { key: 'events_read',  label: 'Read events from a calendar', description: 'Pick the calendars to watch. New events become jobs.', defaultOn: true },
-      { key: 'events_write', label: 'Push confirmed jobs back',     description: 'Accepted jobs land on the sub\'s primary calendar.',    defaultOn: true },
-      { key: 'busy',         label: 'Respect busy times',           description: 'Avoid offering work when a sub is busy elsewhere.',     defaultOn: false },
-    ],
-  },
-  {
-    key: 'microsoft_365',
-    name: 'Microsoft 365 Calendar',
-    category: 'Job sources',
-    monogram: 'M',
-    tone: '#0078d4', toneEnd: '#005a9e',
-    oneliner: 'Office 365 / Outlook calendar events as job offers.',
-    longDescription:
-      'For teams on Microsoft 365 — same flow as Google Calendar. Pick one or more shared calendars, every event becomes a job in Ozly. Optional writeback when accepted.',
-    state: 'coming_soon',
-    scopes: [],
-  },
+  // ── JOB SOURCES — pull scheduled work in ──────────────────────────────
   {
     key: 'csv_jobs',
     name: 'CSV upload',
@@ -153,25 +81,23 @@ const INITIAL_INTEGRATIONS: Integration[] = [
     longDescription:
       'No API? No problem. Upload a CSV with columns like Date / Address / Customer / Duration — we\'ll map them, preview each row, and import as Ozly jobs. Useful for one-off batch imports or migrating from Excel.',
     state: 'available',
-    scopes: [
-      { key: 'upload',  label: 'One-shot upload',              description: 'Manual — pick a file and import.',                     defaultOn: true },
-      { key: 'mapping', label: 'Remember column mapping',      description: 'Save your column → field mapping for future uploads.', defaultOn: true },
-    ],
+    linkTo: '/import',
+    scopes: [],
   },
   {
-    key: 'zapier',
-    name: 'Zapier',
+    key: 'servicem8',
+    name: 'ServiceM8',
     category: 'Job sources',
-    monogram: 'Z',
-    tone: '#ff4a00', toneEnd: '#cc3a00',
-    oneliner: 'Webhook trigger — anything that can fire Zapier becomes a job.',
+    monogram: 'S8',
+    tone: '#ff6c00', toneEnd: '#c44d00',
+    oneliner: 'Pull scheduled jobs into Ozly, offer to subs in one click.',
     longDescription:
-      'For tools we don\'t integrate with directly — connect via Zapier. Trigger: "new row in Google Sheets / new Typeform response / new HubSpot deal" → Action: "create Ozly job". Fully bidirectional.',
+      'When a job is scheduled in ServiceM8 (status: queued or scheduled), it will auto-appear in Ozly\'s Work inbox. You pick a sub, hit Offer, and the sub gets a push to accept. No re-typing job details, location or customer notes.',
     state: 'coming_soon',
     scopes: [],
   },
 
-  // ── ACCOUNTING — secondary: push the financial outcome out ────────────
+  // ── ACCOUNTING — push the financial outcome out ───────────────────────
   {
     key: 'xero',
     name: 'Xero',
@@ -180,25 +106,9 @@ const INITIAL_INTEGRATIONS: Integration[] = [
     tone: '#13b5ea', toneEnd: '#0c84ad',
     oneliner: 'Push paid invoices straight into Bills to pay.',
     longDescription:
-      'When a sub-contractor invoice is marked paid in Ozly, the bill auto-imports into Xero with the right contact, GST split and date. No CSV gymnastics. Best for AU teams already on Xero.',
-    state: 'connected',
-    scopes: [
-      { key: 'bills',    label: 'Paid invoices → Bills',     description: 'Each paid invoice creates a Bill in Xero.',           defaultOn: true },
-      { key: 'contacts', label: 'Sub-contractors → Contacts', description: 'New subs sync as Xero suppliers automatically.',     defaultOn: true },
-      { key: 'gst',      label: 'GST split',                  description: 'Tax-component lines mapped to the right GST code.',  defaultOn: true },
-      { key: 'projects', label: 'Tracking (Project / Class)', description: 'Optional — tag bills with a Xero project or class.', defaultOn: false },
-    ],
-    connectedAt: isoMinutesAgo(60 * 24 * 6),
-    lastSyncAt:  isoMinutesAgo(8),
-    syncFrequency: 'Every 15 minutes',
-    syncCount: 3,
-    activityLog: [
-      { at: isoMinutesAgo(8),   message: '3 paid invoices → Bills',  status: 'ok' },
-      { at: isoMinutesAgo(23),  message: '2 paid invoices → Bills',  status: 'ok' },
-      { at: isoMinutesAgo(38),  message: '1 new sub → Xero contact', status: 'ok' },
-      { at: isoMinutesAgo(53),  message: 'No changes',                status: 'ok' },
-      { at: isoMinutesAgo(68),  message: '4 paid invoices → Bills',  status: 'ok' },
-    ],
+      'When a sub-contractor invoice is marked paid in Ozly, the bill will auto-import into Xero with the right contact, GST split and date. No CSV gymnastics. Best for AU teams already on Xero.',
+    state: 'coming_soon',
+    scopes: [],
   },
   {
     key: 'myob',
@@ -208,43 +118,13 @@ const INITIAL_INTEGRATIONS: Integration[] = [
     tone: '#7e3eff', toneEnd: '#5b2bbf',
     oneliner: 'Supplier bills sync with MYOB Business / AccountRight.',
     longDescription:
-      'Same flow as Xero — paid invoices land as supplier bills in MYOB so your bookkeeper sees the truth in one place. We support MYOB Business and AccountRight Live.',
-    state: 'available',
-    scopes: [
-      { key: 'bills',    label: 'Paid invoices → Supplier bills', description: 'Each paid invoice becomes a supplier bill.', defaultOn: true },
-      { key: 'contacts', label: 'Sub-contractors → Cards',         description: 'Subs sync as MYOB supplier cards.',         defaultOn: true },
-      { key: 'gst',      label: 'GST split',                       description: 'Tax codes mapped to your MYOB chart.',      defaultOn: true },
-    ],
-  },
-  {
-    key: 'qbo',
-    name: 'QuickBooks Online',
-    category: 'Accounting',
-    monogram: 'Q',
-    tone: '#2ca01c', toneEnd: '#1f7414',
-    oneliner: 'Bills + contacts sync for QBO users.',
-    longDescription:
-      'QuickBooks Online integration creates the supplier contact (if missing), then files each paid invoice as a Bill. We respect class + location if you use them.',
-    state: 'coming_soon',
-    scopes: [],
-  },
-
-  // ── PAYMENTS ──────────────────────────────────────────────────────────
-  {
-    key: 'stripe',
-    name: 'Stripe (collect from clients)',
-    category: 'Payments',
-    monogram: '$',
-    tone: '#635bff', toneEnd: '#4a40d6',
-    oneliner: 'Pay-by-link on your clients\' invoices — separate from your Ozly subscription.',
-    longDescription:
-      'Currently Stripe powers your Ozly subscription. We\'re building a second Stripe surface so you can attach a Pay link to each invoice your subs send through you — separate from the Stripe account billing you for Ozly.',
+      'Same flow as Xero — paid invoices land as supplier bills in MYOB so your bookkeeper sees the truth in one place. We will support MYOB Business and AccountRight Live.',
     state: 'coming_soon',
     scopes: [],
   },
 ];
 
-const CATEGORY_ORDER: IntegrationCategory[] = ['Job sources', 'Accounting', 'Payments'];
+const CATEGORY_ORDER: IntegrationCategory[] = ['Job sources', 'Accounting'];
 
 const STATE_PILL: Record<IntegrationState, { label: string; cls: string }> = {
   available:    { label: 'Available',    cls: 'bg-brand-50 text-brand-700 ring-1 ring-brand-100' },
@@ -261,6 +141,7 @@ const STATUS_DOT: Record<SyncLogEntry['status'], string> = {
 export function IntegrationsPage() {
   const { currentOrg } = useOrg();
   const { notify } = useToast();
+  const navigate = useNavigate();
   const [integrations, setIntegrations] = useState<Integration[]>(INITIAL_INTEGRATIONS);
   const [openKey, setOpenKey] = useState<string | null>(null);
   const open = integrations.find((i) => i.key === openKey) ?? null;
@@ -424,9 +305,10 @@ export function IntegrationsPage() {
         <span aria-hidden="true" className="text-base leading-none">🔌</span>
         <div>
           <span className="font-semibold text-navy-700">The point of integrations:</span>{' '}
-          stop re-typing jobs. Connect ServiceM8 / Tradify / your calendar — every scheduled job
-          shows up in <Link to="/work" className="font-semibold text-brand-700 underline">Work</Link>,
-          ready to offer to a sub. Sync runs in the background, every 5 minutes.
+          stop re-typing jobs and stop double-keying into your books. Today you can bulk-import
+          jobs via CSV — drop them into{' '}
+          <Link to="/work" className="font-semibold text-brand-700 underline">Work</Link>,
+          ready to offer to a sub. Live API integrations with ServiceM8, Xero and MYOB are on the way.
         </div>
       </div>
 
@@ -457,7 +339,19 @@ export function IntegrationsPage() {
                     <button
                       key={int.key}
                       type="button"
-                      onClick={() => setOpenKey(int.key)}
+                      onClick={() => {
+                        if (int.linkTo) {
+                          if (orgId) {
+                            void logOrgEvent(orgId, 'org_integration_requested', {
+                              integration_key: int.key,
+                              state: 'linkto_navigated',
+                            });
+                          }
+                          navigate(int.linkTo);
+                          return;
+                        }
+                        setOpenKey(int.key);
+                      }}
                       className="group flex flex-col gap-3 rounded-xl border border-navy-100 bg-white p-4 text-left transition-all hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-md"
                     >
                       <div className="flex items-start justify-between gap-2">
@@ -483,7 +377,11 @@ export function IntegrationsPage() {
                         </div>
                       ) : (
                         <div className="mt-auto text-[11px] font-semibold text-brand-700 opacity-0 transition-opacity group-hover:opacity-100">
-                          {int.state === 'available' ? 'Connect →' : 'Learn more →'}
+                          {int.linkTo
+                            ? 'Open →'
+                            : int.state === 'available'
+                              ? 'Connect →'
+                              : 'Learn more →'}
                         </div>
                       )}
                     </button>

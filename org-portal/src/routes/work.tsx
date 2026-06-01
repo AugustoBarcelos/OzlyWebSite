@@ -77,6 +77,7 @@ export function WorkPage() {
   const [payState, setPayState] = useState<Record<string, PayState>>({});
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [seriesModalOpen, setSeriesModalOpen] = useState(false);
   const [jobDetail, setJobDetail] = useState<JobRow | null>(null);
   const [filters, setFilters] = useState<Record<SetCol, Set<string>>>({
     sub: new Set(),
@@ -364,14 +365,23 @@ export function WorkPage() {
         title="Work"
         subtitle={`Work confirmed for ${currentOrg?.name ?? ''} — offers are accepted in the Ozly app`}
         action={
-          <button
-            onClick={() => setModalOpen(true)}
-            disabled={members.length === 0}
-            title={members.length === 0 ? 'Invite and have a member accept first' : undefined}
-            className="shrink-0 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-500 disabled:bg-brand-300"
-          >
-            Offer work
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              onClick={() => setSeriesModalOpen(true)}
+              className="rounded-lg bg-white px-3 py-2 text-sm font-medium text-navy-700 ring-1 ring-navy-100 hover:bg-navy-50"
+              title="View and cancel recurring offer series"
+            >
+              Recurring series
+            </button>
+            <button
+              onClick={() => setModalOpen(true)}
+              disabled={members.length === 0}
+              title={members.length === 0 ? 'Invite and have a member accept first' : undefined}
+              className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-500 disabled:bg-brand-300"
+            >
+              Offer work
+            </button>
+          </div>
         }
       />
 
@@ -667,6 +677,15 @@ export function WorkPage() {
           }}
         />
       )}
+
+      {seriesModalOpen && orgId && (
+        <RecurringSeriesModal
+          orgId={orgId}
+          onClose={() => setSeriesModalOpen(false)}
+          onChanged={() => void load()}
+          notify={notify}
+        />
+      )}
     </div>
   );
 }
@@ -925,17 +944,105 @@ function OfferWorkModal(props: {
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const valid = useMemo(
-    () => member && title.trim() && start && end && new Date(end) > new Date(start),
-    [member, title, start, end],
-  );
+  // ── Recurrence state ────────────────────────────────────────────────
+  // Default: single offer ('none'). When the admin picks weekly/fortnightly
+  // we seed the day-of-week from the start date and end-date to +4 weeks.
+  type Recurrence = 'none' | 'weekly' | 'fortnightly' | 'monthly';
+  const [recurrence, setRecurrence] = useState<Recurrence>('none');
+  const [recurrenceDays, setRecurrenceDays] = useState<number[]>([]);  // ISO 1=Mon..7=Sun
+  const [recurrenceEnd, setRecurrenceEnd] = useState<string>('');       // yyyy-mm-dd
+
+  // When the user picks a start date AND switches to a weekly/fortnightly
+  // recurrence with no day selected yet, seed the day from the start.
+  useEffect(() => {
+    if (!start) return;
+    if (recurrence === 'weekly' || recurrence === 'fortnightly') {
+      const d = new Date(start);
+      const iso = d.getDay() === 0 ? 7 : d.getDay(); // JS Sun=0 → ISO 7
+      if (recurrenceDays.length === 0) setRecurrenceDays([iso]);
+      if (!recurrenceEnd) {
+        const ed = new Date(d);
+        ed.setDate(ed.getDate() + 28);
+        setRecurrenceEnd(ed.toISOString().slice(0, 10));
+      }
+    } else if (recurrence === 'monthly') {
+      if (!recurrenceEnd) {
+        const d = new Date(start);
+        const ed = new Date(d);
+        ed.setMonth(ed.getMonth() + 6);
+        setRecurrenceEnd(ed.toISOString().slice(0, 10));
+      }
+    } else {
+      setRecurrenceDays([]);
+      setRecurrenceEnd('');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recurrence, start]);
+
+  // Compute date list for the preview ("14 offers · Aug 5 → Aug 31 · ~$1,470").
+  // Mirrors the server-side generator in 20260612120000_org_offer_work_recurring.
+  const preview = useMemo(() => {
+    if (!start || !end || new Date(end) <= new Date(start)) return null;
+    const startD = new Date(start);
+    const durationMs = new Date(end).getTime() - startD.getTime();
+    const hours = durationMs / 3_600_000;
+    const rateNum = rate.trim() === '' ? defaultRate : Number(rate);
+    const perOfferValue = hours * (Number.isFinite(rateNum) && rateNum > 0 ? rateNum : 0);
+    if (recurrence === 'none') {
+      return { count: 1, first: startD, last: startD, totalValue: perOfferValue };
+    }
+    const endD = recurrenceEnd ? new Date(recurrenceEnd + 'T23:59:59') : null;
+    if (!endD || endD < startD) return null;
+    const dates: Date[] = [];
+    if (recurrence === 'monthly') {
+      const cursor = new Date(startD);
+      while (cursor <= endD && dates.length < 100) {
+        dates.push(new Date(cursor));
+        cursor.setMonth(cursor.getMonth() + 1);
+      }
+    } else {
+      if (recurrenceDays.length === 0) return null;
+      const cursor = new Date(startD);
+      while (cursor <= endD && dates.length < 100) {
+        const iso = cursor.getDay() === 0 ? 7 : cursor.getDay();
+        const weeksSince = Math.floor((cursor.getTime() - startD.getTime()) / (7 * 86_400_000));
+        const inRightWeek = recurrence === 'weekly' ? true : weeksSince % 2 === 0;
+        if (inRightWeek && recurrenceDays.includes(iso)) {
+          const d = new Date(cursor);
+          d.setHours(startD.getHours(), startD.getMinutes(), 0, 0);
+          dates.push(d);
+        }
+        cursor.setDate(cursor.getDate() + 1);
+      }
+    }
+    if (dates.length === 0) return null;
+    return {
+      count: dates.length,
+      first: dates[0]!,
+      last: dates[dates.length - 1]!,
+      totalValue: perOfferValue * dates.length,
+    };
+  }, [start, end, rate, defaultRate, recurrence, recurrenceDays, recurrenceEnd]);
+
+  const valid = useMemo(() => {
+    if (!member || !title.trim() || !start || !end) return false;
+    if (new Date(end) <= new Date(start)) return false;
+    if (recurrence === 'none') return true;
+    if (!recurrenceEnd) return false;
+    if ((recurrence === 'weekly' || recurrence === 'fortnightly') && recurrenceDays.length === 0) return false;
+    return preview !== null && preview.count > 0;
+  }, [member, title, start, end, recurrence, recurrenceEnd, recurrenceDays, preview]);
+
+  function toggleDay(iso: number) {
+    setRecurrenceDays((prev) => (prev.includes(iso) ? prev.filter((d) => d !== iso) : [...prev, iso].sort()));
+  }
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!valid) return;
     setSubmitting(true);
     const rateNum = rate.trim() === '' ? null : Number(rate);
-    const { error } = await supabase.rpc('org_offer_work', {
+    const { data, error } = await supabase.rpc('org_offer_work', {
       p_org_id: orgId,
       p_member: member,
       p_title: title.trim(),
@@ -944,12 +1051,21 @@ function OfferWorkModal(props: {
       p_location: location.trim() || null,
       p_notes: notes.trim() || null,
       p_hourly_rate: rateNum != null && !Number.isNaN(rateNum) ? rateNum : null,
+      p_recurrence: recurrence,
+      p_recurrence_end: recurrence === 'none' ? null : recurrenceEnd || null,
+      p_recurrence_days: recurrence === 'weekly' || recurrence === 'fortnightly' ? recurrenceDays : null,
     });
     if (error) {
       notify(friendlyError(error), 'error');
       setSubmitting(false);
     } else {
-      notify('Work offered — the member confirms it in the app', 'success');
+      const count = (data as { count?: number } | null)?.count ?? 1;
+      notify(
+        count === 1
+          ? 'Work offered — the member confirms it in the app'
+          : `${count} offers sent — the member confirms each one in the app`,
+        'success',
+      );
       onSent();
     }
   }
@@ -1029,15 +1145,296 @@ function OfferWorkModal(props: {
             />
           </label>
 
+          {/* ── Recurrence ───────────────────────────────────────────── */}
+          <fieldset className="mt-5 rounded-lg border border-navy-100 bg-navy-50/40 p-3">
+            <legend className="px-1 text-[10.5px] font-semibold uppercase tracking-wider text-navy-500">
+              Repeat
+            </legend>
+            <div className="flex flex-wrap gap-2">
+              {(
+                [
+                  { key: 'none',        label: 'Once' },
+                  { key: 'weekly',      label: 'Weekly' },
+                  { key: 'fortnightly', label: 'Fortnightly' },
+                  { key: 'monthly',     label: 'Monthly' },
+                ] as const
+              ).map((opt) => {
+                const active = recurrence === opt.key;
+                return (
+                  <button
+                    type="button"
+                    key={opt.key}
+                    onClick={() => setRecurrence(opt.key)}
+                    className={`rounded-full px-3 py-1 text-[11.5px] font-semibold transition-colors ${
+                      active
+                        ? 'bg-brand-600 text-white shadow-sm'
+                        : 'bg-white text-navy-600 ring-1 ring-navy-100 hover:bg-navy-50'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {(recurrence === 'weekly' || recurrence === 'fortnightly') && (
+              <div className="mt-3">
+                <div className="mb-1 text-[10.5px] font-semibold uppercase tracking-wider text-navy-400">
+                  Days
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {([
+                    { iso: 1, label: 'Mon' },
+                    { iso: 2, label: 'Tue' },
+                    { iso: 3, label: 'Wed' },
+                    { iso: 4, label: 'Thu' },
+                    { iso: 5, label: 'Fri' },
+                    { iso: 6, label: 'Sat' },
+                    { iso: 7, label: 'Sun' },
+                  ] as const).map((d) => {
+                    const on = recurrenceDays.includes(d.iso);
+                    return (
+                      <button
+                        key={d.iso}
+                        type="button"
+                        onClick={() => toggleDay(d.iso)}
+                        className={`rounded-md px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                          on
+                            ? 'bg-brand-600 text-white'
+                            : 'bg-white text-navy-600 ring-1 ring-navy-100 hover:bg-navy-50'
+                        }`}
+                      >
+                        {d.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {recurrence !== 'none' && (
+              <label className="mt-3 block text-[11px] font-medium text-navy-600">
+                Until
+                <input
+                  type="date"
+                  value={recurrenceEnd}
+                  onChange={(e) => setRecurrenceEnd(e.target.value)}
+                  min={start ? start.slice(0, 10) : undefined}
+                  className="mt-1 w-full rounded-md border border-navy-100 bg-white px-3 py-1.5 text-[13px] text-navy-700 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                />
+              </label>
+            )}
+
+            {preview && recurrence !== 'none' && (
+              <div className="mt-3 rounded-md bg-white p-2.5 ring-1 ring-navy-100">
+                <div className="text-[12px] font-semibold text-navy-700">
+                  {preview.count} offer{preview.count === 1 ? '' : 's'}
+                  {preview.totalValue > 0 && (
+                    <span className="ml-1 font-normal text-navy-400">
+                      · ~${preview.totalValue.toFixed(0)} total
+                    </span>
+                  )}
+                </div>
+                <div className="mt-0.5 text-[10.5px] text-navy-400">
+                  {preview.first.toLocaleDateString(undefined, { day: '2-digit', month: 'short' })}
+                  {' → '}
+                  {preview.last.toLocaleDateString(undefined, { day: '2-digit', month: 'short' })}
+                </div>
+                {preview.count >= 100 && (
+                  <div className="mt-1 text-[10.5px] font-semibold text-amber-600">
+                    Capped at 100 — pick a closer end date if you need more.
+                  </div>
+                )}
+              </div>
+            )}
+          </fieldset>
+
           <button
             type="submit"
             disabled={submitting || !valid}
             className="mt-5 flex w-full items-center justify-center gap-2 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-500 disabled:bg-brand-300"
           >
             {submitting && <Spinner size="sm" label="Sending" />}
-            {submitting ? 'Sending…' : 'Send offer'}
+            {submitting
+              ? 'Sending…'
+              : preview && preview.count > 1
+                ? `Send ${preview.count} offers`
+                : 'Send offer'}
           </button>
         </form>
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════ RecurringSeriesModal ═══════════════════════════
+// Lists active recurring series for an org and lets the admin cancel future
+// (still-pending) occurrences. Server-side, cancel only deletes occurrences
+// whose start is in the future AND not yet reviewed — accepted/declined ones
+// are immutable history. Empty state encourages creating one from "Offer work".
+
+interface SeriesRow {
+  series_id: string;
+  member_id: string;
+  member_name: string;
+  member_email: string;
+  title: string;
+  recurrence_kind: 'weekly' | 'fortnightly' | 'monthly';
+  hourly_rate: number;
+  first_start: string;
+  last_start: string;
+  total_count: number;
+  pending_count: number;
+  accepted_count: number;
+  declined_count: number;
+}
+
+function RecurringSeriesModal(props: {
+  orgId: string;
+  onClose: () => void;
+  onChanged: () => void;
+  notify: (m: string, k?: 'success' | 'error' | 'info') => void;
+}) {
+  const { orgId, onClose, onChanged, notify } = props;
+  const [rows, setRows] = useState<SeriesRow[] | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const reload = useCallback(async () => {
+    const { data, error } = await supabase.rpc('org_list_recurring_series', { p_org_id: orgId });
+    if (error) {
+      notify(friendlyError(error, 'Could not load series.'), 'error');
+      setRows([]);
+      return;
+    }
+    setRows((data ?? []) as SeriesRow[]);
+  }, [orgId, notify]);
+
+  useEffect(() => { void reload(); }, [reload]);
+
+  async function cancel(s: SeriesRow) {
+    const ok = window.confirm(
+      `Cancel ${s.pending_count} upcoming offer${s.pending_count === 1 ? '' : 's'} in this series? ` +
+      `Already-accepted jobs stay — only future pending offers are removed.`,
+    );
+    if (!ok) return;
+    setBusyId(s.series_id);
+    const { data, error } = await supabase.rpc('org_cancel_recurring_series', {
+      p_org_id:    orgId,
+      p_series_id: s.series_id,
+    });
+    setBusyId(null);
+    if (error) {
+      notify(friendlyError(error, 'Could not cancel.'), 'error');
+      return;
+    }
+    const n = typeof data === 'number' ? data : 0;
+    notify(
+      n === 0
+        ? 'Nothing to cancel — no pending future offers.'
+        : `Cancelled ${n} pending offer${n === 1 ? '' : 's'}.`,
+      n === 0 ? 'info' : 'success',
+    );
+    await reload();
+    onChanged();
+  }
+
+  function describeRecurrence(k: SeriesRow['recurrence_kind']): string {
+    return k === 'weekly' ? 'Weekly' : k === 'fortnightly' ? 'Fortnightly' : 'Monthly';
+  }
+
+  return (
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-navy-900/30 p-4">
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-navy-700">Recurring series</h2>
+            <p className="mt-0.5 text-xs text-navy-400">
+              Series you offered to members. Cancel future offers without touching accepted jobs.
+            </p>
+          </div>
+          <button onClick={onClose} className="text-navy-300 hover:text-navy-500" aria-label="Close">✕</button>
+        </div>
+
+        {rows === null && (
+          <div className="mt-6 flex items-center justify-center py-8 text-sm text-navy-400">
+            <Spinner size="sm" label="Loading series" />
+            <span className="ml-2">Loading…</span>
+          </div>
+        )}
+
+        {rows !== null && rows.length === 0 && (
+          <div className="mt-6 rounded-lg border border-dashed border-navy-100 bg-navy-50/40 p-6 text-center text-sm text-navy-500">
+            <div className="font-semibold text-navy-700">No recurring series yet</div>
+            <p className="mt-1 text-xs text-navy-400">
+              Use <strong>Offer work</strong> and pick a repeat schedule to create one.
+            </p>
+          </div>
+        )}
+
+        {rows !== null && rows.length > 0 && (
+          <ul className="mt-4 space-y-2">
+            {rows.map((s) => {
+              const fmt = (iso: string) =>
+                new Date(iso).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
+              return (
+                <li key={s.series_id} className="rounded-xl border border-navy-100 bg-white p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-semibold text-navy-800">{s.title}</div>
+                      <div className="mt-0.5 truncate text-[12px] text-navy-500">
+                        {s.member_name}
+                        {Number.isFinite(s.hourly_rate) && s.hourly_rate > 0 && (
+                          <> · ${Number(s.hourly_rate).toFixed(2)}/h</>
+                        )}
+                        {' · '}{describeRecurrence(s.recurrence_kind)}
+                      </div>
+                      <div className="mt-0.5 text-[11px] text-navy-400">
+                        {fmt(s.first_start)} → {fmt(s.last_start)}
+                      </div>
+                      <div className="mt-1.5 flex flex-wrap gap-1.5 text-[10.5px] font-semibold">
+                        <span className="rounded-full bg-navy-50 px-2 py-0.5 text-navy-600">
+                          {s.total_count} total
+                        </span>
+                        {s.accepted_count > 0 && (
+                          <span className="rounded-full bg-brand-50 px-2 py-0.5 text-brand-700">
+                            {s.accepted_count} accepted
+                          </span>
+                        )}
+                        {s.pending_count > 0 && (
+                          <span className="rounded-full bg-amber-50 px-2 py-0.5 text-amber-700">
+                            {s.pending_count} pending
+                          </span>
+                        )}
+                        {s.declined_count > 0 && (
+                          <span className="rounded-full bg-rose-50 px-2 py-0.5 text-rose-700">
+                            {s.declined_count} declined
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => void cancel(s)}
+                      disabled={busyId === s.series_id || s.pending_count === 0}
+                      title={s.pending_count === 0 ? 'No pending future offers to cancel' : 'Cancel future pending offers'}
+                      className="shrink-0 rounded-md px-2.5 py-1.5 text-[11.5px] font-semibold text-rose-700 ring-1 ring-rose-200 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {busyId === s.series_id ? 'Cancelling…' : 'Cancel future'}
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
+        <div className="mt-6 flex justify-end">
+          <button
+            onClick={onClose}
+            className="rounded-md px-3 py-1.5 text-xs font-medium text-navy-600 ring-1 ring-navy-100 hover:bg-navy-50"
+          >
+            Close
+          </button>
+        </div>
       </div>
     </div>
   );
