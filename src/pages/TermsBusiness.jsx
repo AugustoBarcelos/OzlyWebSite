@@ -32,10 +32,10 @@ export default function TermsBusiness() {
           <tr><th className="px-3 py-2 text-left">Tier</th><th className="px-3 py-2 text-left">Seats</th><th className="px-3 py-2 text-right">Monthly</th><th className="px-3 py-2 text-right">Annual (17% off)</th></tr>
         </thead>
         <tbody>
-          <tr className="border-t border-navy-100"><td className="px-3 py-2">Tier 1</td><td className="px-3 py-2">1–5</td><td className="px-3 py-2 text-right">$12.99/seat</td><td className="px-3 py-2 text-right">$129.90/seat/year</td></tr>
-          <tr className="border-t border-navy-100"><td className="px-3 py-2">Tier 2</td><td className="px-3 py-2">6–15</td><td className="px-3 py-2 text-right">$10.99/seat</td><td className="px-3 py-2 text-right">$109.90/seat/year</td></tr>
-          <tr className="border-t border-navy-100"><td className="px-3 py-2">Tier 3</td><td className="px-3 py-2">16–30</td><td className="px-3 py-2 text-right">$8.99/seat</td><td className="px-3 py-2 text-right">$89.90/seat/year</td></tr>
-          <tr className="border-t border-navy-100"><td className="px-3 py-2">Tier 4</td><td className="px-3 py-2">31–100</td><td className="px-3 py-2 text-right">$6.99/seat</td><td className="px-3 py-2 text-right">$69.90/seat/year</td></tr>
+          <tr className="border-t border-navy-100"><td className="px-3 py-2">Crew</td><td className="px-3 py-2">1–5</td><td className="px-3 py-2 text-right">$14.99/seat</td><td className="px-3 py-2 text-right">$149.90/seat/year</td></tr>
+          <tr className="border-t border-navy-100"><td className="px-3 py-2">Squad</td><td className="px-3 py-2">6–15</td><td className="px-3 py-2 text-right">$12.99/seat</td><td className="px-3 py-2 text-right">$129.90/seat/year</td></tr>
+          <tr className="border-t border-navy-100"><td className="px-3 py-2">Fleet</td><td className="px-3 py-2">16–30</td><td className="px-3 py-2 text-right">$9.99/seat</td><td className="px-3 py-2 text-right">$99.90/seat/year</td></tr>
+          <tr className="border-t border-navy-100"><td className="px-3 py-2">Operation</td><td className="px-3 py-2">31–100</td><td className="px-3 py-2 text-right">$7.99/seat</td><td className="px-3 py-2 text-right">$79.90/seat/year</td></tr>
           <tr className="border-t border-navy-100"><td className="px-3 py-2">Custom</td><td className="px-3 py-2">100+</td><td className="px-3 py-2 text-right">contact us</td><td className="px-3 py-2 text-right">contact us</td></tr>
         </tbody>
       </table>
@@ -123,7 +123,7 @@ export default function TermsBusiness() {
       </p>
 
       <p className="mt-12 text-sm text-navy-400">
-        Questions? <a href="mailto:augusto@ozly.app" className="text-brand-600 hover:underline">augusto@ozly.app</a>
+        Questions? <a href="mailto:augusto@ozly.au" className="text-brand-600 hover:underline">augusto@ozly.au</a>
       </p>
     </main>
   );

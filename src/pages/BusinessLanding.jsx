@@ -1,11 +1,11 @@
 // /business — B2B landing page for the Org Portal.
 // Linked from the marketing nav (footer) and inbound channels. CTAs go to the
-// Org Portal signup (app.ozly.app/signup) — Cloudflare DNS resolves that to
+// Org Portal signup (app.ozly.au/signup) — Cloudflare DNS resolves that to
 // the React app deployed by org-portal.yml.
 
 import { Link } from 'react-router-dom';
 
-const ORG_PORTAL = 'https://app.ozly.app';
+const ORG_PORTAL = 'https://app.ozly.au';
 
 export default function BusinessLanding() {
   return (
@@ -45,7 +45,7 @@ export default function BusinessLanding() {
       <section className="px-4 py-16 sm:px-6">
         <div className="mx-auto max-w-5xl grid grid-cols-1 gap-6 md:grid-cols-3">
           <Card title="Invoices flow in" body="Your sub-contractors emit their own ABN invoices in the Ozly app — you receive them in the portal Inbox, ready to pay or export." />
-          <Card title="Cover ABN access (optional)" body="From $6.99/seat/mo, cover your sub-contractors' ABN access on Ozly. While you cover their access, their Ozly invoicing is set to your org. They stay free to work and bill anyone else — a $5/mo personal top-up simply re-opens Ozly invoicing to other clients too." />
+          <Card title="Cover ABN access (optional)" body="From $7.99/seat/mo, cover your sub-contractors' ABN access on Ozly. While you cover their access, their Ozly invoicing is set to your org. They stay free to work and bill anyone else — a $5/mo personal top-up simply re-opens Ozly invoicing to other clients too." />
           <Card title="Built on the sub-contractor framework" body="Ozly is a record-keeping tool, not your employer-of-record. Flows and retention are built around the sub-contractor framework — but your Fair Work, super, payroll-tax and workers'-comp obligations remain yours. We help you document them, not avoid them." />
         </div>
       </section>
@@ -67,10 +67,10 @@ export default function BusinessLanding() {
                 </tr>
               </thead>
               <tbody className="text-sm">
-                <PricingRow tier="Tier 1" seats="1–5" m="$12.99" a="$129.90" />
-                <PricingRow tier="Tier 2" seats="6–15" m="$10.99" a="$109.90" highlight />
-                <PricingRow tier="Tier 3" seats="16–30" m="$8.99" a="$89.90" />
-                <PricingRow tier="Tier 4" seats="31–100" m="$6.99" a="$69.90" />
+                <PricingRow tier="Crew" seats="1–5" m="$14.99" a="$149.90" />
+                <PricingRow tier="Squad" seats="6–15" m="$12.99" a="$129.90" highlight />
+                <PricingRow tier="Fleet" seats="16–30" m="$9.99" a="$99.90" />
+                <PricingRow tier="Operation" seats="31–100" m="$7.99" a="$79.90" />
                 <PricingRow tier="Custom" seats="100+" m="contact" a="contact" />
               </tbody>
             </table>
@@ -101,7 +101,7 @@ export default function BusinessLanding() {
         <span className="mx-2">·</span>
         <Link to="/privacy-policy/business" className="hover:underline">Privacy — Business</Link>
         <span className="mx-2">·</span>
-        <a href="mailto:augusto@ozly.app" className="hover:underline">augusto@ozly.app</a>
+        <a href="mailto:augusto@ozly.au" className="hover:underline">augusto@ozly.au</a>
       </footer>
     </main>
   );

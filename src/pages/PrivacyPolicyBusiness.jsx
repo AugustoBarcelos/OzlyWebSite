@@ -83,7 +83,7 @@ export default function PrivacyPolicyBusiness() {
         <li>If you delete your org from Ozly, members remain unaffected — their personal Ozly
             account, their tax records and their invoices to other clients are untouched.</li>
         <li>To exercise an access / correction / deletion request affecting member data, contact us
-            at <a href="mailto:augusto@ozly.app" className="text-brand-600 hover:underline">augusto@ozly.app</a>.</li>
+            at <a href="mailto:augusto@ozly.au" className="text-brand-600 hover:underline">augusto@ozly.au</a>.</li>
       </ul>
       <p className="mt-3 leading-relaxed">
         We maintain a data-breach response process consistent with the Notifiable Data Breaches
@@ -97,7 +97,7 @@ export default function PrivacyPolicyBusiness() {
       </p>
 
       <p className="mt-12 text-sm text-navy-400">
-        Questions? <a href="mailto:augusto@ozly.app" className="text-brand-600 hover:underline">augusto@ozly.app</a>
+        Questions? <a href="mailto:augusto@ozly.au" className="text-brand-600 hover:underline">augusto@ozly.au</a>
       </p>
     </main>
   );

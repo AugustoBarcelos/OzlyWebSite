@@ -1,5 +1,5 @@
 // Standalone B2B Terms of Service for "Ozly for Organisations" (the Org Portal
-// at app.ozly.app). This is the complete contract an organisation agrees to when
+// at app.ozly.au). This is the complete contract an organisation agrees to when
 // it subscribes — it supersedes the older /terms-of-use/business addendum, which
 // is kept only for backward links. Routed at /terms-of-service and linked from
 // the Org Portal billing/signup footer.
@@ -232,7 +232,7 @@ export default function TermsOfService() {
       </p>
 
       <p className="mt-12 text-sm text-navy-400">
-        Questions? <a href="mailto:augusto@ozly.app" className="text-brand-600 hover:underline">augusto@ozly.app</a>
+        Questions? <a href="mailto:augusto@ozly.au" className="text-brand-600 hover:underline">augusto@ozly.au</a>
       </p>
     </main>
   );
