@@ -288,7 +288,7 @@ export function ImportPage() {
   function applyManualMapping() {
     const mapped: MappedRow[] = rawRows.slice(0, MAX_ROWS).map((row) => {
       const val = (k: TargetKey): string => (colMap[k] ? (row[colMap[k]] ?? '') : '');
-      const rateRaw = val('hourly_rate').replace(/[^0-9.\-]/g, '');
+      const rateRaw = val('hourly_rate').replace(/[^0-9.-]/g, '');
       const rate = rateRaw ? Number(rateRaw) : NaN;
       return {
         member_hint: val('member_hint') || null,
@@ -352,7 +352,7 @@ export function ImportPage() {
         patchDraft(d.id, { result: 'error', resultMsg: 'Missing member, title or valid start/end' });
         continue;
       }
-      const rateNum = d.hourlyRate.trim() ? Number(d.hourlyRate.replace(/[^0-9.\-]/g, '')) : null;
+      const rateNum = d.hourlyRate.trim() ? Number(d.hourlyRate.replace(/[^0-9.-]/g, '')) : null;
       const { error } = await supabase.rpc('org_offer_work', {
         p_org_id: orgId,
         p_member: d.userId,
