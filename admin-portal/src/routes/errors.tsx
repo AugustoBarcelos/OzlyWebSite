@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Badge,
   Card,
@@ -14,13 +14,13 @@ import {
   TableRow,
   Text,
   Title,
-} from '@tremor/react';
-import { KpiCard } from '@/components/KpiCard';
-import { AlertTriangleIcon, ExternalLinkIcon } from '@/components/Icons';
-import { Spinner } from '@/components/Spinner';
-import { AppTriageSection } from '@/components/AppTriageSection';
-import { useToast } from '@/components/Toast';
-import { formatRelativeTime } from '@/lib/format';
+} from "@tremor/react";
+import { KpiCard } from "@/components/KpiCard";
+import { AlertTriangleIcon, ExternalLinkIcon } from "@/components/Icons";
+import { Spinner } from "@/components/Spinner";
+import { AppTriageSection } from "@/components/AppTriageSection";
+import { useToast } from "@/components/Toast";
+import { formatRelativeTime } from "@/lib/format";
 import {
   fetchEventCounts,
   fetchRecentReleases,
@@ -35,7 +35,7 @@ import {
   type SentryIssue,
   type SentryPeriod,
   type SentryRelease,
-} from '@/lib/sentry-api';
+} from "@/lib/sentry-api";
 
 /**
  * BRIEFING § 11 (Wave 6) — `/errors`.
@@ -63,8 +63,8 @@ import {
 // The KPI cards above use stats_v2 which does accept 30d — so the period
 // selector here scoping just the issues list is the right shape.
 const PERIODS: ReadonlyArray<{ key: SentryPeriod; label: string }> = [
-  { key: '24h', label: '24h' },
-  { key: '14d', label: '14d' },
+  { key: "24h", label: "24h" },
+  { key: "14d", label: "14d" },
 ];
 
 interface KpiSlotState {
@@ -80,19 +80,122 @@ const EMPTY_KPI: KpiSlotState = { data: null, loading: false };
 
 function severityColor(
   level: string,
-): 'red' | 'orange' | 'yellow' | 'blue' | 'gray' {
+): "red" | "orange" | "yellow" | "blue" | "gray" {
   switch (level.toLowerCase()) {
-    case 'fatal':
-      return 'red';
-    case 'error':
-      return 'orange';
-    case 'warning':
-      return 'yellow';
-    case 'info':
-      return 'blue';
+    case "fatal":
+      return "red";
+    case "error":
+      return "orange";
+    case "warning":
+      return "yellow";
+    case "info":
+      return "blue";
     default:
-      return 'gray';
+      return "gray";
   }
+}
+
+// ---------------------------------------------------------------------------
+// Top-issues sorting + filtering (client-side over the fetched top-N rows)
+// ---------------------------------------------------------------------------
+
+type SortKey =
+  | "status"
+  | "level"
+  | "title"
+  | "culprit"
+  | "count"
+  | "userCount"
+  | "lastSeen";
+
+type SortDir = "asc" | "desc";
+
+interface SortState {
+  key: SortKey;
+  dir: SortDir;
+}
+
+// Numeric / date / ranked columns default to descending on first click
+// (most-of-it-first), text columns default to ascending (A→Z).
+const DESC_FIRST: ReadonlySet<SortKey> = new Set<SortKey>([
+  "count",
+  "userCount",
+  "lastSeen",
+  "level",
+]);
+
+// Severity has a natural order that alphabetical sorting would scramble.
+const SEVERITY_RANK: Record<string, number> = {
+  fatal: 5,
+  error: 4,
+  warning: 3,
+  info: 2,
+  debug: 1,
+};
+
+const STATUS_FILTERS = ["all", "unresolved", "resolved", "ignored"] as const;
+const SEVERITY_FILTERS = [
+  "all",
+  "fatal",
+  "error",
+  "warning",
+  "info",
+  "debug",
+] as const;
+
+function compareIssues(a: SentryIssue, b: SentryIssue, key: SortKey): number {
+  switch (key) {
+    case "count":
+      return a.count - b.count;
+    case "userCount":
+      return a.userCount - b.userCount;
+    case "lastSeen":
+      return new Date(a.lastSeen).getTime() - new Date(b.lastSeen).getTime();
+    case "level":
+      return (
+        (SEVERITY_RANK[(a.level || "error").toLowerCase()] ?? 0) -
+        (SEVERITY_RANK[(b.level || "error").toLowerCase()] ?? 0)
+      );
+    default:
+      return String(a[key] ?? "").localeCompare(String(b[key] ?? ""));
+  }
+}
+
+/** Clickable header cell that drives the table's sort state. */
+function SortableHeaderCell({
+  label,
+  sortKey,
+  sort,
+  onSort,
+  align = "left",
+}: {
+  label: string;
+  sortKey: SortKey;
+  sort: SortState;
+  onSort: (key: SortKey) => void;
+  align?: "left" | "right";
+}) {
+  const active = sort.key === sortKey;
+  const arrow = !active ? "↕" : sort.dir === "asc" ? "↑" : "↓";
+  return (
+    <TableHeaderCell className={align === "right" ? "text-right" : undefined}>
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        aria-label={`Sort by ${label}`}
+        className={`inline-flex items-center gap-1 font-medium transition-colors hover:text-brand-600 ${
+          align === "right" ? "flex-row-reverse" : ""
+        } ${active ? "text-brand-600" : "text-navy-600"}`}
+      >
+        <span>{label}</span>
+        <span
+          className={`text-xs ${active ? "text-brand-500" : "text-navy-300"}`}
+        >
+          {arrow}
+        </span>
+      </button>
+    </TableHeaderCell>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -109,24 +212,24 @@ function buildSentryQuickLinks(): QuickLink[] {
   const base = sentryWebBase();
   return [
     {
-      label: 'Open all issues',
+      label: "Open all issues",
       href: `${base}/issues/`,
-      hint: 'All unresolved issues in Sentry',
+      hint: "All unresolved issues in Sentry",
     },
     {
-      label: 'Issues last 24h',
+      label: "Issues last 24h",
       href: `${base}/issues/?statsPeriod=24h&sort=freq`,
-      hint: 'Most frequent issues in the last 24 hours',
+      hint: "Most frequent issues in the last 24 hours",
     },
     {
-      label: 'Highest user impact',
+      label: "Highest user impact",
       href: `${base}/issues/?statsPeriod=14d&sort=user`,
-      hint: 'Sorted by users affected',
+      hint: "Sorted by users affected",
     },
     {
-      label: 'Critical only',
+      label: "Critical only",
       href: `${base}/issues/?query=level%3Afatal`,
-      hint: 'Fatal-level events only',
+      hint: "Fatal-level events only",
     },
   ];
 }
@@ -135,19 +238,19 @@ function buildExternalToolLinks(): QuickLink[] {
   const base = sentryWebBase();
   return [
     {
-      label: 'Releases',
+      label: "Releases",
       href: `${base}/releases/`,
       hint: 'Helpful for "did this just regress?"',
     },
     {
-      label: 'Alerts',
+      label: "Alerts",
       href: `${base}/alerts/`,
-      hint: 'Alert rules and recent triggers',
+      hint: "Alert rules and recent triggers",
     },
     {
-      label: 'PostHog',
-      href: 'https://eu.posthog.com',
-      hint: 'Cross-reference behavior with errors',
+      label: "PostHog",
+      href: "https://eu.posthog.com",
+      hint: "Cross-reference behavior with errors",
     },
   ];
 }
@@ -180,10 +283,20 @@ export function ErrorsPage() {
   const [kpi30d, setKpi30d] = useState<KpiSlotState>(EMPTY_KPI);
 
   // Top-issues table state.
-  const [period, setPeriod] = useState<SentryPeriod>('24h');
+  const [period, setPeriod] = useState<SentryPeriod>("24h");
   const [issues, setIssues] = useState<SentryIssue[] | null>(null);
   const [issuesLoading, setIssuesLoading] = useState<boolean>(false);
   const [issuesError, setIssuesError] = useState<string | null>(null);
+
+  // Top-issues sort + filter state. Default mirrors the server order
+  // (most frequent first) so the table looks unchanged until the operator
+  // clicks a header or a filter.
+  const [sort, setSort] = useState<SortState>({ key: "count", dir: "desc" });
+  const [statusFilter, setStatusFilter] =
+    useState<(typeof STATUS_FILTERS)[number]>("all");
+  const [severityFilter, setSeverityFilter] =
+    useState<(typeof SEVERITY_FILTERS)[number]>("all");
+  const [query, setQuery] = useState("");
 
   // Recent Sentry releases — used as suggestions when the operator picks
   // "Resolve in release". Loaded once when configured; failures are silent
@@ -199,9 +312,9 @@ export function ErrorsPage() {
     setKpi30d({ data: null, loading: true });
 
     const [r24, r14, r30] = await Promise.all([
-      fetchEventCounts('24h'),
-      fetchEventCounts('14d'),
-      fetchEventCounts('30d'),
+      fetchEventCounts("24h"),
+      fetchEventCounts("14d"),
+      fetchEventCounts("30d"),
     ]);
     setKpi24h({ data: r24, loading: false });
     setKpi7d({ data: r14, loading: false });
@@ -235,14 +348,14 @@ export function ErrorsPage() {
           setIssuesError(
             detail
               ? `Could not load issues from Sentry. ${detail}`
-              : 'Could not load issues from Sentry. Check token scopes (org:read project:read event:read).',
+              : "Could not load issues from Sentry. Check token scopes (org:read project:read event:read).",
           );
           setIssues(null);
         } else {
           setIssues(rows);
         }
       } catch (e) {
-        const msg = e instanceof Error ? e.message : 'Unknown error';
+        const msg = e instanceof Error ? e.message : "Unknown error";
         setIssuesError(msg);
         setIssues(null);
       } finally {
@@ -280,33 +393,33 @@ export function ErrorsPage() {
    * Other actions go through without confirmation.
    */
   const handleMutate = useCallback(
-    async (issue: SentryIssue, action: IssueMutation['action']) => {
+    async (issue: SentryIssue, action: IssueMutation["action"]) => {
       let mutation: IssueMutation;
-      if (action === 'resolveInRelease') {
+      if (action === "resolveInRelease") {
         const hint = releases
           .slice(0, 5)
           .map((r) => r.shortVersion)
-          .join('\n');
-        const defaultRelease = releases[0]?.version ?? '';
+          .join("\n");
+        const defaultRelease = releases[0]?.version ?? "";
         const input = window.prompt(
           hint
             ? `Release name (recent):\n${hint}\n\nPaste/type the full release identifier:`
-            : 'Release name (full identifier, e.g. com.augusto.ozly@1.0.18+411):',
+            : "Release name (full identifier, e.g. com.augusto.ozly@1.0.18+411):",
           defaultRelease,
         );
         if (input === null) return;
         const release = input.trim();
         if (!release) {
-          toast({ title: 'Release name required', variant: 'error' });
+          toast({ title: "Release name required", variant: "error" });
           return;
         }
-        mutation = { action: 'resolveInRelease', release };
-      } else if (action === 'resolve') {
-        mutation = { action: 'resolve' };
-      } else if (action === 'ignore') {
-        mutation = { action: 'ignore' };
+        mutation = { action: "resolveInRelease", release };
+      } else if (action === "resolve") {
+        mutation = { action: "resolve" };
+      } else if (action === "ignore") {
+        mutation = { action: "ignore" };
       } else {
-        mutation = { action: 'reopen' };
+        mutation = { action: "reopen" };
       }
 
       setMutatingIssueId(issue.id);
@@ -315,22 +428,22 @@ export function ErrorsPage() {
         if (!ok) {
           const detail = sentryLastError();
           toast({
-            title: 'Sentry mutation failed',
+            title: "Sentry mutation failed",
             ...(detail ? { description: detail } : {}),
-            variant: 'error',
+            variant: "error",
           });
           return;
         }
         toast({
           title: `Issue ${
-            mutation.action === 'reopen'
-              ? 'reopened'
-              : mutation.action === 'ignore'
-                ? 'ignored'
-                : 'resolved'
+            mutation.action === "reopen"
+              ? "reopened"
+              : mutation.action === "ignore"
+                ? "ignored"
+                : "resolved"
           }`,
           description: issue.shortId || issue.id,
-          variant: 'success',
+          variant: "success",
         });
         await fetchIssues(period);
       } finally {
@@ -340,11 +453,48 @@ export function ErrorsPage() {
     [releases, fetchIssues, period, toast],
   );
 
+  const toggleSort = useCallback((key: SortKey) => {
+    setSort((prev) =>
+      prev.key === key
+        ? { key, dir: prev.dir === "asc" ? "desc" : "asc" }
+        : { key, dir: DESC_FIRST.has(key) ? "desc" : "asc" },
+    );
+  }, []);
+
+  const filtersActive =
+    statusFilter !== "all" || severityFilter !== "all" || query.trim() !== "";
+
+  // Apply filters then sort. Operates on the (≤10) rows already fetched for
+  // the selected period — server still does the heavy "top N by frequency".
+  const visibleIssues = useMemo(() => {
+    if (!issues) return null;
+    const q = query.trim().toLowerCase();
+    const filtered = issues.filter((r) => {
+      if (statusFilter !== "all" && r.status !== statusFilter) return false;
+      if (
+        severityFilter !== "all" &&
+        (r.level || "error").toLowerCase() !== severityFilter
+      )
+        return false;
+      if (
+        q &&
+        !r.title.toLowerCase().includes(q) &&
+        !(r.culprit ?? "").toLowerCase().includes(q)
+      )
+        return false;
+      return true;
+    });
+    return [...filtered].sort((a, b) => {
+      const cmp = compareIssues(a, b, sort.key);
+      return sort.dir === "asc" ? cmp : -cmp;
+    });
+  }, [issues, statusFilter, severityFilter, query, sort]);
+
   const periodIndex = PERIODS.findIndex((p) => p.key === period);
   const sentryQuickLinks = useMemo(buildSentryQuickLinks, []);
   const externalToolLinks = useMemo(buildExternalToolLinks, []);
 
-  const subtitleNotConfigured = 'Configure Sentry API token to enable';
+  const subtitleNotConfigured = "Configure Sentry API token to enable";
 
   return (
     <div className="space-y-6">
@@ -382,7 +532,7 @@ export function ErrorsPage() {
               <>
                 <strong className="font-semibold">
                   Sentry blocks Personal Auth Tokens from the browser.
-                </strong>{' '}
+                </strong>{" "}
                 Use the quick links below, or proxy the REST API through a
                 Cloudflare Worker that injects the token server-side.
               </>
@@ -390,19 +540,19 @@ export function ErrorsPage() {
               <>
                 <strong className="font-semibold">
                   Sentry data is not wired up.
-                </strong>{' '}
-                Add{' '}
+                </strong>{" "}
+                Add{" "}
                 <code className="rounded bg-amber-100 px-1 py-0.5 text-xs">
                   VITE_SENTRY_API_TOKEN
                 </code>
-                ,{' '}
+                ,{" "}
                 <code className="rounded bg-amber-100 px-1 py-0.5 text-xs">
                   VITE_SENTRY_ORG
-                </code>{' '}
-                and{' '}
+                </code>{" "}
+                and{" "}
                 <code className="rounded bg-amber-100 px-1 py-0.5 text-xs">
                   VITE_SENTRY_PROJECT
-                </code>{' '}
+                </code>{" "}
                 to enable in-portal data. Until then, use the quick links below.
               </>
             )}
@@ -433,8 +583,8 @@ export function ErrorsPage() {
             subtitle={
               configured
                 ? kpi24h.data
-                  ? 'Total error events vs previous 24h'
-                  : 'No data yet'
+                  ? "Total error events vs previous 24h"
+                  : "No data yet"
                 : subtitleNotConfigured
             }
           />
@@ -449,8 +599,8 @@ export function ErrorsPage() {
             subtitle={
               configured
                 ? kpi7d.data
-                  ? 'Total error events vs previous 14d'
-                  : 'No data yet'
+                  ? "Total error events vs previous 14d"
+                  : "No data yet"
                 : subtitleNotConfigured
             }
           />
@@ -465,8 +615,8 @@ export function ErrorsPage() {
             subtitle={
               configured
                 ? kpi30d.data
-                  ? 'Total error events vs previous 30d'
-                  : 'No data yet'
+                  ? "Total error events vs previous 30d"
+                  : "No data yet"
                 : subtitleNotConfigured
             }
           />
@@ -505,7 +655,7 @@ export function ErrorsPage() {
               className="mt-4 flex flex-col gap-2 rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 sm:flex-row sm:items-center sm:justify-between"
             >
               <span>
-                <strong className="font-semibold">Sentry API error:</strong>{' '}
+                <strong className="font-semibold">Sentry API error:</strong>{" "}
                 {issuesError}
               </span>
               <button
@@ -557,143 +707,249 @@ export function ErrorsPage() {
               No issues for this period.
             </div>
           ) : (
-            <div className="mt-4 overflow-x-auto">
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableHeaderCell>Status</TableHeaderCell>
-                    <TableHeaderCell>Severity</TableHeaderCell>
-                    <TableHeaderCell>Title</TableHeaderCell>
-                    <TableHeaderCell>Culprit</TableHeaderCell>
-                    <TableHeaderCell className="text-right">
-                      Count
-                    </TableHeaderCell>
-                    <TableHeaderCell className="text-right">
-                      Users
-                    </TableHeaderCell>
-                    <TableHeaderCell>Last seen</TableHeaderCell>
-                    <TableHeaderCell>Actions</TableHeaderCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {issues.map((issue) => {
-                    const busy = mutatingIssueId === issue.id;
-                    const statusBadgeColor =
-                      issue.status === 'resolved'
-                        ? 'emerald'
-                        : issue.status === 'ignored'
-                          ? 'gray'
-                          : 'red';
-                    return (
-                      <TableRow key={issue.id}>
-                        <TableCell>
-                          <Badge color={statusBadgeColor} size="xs">
-                            {issue.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge color={severityColor(issue.level)} size="xs">
-                            {issue.level || 'error'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="max-w-xs">
-                          {issue.permalink ? (
-                            <a
-                              href={issue.permalink}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="block truncate text-brand-600 hover:underline"
-                              title={issue.title}
-                            >
-                              {issue.shortId
-                                ? `${issue.shortId} · ${issue.title}`
-                                : issue.title}
-                            </a>
-                          ) : (
-                            <span
-                              className="block truncate text-navy-600"
-                              title={issue.title}
-                            >
-                              {issue.title}
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell className="max-w-xs">
-                          <span
-                            className="block truncate text-navy-400"
-                            title={issue.culprit}
-                          >
-                            {issue.culprit || '—'}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums">
-                          {issue.count.toLocaleString('en-AU')}
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums">
-                          {issue.userCount.toLocaleString('en-AU')}
-                        </TableCell>
-                        <TableCell className="text-navy-400">
-                          {formatRelativeTime(issue.lastSeen)}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {issue.status !== 'resolved' && (
-                              <>
-                                <button
-                                  type="button"
-                                  disabled={busy}
-                                  onClick={() => {
-                                    void handleMutate(issue, 'resolveInRelease');
-                                  }}
-                                  className="rounded border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
-                                  title="Mark resolved against a specific Sentry release; auto-reopens if newer build still throws this"
-                                >
-                                  Resolve (release)
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled={busy}
-                                  onClick={() => {
-                                    void handleMutate(issue, 'resolve');
-                                  }}
-                                  className="rounded border border-emerald-200 bg-white px-2 py-0.5 text-xs text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
-                                  title="Mark resolved without release tracking"
-                                >
-                                  Resolve
-                                </button>
-                              </>
-                            )}
-                            {issue.status !== 'ignored' && (
-                              <button
-                                type="button"
-                                disabled={busy}
-                                onClick={() => {
-                                  void handleMutate(issue, 'ignore');
-                                }}
-                                className="rounded border border-navy-200 bg-white px-2 py-0.5 text-xs text-navy-600 hover:bg-navy-50 disabled:opacity-50"
-                              >
-                                Ignore
-                              </button>
-                            )}
-                            {issue.status !== 'unresolved' && (
-                              <button
-                                type="button"
-                                disabled={busy}
-                                onClick={() => {
-                                  void handleMutate(issue, 'reopen');
-                                }}
-                                className="rounded border border-amber-300 bg-amber-50 px-2 py-0.5 text-xs text-amber-800 hover:bg-amber-100 disabled:opacity-50"
-                              >
-                                Reopen
-                              </button>
-                            )}
-                          </div>
-                        </TableCell>
+            <div className="mt-4 space-y-3">
+              {/* Filter toolbar */}
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Filter title / culprit…"
+                  className="w-48 rounded-md border border-navy-200 bg-white px-2 py-1 text-xs text-navy-600 placeholder:text-navy-300 focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-200"
+                />
+                <select
+                  value={statusFilter}
+                  onChange={(e) =>
+                    setStatusFilter(
+                      e.target.value as (typeof STATUS_FILTERS)[number],
+                    )
+                  }
+                  aria-label="Filter by status"
+                  className="rounded-md border border-navy-200 bg-white px-2 py-1 text-xs text-navy-600 focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-200"
+                >
+                  {STATUS_FILTERS.map((s) => (
+                    <option key={s} value={s}>
+                      {s === "all" ? "All statuses" : s}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={severityFilter}
+                  onChange={(e) =>
+                    setSeverityFilter(
+                      e.target.value as (typeof SEVERITY_FILTERS)[number],
+                    )
+                  }
+                  aria-label="Filter by severity"
+                  className="rounded-md border border-navy-200 bg-white px-2 py-1 text-xs text-navy-600 focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-200"
+                >
+                  {SEVERITY_FILTERS.map((s) => (
+                    <option key={s} value={s}>
+                      {s === "all" ? "All severities" : s}
+                    </option>
+                  ))}
+                </select>
+                {filtersActive && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuery("");
+                      setStatusFilter("all");
+                      setSeverityFilter("all");
+                    }}
+                    className="rounded-md border border-navy-200 bg-white px-2 py-1 text-xs text-navy-500 transition-colors hover:bg-navy-50"
+                  >
+                    Clear
+                  </button>
+                )}
+                <span className="ml-auto text-xs text-navy-400 tabular-nums">
+                  {visibleIssues?.length ?? 0} of {issues.length}
+                </span>
+              </div>
+
+              {!visibleIssues || visibleIssues.length === 0 ? (
+                <div className="flex h-32 items-center justify-center rounded-md border border-dashed border-navy-100 bg-navy-50 text-sm text-navy-400">
+                  No issues match the current filters.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <SortableHeaderCell
+                          label="Status"
+                          sortKey="status"
+                          sort={sort}
+                          onSort={toggleSort}
+                        />
+                        <SortableHeaderCell
+                          label="Severity"
+                          sortKey="level"
+                          sort={sort}
+                          onSort={toggleSort}
+                        />
+                        <SortableHeaderCell
+                          label="Title"
+                          sortKey="title"
+                          sort={sort}
+                          onSort={toggleSort}
+                        />
+                        <SortableHeaderCell
+                          label="Culprit"
+                          sortKey="culprit"
+                          sort={sort}
+                          onSort={toggleSort}
+                        />
+                        <SortableHeaderCell
+                          label="Count"
+                          sortKey="count"
+                          sort={sort}
+                          onSort={toggleSort}
+                          align="right"
+                        />
+                        <SortableHeaderCell
+                          label="Users"
+                          sortKey="userCount"
+                          sort={sort}
+                          onSort={toggleSort}
+                          align="right"
+                        />
+                        <SortableHeaderCell
+                          label="Last seen"
+                          sortKey="lastSeen"
+                          sort={sort}
+                          onSort={toggleSort}
+                        />
+                        <TableHeaderCell>Actions</TableHeaderCell>
                       </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                    </TableHead>
+                    <TableBody>
+                      {visibleIssues.map((issue) => {
+                        const busy = mutatingIssueId === issue.id;
+                        const statusBadgeColor =
+                          issue.status === "resolved"
+                            ? "emerald"
+                            : issue.status === "ignored"
+                              ? "gray"
+                              : "red";
+                        return (
+                          <TableRow key={issue.id}>
+                            <TableCell>
+                              <Badge color={statusBadgeColor} size="xs">
+                                {issue.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                color={severityColor(issue.level)}
+                                size="xs"
+                              >
+                                {issue.level || "error"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="max-w-xs">
+                              {issue.permalink ? (
+                                <a
+                                  href={issue.permalink}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="block truncate text-brand-600 hover:underline"
+                                  title={issue.title}
+                                >
+                                  {issue.shortId
+                                    ? `${issue.shortId} · ${issue.title}`
+                                    : issue.title}
+                                </a>
+                              ) : (
+                                <span
+                                  className="block truncate text-navy-600"
+                                  title={issue.title}
+                                >
+                                  {issue.title}
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell className="max-w-xs">
+                              <span
+                                className="block truncate text-navy-400"
+                                title={issue.culprit}
+                              >
+                                {issue.culprit || "—"}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums">
+                              {issue.count.toLocaleString("en-AU")}
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums">
+                              {issue.userCount.toLocaleString("en-AU")}
+                            </TableCell>
+                            <TableCell className="text-navy-400">
+                              {formatRelativeTime(issue.lastSeen)}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-wrap gap-1">
+                                {issue.status !== "resolved" && (
+                                  <>
+                                    <button
+                                      type="button"
+                                      disabled={busy}
+                                      onClick={() => {
+                                        void handleMutate(
+                                          issue,
+                                          "resolveInRelease",
+                                        );
+                                      }}
+                                      className="rounded border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
+                                      title="Mark resolved against a specific Sentry release; auto-reopens if newer build still throws this"
+                                    >
+                                      Resolve (release)
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={busy}
+                                      onClick={() => {
+                                        void handleMutate(issue, "resolve");
+                                      }}
+                                      className="rounded border border-emerald-200 bg-white px-2 py-0.5 text-xs text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
+                                      title="Mark resolved without release tracking"
+                                    >
+                                      Resolve
+                                    </button>
+                                  </>
+                                )}
+                                {issue.status !== "ignored" && (
+                                  <button
+                                    type="button"
+                                    disabled={busy}
+                                    onClick={() => {
+                                      void handleMutate(issue, "ignore");
+                                    }}
+                                    className="rounded border border-navy-200 bg-white px-2 py-0.5 text-xs text-navy-600 hover:bg-navy-50 disabled:opacity-50"
+                                  >
+                                    Ignore
+                                  </button>
+                                )}
+                                {issue.status !== "unresolved" && (
+                                  <button
+                                    type="button"
+                                    disabled={busy}
+                                    onClick={() => {
+                                      void handleMutate(issue, "reopen");
+                                    }}
+                                    className="rounded border border-amber-300 bg-amber-50 px-2 py-0.5 text-xs text-amber-800 hover:bg-amber-100 disabled:opacity-50"
+                                  >
+                                    Reopen
+                                  </button>
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </div>
           )}
         </Card>
