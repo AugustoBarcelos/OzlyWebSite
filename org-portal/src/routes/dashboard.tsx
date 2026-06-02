@@ -29,7 +29,7 @@ import {
   MOCK_KPIS, MOCK_KPI_DELTAS, MOCK_KPI_TRENDS,
   MOCK_STATUS_MIX, MOCK_TOP_SUBS,
   buildMockRevenueTrend, buildMockUpcomingJobs, scaleByDays,
-  type DashboardKpi, type StatusMix,
+  type DashboardKpi, type StatusMix, type TopSub,
 } from '@/lib/dashboard-mock';
 
 // Period filter — same set of options across the app's "Reporting period"
@@ -129,40 +129,149 @@ export function DashboardPage() {
   const days = daysOf(period, customRange.from, customRange.to);
   const periodLabel = PERIOD_OPTIONS.find((p) => p.key === period)?.label ?? '';
 
-  // Mocks scale with the selected window. Real fetches will replace these.
+  // ── Real-data fetches (RPCs deployed via 20260613020100_org_dashboard_real_kpis).
+  // First fetch wins, then we switch off the "Preview data" banner. While loading
+  // we still show the mock-scaled values so the layout doesn't jump.
+  const orgId = currentOrg?.id ?? null;
+  const [kpisReal, setKpisReal] = useState<{
+    outstanding: number; overdue: number; paid_period: number; active_subs: number;
+    prev: { outstanding: number; overdue: number; paid_period: number; active_subs: number };
+    status_mix: { paid: number; sent: number; overdue: number; draft: number };
+  } | null>(null);
+  const [revenueReal, setRevenueReal] = useState<Array<{ date: string; paid: number }> | null>(null);
+  const [topSubsReal, setTopSubsReal] = useState<TopSub[] | null>(null);
+
+  useEffect(() => {
+    if (!orgId) return;
+    let active = true;
+    const to = new Date().toISOString();
+    const from = new Date(Date.now() - days * 86_400_000).toISOString();
+    (async () => {
+      const [overviewRes, trendRes, topSubsRes] = await Promise.all([
+        supabase.rpc('org_dashboard_overview', { p_org_id: orgId, p_from: from, p_to: to }),
+        supabase.rpc('org_dashboard_revenue_trend', { p_org_id: orgId, p_from: from, p_to: to }),
+        supabase.rpc('org_dashboard_top_subs', { p_org_id: orgId, p_from: from, p_to: to, p_limit: 5 }),
+      ]);
+      if (!active) return;
+      type OverviewRes = {
+        kpis: { outstanding: number; overdue: number; paid_period: number; active_subs: number };
+        kpis_prev: { outstanding: number; overdue: number; paid_period: number; active_subs: number };
+        status_mix: { paid: number; sent: number; overdue: number; draft: number };
+      };
+      if (!overviewRes.error && overviewRes.data) {
+        const d = overviewRes.data as OverviewRes;
+        setKpisReal({
+          outstanding: Number(d.kpis.outstanding) || 0,
+          overdue:     Number(d.kpis.overdue)     || 0,
+          paid_period: Number(d.kpis.paid_period) || 0,
+          active_subs: Number(d.kpis.active_subs) || 0,
+          prev: {
+            outstanding: Number(d.kpis_prev.outstanding) || 0,
+            overdue:     Number(d.kpis_prev.overdue)     || 0,
+            paid_period: Number(d.kpis_prev.paid_period) || 0,
+            active_subs: Number(d.kpis_prev.active_subs) || 0,
+          },
+          status_mix: {
+            paid:    Number(d.status_mix.paid)    || 0,
+            sent:    Number(d.status_mix.sent)    || 0,
+            overdue: Number(d.status_mix.overdue) || 0,
+            draft:   Number(d.status_mix.draft)   || 0,
+          },
+        });
+      }
+      if (!trendRes.error && trendRes.data) {
+        const rows = trendRes.data as Array<{ date: string; paid: number }>;
+        setRevenueReal(rows.map((r) => ({ date: r.date, paid: Number(r.paid) || 0 })));
+      }
+      if (!topSubsRes.error && topSubsRes.data) {
+        const rows = topSubsRes.data as Array<{ user_id: string; full_name: string; email: string; total_paid: number; invoice_count: number }>;
+        setTopSubsReal(rows.map((r) => ({
+          id: r.user_id,
+          name: r.full_name ?? r.email,
+          email: r.email,
+          totalPaid: Number(r.total_paid) || 0,
+          // The mock TopSub schema has `jobsDone` from a different angle;
+          // we approximate it with the paid-invoice count, which is the
+          // closest real signal the org has of "how active was this sub".
+          jobsDone: Number(r.invoice_count) || 0,
+        })));
+      }
+    })();
+    return () => { active = false; };
+  }, [orgId, days]);
+
+  // KPIs: real data when loaded, mocks scaled by period as fallback while
+  // initial fetch is in flight (avoids layout jump on first paint).
   const kpis: DashboardKpi = useMemo(() => {
+    if (kpisReal) {
+      return {
+        outstanding: kpisReal.outstanding,
+        overdue:     kpisReal.overdue,
+        paidPeriod:  kpisReal.paid_period,
+        activeSubs:  kpisReal.active_subs,
+      };
+    }
     const scaled = scaleByDays(
-      {
-        outstanding: MOCK_KPIS.outstanding,
-        overdue:     MOCK_KPIS.overdue,
-        paidPeriod:  MOCK_KPIS.paidPeriod,
-      },
+      { outstanding: MOCK_KPIS.outstanding, overdue: MOCK_KPIS.overdue, paidPeriod: MOCK_KPIS.paidPeriod },
       days,
     );
-    return {
-      outstanding: scaled.outstanding,
-      overdue:     scaled.overdue,
-      paidPeriod:  scaled.paidPeriod,
-      // Active subs is a "right now" snapshot — doesn't scale with window.
-      activeSubs:  MOCK_KPIS.activeSubs,
+    return { ...scaled, activeSubs: MOCK_KPIS.activeSubs };
+  }, [kpisReal, days]);
+
+  // Deltas: compute from real prev when available, else mock.
+  const deltas = useMemo(() => {
+    if (!kpisReal) return MOCK_KPI_DELTAS;
+    const pct = (cur: number, prev: number): { direction: 'up' | 'down' | 'flat'; pct: number } => {
+      if (prev <= 0) return { direction: cur > 0 ? 'up' : 'flat', pct: 0 };
+      const change = ((cur - prev) / prev) * 100;
+      if (Math.abs(change) < 0.5) return { direction: 'flat', pct: 0 };
+      return { direction: change > 0 ? 'up' : 'down', pct: Math.abs(change) };
     };
-  }, [days]);
+    const abs = (cur: number, prev: number): { direction: 'up' | 'down' | 'flat'; pct: number; abs: number } => {
+      const diff = cur - prev;
+      return {
+        direction: diff > 0 ? 'up' : diff < 0 ? 'down' : 'flat',
+        pct: 0,
+        abs: Math.abs(diff),
+      };
+    };
+    return {
+      outstanding: pct(kpisReal.outstanding, kpisReal.prev.outstanding),
+      overdue:     pct(kpisReal.overdue,     kpisReal.prev.overdue),
+      paid:        pct(kpisReal.paid_period, kpisReal.prev.paid_period),
+      active:      abs(kpisReal.active_subs, kpisReal.prev.active_subs),
+    };
+  }, [kpisReal]);
+
+  // Trends: keep mock sparklines until a follow-up adds 14-day history per KPI.
   const trends = MOCK_KPI_TRENDS;
-  const deltas = MOCK_KPI_DELTAS;
-  const revenue = useMemo(() => buildMockRevenueTrend(days), [days]);
-  const statusMix: StatusMix = useMemo(
-    () => scaleByDays(
+
+  // Revenue trend: real or build mock as fallback.
+  const revenue = useMemo(() => {
+    if (revenueReal) return revenueReal;
+    return buildMockRevenueTrend(days);
+  }, [revenueReal, days]);
+
+  // Status mix: real if loaded, else scaled mock.
+  const statusMix: StatusMix = useMemo(() => {
+    if (kpisReal) return kpisReal.status_mix;
+    return scaleByDays(
       { paid: MOCK_STATUS_MIX.paid, sent: MOCK_STATUS_MIX.sent, overdue: MOCK_STATUS_MIX.overdue, draft: MOCK_STATUS_MIX.draft },
       days,
-    ),
-    [days],
-  );
-  const topSubs = useMemo(
-    () => MOCK_TOP_SUBS.map((s) => ({ ...s, totalPaid: Math.round(s.totalPaid * (days / 30)) })),
-    [days],
-  );
-  const upcoming = useMemo(() => buildMockUpcomingJobs(), []); // forward-looking, not scoped by period
-  const isPreview = true;
+    );
+  }, [kpisReal, days]);
+
+  // Top subs: real list (may be empty for fresh orgs — show empty state) or mock.
+  const topSubs = useMemo(() => {
+    if (topSubsReal !== null) return topSubsReal;
+    return MOCK_TOP_SUBS.map((s) => ({ ...s, totalPaid: Math.round(s.totalPaid * (days / 30)) }));
+  }, [topSubsReal, days]);
+
+  // Upcoming jobs still come from /work; keeping mock until that fetch wires in.
+  const upcoming = useMemo(() => buildMockUpcomingJobs(), []);
+
+  // Preview banner only shows while initial real data hasn't landed yet.
+  const isPreview = kpisReal === null;
 
   const firstName = (user?.email?.split('@')[0] ?? '').split('+')[0]!;
   const cap = firstName ? firstName.charAt(0).toUpperCase() + firstName.slice(1) : '';
