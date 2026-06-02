@@ -26,7 +26,7 @@ import { ThreadPanel } from '@/components/ThreadPanel';
 import { listPresets, savePreset, deletePreset, type Preset } from '@/lib/filter-presets';
 
 const INVOICE_SELECT =
-  'id, invoice_number, issue_date, due_date, status, subtotal, tax_rate, tax_amount, total, notes, sent_at, paid_at, payment_confirmed_at, user_id, org_visible_id, is_edited, divergence_status, last_edit_comment, last_edited_at, issuer:profiles!invoices_user_id_fkey(full_name,email)';
+  'id, invoice_number, issue_date, due_date, status, subtotal, tax_rate, tax_amount, total, notes, sent_at, paid_at, payment_confirmed_at, user_id, org_visible_id, is_edited, divergence_status, last_edit_comment, last_edited_at, correction_status, correction_message, correction_requested_at, issuer:profiles!invoices_user_id_fkey(full_name,email)';
 
 const PAGE_SIZES = [10, 20, 50, 100];
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -105,6 +105,20 @@ function ReconBadge({ warnings }: { warnings: string[] }) {
 
 // Compact chip that flags an invoice the member edited after it became visible
 // to the org. Pending = needs the admin to confirm/reject the change.
+// Chip for an open correction the org asked the member to make (proactive,
+// before any member edit). Shows until the member edits in response.
+function CorrectionBadge({ invoice }: { invoice: InvoiceRow }) {
+  if (invoice.correction_status !== 'requested') return null;
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-[11px] font-medium text-orange-700"
+      title={invoice.correction_message ?? 'You asked the sub-contractor to revise this invoice'}
+    >
+      ↩ Correction requested
+    </span>
+  );
+}
+
 function DivergenceBadge({ invoice }: { invoice: InvoiceRow }) {
   if (!invoice.is_edited && invoice.divergence_status === 'none') return null;
   const s = invoice.divergence_status;
@@ -418,6 +432,26 @@ export function InvoicesPage() {
     patchInvoice(id, { divergence_status: next });
     setDetail((d) => (d && d.id === id ? { ...d, divergence_status: next } : d));
     notify(action === 'confirm' ? 'Change accepted' : 'Change flagged to the sub-contractor', 'success');
+  }
+
+  // Org-initiated correction request — asks the member to revise the invoice
+  // (before any edit). Flags the invoice, notifies the member by push, and
+  // records the message in the thread (server-side).
+  async function requestCorrection(id: string, message: string) {
+    const { error } = await supabase.rpc('org_request_invoice_correction', {
+      p_invoice_id: id,
+      p_message: message.trim(),
+    });
+    if (error) {
+      notify(friendlyError(error), 'error');
+      return;
+    }
+    patchInvoice(id, {
+      correction_status: 'requested',
+      correction_message: message.trim(),
+      correction_requested_at: new Date().toISOString(),
+    });
+    notify('Correction requested — the sub-contractor was notified', 'success');
   }
 
   const setColFilter = (k: SetCol) => (next: Set<string>) => setFilters((prev) => ({ ...prev, [k]: next }));
@@ -1099,6 +1133,7 @@ export function InvoicesPage() {
                       <div className="flex flex-col items-start gap-1">
                         <InvoiceStatusBadge status={r.status} />
                         <DivergenceBadge invoice={r} />
+                        <CorrectionBadge invoice={r} />
                         <ReconBadge warnings={reconcileInvoice(r, rows)} />
                       </div>
                     </td>
@@ -1158,6 +1193,7 @@ export function InvoicesPage() {
           onMarkPaid={() => setConfirmingPay(detail)}
           onUnmark={() => void unmarkPaid(detail.id)}
           onResolveDivergence={(action, comment) => resolveDivergence(detail.id, action, comment)}
+          onRequestCorrection={(message) => requestCorrection(detail.id, message)}
           notify={notify}
           reconWarnings={reconcileInvoice(detail, rows)}
         />
@@ -1206,10 +1242,11 @@ function InvoiceDetailModal(props: {
   onMarkPaid: () => void;
   onUnmark: () => void;
   onResolveDivergence: (action: 'confirm' | 'reject', comment?: string) => void | Promise<void>;
+  onRequestCorrection: (message: string) => void | Promise<void>;
   notify: (m: string, k?: 'success' | 'error' | 'info') => void;
   reconWarnings: string[];
 }) {
-  const { invoice, marking, orgName, orgAbn, onClose, onMarkPaid, onUnmark, onResolveDivergence, notify, reconWarnings } = props;
+  const { invoice, marking, orgName, orgAbn, onClose, onMarkPaid, onUnmark, onResolveDivergence, onRequestCorrection, notify, reconWarnings } = props;
   const [items, setItems] = useState<LineItem[] | null>(null);
   const onPrintReceipt = () => {
     const ok = openInvoiceReceipt({
@@ -1323,6 +1360,8 @@ function InvoiceDetailModal(props: {
         {(invoice.is_edited || invoice.divergence_status !== 'none') && (
           <DivergencePanel invoice={invoice} onResolve={onResolveDivergence} />
         )}
+
+        <CorrectionPanel invoice={invoice} onRequest={onRequestCorrection} />
 
         <ThreadPanel
           subjectType="invoice"
@@ -1491,6 +1530,94 @@ function DivergencePanel({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Correction panel — lets the org proactively ask the member to revise the
+// invoice (before any edit). Shows the open request once sent; hidden on paid
+// invoices (nothing to correct after payment).
+// ─────────────────────────────────────────────────────────────────────────────
+function CorrectionPanel({
+  invoice,
+  onRequest,
+}: {
+  invoice: InvoiceRow;
+  onRequest: (message: string) => void | Promise<void>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [message, setMessage] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const requested = invoice.correction_status === 'requested';
+
+  // Open request — show it, no form (waiting on the member to revise).
+  if (requested) {
+    return (
+      <div className="mt-4 rounded-lg border border-orange-200 bg-orange-50/60 p-3">
+        <div className="flex items-center gap-2 text-sm font-semibold text-orange-800">
+          ↩ Correction requested
+        </div>
+        {invoice.correction_message && (
+          <p className="mt-1 text-xs italic text-navy-600">“{invoice.correction_message}”</p>
+        )}
+        <p className="mt-1 text-[11px] text-navy-400">
+          Waiting for the sub-contractor to revise and re-send. They’ve been notified.
+        </p>
+      </div>
+    );
+  }
+
+  // Nothing to correct once paid.
+  if (invoice.status === 'paid') return null;
+
+  const send = async () => {
+    if (!message.trim()) return;
+    setBusy(true);
+    await onRequest(message.trim());
+    setBusy(false);
+    setMessage('');
+    setOpen(false);
+  };
+
+  return (
+    <div className="mt-4">
+      {!open ? (
+        <button
+          onClick={() => setOpen(true)}
+          className="rounded-md px-3 py-1.5 text-xs font-medium text-orange-700 ring-1 ring-orange-200 hover:bg-orange-50"
+        >
+          ↩ Request a correction
+        </button>
+      ) : (
+        <div className="rounded-lg border border-orange-200 bg-orange-50/60 p-3">
+          <div className="text-sm font-semibold text-orange-800">Ask the sub-contractor to revise</div>
+          <textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            rows={2}
+            autoFocus
+            placeholder="What needs fixing? e.g. “The hours on 3 Jun look off — please check.”"
+            className="mt-2 w-full rounded-md border border-orange-200 px-2.5 py-1.5 text-xs focus:border-orange-400 focus:outline-none"
+          />
+          <div className="mt-2 flex justify-end gap-2">
+            <button
+              onClick={() => { setOpen(false); setMessage(''); }}
+              className="rounded-md px-3 py-1.5 text-xs font-medium text-navy-500 hover:bg-navy-50"
+            >
+              Cancel
+            </button>
+            <button
+              disabled={busy || !message.trim()}
+              onClick={() => void send()}
+              className="rounded-md bg-orange-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-orange-500 disabled:opacity-50"
+            >
+              {busy ? 'Sending…' : 'Send request'}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Audit timeline for an invoice — chronological log of who did what when.
 // Reads org_events filtered to this invoice. Always renders a synthetic
 // 'created' entry so the timeline isn't empty for invoices issued before
@@ -1533,6 +1660,14 @@ function InvoiceAuditTimeline({ invoice }: { invoice: InvoiceRow }) {
             break;
           case 'org_payment_confirmed_by_member':
             out.push({ at: e.created_at, icon: '✓', label: 'Member confirmed payment received', tone: 'brand' });
+            break;
+          case 'org_invoice_correction_requested': {
+            const m = (e.metadata as { message?: string } | null)?.message;
+            out.push({ at: e.created_at, icon: '↩', label: 'Correction requested by admin', tone: 'amber', ...(m ? { detail: m } : {}) });
+            break;
+          }
+          case 'org_invoice_edited':
+            out.push({ at: e.created_at, icon: '✎', label: 'Sub-contractor revised the invoice', tone: 'amber' });
             break;
           default:
             out.push({ at: e.created_at, icon: '·', label: e.event_name.replace(/_/g, ' '), tone: 'navy' });

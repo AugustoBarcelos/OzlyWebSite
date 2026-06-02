@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth';
 import { useToast } from '@/components/Toast';
 import { PageHeader } from '@/components/PageHeader';
 import { NotificationPreferences } from '@/components/NotificationPreferences';
+import { CalendarFeedsSection } from '@/components/CalendarFeedsSection';
 import { formatDate } from '@/lib/format';
 import { SEAT_LIMIT } from '@/lib/types';
 import { friendlyError } from '@/lib/errors';
@@ -404,6 +405,8 @@ export function SettingsPage() {
           Manage members
         </Link>
       </section>
+
+      {orgId && <CalendarFeedsSection orgId={orgId} />}
 
       {user?.id && <NotificationPreferences userKey={user.id} />}
 

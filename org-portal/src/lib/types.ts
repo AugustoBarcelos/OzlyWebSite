@@ -102,6 +102,12 @@ export interface InvoiceRow {
   divergence_status: 'none' | 'pending' | 'confirmed' | 'rejected';
   last_edit_comment: string | null;
   last_edited_at: string | null;
+  // Correction request: the org asked the member to revise this invoice
+  // (proactive, before the member edits). 'resolved' once the member edits in
+  // response. Drives the "Correction requested" badge + request button.
+  correction_status: 'none' | 'requested' | 'resolved';
+  correction_message: string | null;
+  correction_requested_at: string | null;
   // The sub-contractor who issued the invoice (invoices.user_id → profiles).
   // This is the member the org cares about — NOT contractors (that row is the
   // org itself, from the member's address book).

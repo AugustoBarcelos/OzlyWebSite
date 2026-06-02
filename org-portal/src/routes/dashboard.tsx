@@ -11,10 +11,14 @@
 // A "Preview data" banner makes the mock explicit when org has zero real
 // activity (mirrors the activity.tsx preview pattern).
 
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useOrg } from '@/lib/org';
 import { useAuth } from '@/lib/auth';
+import { supabase } from '@/lib/supabase';
+import { useToast } from '@/components/Toast';
+import { Spinner } from '@/components/Spinner';
+import { friendlyError } from '@/lib/errors';
 import { KpiCard } from '@/components/KpiCard';
 import { GettingStartedDashboard } from '@/components/GettingStartedDashboard';
 import { LineChart } from '@/components/charts/LineChart';
@@ -184,19 +188,9 @@ export function DashboardPage() {
               {' · '}
               <span className="font-semibold text-navy-700">{currentOrg?.name ?? 'Your organisation'}</span>
             </p>
-            {/* Sync pill — primary value prop is "jobs in", so we surface the
-                top job-source first. Linka pra /settings/integrations. */}
-            <Link
-              to="/settings/integrations"
-              className="mt-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold transition-colors hover:bg-brand-100"
-              style={{ background: 'rgba(43, 187, 151, 0.15)', color: 'var(--color-brand-700)' }}
-            >
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-400 opacity-60" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-brand-500" />
-              </span>
-              2 jobs pulled from ServiceM8 · 4 min ago
-            </Link>
+            {/* Sync pill — surfaces the calendar-feed status (or invites to
+                connect one). Real data from org_list_calendar_connections. */}
+            {currentOrg && <CalendarSyncPill orgId={currentOrg.id} />}
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <QuickAction to="/members" label="+ Invite member" primary />
@@ -262,6 +256,18 @@ export function DashboardPage() {
           )}
         </span>
       </div>
+
+      {/* Invoice stragglers — REAL data from org_invoice_stragglers RPC.
+          Highest-signal panel on the dashboard: who sent, who didn't.
+          Sits above KPI strip because action follows the eye top→bottom. */}
+      {currentOrg && (
+        <StragglersPanel
+          orgId={currentOrg.id}
+          orgName={currentOrg.name ?? 'Your organisation'}
+          days={days}
+          periodLabel={periodLabel}
+        />
+      )}
 
       {/* KPI strip — each card is a drill-down link into the relevant route
           with a status query param. invoices.tsx reads ?status= on mount and
@@ -424,5 +430,264 @@ export function DashboardPage() {
         </section>
       </div>
     </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CalendarSyncPill — shows last sync time for the org's calendar feeds.
+// Surfaces the real status of the iCal pull, replacing the old fake
+// "2 jobs pulled from ServiceM8" placeholder.
+function CalendarSyncPill({ orgId }: { orgId: string }) {
+  const [state, setState] = useState<{
+    label: string;
+    error?: string;
+    count: number;
+  } | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const { data, error } = await supabase.rpc('org_list_calendar_connections', { p_org_id: orgId });
+      if (!active) return;
+      if (error || !data || (data as unknown[]).length === 0) {
+        setState({ label: 'Connect a calendar to auto-import jobs', count: 0 });
+        return;
+      }
+      const rows = data as Array<{
+        last_sync_at: string | null;
+        last_sync_event_count: number | null;
+        last_sync_error: string | null;
+        paused: boolean;
+      }>;
+      const active_ = rows.filter((r) => !r.paused);
+      if (active_.length === 0) {
+        setState({ label: 'All calendar feeds paused', count: 0 });
+        return;
+      }
+      const mostRecent = [...active_].sort((a, b) => {
+        const at = a.last_sync_at ? Date.parse(a.last_sync_at) : 0;
+        const bt = b.last_sync_at ? Date.parse(b.last_sync_at) : 0;
+        return bt - at;
+      })[0]!;
+      const lastErr = mostRecent.last_sync_error;
+      const last = mostRecent.last_sync_at;
+      const count = mostRecent.last_sync_event_count ?? 0;
+      const rel = last ? relativeShort(last) : 'pending';
+      const label = lastErr
+        ? `Calendar sync error · ${rel}`
+        : `Calendar sync · last ${rel}${count > 0 ? ` · ${count} events` : ''}`;
+      setState(lastErr ? { label, error: lastErr, count } : { label, count });
+    })();
+    return () => { active = false; };
+  }, [orgId]);
+
+  if (!state) return null;
+  const ok = !state.error && state.count >= 0;
+  return (
+    <Link
+      to="/settings"
+      className="mt-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold transition-colors hover:bg-brand-100"
+      style={{
+        background: state.error
+          ? 'rgba(244, 63, 94, 0.12)'
+          : 'rgba(43, 187, 151, 0.15)',
+        color: state.error ? 'var(--color-rose-700, #be123c)' : 'var(--color-brand-700)',
+      }}
+    >
+      <span className="relative flex h-1.5 w-1.5">
+        <span className={`absolute inline-flex h-full w-full animate-ping rounded-full ${
+          state.error ? 'bg-rose-400' : 'bg-brand-400'} opacity-60`} />
+        <span className={`relative inline-flex h-1.5 w-1.5 rounded-full ${
+          state.error ? 'bg-rose-500' : ok ? 'bg-brand-500' : 'bg-amber-500'}`} />
+      </span>
+      {state.label}
+    </Link>
+  );
+}
+
+function relativeShort(iso: string): string {
+  const ms = Date.now() - new Date(iso).getTime();
+  const min = Math.round(ms / 60_000);
+  if (min < 1)  return 'just now';
+  if (min < 60) return `${min} min ago`;
+  const h = Math.round(min / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.round(h / 24);
+  return `${d}d ago`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// StragglersPanel — real-data panel showing who's billed, who's pending, who's
+// silent for the selected period. Driven by the `org_invoice_stragglers` RPC.
+// "Send reminder" inserts an org_invoice_requests row which the trigger
+// fan-outs into email + push to the member.
+interface StragglerRow {
+  member_user_id: string;
+  member_name: string;
+  member_email: string;
+  completed_job_count: number;
+  completed_job_value: number;
+  invoiced_count: number;
+  uninvoiced_count: number;
+  invoice_count_in_period: number;
+  last_activity_at: string | null;
+}
+
+function StragglersPanel(props: {
+  orgId: string;
+  orgName: string;
+  days: number;
+  periodLabel: string;
+}) {
+  const { orgId, orgName, days, periodLabel } = props;
+  const { notify } = useToast();
+  const [rows, setRows] = useState<StragglerRow[] | null>(null);
+  const [reminding, setReminding] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    const from = new Date(Date.now() - days * 86_400_000).toISOString();
+    const to   = new Date().toISOString();
+    const { data, error } = await supabase.rpc('org_invoice_stragglers', {
+      p_org_id:      orgId,
+      p_period_from: from,
+      p_period_to:   to,
+    });
+    if (error) {
+      // RPC isn't available yet (migration not deployed) — fail silent
+      // so the rest of the dashboard renders.
+      setRows([]);
+      return;
+    }
+    setRows((data ?? []) as StragglerRow[]);
+  }, [orgId, days]);
+
+  useEffect(() => { void load(); }, [load]);
+
+  async function sendReminder(r: StragglerRow) {
+    setReminding(r.member_user_id);
+    const dueBy = new Date();
+    dueBy.setDate(dueBy.getDate() + 3);
+    const { error } = await supabase.from('org_invoice_requests').insert({
+      org_id:         orgId,
+      member_user_id: r.member_user_id,
+      message:        `${orgName} — please send invoice for ${r.uninvoiced_count} completed job${r.uninvoiced_count === 1 ? '' : 's'}`,
+      due_by:         dueBy.toISOString().slice(0, 10),
+      status:         'open',
+    });
+    setReminding(null);
+    if (error) { notify(friendlyError(error, 'Could not send reminder.'), 'error'); return; }
+    notify(`Reminder sent to ${r.member_name}.`, 'success');
+  }
+
+  if (rows === null) {
+    return (
+      <section className="ozly-card mb-5 p-5">
+        <div className="flex items-center gap-2 text-xs text-navy-400">
+          <Spinner size="sm" label="Loading stragglers" /> Loading invoice status…
+        </div>
+      </section>
+    );
+  }
+
+  if (rows.length === 0) {
+    return null; // no accepted members yet → suppress entirely
+  }
+
+  const stragglers = rows.filter((r) => r.uninvoiced_count > 0);
+  const allDone    = rows.filter((r) => r.completed_job_count > 0 && r.uninvoiced_count === 0);
+  const inactive   = rows.filter((r) => r.completed_job_count === 0);
+
+  return (
+    <section className="ozly-card mb-5 p-5">
+      <div className="mb-3 flex items-baseline justify-between gap-2">
+        <div>
+          <h2 className="font-display text-sm font-bold text-navy-800">
+            Who's billed · {periodLabel.toLowerCase()}
+          </h2>
+          <p className="mt-0.5 text-[11.5px] text-navy-400">
+            Stragglers first. <strong>Send reminder</strong> pushes a notification + email asking for the invoice.
+          </p>
+        </div>
+        <div className="flex shrink-0 gap-2 text-[10.5px] font-semibold">
+          {stragglers.length > 0 && (
+            <span className="rounded-full bg-amber-50 px-2 py-0.5 text-amber-700">
+              {stragglers.length} pending
+            </span>
+          )}
+          {allDone.length > 0 && (
+            <span className="rounded-full bg-brand-50 px-2 py-0.5 text-brand-700">
+              {allDone.length} all-clear
+            </span>
+          )}
+        </div>
+      </div>
+
+      {stragglers.length === 0 && allDone.length === 0 && inactive.length > 0 && (
+        <div className="rounded-lg border border-dashed border-navy-100 bg-navy-50/40 p-3 text-[12.5px] text-navy-500">
+          No completed work this period yet. Members will show here once they finish jobs.
+        </div>
+      )}
+
+      <ul className="space-y-1">
+        {[...stragglers, ...allDone, ...inactive].map((r) => {
+          const status: 'pending' | 'done' | 'inactive' =
+            r.uninvoiced_count > 0 ? 'pending'
+            : r.completed_job_count > 0 ? 'done'
+            : 'inactive';
+          return (
+            <li
+              key={r.member_user_id}
+              className={`flex items-center gap-3 rounded-lg p-2 ${
+                status === 'pending'
+                  ? 'bg-amber-50/50'
+                  : status === 'done'
+                    ? 'bg-brand-50/40'
+                    : 'bg-navy-50/30'
+              }`}
+            >
+              <span
+                className={`h-2 w-2 shrink-0 rounded-full ${
+                  status === 'pending' ? 'bg-amber-500'
+                  : status === 'done'    ? 'bg-brand-500'
+                  : 'bg-navy-300'
+                }`}
+              />
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-[13px] font-semibold text-navy-800">{r.member_name}</div>
+                <div className="truncate text-[11px] text-navy-500">
+                  {status === 'pending' && (
+                    <>
+                      <strong className="text-amber-700">{r.uninvoiced_count} uninvoiced</strong>
+                      {' · '}
+                      {r.completed_job_count} done
+                      {r.invoiced_count > 0 && <> · {r.invoiced_count} billed</>}
+                      {r.completed_job_value > 0 && <> · ~${Math.round(r.completed_job_value)}</>}
+                    </>
+                  )}
+                  {status === 'done' && (
+                    <>
+                      All {r.completed_job_count} job{r.completed_job_count === 1 ? '' : 's'} invoiced
+                      {r.invoice_count_in_period > 0 && <> · {r.invoice_count_in_period} sent</>}
+                    </>
+                  )}
+                  {status === 'inactive' && (
+                    <>No completed work this period</>
+                  )}
+                </div>
+              </div>
+              {status === 'pending' && (
+                <button
+                  onClick={() => void sendReminder(r)}
+                  disabled={reminding === r.member_user_id}
+                  className="shrink-0 rounded-md bg-amber-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-amber-500 disabled:opacity-50"
+                >
+                  {reminding === r.member_user_id ? 'Sending…' : 'Send reminder'}
+                </button>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }
