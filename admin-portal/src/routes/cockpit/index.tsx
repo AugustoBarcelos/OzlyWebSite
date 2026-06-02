@@ -19,6 +19,7 @@ import {
 } from '@/components/Icons';
 import { formatCurrencyAUD, formatNumber, formatPercent } from '@/lib/format';
 import { callRpc, RpcError } from '@/lib/rpc';
+import { callEdge } from '@/lib/edge';
 import { useGlobalFilters } from '@/lib/useGlobalFilters';
 import { useDashboardData } from '@/routes/dashboard/useDashboardData';
 import type { Period } from '@/routes/dashboard/types';
@@ -28,6 +29,49 @@ interface AcquisitionOverview {
   total_spend_aud: number;
   new_paying: number | null;
   top_sources: Array<{ source: string; signups: number }>;
+}
+
+// ── Site traffic (GA4 + GSC) — mirrors the ga4-stats `op=summary` payload that
+// powers Marketing › Site. Surfaced here so the founder sees the website numbers
+// without leaving the Cockpit.
+interface Ga4Summary {
+  sessions: number;
+  users: number;
+  pageviews: number;
+  engagement_rate: number;
+  prev: { sessions: number; users: number; pageviews: number; engagement_rate: number };
+}
+interface GscSummary {
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  position: number;
+  prev: { clicks: number; impressions: number; ctr: number; position: number };
+}
+interface SiteSummary {
+  ga4: Ga4Summary | { error: string };
+  gsc: GscSummary | { error: string };
+}
+
+/**
+ * Builds the optional `delta` prop for KpiHero from a current/previous pair.
+ * Returns `{}` (not `{ delta: undefined }`) when not computable, so it satisfies
+ * `exactOptionalPropertyTypes`. Delta is a fraction (0.123 = +12.3%).
+ */
+function deltaProp(
+  current: number | undefined,
+  previous: number | undefined,
+): { delta: number } | Record<string, never> {
+  if (
+    current === undefined ||
+    previous === undefined ||
+    !Number.isFinite(current) ||
+    !Number.isFinite(previous) ||
+    previous === 0
+  ) {
+    return {};
+  }
+  return { delta: (current - previous) / previous };
 }
 
 /**
@@ -54,6 +98,12 @@ export function CockpitPage() {
   const [acquisition, setAcquisition] = useState<AcquisitionOverview | null>(null);
   const [acquisitionLoading, setAcquisitionLoading] = useState(true);
   const [acquisitionError, setAcquisitionError] = useState<string | null>(null);
+
+  // Site traffic (GA4/GSC). Window is fixed by the edge function (GA4 30d, GSC
+  // 28d w/ 3-day lag), so it does NOT react to the global period filter.
+  const [site, setSite] = useState<SiteSummary | null>(null);
+  const [siteLoading, setSiteLoading] = useState(true);
+  const [siteError, setSiteError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -91,6 +141,30 @@ export function CockpitPage() {
       cancelled = true;
     };
   }, [periodDays]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setSiteLoading(true);
+    setSiteError(null);
+    callEdge<SiteSummary>('ga4-stats', { query: { op: 'summary' } })
+      .then((r) => {
+        if (cancelled) return;
+        if (r.ok) {
+          setSite(r.data);
+        } else {
+          setSiteError(r.error);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setSiteLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const ga4 = site && 'sessions' in site.ga4 ? site.ga4 : null;
+  const gsc = site && 'clicks' in site.gsc ? site.gsc : null;
 
   const signupsSeries = useMemo(
     () =>
@@ -255,6 +329,87 @@ export function CockpitPage() {
             : {})}
           href="/users"
         />
+      </section>
+
+      {/* Site traffic (ozly.au) — GA4 + Search Console */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-semibold text-navy-700">
+              Tráfego do site — ozly.au
+            </h2>
+            <p className="mt-0.5 text-xs text-navy-300">
+              GA4 últimos 30d · Search Console últimos 28d (lag de 3 dias)
+            </p>
+          </div>
+          <Link
+            to="/marketing/seo"
+            className="flex items-center gap-1 text-xs text-brand-600 hover:text-brand-700"
+          >
+            Detalhe + top pages <ArrowUpRightIcon className="h-3 w-3" />
+          </Link>
+        </div>
+
+        {siteError ? (
+          <div className="ozly-card border-amber-100 bg-amber-50/60 p-3 text-xs text-amber-700">
+            <strong>Heads up:</strong> não deu pra carregar o tráfego do site (
+            <code className="font-mono">ga4-stats</code>): {siteError}
+          </div>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <KpiHero
+              label="Sessions (GA4)"
+              value={ga4?.sessions ?? null}
+              loading={siteLoading}
+              tone="brand"
+              href="/marketing/seo"
+              {...deltaProp(ga4?.sessions, ga4?.prev.sessions)}
+            />
+            <KpiHero
+              label="Users (GA4)"
+              value={ga4?.users ?? null}
+              loading={siteLoading}
+              tone="brand"
+              href="/marketing/seo"
+              {...deltaProp(ga4?.users, ga4?.prev.users)}
+            />
+            <KpiHero
+              label="Pageviews (GA4)"
+              value={ga4?.pageviews ?? null}
+              loading={siteLoading}
+              tone="lime"
+              href="/marketing/seo"
+              {...deltaProp(ga4?.pageviews, ga4?.prev.pageviews)}
+            />
+            <KpiHero
+              label="Clicks (Search)"
+              value={gsc?.clicks ?? null}
+              loading={siteLoading}
+              tone="brand"
+              href="/marketing/seo"
+              {...deltaProp(gsc?.clicks, gsc?.prev.clicks)}
+            />
+            <KpiHero
+              label="Impressions (Search)"
+              value={gsc?.impressions ?? null}
+              loading={siteLoading}
+              tone="neutral"
+              href="/marketing/seo"
+              {...deltaProp(gsc?.impressions, gsc?.prev.impressions)}
+            />
+            <KpiHero
+              label="Posição média (Search)"
+              value={gsc?.position ?? null}
+              formatter={(v) => (v === null || !Number.isFinite(v) ? '—' : v.toFixed(1))}
+              loading={siteLoading}
+              tone="neutral"
+              hint="menor = melhor"
+              isIncreasePositive={false}
+              href="/marketing/seo"
+              {...deltaProp(gsc?.position, gsc?.prev.position)}
+            />
+          </div>
+        )}
       </section>
 
       {/* Top sources placeholder + Plan mix */}
