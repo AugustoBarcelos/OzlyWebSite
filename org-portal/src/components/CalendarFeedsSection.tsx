@@ -20,7 +20,10 @@ import { Spinner } from '@/components/Spinner';
 interface CalendarConnection {
   id: string;
   label: string;
-  ical_url_preview: string;
+  auth_type: 'ical' | 'google_oauth';
+  ical_url_preview: string | null;
+  google_account_email: string | null;
+  google_calendar_id: string | null;
   default_member_id: string | null;
   default_member_name: string | null;
   auto_send: boolean;
@@ -49,12 +52,33 @@ function relTime(iso: string | null): string {
   return `${d}d ago`;
 }
 
+type AddMode = null | 'choose' | 'google' | 'ical';
+
 export function CalendarFeedsSection({ orgId }: { orgId: string }) {
   const { notify } = useToast();
   const [rows, setRows] = useState<CalendarConnection[] | null>(null);
   const [members, setMembers] = useState<MemberOption[]>([]);
-  const [adding, setAdding] = useState(false);
+  const [addMode, setAddMode] = useState<AddMode>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+
+  // Handle the OAuth callback redirect from google-oauth-callback: it lands
+  // on /settings?calendar=ok or ?calendar=error&reason=…. We surface the
+  // result as a toast and clear the query so refresh doesn't re-fire it.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    const status = url.searchParams.get('calendar');
+    if (!status) return;
+    if (status === 'ok') {
+      notify('Google Calendar connected — first sync runs in a few seconds.', 'success');
+    } else {
+      const reason = url.searchParams.get('reason') ?? 'unknown';
+      notify(`Could not connect Google Calendar: ${reason}`, 'error');
+    }
+    url.searchParams.delete('calendar');
+    url.searchParams.delete('reason');
+    window.history.replaceState({}, '', url.pathname + (url.search ? '?' + url.searchParams.toString() : ''));
+  }, [notify]);
 
   const load = useCallback(async () => {
     const { data, error } = await supabase.rpc('org_list_calendar_connections', { p_org_id: orgId });
@@ -133,15 +157,15 @@ export function CalendarFeedsSection({ orgId }: { orgId: string }) {
         <div>
           <h2 className="text-sm font-semibold text-navy-700">Calendar feeds</h2>
           <p className="mt-1 max-w-md text-xs text-navy-400">
-            Paste an iCal URL from Google / Outlook / Apple Calendar. Events
-            matching an accepted member become job offers automatically
-            every 15 minutes.
+            Connect your Google Calendar (official OAuth) so events
+            matching an accepted member become job offers automatically.
+            iCal URL is supported as a fallback for Outlook / Apple.
           </p>
         </div>
-        {!adding && (
+        {addMode === null && (
           <button
             type="button"
-            onClick={() => setAdding(true)}
+            onClick={() => setAddMode('choose')}
             className="shrink-0 rounded-md bg-brand-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-500"
           >
             + Add feed
@@ -149,12 +173,28 @@ export function CalendarFeedsSection({ orgId }: { orgId: string }) {
         )}
       </div>
 
-      {adding && (
+      {addMode === 'choose' && (
+        <AddModeChooser
+          onPick={(m) => setAddMode(m)}
+          onCancel={() => setAddMode(null)}
+        />
+      )}
+
+      {addMode === 'google' && (
+        <AddGoogleFlow
+          orgId={orgId}
+          members={members}
+          onCancel={() => setAddMode(null)}
+          notify={notify}
+        />
+      )}
+
+      {addMode === 'ical' && (
         <AddFeedForm
           orgId={orgId}
           members={members}
-          onCancel={() => setAdding(false)}
-          onAdded={async () => { setAdding(false); await load(); }}
+          onCancel={() => setAddMode(null)}
+          onAdded={async () => { setAddMode(null); await load(); }}
         />
       )}
 
@@ -165,7 +205,7 @@ export function CalendarFeedsSection({ orgId }: { orgId: string }) {
           </div>
         )}
 
-        {rows && rows.length === 0 && !adding && (
+        {rows && rows.length === 0 && addMode === null && (
           <div className="rounded-lg border border-dashed border-navy-100 bg-navy-50/40 p-4 text-center text-xs text-navy-500">
             No calendar feeds yet — add one above to stop re-typing jobs.
           </div>
@@ -186,6 +226,13 @@ export function CalendarFeedsSection({ orgId }: { orgId: string }) {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="truncate text-sm font-semibold text-navy-800">{c.label}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
+                    c.auth_type === 'google_oauth'
+                      ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-100'
+                      : 'bg-navy-50 text-navy-600 ring-1 ring-navy-100'
+                  }`}>
+                    {c.auth_type === 'google_oauth' ? 'Google' : 'iCal'}
+                  </span>
                   {c.paused && (
                     <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-700">
                       Paused
@@ -198,7 +245,9 @@ export function CalendarFeedsSection({ orgId }: { orgId: string }) {
                   )}
                 </div>
                 <div className="mt-0.5 truncate font-mono text-[10.5px] text-navy-400">
-                  {c.ical_url_preview}
+                  {c.auth_type === 'google_oauth'
+                    ? (c.google_account_email ?? c.google_calendar_id ?? '—')
+                    : (c.ical_url_preview ?? '—')}
                 </div>
                 <div className="mt-1 text-[11px] text-navy-500">
                   {c.default_member_name
@@ -356,5 +405,188 @@ function AddFeedForm(props: {
         </button>
       </div>
     </form>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AddModeChooser — picks between Google OAuth (recommended) and iCal URL.
+// Google is the primary path now; iCal is kept as a fallback for Outlook /
+// Apple Calendar users until those get their own OAuth integration.
+function AddModeChooser(props: {
+  onPick: (mode: 'google' | 'ical') => void;
+  onCancel: () => void;
+}) {
+  const { onPick, onCancel } = props;
+  return (
+    <div className="mt-4 rounded-xl border border-brand-200 bg-brand-50/30 p-4">
+      <div className="mb-3 text-[10.5px] font-semibold uppercase tracking-wider text-brand-700">
+        Pick a connection method
+      </div>
+      <div className="grid gap-2 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={() => onPick('google')}
+          className="group flex flex-col items-start gap-2 rounded-lg border border-navy-100 bg-white p-3 text-left transition-colors hover:border-brand-300 hover:bg-brand-50/20"
+        >
+          <div className="flex items-center gap-2">
+            <span aria-hidden className="text-base">🅖</span>
+            <span className="text-sm font-semibold text-navy-800">Google Calendar</span>
+            <span className="rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-brand-700">
+              Recommended
+            </span>
+          </div>
+          <p className="text-[11.5px] leading-snug text-navy-500">
+            Official OAuth — events appear within a minute, no secret URL to
+            paste. Works with personal Gmail and Google Workspace.
+          </p>
+        </button>
+        <button
+          type="button"
+          onClick={() => onPick('ical')}
+          className="group flex flex-col items-start gap-2 rounded-lg border border-navy-100 bg-white p-3 text-left transition-colors hover:border-navy-300 hover:bg-navy-50/40"
+        >
+          <div className="flex items-center gap-2">
+            <span aria-hidden className="text-base">🔗</span>
+            <span className="text-sm font-semibold text-navy-800">iCal URL</span>
+          </div>
+          <p className="text-[11.5px] leading-snug text-navy-500">
+            Paste a secret iCal URL from Outlook / Apple / Google Calendar.
+            Polled every 15 minutes. Use this if Google OAuth isn't available.
+          </p>
+        </button>
+      </div>
+      <div className="mt-3 text-right">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="text-[11px] font-semibold text-navy-500 hover:text-navy-700"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AddGoogleFlow — collects label / default member / auto-send (mirrors the
+// iCal form), then calls org_create_calendar_oauth_intent to mint a `state`,
+// asks the google-oauth-start edge fn for the consent URL, and redirects.
+// On return, the page reads ?calendar=ok|error in the useEffect at the top
+// of the parent component.
+function AddGoogleFlow(props: {
+  orgId: string;
+  members: MemberOption[];
+  onCancel: () => void;
+  notify: (m: string, k?: 'success' | 'error' | 'info') => void;
+}) {
+  const { orgId, members, onCancel, notify } = props;
+  const [label, setLabel] = useState('Google Calendar');
+  const [defaultMember, setDefaultMember] = useState('');
+  const [autoSend, setAutoSend] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function onConnect() {
+    setSubmitting(true);
+    try {
+      const { data: state, error } = await supabase.rpc('org_create_calendar_oauth_intent', {
+        p_org_id:         orgId,
+        p_label:          label.trim() || 'Google Calendar',
+        p_default_member: defaultMember || null,
+        p_auto_send:      autoSend,
+      });
+      if (error || !state) {
+        notify(friendlyError(error, 'Could not start the OAuth flow.'), 'error');
+        setSubmitting(false);
+        return;
+      }
+      const { data: urlData, error: urlErr } = await supabase.functions.invoke(
+        'google-oauth-start',
+        { body: { state } },
+      );
+      if (urlErr || !urlData || typeof (urlData as { url?: string }).url !== 'string') {
+        notify(friendlyError(urlErr, 'Could not get the Google consent URL.'), 'error');
+        setSubmitting(false);
+        return;
+      }
+      // Redirect — the user comes back to /settings?calendar=ok or ?calendar=error
+      window.location.href = (urlData as { url: string }).url;
+    } catch (e) {
+      notify(friendlyError(e, 'Could not start the OAuth flow.'), 'error');
+      setSubmitting(false);
+    }
+  }
+
+  const field =
+    'mt-1 w-full rounded-md border border-navy-100 bg-white px-3 py-2 text-sm text-navy-700 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100';
+
+  return (
+    <div className="mt-4 rounded-xl border border-brand-200 bg-brand-50/30 p-4">
+      <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-wider text-brand-700">
+        Connect Google Calendar
+      </div>
+      <label className="block text-xs font-medium text-navy-700">
+        Label
+        <input
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+          placeholder="Google Calendar"
+          className={field}
+        />
+      </label>
+      <label className="mt-3 block text-xs font-medium text-navy-700">
+        Default member <span className="text-navy-300">(optional)</span>
+        <select
+          value={defaultMember}
+          onChange={(e) => setDefaultMember(e.target.value)}
+          className={field}
+        >
+          <option value="">— none, skip unmatched events —</option>
+          {members.map((m) => (
+            <option key={m.user_id} value={m.user_id}>{m.label}</option>
+          ))}
+        </select>
+        <span className="mt-1 block text-[10.5px] text-navy-400">
+          We match by attendee email or by member name in the event title.
+          Unmatched events go to the default member (or are skipped).
+        </span>
+      </label>
+      <label className="mt-3 flex items-start gap-2 text-xs text-navy-700">
+        <input
+          type="checkbox"
+          checked={autoSend}
+          onChange={(e) => setAutoSend(e.target.checked)}
+          className="mt-0.5 h-4 w-4 rounded border-navy-300 text-brand-600 focus:ring-brand-200"
+        />
+        <span>
+          <strong>Auto-send to the matched member.</strong> When off (recommended
+          for the first week), imported events sit as drafts in /work for you
+          to review and send manually.
+        </span>
+      </label>
+      <div className="mt-3 rounded-md bg-white px-3 py-2 text-[10.5px] leading-snug text-navy-500 ring-1 ring-navy-100">
+        Clicking <strong>Continue with Google</strong> will redirect you to a
+        Google consent screen. We only ask for read access to your calendar
+        events — we never write or delete anything.
+      </div>
+      <div className="mt-4 flex gap-2">
+        <button
+          type="button"
+          onClick={() => void onConnect()}
+          disabled={submitting}
+          className="flex-1 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-500 disabled:bg-brand-300"
+        >
+          {submitting ? 'Redirecting…' : 'Continue with Google →'}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={submitting}
+          className="rounded-md px-3 py-2 text-sm font-medium text-navy-600 ring-1 ring-navy-100 hover:bg-navy-50 disabled:opacity-50"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
   );
 }

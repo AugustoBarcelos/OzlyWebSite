@@ -71,6 +71,12 @@ function relativeFromNow(iso: string): string {
 
 const INITIAL_INTEGRATIONS: Integration[] = [
   // ── JOB SOURCES — pull scheduled work in ──────────────────────────────
+  // Only real, shipped integrations show here. Calendar sync lives in its
+  // own section in /settings (CalendarFeedsSection) because it's a more
+  // involved flow with auth/connections. ServiceM8 / Xero / MYOB were
+  // removed in 2026-06: showing "Coming soon" cards for things we
+  // hadn't started building looked like vapourware and made the page
+  // feel empty of real value.
   {
     key: 'csv_jobs',
     name: 'CSV upload',
@@ -84,47 +90,9 @@ const INITIAL_INTEGRATIONS: Integration[] = [
     linkTo: '/import',
     scopes: [],
   },
-  {
-    key: 'servicem8',
-    name: 'ServiceM8',
-    category: 'Job sources',
-    monogram: 'S8',
-    tone: '#ff6c00', toneEnd: '#c44d00',
-    oneliner: 'Pull scheduled jobs into Ozly, offer to subs in one click.',
-    longDescription:
-      'When a job is scheduled in ServiceM8 (status: queued or scheduled), it will auto-appear in Ozly\'s Work inbox. You pick a sub, hit Offer, and the sub gets a push to accept. No re-typing job details, location or customer notes.',
-    state: 'coming_soon',
-    scopes: [],
-  },
-
-  // ── ACCOUNTING — push the financial outcome out ───────────────────────
-  {
-    key: 'xero',
-    name: 'Xero',
-    category: 'Accounting',
-    monogram: 'X',
-    tone: '#13b5ea', toneEnd: '#0c84ad',
-    oneliner: 'Push paid invoices straight into Bills to pay.',
-    longDescription:
-      'When a sub-contractor invoice is marked paid in Ozly, the bill will auto-import into Xero with the right contact, GST split and date. No CSV gymnastics. Best for AU teams already on Xero.',
-    state: 'coming_soon',
-    scopes: [],
-  },
-  {
-    key: 'myob',
-    name: 'MYOB',
-    category: 'Accounting',
-    monogram: 'M',
-    tone: '#7e3eff', toneEnd: '#5b2bbf',
-    oneliner: 'Supplier bills sync with MYOB Business / AccountRight.',
-    longDescription:
-      'Same flow as Xero — paid invoices land as supplier bills in MYOB so your bookkeeper sees the truth in one place. We will support MYOB Business and AccountRight Live.',
-    state: 'coming_soon',
-    scopes: [],
-  },
 ];
 
-const CATEGORY_ORDER: IntegrationCategory[] = ['Job sources', 'Accounting'];
+const CATEGORY_ORDER: IntegrationCategory[] = ['Job sources'];
 
 const STATE_PILL: Record<IntegrationState, { label: string; cls: string }> = {
   available:    { label: 'Available',    cls: 'bg-brand-50 text-brand-700 ring-1 ring-brand-100' },
