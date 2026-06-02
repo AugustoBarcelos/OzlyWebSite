@@ -13,6 +13,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@sentry/react": "^10.55.0",
     "@supabase/supabase-js": "^2.46.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

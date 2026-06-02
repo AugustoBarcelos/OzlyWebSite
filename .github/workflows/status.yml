@@ -1,6 +1,6 @@
 name: status CI
 
-# Deploys the static status page (status.ozly.app) to Cloudflare Pages.
+# Deploys the static status page (status.ozly.au) to Cloudflare Pages.
 # The status page is plain HTML — no build step. CI just validates the
 # files exist + uploads them.
 #

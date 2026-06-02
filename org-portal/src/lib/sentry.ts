@@ -1,12 +1,12 @@
 // Sentry init wrapper. The module dynamically imports `@sentry/react` only
-// when `VITE_SENTRY_DSN` is set so the SDK isn't bundled when monitoring is
-// off — keeps the baseline bundle smaller.
+// when `VITE_SENTRY_DSN` is set so the SDK isn't bundled into builds where
+// monitoring is off — keeps the baseline bundle smaller. The package IS
+// installed (^10.55.0); the dynamic import is purely for bundle-size hygiene.
 //
-// To enable:
-//   1. `npm i -S @sentry/react`
-//   2. Set `VITE_SENTRY_DSN` in the Cloudflare Pages env (and locally in
-//      `.env.local` if you want dev-time captures).
-//   3. Re-deploy.
+// To enable monitoring in a given environment:
+//   1. Set `VITE_SENTRY_DSN` in the host's build env (Cloudflare Pages /
+//      Vercel / Netlify), or in `.env.local` for dev-time captures.
+//   2. Deploy. Without a DSN, this module is a complete no-op.
 //
 // `captureException` is exported as a safe no-op when Sentry isn't loaded
 // — call it from ErrorBoundary / friendlyError without conditional checks.

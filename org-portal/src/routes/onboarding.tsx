@@ -204,7 +204,7 @@ export function OnboardingPage() {
       )}
 
       <footer className="mt-auto pt-12 text-center text-[11px] text-navy-400">
-        Need help? Email <a className="font-medium text-brand-600 hover:underline" href="mailto:augusto@ozly.app">augusto@ozly.app</a>
+        Need help? Email <a className="font-medium text-brand-600 hover:underline" href="mailto:augusto@ozly.au">augusto@ozly.au</a>
       </footer>
     </main>
   );

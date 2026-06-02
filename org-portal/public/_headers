@@ -1,4 +1,4 @@
-# Cloudflare Pages / Netlify-style headers for ozly.app (Org Portal).
+# Cloudflare Pages / Netlify-style headers for app.ozly.au (Org Portal).
 #
 # CSP rationale:
 #   - default-src 'none'         : deny by default; whitelist below.

@@ -1,6 +1,6 @@
 name: help CI
 
-# Deploys the static help center (help.ozly.app) to Cloudflare Pages.
+# Deploys the static help center (help.ozly.au) to Cloudflare Pages.
 # Mirror of status.yml — plain HTML for now, MDX rendering lands in P1.
 
 on:

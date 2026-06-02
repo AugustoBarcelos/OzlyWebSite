@@ -25,5 +25,5 @@ function required(name: EnvKey): string {
 export const env = {
   supabaseUrl: required('VITE_SUPABASE_URL'),
   supabaseAnonKey: required('VITE_SUPABASE_ANON_KEY'),
-  inviteBaseUrl: (read('VITE_INVITE_BASE_URL') ?? 'https://ozly.app').replace(/\/+$/, ''),
+  inviteBaseUrl: (read('VITE_INVITE_BASE_URL') ?? 'https://ozly.au').replace(/\/+$/, ''),
 } as const;
