@@ -157,11 +157,11 @@ function RetentionHeatmap({
               <tr key={cohort.cohort} className="border-b border-navy-50/60 last:border-0">
                 <td className="py-1.5 font-mono text-[11px]">{cohort.cohort}</td>
                 <td className="py-1.5 text-right tabular-nums">{formatNumber(cohort.size)}</td>
-                <RetentionCell value={cohort.d1} base={cohort.size} />
-                <RetentionCell value={cohort.d7} base={cohort.size} />
-                <RetentionCell value={cohort.d14} base={cohort.size} />
-                <RetentionCell value={cohort.d30} base={cohort.size} />
-                <RetentionCell value={cohort.d60} base={cohort.size} />
+                <RetentionCell value={cohort.d1} />
+                <RetentionCell value={cohort.d7} />
+                <RetentionCell value={cohort.d14} />
+                <RetentionCell value={cohort.d30} />
+                <RetentionCell value={cohort.d60} />
               </tr>
             ))}
           </tbody>
@@ -171,11 +171,13 @@ function RetentionHeatmap({
   );
 }
 
-function RetentionCell({ value, base }: { value: CohortRow['d1']; base: number }) {
-  if (value === null || base === 0) {
+function RetentionCell({ value }: { value: CohortRow['d1'] }) {
+  if (value === null) {
     return <td className="py-1.5 text-right text-navy-300">—</td>;
   }
-  const pct = (value / base) * 100;
+  // admin_cohort_retention already returns a fraction (d1_count / size); just
+  // scale to percent. (Previously divided by size again → always ~0%.)
+  const pct = value * 100;
   // Color intensity based on retention %
   const tone =
     pct >= 50 ? 'bg-emerald-100 text-emerald-800' :

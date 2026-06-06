@@ -27,9 +27,6 @@ const FUNCTIONS: ReadonlyArray<EdgeFn> = [
   { name: 'tiktok-oauth-callback', description: 'Callback OAuth TikTok — exchange code por access_token', category: 'oauth', invokedBy: 'TikTok redirect' },
   { name: 'tiktok-stats', description: 'Read proxy pra TikTok user info + recent videos', category: 'oauth', invokedBy: 'admin (Marketing/Channels)' },
 
-  // Admin / referral
-  { name: 'referral-test', description: 'E2E diagnostic do flow de referral signup (magiclink)', category: 'admin', invokedBy: 'admin' },
-
   // Apple Search Ads / paid snapshots
   { name: 'paid-snapshot-dispatch', description: 'Cron dispatch dos snapshots de ad spend (ASA, Google, Meta, TikTok Ads)', category: 'sync', invokedBy: 'pg_cron' },
 ];

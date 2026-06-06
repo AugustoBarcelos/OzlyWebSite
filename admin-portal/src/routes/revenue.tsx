@@ -230,7 +230,7 @@ export function RevenuePage() {
               ? '—'
               : conversion === null
                 ? '—'
-                : `${(conversion * 100).toFixed(1)}%`}
+                : `${conversion.toFixed(1)}%`}
           </div>
           <div className="mt-4 grid grid-cols-3 gap-3 text-xs">
             <div className="rounded-md border border-navy-50 bg-white p-2.5">

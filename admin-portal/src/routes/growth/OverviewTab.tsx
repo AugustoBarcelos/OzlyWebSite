@@ -33,8 +33,10 @@ interface KpiResponse {
 }
 
 interface RevenueResponse {
-  mrr_estimate_aud?: number | null;
-  paid_active?: { tfn?: number; abn?: number; pro?: number };
+  // admin_revenue_summary exposes these top-level keys (mrr_total / paid_by_plan);
+  // mrr_estimate_aud is only the internal matview column, never a response key.
+  mrr_total?: number | null;
+  paid_by_plan?: { tfn?: number; abn?: number; pro?: number };
 }
 
 interface Ga4Response {
@@ -85,7 +87,7 @@ export function OverviewTab({ period }: Props) {
         setError(kpiRes.reason.message);
       }
 
-      const paid_active = rev?.paid_active ?? kpi?.kpi?.paid_active ?? {};
+      const paid_active = rev?.paid_by_plan ?? kpi?.kpi?.paid_active ?? {};
       const paying_total =
         (paid_active.tfn ?? 0) + (paid_active.abn ?? 0) + (paid_active.pro ?? 0);
 
@@ -94,7 +96,7 @@ export function OverviewTab({ period }: Props) {
         ga4_users: ga4?.users ?? null,
         signups_30d: kpi?.kpi?.signups_period ?? null,
         paying_total: paying_total > 0 ? paying_total : null,
-        mrr_aud: rev?.mrr_estimate_aud ?? null,
+        mrr_aud: rev?.mrr_total ?? null,
       });
       setLoading(false);
     })();
