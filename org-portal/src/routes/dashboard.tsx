@@ -269,8 +269,13 @@ export function DashboardPage() {
     return MOCK_TOP_SUBS.map((s) => ({ ...s, totalPaid: Math.round(s.totalPaid * (days / 30)) }));
   }, [topSubsReal, days]);
 
-  // Upcoming jobs still come from /work; keeping mock until that fetch wires in.
-  const upcoming = useMemo(() => buildMockUpcomingJobs(), []);
+  // Upcoming jobs aren't wired to a real source yet. Show illustrative entries
+  // ONLY in preview (while real KPIs haven't landed / empty org) so we never
+  // render fabricated jobs next to a real store's numbers. Empty otherwise.
+  const upcoming = useMemo(
+    () => (kpisReal === null ? buildMockUpcomingJobs() : []),
+    [kpisReal],
+  );
 
   // Preview banner only shows while initial real data hasn't landed yet.
   const isPreview = kpisReal === null;
@@ -510,30 +515,39 @@ export function DashboardPage() {
               All work →
             </Link>
           </div>
-          <ul className="space-y-1">
-            {upcoming.map((j) => (
-              <li key={j.id}>
-                <Link
-                  to="/work"
-                  className="-mx-2 flex items-center gap-3 rounded-lg px-2 py-1.5 transition-colors hover:bg-navy-50/60"
-                >
-                  <Avatar name={j.subName} email={j.subEmail} size="sm" />
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-[13px] font-semibold text-navy-800">{j.title}</div>
-                    <div className="truncate text-[11px] text-navy-400">
-                      {j.subName} · {j.durationHours}h
+          {upcoming.length === 0 ? (
+            <Link
+              to="/work"
+              className="flex h-24 items-center justify-center rounded-lg border border-dashed border-navy-100 bg-navy-50/30 text-[12px] text-navy-400 hover:text-brand-700"
+            >
+              No scheduled jobs in the next 7 days — open Work →
+            </Link>
+          ) : (
+            <ul className="space-y-1">
+              {upcoming.map((j) => (
+                <li key={j.id}>
+                  <Link
+                    to="/work"
+                    className="-mx-2 flex items-center gap-3 rounded-lg px-2 py-1.5 transition-colors hover:bg-navy-50/60"
+                  >
+                    <Avatar name={j.subName} email={j.subEmail} size="sm" />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-[13px] font-semibold text-navy-800">{j.title}</div>
+                      <div className="truncate text-[11px] text-navy-400">
+                        {j.subName} · {j.durationHours}h
+                      </div>
                     </div>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <div className="text-[12px] font-semibold text-navy-700">{timeUntil(j.startsAt)}</div>
-                    <div className="text-[10px] uppercase tracking-wider text-navy-400">
-                      {formatDate(j.startsAt)}
+                    <div className="shrink-0 text-right">
+                      <div className="text-[12px] font-semibold text-navy-700">{timeUntil(j.startsAt)}</div>
+                      <div className="text-[10px] uppercase tracking-wider text-navy-400">
+                        {formatDate(j.startsAt)}
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ul>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       </div>
     </div>
