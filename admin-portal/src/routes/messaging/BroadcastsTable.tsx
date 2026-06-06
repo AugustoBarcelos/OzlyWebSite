@@ -5,6 +5,7 @@ import { useToast } from '@/components/Toast';
 import {
   deleteBroadcast,
   listBroadcasts,
+  sendBroadcastNow,
   MESSAGING_SEGMENTS,
   type BroadcastRow,
   type MsgChannel,
@@ -77,6 +78,17 @@ export function BroadcastsTable({ channel, refreshKey = 0 }: Props) {
         title: e instanceof RpcError ? e.message : 'Failed',
         variant: 'error',
       });
+    }
+  }
+
+  async function handleSendNow(r: BroadcastRow) {
+    if (!window.confirm(`Enviar agora para ${r.audience_count ?? '—'} destinatários? Envio em até ~1 min.`)) return;
+    try {
+      await sendBroadcastNow(r.id);
+      toast({ title: 'Broadcast na fila de envio (≤1 min)', variant: 'success' });
+      await reload();
+    } catch (e) {
+      toast({ title: e instanceof RpcError ? e.message : 'Failed', variant: 'error' });
     }
   }
 
@@ -161,18 +173,31 @@ export function BroadcastsTable({ channel, refreshKey = 0 }: Props) {
                     </div>
                   </td>
                   <td className="py-3 text-right">
-                    {(r.status === 'draft' ||
-                      r.status === 'scheduled' ||
-                      r.status === 'cancelled' ||
-                      r.status === 'failed') && (
-                      <button
-                        type="button"
-                        onClick={() => void handleDelete(r.id)}
-                        className="text-xs text-rose-600 hover:underline"
-                      >
-                        Deletar
-                      </button>
-                    )}
+                    <div className="flex items-center justify-end gap-3">
+                      {(r.status === 'draft' ||
+                        r.status === 'scheduled' ||
+                        r.status === 'failed') && (
+                        <button
+                          type="button"
+                          onClick={() => void handleSendNow(r)}
+                          className="text-xs font-medium text-emerald-600 hover:underline"
+                        >
+                          {r.status === 'failed' ? 'Reenviar' : 'Enviar agora'}
+                        </button>
+                      )}
+                      {(r.status === 'draft' ||
+                        r.status === 'scheduled' ||
+                        r.status === 'cancelled' ||
+                        r.status === 'failed') && (
+                        <button
+                          type="button"
+                          onClick={() => void handleDelete(r.id)}
+                          className="text-xs text-rose-600 hover:underline"
+                        >
+                          Deletar
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

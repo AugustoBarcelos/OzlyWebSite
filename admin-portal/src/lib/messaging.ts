@@ -77,3 +77,16 @@ export async function listBroadcasts(channel?: MsgChannel, limit = 50) {
 export async function deleteBroadcast(id: string) {
   return callRpc<{ ok: boolean }>('messaging_delete_broadcast', { p_id: id });
 }
+
+/**
+ * Arm a draft/scheduled/failed broadcast to send now: flips it to
+ * scheduled@now so the `messaging-broadcast-dispatch` cron (runs every minute)
+ * hands it to the messaging-send-broadcast edge function. Delivery is near-real-
+ * time (≤1 min), not instant.
+ */
+export async function sendBroadcastNow(id: string) {
+  return callRpc<{ ok: boolean; broadcast_id: string; status: BroadcastStatus }>(
+    'messaging_send_now',
+    { p_id: id },
+  );
+}
