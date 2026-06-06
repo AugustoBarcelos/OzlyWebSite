@@ -26,7 +26,7 @@ import { DonutChart } from '@/components/charts/DonutChart';
 import { Avatar } from '@/components/Avatar';
 import { formatMoney, formatDate } from '@/lib/format';
 import {
-  MOCK_KPIS, MOCK_KPI_DELTAS, MOCK_KPI_TRENDS,
+  MOCK_KPIS, MOCK_KPI_DELTAS,
   MOCK_STATUS_MIX, MOCK_TOP_SUBS,
   buildMockRevenueTrend, buildMockUpcomingJobs, scaleByDays,
   type DashboardKpi, type StatusMix, type TopSub,
@@ -243,8 +243,10 @@ export function DashboardPage() {
     };
   }, [kpisReal]);
 
-  // Trends: keep mock sparklines until a follow-up adds 14-day history per KPI.
-  const trends = MOCK_KPI_TRENDS;
+  // Sparklines intentionally omitted: we don't have real 14-day per-KPI history
+  // yet, and fabricated trend lines misrepresent the store's numbers. The delta
+  // chips below are real (computed from kpis_prev). Re-add sparklines once a
+  // history source lands.
 
   // Revenue trend: real or build mock as fallback.
   const revenue = useMemo(() => {
@@ -385,28 +387,24 @@ export function DashboardPage() {
         <KpiCard
           tone="navy" label="Outstanding"
           value={formatMoney(kpis.outstanding)}
-          trend={trends.outstanding}
           delta={{ direction: deltas.outstanding.direction, value: `${deltas.outstanding.pct.toFixed(1)}%` }}
           to="/invoices?status=sent,overdue"
         />
         <KpiCard
           tone="rose" label="Overdue"
           value={formatMoney(kpis.overdue)}
-          trend={trends.overdue}
           delta={{ direction: deltas.overdue.direction, value: `${deltas.overdue.pct.toFixed(1)}%` }}
           to="/invoices?status=overdue"
         />
         <KpiCard
           tone="brand" label="Paid (period)"
           value={formatMoney(kpis.paidPeriod)}
-          trend={trends.paid}
           delta={{ direction: deltas.paid.direction, value: `${deltas.paid.pct.toFixed(1)}%` }}
           to="/invoices?status=paid"
         />
         <KpiCard
           tone="lime" label="Active subs"
           value={String(kpis.activeSubs)}
-          trend={trends.active}
           delta={{ direction: deltas.active.direction, value: `+${deltas.active.abs}` }}
           to="/members"
         />

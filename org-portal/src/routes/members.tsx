@@ -8,8 +8,6 @@ import { EmptyState } from '@/components/EmptyState';
 import { UsersIcon } from '@/components/Icons';
 import { MemberStatusBadge } from '@/components/StatusBadge';
 import { Avatar } from '@/components/Avatar';
-import { ComplianceCluster } from '@/components/ComplianceBadge';
-import { mockComplianceFor } from '@/lib/compliance';
 import { formatDate } from '@/lib/format';
 import { logOrgEvent } from '@/lib/telemetry';
 import { fetchPayState } from '@/lib/payments';
@@ -68,12 +66,17 @@ export function MembersPage() {
       supabase
         .from('org_memberships')
         .select('id, org_id, user_id, role, status, invited_at, accepted_at, billing_frequency, billing_anchor, auto_invoice_request, admin_tags, admin_notes, rate_override')
-        .eq('org_id', orgId),
+        .eq('org_id', orgId)
+        // Live memberships only — drop declined/removed so the count + cards
+        // match the rest of the system (dashboard active_subs, admin portal).
+        .in('status', ['accepted', 'pending']),
       supabase
         .from('org_invitations')
-        .select('id, email_or_phone, role, created_at')
+        .select('id, email_or_phone, role, created_at, expires_at')
         .eq('org_id', orgId)
-        .is('accepted_at', null),
+        .is('accepted_at', null)
+        // Hide expired invites so "pending" mirrors what the invitee can act on.
+        .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`),
     ]);
 
     if (!seq.isCurrent(token)) return;
@@ -196,11 +199,9 @@ export function MembersPage() {
                 </div>
                 {accepted ? (
                   <>
-                    {/* Compliance cluster — mock-derived. Real ABR/insurance
-                        verification happens in mobile; portal just renders. */}
-                    <div className="mt-3">
-                      <ComplianceCluster c={mockComplianceFor({ email: c.name })} />
-                    </div>
+                    {/* ABN/insurance compliance intentionally omitted here: there
+                        is no real verification source wired to the portal yet.
+                        (Was rendering fabricated mockComplianceFor data.) */}
                     <div className="mt-3 flex items-center justify-between gap-2">
                       <div className="flex flex-wrap items-center gap-1.5">
                         <span
