@@ -324,7 +324,10 @@ export function CockpitPage() {
           tone="lime"
           {...(data.kpi?.paid_active
             ? {
-                hint: `TFN ${formatNumber(data.kpi.paid_active.tfn)} · ABN ${formatNumber(data.kpi.paid_active.abn)} · PRO ${formatNumber(data.kpi.paid_active.pro)}`,
+                hint: `TFN ${formatNumber(data.kpi.paid_active.tfn)} · ABN ${formatNumber(data.kpi.paid_active.abn)} · PRO ${formatNumber(data.kpi.paid_active.pro)}`
+                  + (data.kpi.promo_grants_active
+                      ? ` · +${formatNumber(data.kpi.promo_grants_active)} comped`
+                      : ''),
               }
             : {})}
           href="/users"
