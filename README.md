@@ -1,16 +1,27 @@
-# React + Vite
+# Ozly — Website & Portals
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Marketing site e portais do Ozly (domínio canônico **ozly.au**). React 19 + Vite + Tailwind CSS, deploy via Cloudflare Pages.
 
-Currently, two official plugins are available:
+## Estrutura
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+| Pasta | Descrição |
+|---|---|
+| `src/` | Site de marketing (React + React Router) — landing, pricing, help, etc. |
+| `public/` | Assets estáticos servidos como estão |
+| `admin-portal/` | Portal admin (`admin.ozly.au`) — ver [admin-portal/README.md](admin-portal/README.md) |
+| `org-portal/` | Portal de empresas (`app.ozly.au`) — ver [org-portal/docs/ORG_PORTAL_OVERVIEW.md](org-portal/docs/ORG_PORTAL_OVERVIEW.md) |
+| `cloudflare-worker/` | Worker de OG tags para `ozly.au/v/:code` — ver [cloudflare-worker/README.md](cloudflare-worker/README.md) |
+| `marketing/` | Material de marca/handoff — ver [marketing/CMO_BRAND_HANDOFF.md](marketing/CMO_BRAND_HANDOFF.md) |
+| `scripts/` | Scripts de build (ex: `postbuild.js`) |
 
-## React Compiler
+## Desenvolvimento
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+npm install
+npm run dev      # servidor de dev (Vite)
+npm run build    # build de produção + postbuild
+npm run preview  # preview do build
+npm run lint     # ESLint
+```
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Configuração via `.env.local` (ver `.env.example`).
