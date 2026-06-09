@@ -286,32 +286,61 @@ export function BillingPage() {
           </div>
         )}
 
-        {inTrial && state.trialEndsAt && (
-          <div
-            className="rounded-xl border p-4 text-[13px] leading-relaxed"
-            style={{
-              background: 'var(--warn-bg)',
-              borderColor: 'var(--warn-border)',
-              color: 'var(--warn-text-body)',
-            }}
-          >
-            <span className="font-semibold" style={{ color: 'var(--warn-text-strong)' }}>
-              🕒 Your trial ends {formatDate(state.trialEndsAt)}.
-            </span>
-            {isOwner && !state.hasSubscription && (
-              <>
-                {' '}Add a payment method to keep going —{' '}
-                <button
-                  onClick={() => void startCheckout()}
-                  className="font-semibold underline hover:no-underline"
-                  style={{ color: 'var(--warn-link)' }}
-                >
-                  Start subscription →
-                </button>
-              </>
-            )}
-          </div>
-        )}
+        {inTrial && state.trialEndsAt && (() => {
+          // Bump urgency from amber → rose when the trial is within a week.
+          // AU cleaning companies are time-poor and "ends in 30 days" reads
+          // as "later"; "ends in 5 days" needs to land like a real deadline.
+          const daysLeft = Math.ceil(
+            (new Date(state.trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+          );
+          const urgent = daysLeft <= 7;
+          const dayCopy =
+            daysLeft <= 0 ? 'today'
+            : daysLeft === 1 ? 'tomorrow'
+            : `in ${daysLeft} days`;
+
+          return (
+            <div
+              role={urgent ? 'alert' : undefined}
+              className={`rounded-xl border p-4 text-[13px] leading-relaxed ${
+                urgent
+                  ? 'border-rose-300 bg-rose-50 text-rose-900'
+                  : ''
+              }`}
+              style={
+                urgent
+                  ? undefined
+                  : {
+                      background: 'var(--warn-bg)',
+                      borderColor: 'var(--warn-border)',
+                      color: 'var(--warn-text-body)',
+                    }
+              }
+            >
+              <span
+                className="font-semibold"
+                style={urgent ? undefined : { color: 'var(--warn-text-strong)' }}
+              >
+                {urgent ? '🛑' : '🕒'} Your trial ends {dayCopy} ({formatDate(state.trialEndsAt)}).
+              </span>
+              {isOwner && !state.hasSubscription && (
+                <>
+                  {' '}
+                  {urgent
+                    ? 'Add a card now to avoid losing portal access.'
+                    : 'Add a payment method to keep going.'}{' '}
+                  <button
+                    onClick={() => void startCheckout()}
+                    className={`font-semibold underline hover:no-underline ${urgent ? 'text-rose-700 hover:text-rose-800' : ''}`}
+                    style={urgent ? undefined : { color: 'var(--warn-link)' }}
+                  >
+                    Start subscription →
+                  </button>
+                </>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Tier meter */}
         {currentTier && (

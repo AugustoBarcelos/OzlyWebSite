@@ -452,31 +452,36 @@ export function WorkPage() {
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium text-brand-700">
               {selectedIds.size === 0
-                ? 'Nothing selected'
-                : `${selectedIds.size} job${selectedIds.size === 1 ? '' : 's'} selected`}
+                ? `0 of ${jobs.length} on this page selected`
+                : `${selectedIds.size} job${selectedIds.size === 1 ? '' : 's'} selected · of ${jobs.length} on this page`}
             </span>
             {jobs.length > 0 && selectedIds.size < jobs.length && (
               <button
                 onClick={selectAllOnPage}
                 className="text-[11px] font-semibold text-brand-700 hover:text-brand-600"
               >
-                Select all on page ({jobs.length})
+                Select all on this page ({jobs.length})
               </button>
             )}
           </div>
+          {/* Hide actions entirely when nothing is selected — greyed-out
+              buttons read as "click me but I won't do anything" to non-tech
+              admins; better to remove until the selection has weight. */}
           <div className="flex gap-2">
-            <button
-              onClick={() => void bulkExportSelected()}
-              disabled={bulkBusy || selectedIds.size === 0}
-              className="rounded-md bg-brand-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-500 disabled:bg-brand-300"
-            >
-              {bulkBusy ? 'Exporting…' : `Export ${selectedIds.size || ''} to CSV`}
-            </button>
+            {selectedIds.size > 0 && (
+              <button
+                onClick={() => void bulkExportSelected()}
+                disabled={bulkBusy}
+                className="rounded-md bg-brand-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-500 disabled:bg-brand-300"
+              >
+                {bulkBusy ? 'Exporting…' : `Export ${selectedIds.size} to CSV`}
+              </button>
+            )}
             <button
               onClick={clearSelection}
               className="rounded-md px-3 py-1.5 text-xs font-medium text-navy-500 hover:bg-navy-50"
             >
-              Cancel
+              {selectedIds.size === 0 ? 'Exit select mode' : 'Cancel'}
             </button>
           </div>
         </div>
@@ -488,6 +493,8 @@ export function WorkPage() {
         <KpiCard tone="navy"  label="Jobs"        value={kpis.jobs.toLocaleString('en-AU')} />
         <KpiCard tone="brand" label="Completed"   value={kpis.completed.toLocaleString('en-AU')} />
       </div>
+
+      {orgId && <PendingOffersBanner orgId={orgId} reloadKey={total} />}
 
       {loading ? (
         <div className="flex justify-center py-16">
@@ -685,6 +692,74 @@ export function WorkPage() {
           onChanged={() => void load()}
           notify={notify}
         />
+      )}
+    </div>
+  );
+}
+
+// ════════════════════════════ PendingOffersBanner ════════════════════════════
+// Offers the org sent that the sub-contractor hasn't accepted/declined yet.
+// They live in calendar_import_candidates (the member's rows) so we read them
+// through the org_list_pending_offers RPC. Collapsed by default.
+interface PendingOffer {
+  offer_id: string;
+  member_id: string;
+  member_name: string | null;
+  member_email: string | null;
+  title: string | null;
+  start_ts: string;
+  end_ts: string;
+  location: string | null;
+  hourly_rate: number | null;
+  series_id: string | null;
+  created_at: string;
+}
+
+function PendingOffersBanner({ orgId, reloadKey }: { orgId: string; reloadKey: number }) {
+  const [offers, setOffers] = useState<PendingOffer[] | null>(null);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const { data, error } = await supabase.rpc('org_list_pending_offers', { p_org_id: orgId });
+      if (!active) return;
+      setOffers(error ? [] : ((data ?? []) as PendingOffer[]));
+    })();
+    return () => { active = false; };
+  }, [orgId, reloadKey]);
+
+  if (!offers || offers.length === 0) return null;
+
+  return (
+    <div className="mb-5 rounded-lg border border-amber-200 bg-amber-50/60">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center justify-between px-4 py-3 text-left"
+      >
+        <span className="text-sm font-medium text-amber-800">
+          ⏳ {offers.length} offer{offers.length === 1 ? '' : 's'} waiting for sub-contractors to accept
+        </span>
+        <span className="text-xs text-amber-500">{open ? 'Hide ▴' : 'Show ▾'}</span>
+      </button>
+      {open && (
+        <div className="divide-y divide-amber-100 border-t border-amber-100">
+          {offers.map((o) => (
+            <div key={o.offer_id} className="flex items-center justify-between gap-3 px-4 py-2 text-sm">
+              <div className="min-w-0">
+                <div className="truncate font-medium text-navy-800">{o.title || 'Work'}</div>
+                <div className="text-xs text-navy-400">
+                  {o.member_name || o.member_email || '—'} · {formatDate(o.start_ts)} {timeOf(o.start_ts)}
+                  {o.location ? ` · ${o.location}` : ''}
+                  {o.series_id ? ' · recurring' : ''}
+                </div>
+              </div>
+              {o.hourly_rate ? (
+                <div className="shrink-0 text-xs text-navy-500">{formatMoney(o.hourly_rate)}/h</div>
+              ) : null}
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
@@ -1338,6 +1413,37 @@ function RecurringSeriesModal(props: {
     onChanged();
   }
 
+  async function editRate(s: SeriesRow) {
+    const input = window.prompt(
+      `New hourly rate for "${s.title}" — applies to ${s.pending_count} upcoming pending offer${s.pending_count === 1 ? '' : 's'} (accepted ones are unchanged):`,
+      Number.isFinite(s.hourly_rate) ? String(s.hourly_rate) : '',
+    );
+    if (input === null) return;
+    const rate = Number(input);
+    if (!Number.isFinite(rate) || rate < 0) {
+      notify('Enter a valid rate.', 'error');
+      return;
+    }
+    setBusyId(s.series_id);
+    const { data, error } = await supabase.rpc('org_update_recurring_series', {
+      p_org_id: orgId,
+      p_series_id: s.series_id,
+      p_hourly_rate: rate,
+    });
+    setBusyId(null);
+    if (error) {
+      notify(friendlyError(error, 'Could not update.'), 'error');
+      return;
+    }
+    const n = typeof data === 'number' ? data : 0;
+    notify(
+      n === 0 ? 'No upcoming pending offers to update.' : `Updated rate on ${n} offer${n === 1 ? '' : 's'}.`,
+      n === 0 ? 'info' : 'success',
+    );
+    await reload();
+    onChanged();
+  }
+
   function describeRecurrence(k: SeriesRow['recurrence_kind']): string {
     return k === 'weekly' ? 'Weekly' : k === 'fortnightly' ? 'Fortnightly' : 'Monthly';
   }
@@ -1412,14 +1518,24 @@ function RecurringSeriesModal(props: {
                         )}
                       </div>
                     </div>
-                    <button
-                      onClick={() => void cancel(s)}
-                      disabled={busyId === s.series_id || s.pending_count === 0}
-                      title={s.pending_count === 0 ? 'No pending future offers to cancel' : 'Cancel future pending offers'}
-                      className="shrink-0 rounded-md px-2.5 py-1.5 text-[11.5px] font-semibold text-rose-700 ring-1 ring-rose-200 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      {busyId === s.series_id ? 'Cancelling…' : 'Cancel future'}
-                    </button>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <button
+                        onClick={() => void editRate(s)}
+                        disabled={busyId === s.series_id || s.pending_count === 0}
+                        title={s.pending_count === 0 ? 'No pending future offers to edit' : 'Change the rate on upcoming pending offers'}
+                        className="rounded-md px-2.5 py-1.5 text-[11.5px] font-semibold text-navy-700 ring-1 ring-navy-200 hover:bg-navy-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        Edit rate
+                      </button>
+                      <button
+                        onClick={() => void cancel(s)}
+                        disabled={busyId === s.series_id || s.pending_count === 0}
+                        title={s.pending_count === 0 ? 'No pending future offers to cancel' : 'Cancel future pending offers'}
+                        className="rounded-md px-2.5 py-1.5 text-[11.5px] font-semibold text-rose-700 ring-1 ring-rose-200 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        {busyId === s.series_id ? 'Cancelling…' : 'Cancel future'}
+                      </button>
+                    </div>
                   </div>
                 </li>
               );

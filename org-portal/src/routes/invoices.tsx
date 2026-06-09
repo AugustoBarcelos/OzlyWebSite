@@ -801,9 +801,19 @@ export function InvoicesPage() {
           </button>
         </div>
         {r.payment_confirmed_at ? (
-          <span className="text-[11px] text-brand-600">✓ confirmed by member</span>
+          <span
+            title="The member confirmed receiving the payment. The record is now locked."
+            className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-700"
+          >
+            ✓ confirmed by member
+          </span>
         ) : (
-          <span className="text-[11px] text-amber-600">awaiting member confirmation</span>
+          <span
+            title="The member will tap 'I received it' in the Ozly app — once they do, the record is locked. Until then, this stays pending."
+            className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700"
+          >
+            ⏳ awaiting member confirmation
+          </span>
         )}
       </div>
     ) : (
@@ -909,21 +919,28 @@ export function InvoicesPage() {
           >
             {selectMode ? 'Done' : 'Select'}
           </button>
-          <button
-            onClick={() => void exportCsv()}
+          {/* Collapse two separate Export buttons into a single dropdown.
+              Two side-by-side buttons in identical styling fight for the
+              admin's eye and add noise for an action they touch ≤ 1x/quarter
+              (BAS / accounting export). The label "Export ▾" telegraphs
+              both options without committing visual weight to either. */}
+          <select
+            onChange={(e) => {
+              const v = e.target.value;
+              if (!v) return;
+              if (v === 'csv') void exportCsv();
+              else if (v === 'xero') void exportXero();
+              e.target.value = '';
+            }}
+            value=""
             disabled={exporting}
-            className="rounded-md px-3 py-1.5 text-xs font-medium text-navy-700 ring-1 ring-navy-100 hover:bg-navy-50 disabled:opacity-50"
+            title="Download the visible invoices as CSV or in Xero's Bills import format"
+            className="rounded-md border border-navy-100 bg-white px-3 py-1.5 text-xs font-medium text-navy-700 hover:bg-navy-50 disabled:opacity-50"
           >
-            {exporting ? 'Exporting…' : 'Export CSV'}
-          </button>
-          <button
-            onClick={() => void exportXero()}
-            disabled={exporting}
-            className="rounded-md px-3 py-1.5 text-xs font-medium text-navy-700 ring-1 ring-navy-100 hover:bg-navy-50 disabled:opacity-50"
-            title="CSV in Xero's Bills import format"
-          >
-            Export for Xero
-          </button>
+            <option value="">{exporting ? 'Exporting…' : 'Export ▾'}</option>
+            <option value="csv">As CSV (spreadsheet)</option>
+            <option value="xero">For Xero (Bills import)</option>
+          </select>
         </div>
       </div>
 
