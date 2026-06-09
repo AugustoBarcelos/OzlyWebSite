@@ -328,6 +328,13 @@ export function BillingPage() {
           const empty = Math.max(0, billed - occupied);
           const occupiedPct = billed > 0 ? Math.round((occupied / billed) * 100) : 0;
           const atCap = empty === 0 && billed > 0;
+          // Drift = the Stripe subscription's seat_quantity is behind the
+          // actual accepted-member count. The DB trigger sync runs on
+          // membership change but if Stripe was unreachable then, we surface
+          // it here so the admin can re-trigger via "Manage billing".
+          const overOccupied = state.hasSubscription
+                              && state.seatQuantity > 0
+                              && occupied > state.seatQuantity;
 
           return (
             <section className="ozly-card p-5">
@@ -348,6 +355,21 @@ export function BillingPage() {
                   Manage members →
                 </Link>
               </div>
+
+              {overOccupied && (
+                <div
+                  role="alert"
+                  className="mt-3 flex flex-wrap items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-[12.5px] text-amber-900"
+                >
+                  <span aria-hidden className="text-base leading-none">⚠️</span>
+                  <div className="flex-1 space-y-1">
+                    <div className="font-semibold">Seat count out of sync</div>
+                    <div className="text-amber-800">
+                      You have <strong>{occupied}</strong> active members but your subscription is billed for <strong>{state.seatQuantity}</strong>. Stripe will reconcile on the next renewal. To update sooner, click <button type="button" onClick={openManage} className="font-medium underline">Manage billing</button>.
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Slot grid — every seat is a square. Filled = avatar; pending
                   = dashed pill with the invitee email; empty = ghost slot. */}
