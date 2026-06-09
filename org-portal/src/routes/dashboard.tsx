@@ -652,6 +652,22 @@ interface StragglerRow {
   uninvoiced_count: number;
   invoice_count_in_period: number;
   last_activity_at: string | null;
+  // Most recent reminder timestamp from org_invoice_requests (any status).
+  // null = no reminder ever. Falsey from older RPC versions tolerated.
+  last_reminder_at?: string | null;
+}
+
+function relativeAgo(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return null;
+  const minutes = Math.max(0, Math.round((Date.now() - then) / 60_000));
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  return `${days}d ago`;
 }
 
 function StragglersPanel(props: {
@@ -704,6 +720,14 @@ function StragglersPanel(props: {
     setReminding(null);
     if (error) { notify(friendlyError(error, 'Could not send reminder.'), 'error'); return; }
     notify(`Reminder sent to ${r.member_name}.`, 'success');
+    // Optimistic update so the row immediately shows "Reminded just now"
+    // without waiting for a full RPC refresh.
+    const nowIso = new Date().toISOString();
+    setRows((prev) =>
+      prev
+        ? prev.map((row) => (row.member_user_id === r.member_user_id ? { ...row, last_reminder_at: nowIso } : row))
+        : prev,
+    );
   }
 
   function toggleSelected(memberId: string) {
@@ -741,6 +765,15 @@ function StragglersPanel(props: {
       return;
     }
     notify(`${targets.length} reminder${targets.length === 1 ? '' : 's'} sent.`, 'success');
+    // Same optimistic update — paint last_reminder_at on every row in the
+    // batch so the admin sees the receipt instantly.
+    const nowIso = new Date().toISOString();
+    const targetIds = new Set(targets.map((t) => t.member_user_id));
+    setRows((prev) =>
+      prev
+        ? prev.map((row) => (targetIds.has(row.member_user_id) ? { ...row, last_reminder_at: nowIso } : row))
+        : prev,
+    );
     setSelectedIds(new Set());
   }
 
@@ -884,7 +917,21 @@ function StragglersPanel(props: {
                 />
               )}
               <div className="min-w-0 flex-1">
-                <div className="truncate text-[13px] font-semibold text-navy-800">{r.member_name}</div>
+                <div className="flex items-center gap-2 truncate text-[13px] font-semibold text-navy-800">
+                  <span className="truncate">{r.member_name}</span>
+                  {status === 'pending' && r.last_reminder_at && (() => {
+                    const ago = relativeAgo(r.last_reminder_at);
+                    if (!ago) return null;
+                    return (
+                      <span
+                        title={`Reminder sent ${new Date(r.last_reminder_at).toLocaleString()}`}
+                        className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700"
+                      >
+                        Reminded {ago}
+                      </span>
+                    );
+                  })()}
+                </div>
                 <div className="truncate text-[11px] text-navy-500">
                   {status === 'pending' && (
                     <>
@@ -906,15 +953,32 @@ function StragglersPanel(props: {
                   )}
                 </div>
               </div>
-              {status === 'pending' && (
-                <button
-                  onClick={() => void sendReminder(r)}
-                  disabled={reminding === r.member_user_id}
-                  className="shrink-0 rounded-md bg-amber-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-amber-500 disabled:opacity-50"
-                >
-                  {reminding === r.member_user_id ? 'Sending…' : 'Send reminder'}
-                </button>
-              )}
+              {status === 'pending' && (() => {
+                // After 4 hours of staying uninvoiced, allow another reminder.
+                // Inside that window we still let the admin click, but the
+                // label changes from "Send reminder" → "Remind again" so the
+                // intent is explicit.
+                const lastIso = r.last_reminder_at;
+                const recentlyReminded = lastIso
+                  ? (Date.now() - new Date(lastIso).getTime()) < 4 * 3_600_000
+                  : false;
+                const label = reminding === r.member_user_id
+                  ? 'Sending…'
+                  : recentlyReminded ? 'Remind again' : 'Send reminder';
+                return (
+                  <button
+                    onClick={() => void sendReminder(r)}
+                    disabled={reminding === r.member_user_id}
+                    className={`shrink-0 rounded-md px-2.5 py-1 text-[11px] font-semibold disabled:opacity-50 ${
+                      recentlyReminded
+                        ? 'bg-amber-100 text-amber-800 ring-1 ring-amber-200 hover:bg-amber-200'
+                        : 'bg-amber-600 text-white hover:bg-amber-500'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })()}
             </li>
           );
         })}
