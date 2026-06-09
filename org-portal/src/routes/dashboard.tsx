@@ -686,6 +686,13 @@ function StragglersPanel(props: {
   // sees an up-to-date list.
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [bulkSending, setBulkSending] = useState(false);
+  // Top-N collapse. Dashboard's job is at-a-glance triage, not list management
+  // — defaulting to all 53 rendered turns the panel into the entire page and
+  // pushes KPIs / trial banner below the fold. Show the 5 most-overdue, let
+  // the admin expand when they want the long tail. Bulk actions always
+  // operate on the full set regardless of expand state.
+  const [stragglersExpanded, setStragglersExpanded] = useState(false);
+  const STRAGGLERS_COLLAPSED_LIMIT = 5;
   // Hide-recently-reminded filter — persists across this session so the
   // admin doesn't have to re-pick after every navigation. localStorage
   // because state is per-user, not per-org (their preference).
@@ -822,6 +829,14 @@ function StragglersPanel(props: {
   const hiddenCount = allPendingStragglers.length - stragglers.length;
   const allDone    = rows.filter((r) => r.completed_job_count > 0 && r.uninvoiced_count === 0);
   const inactive   = rows.filter((r) => r.completed_job_count === 0);
+  // Top-N slice for the collapsed view. Stragglers already arrive sorted
+  // by uninvoiced_count DESC from the RPC (most-overdue first). Bulk
+  // actions still target the full `stragglers` array — only render is sliced.
+  const stragglersTooMany = stragglers.length > STRAGGLERS_COLLAPSED_LIMIT;
+  const visibleStragglers = !stragglersTooMany || stragglersExpanded
+    ? stragglers
+    : stragglers.slice(0, STRAGGLERS_COLLAPSED_LIMIT);
+  const stragglersOverflow = stragglers.length - visibleStragglers.length;
 
   return (
     <section className="ozly-card mb-5 p-5">
@@ -939,7 +954,7 @@ function StragglersPanel(props: {
       )}
 
       <ul className="space-y-1">
-        {[...stragglers, ...allDone, ...inactive].map((r) => {
+        {[...visibleStragglers, ...allDone, ...inactive].map((r) => {
           const status: 'pending' | 'done' | 'inactive' =
             r.uninvoiced_count > 0 ? 'pending'
             : r.completed_job_count > 0 ? 'done'
@@ -1039,6 +1054,20 @@ function StragglersPanel(props: {
           );
         })}
       </ul>
+
+      {stragglersTooMany && (
+        <div className="mt-2 flex justify-center">
+          <button
+            type="button"
+            onClick={() => setStragglersExpanded((v) => !v)}
+            className="rounded-md px-3 py-1 text-[11.5px] font-semibold text-brand-700 hover:bg-brand-50 hover:text-brand-800"
+          >
+            {stragglersExpanded
+              ? 'Show less ↑'
+              : `Show ${stragglersOverflow} more →`}
+          </button>
+        </div>
+      )}
     </section>
   );
 }
