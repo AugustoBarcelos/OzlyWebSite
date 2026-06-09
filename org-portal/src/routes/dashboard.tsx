@@ -664,6 +664,12 @@ function StragglersPanel(props: {
   const { notify } = useToast();
   const [rows, setRows] = useState<StragglerRow[] | null>(null);
   const [reminding, setReminding] = useState<string | null>(null);
+  // Bulk-select state. We key by member_user_id (same key the RPC returns
+  // + the underlying insert into org_invoice_requests needs). We DON'T
+  // persist across loads — re-fetching wipes the selection so the admin
+  // sees an up-to-date list.
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const [bulkSending, setBulkSending] = useState(false);
 
   const load = useCallback(async () => {
     const from = new Date(Date.now() - days * 86_400_000).toISOString();
@@ -698,6 +704,44 @@ function StragglersPanel(props: {
     setReminding(null);
     if (error) { notify(friendlyError(error, 'Could not send reminder.'), 'error'); return; }
     notify(`Reminder sent to ${r.member_name}.`, 'success');
+  }
+
+  function toggleSelected(memberId: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(memberId)) next.delete(memberId);
+      else next.add(memberId);
+      return next;
+    });
+  }
+
+  // Single batched insert — the tg_org_invoice_request_email trigger fans
+  // out email + push per row, so one network round-trip from the client is
+  // enough. We capture per-row uninvoiced_count in the message so each sub
+  // sees their actual outstanding figure, not a generic "N stragglers" line.
+  async function sendBulkReminder(targets: StragglerRow[]) {
+    if (targets.length === 0) return;
+    setBulkSending(true);
+    const dueBy = new Date();
+    dueBy.setDate(dueBy.getDate() + 3);
+    const due = dueBy.toISOString().slice(0, 10);
+
+    const payload = targets.map((r) => ({
+      org_id:         orgId,
+      member_user_id: r.member_user_id,
+      message:        `${orgName} — please send invoice for ${r.uninvoiced_count} completed job${r.uninvoiced_count === 1 ? '' : 's'}`,
+      due_by:         due,
+      status:         'open',
+    }));
+
+    const { error } = await supabase.from('org_invoice_requests').insert(payload);
+    setBulkSending(false);
+    if (error) {
+      notify(friendlyError(error, 'Could not send reminders.'), 'error');
+      return;
+    }
+    notify(`${targets.length} reminder${targets.length === 1 ? '' : 's'} sent.`, 'success');
+    setSelectedIds(new Set());
   }
 
   if (rows === null) {
@@ -743,6 +787,62 @@ function StragglersPanel(props: {
         </div>
       </div>
 
+      {stragglers.length > 1 && (() => {
+        // Selection toolbar. Only renders with ≥2 pending — single straggler
+        // is faster via the per-row button. Selected = explicit pick;
+        // "All pending" = shortcut for select-all-then-send.
+        const allPendingIds = stragglers.map((s) => s.member_user_id);
+        const selectedCount = allPendingIds.filter((id) => selectedIds.has(id)).length;
+        const allSelected = selectedCount === stragglers.length;
+
+        return (
+          <div className="mb-2 flex flex-wrap items-center gap-2 rounded-lg border border-amber-200 bg-amber-50/40 px-3 py-2 text-[12px] text-amber-900">
+            <label className="flex cursor-pointer items-center gap-1.5 font-medium">
+              <input
+                type="checkbox"
+                checked={allSelected}
+                onChange={() => {
+                  setSelectedIds((prev) => {
+                    if (allSelected) return new Set();
+                    const next = new Set(prev);
+                    for (const id of allPendingIds) next.add(id);
+                    return next;
+                  });
+                }}
+                className="h-3.5 w-3.5 rounded border-amber-400 text-amber-600 focus:ring-amber-500"
+              />
+              <span>
+                {selectedCount > 0
+                  ? `${selectedCount} of ${stragglers.length} selected`
+                  : `Select all (${stragglers.length})`}
+              </span>
+            </label>
+            <span className="ml-auto flex gap-2">
+              {selectedCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => void sendBulkReminder(stragglers.filter((s) => selectedIds.has(s.member_user_id)))}
+                  disabled={bulkSending}
+                  className="rounded-md bg-amber-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-amber-500 disabled:opacity-50"
+                >
+                  {bulkSending ? 'Sending…' : `Send reminder to ${selectedCount}`}
+                </button>
+              )}
+              {selectedCount === 0 && (
+                <button
+                  type="button"
+                  onClick={() => void sendBulkReminder(stragglers)}
+                  disabled={bulkSending}
+                  className="rounded-md bg-amber-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-amber-500 disabled:opacity-50"
+                >
+                  {bulkSending ? 'Sending…' : `Remind all ${stragglers.length}`}
+                </button>
+              )}
+            </span>
+          </div>
+        );
+      })()}
+
       {stragglers.length === 0 && allDone.length === 0 && inactive.length > 0 && (
         <div className="rounded-lg border border-dashed border-navy-100 bg-navy-50/40 p-3 text-[12.5px] text-navy-500">
           No completed work this period yet. Members will show here once they finish jobs.
@@ -766,13 +866,23 @@ function StragglersPanel(props: {
                     : 'bg-navy-50/30'
               }`}
             >
-              <span
-                className={`h-2 w-2 shrink-0 rounded-full ${
-                  status === 'pending' ? 'bg-amber-500'
-                  : status === 'done'    ? 'bg-brand-500'
-                  : 'bg-navy-300'
-                }`}
-              />
+              {status === 'pending' && stragglers.length > 1 ? (
+                <input
+                  type="checkbox"
+                  aria-label={`Select ${r.member_name}`}
+                  checked={selectedIds.has(r.member_user_id)}
+                  onChange={() => toggleSelected(r.member_user_id)}
+                  className="h-3.5 w-3.5 shrink-0 rounded border-amber-400 text-amber-600 focus:ring-amber-500"
+                />
+              ) : (
+                <span
+                  className={`h-2 w-2 shrink-0 rounded-full ${
+                    status === 'pending' ? 'bg-amber-500'
+                    : status === 'done'    ? 'bg-brand-500'
+                    : 'bg-navy-300'
+                  }`}
+                />
+              )}
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[13px] font-semibold text-navy-800">{r.member_name}</div>
                 <div className="truncate text-[11px] text-navy-500">
