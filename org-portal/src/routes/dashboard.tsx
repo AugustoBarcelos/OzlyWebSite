@@ -686,6 +686,20 @@ function StragglersPanel(props: {
   // sees an up-to-date list.
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [bulkSending, setBulkSending] = useState(false);
+  // Hide-recently-reminded filter — persists across this session so the
+  // admin doesn't have to re-pick after every navigation. localStorage
+  // because state is per-user, not per-org (their preference).
+  const [hideReminded, setHideReminded] = useState<'off' | '24h' | '72h'>(() => {
+    try {
+      const v = localStorage.getItem('ozly:dashboard:hide-reminded');
+      if (v === '24h' || v === '72h' || v === 'off') return v;
+    } catch { /* SSR / private mode */ }
+    return 'off';
+  });
+  function setHideRemindedPersist(v: 'off' | '24h' | '72h') {
+    setHideReminded(v);
+    try { localStorage.setItem('ozly:dashboard:hide-reminded', v); } catch { /* no-op */ }
+  }
 
   const load = useCallback(async () => {
     const from = new Date(Date.now() - days * 86_400_000).toISOString();
@@ -791,7 +805,21 @@ function StragglersPanel(props: {
     return null; // no accepted members yet → suppress entirely
   }
 
-  const stragglers = rows.filter((r) => r.uninvoiced_count > 0);
+  const allPendingStragglers = rows.filter((r) => r.uninvoiced_count > 0);
+  // Filter stragglers by hide-reminded preference. The "hidden" ones are still
+  // counted in the summary badge so the admin sees they exist; they just
+  // don't appear in the action list while suppressed.
+  const hideThresholdMs = hideReminded === '24h' ? 24 * 3_600_000
+                        : hideReminded === '72h' ? 72 * 3_600_000
+                        : 0;
+  const stragglers = hideThresholdMs > 0
+    ? allPendingStragglers.filter((r) => {
+        if (!r.last_reminder_at) return true; // never reminded → always show
+        const age = Date.now() - new Date(r.last_reminder_at).getTime();
+        return age >= hideThresholdMs;        // shown only if reminder is stale
+      })
+    : allPendingStragglers;
+  const hiddenCount = allPendingStragglers.length - stragglers.length;
   const allDone    = rows.filter((r) => r.completed_job_count > 0 && r.uninvoiced_count === 0);
   const inactive   = rows.filter((r) => r.completed_job_count === 0);
 
@@ -806,10 +834,22 @@ function StragglersPanel(props: {
             Stragglers first. <strong>Send reminder</strong> pushes a notification + email asking for the invoice.
           </p>
         </div>
-        <div className="flex shrink-0 gap-2 text-[10.5px] font-semibold">
-          {stragglers.length > 0 && (
+        <div className="flex shrink-0 flex-wrap items-center gap-2 text-[10.5px] font-semibold">
+          {allPendingStragglers.length > 1 && (
+            <select
+              aria-label="Hide recently reminded stragglers"
+              value={hideReminded}
+              onChange={(e) => setHideRemindedPersist(e.target.value as 'off' | '24h' | '72h')}
+              className="rounded-md border border-navy-200 bg-white px-2 py-0.5 text-[10.5px] font-medium text-navy-700"
+            >
+              <option value="off">Show all reminders</option>
+              <option value="24h">Hide reminded &lt; 24h</option>
+              <option value="72h">Hide reminded &lt; 72h</option>
+            </select>
+          )}
+          {allPendingStragglers.length > 0 && (
             <span className="rounded-full bg-amber-50 px-2 py-0.5 text-amber-700">
-              {stragglers.length} pending
+              {allPendingStragglers.length} pending
             </span>
           )}
           {allDone.length > 0 && (
@@ -819,6 +859,22 @@ function StragglersPanel(props: {
           )}
         </div>
       </div>
+
+      {hiddenCount > 0 && (
+        <div className="mb-2 flex items-center justify-between gap-2 rounded-md bg-navy-50/60 px-3 py-1.5 text-[11.5px] text-navy-500">
+          <span>
+            <strong className="font-semibold text-navy-700">{hiddenCount}</strong>
+            {' '}straggler{hiddenCount === 1 ? '' : 's'} hidden — reminded recently.
+          </span>
+          <button
+            type="button"
+            onClick={() => setHideRemindedPersist('off')}
+            className="text-[11px] font-semibold text-brand-600 hover:text-brand-700"
+          >
+            Show all
+          </button>
+        </div>
+      )}
 
       {stragglers.length > 1 && (() => {
         // Selection toolbar. Only renders with ≥2 pending — single straggler
