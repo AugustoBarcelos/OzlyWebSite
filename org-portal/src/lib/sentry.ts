@@ -35,6 +35,13 @@ export async function initSentry(): Promise<void> {
       tracesSampleRate: 0.1,
       replaysSessionSampleRate: 0,
       replaysOnErrorSampleRate: 0,
+      // Stamp every event with portal=org so the shared Sentry project can
+      // separate org-portal errors from admin-portal errors at the dashboard
+      // level (filter / saved search / issue alert). The admin-portal sets
+      // its own initialScope.tags.portal='admin' for the same reason.
+      initialScope: {
+        tags: { portal: 'org' },
+      },
     });
     sentry = mod;
   } catch (e) {
