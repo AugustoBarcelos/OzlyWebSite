@@ -385,12 +385,13 @@ export function SettingsPage() {
 
       {/* How org-subsidy works — admin awareness */}
       <section className="ozly-card mb-4 border border-amber-100 bg-amber-50/40 p-5">
-        <h2 className="text-sm font-semibold text-amber-800">How the ABN cover affects the sub-contractor</h2>
+        <h2 className="text-sm font-semibold text-amber-800">What you get when you pay for a member's ABN</h2>
         <p className="mt-2 text-xs leading-relaxed text-amber-900/80">
-          When you cover a member's ABN, their invoices are <strong>locked to your organisation</strong> — they
-          can only bill you while you're paying. If they want to bill other clients, they pay for their own
-          ABN access on top (one-tap upgrade in the Ozly app). This protects your seat fee from cross-subsidising
-          unrelated work and keeps the commercial relationship clean.
+          While you're paying for a member's ABN, they can only invoice <strong>you</strong> through Ozly —
+          they can't use it to bill other clients on the side. If they want to bill other businesses too,
+          they upgrade their own ABN plan in the Ozly app (one tap, on their card). That way your seat fee
+          doesn't end up funding work you have nothing to do with, and the paperwork stays clean if you
+          ever change accountants.
         </p>
       </section>
 

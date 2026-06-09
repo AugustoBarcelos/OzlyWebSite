@@ -239,7 +239,7 @@ export function InboxPage() {
         ) : rows.length === 0 ? (
           <EmptyState
             title="No invoices delivered yet"
-            description="When a member emits an invoice and selects 'Send directly to org', it'll appear here."
+            description="Members can send their invoices straight to your organisation's inbox email (set under Settings → Organisation). Anything they send that way will land here for you to mark paid."
           />
         ) : (
           <>

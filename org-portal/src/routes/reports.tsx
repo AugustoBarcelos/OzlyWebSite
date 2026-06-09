@@ -108,6 +108,15 @@ export function ReportsPage() {
   const loadPnl = useCallback(async () => {
     if (!orgId) return;
     if (!pnlRange.from || !pnlRange.to) return; // require both dates
+    // Catch the most common slip: typing the end date before the start.
+    // RPC silently returns no rows for inverted ranges; we'd rather toast
+    // the actual cause than have the admin think there were no invoices.
+    if (new Date(pnlRange.to) < new Date(pnlRange.from)) {
+      notify('"To" date must be on or after the "From" date.', 'error');
+      setPnl(null);
+      setLoadingPnl(false);
+      return;
+    }
     setLoadingPnl(true);
     const token = pnlSeq.start();
     const { data, error } = await supabase.rpc('org_pnl', {

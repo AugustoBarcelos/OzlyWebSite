@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useOrg } from '@/lib/org';
 import { useToast } from '@/components/Toast';
@@ -148,6 +149,12 @@ export function MembersPage() {
   const acceptedCount = members.filter((m) => m.status === 'accepted').length;
   const seatLimit = SEAT_LIMIT[plan];
   const atSeatLimit = seatLimit !== null && acceptedCount >= seatLimit;
+  // "Approaching cap" = within 1 seat of the limit (so 4/5 on free plan).
+  // Triggers a gentle yellow warning that doesn't block invites; the hard
+  // cap (atSeatLimit) is still the gate. Plans with seatLimit === null
+  // (unlimited tiers) never trip either.
+  const approachingSeatLimit =
+    seatLimit !== null && acceptedCount === seatLimit - 1 && !atSeatLimit;
 
   return (
     <div>
@@ -156,11 +163,45 @@ export function MembersPage() {
         title="Members"
         subtitle={`Sub-contractors engaged by ${currentOrg?.name ?? ''}`}
         action={
-          <button onClick={() => setModalOpen(true)} className="btn-primary shrink-0">
+          <button
+            onClick={() => setModalOpen(true)}
+            disabled={atSeatLimit}
+            title={atSeatLimit ? `Upgrade your plan to invite past ${seatLimit} members` : undefined}
+            className="btn-primary shrink-0 disabled:cursor-not-allowed disabled:opacity-50"
+          >
             Invite member
           </button>
         }
       />
+
+      {(approachingSeatLimit || atSeatLimit) && (
+        <div
+          role="alert"
+          className={`mb-4 flex flex-wrap items-start gap-3 rounded-lg border p-3 text-[12.5px] ${
+            atSeatLimit
+              ? 'border-rose-200 bg-rose-50 text-rose-900'
+              : 'border-amber-200 bg-amber-50 text-amber-900'
+          }`}
+        >
+          <span aria-hidden className="text-base leading-none">{atSeatLimit ? '🛑' : '⚠️'}</span>
+          <div className="flex-1 space-y-1">
+            <div className="font-semibold">
+              {atSeatLimit
+                ? `Seat cap reached (${acceptedCount} of ${seatLimit})`
+                : `Approaching seat cap (${acceptedCount} of ${seatLimit})`}
+            </div>
+            <div>
+              {atSeatLimit
+                ? 'You can\'t invite anyone else until you upgrade your plan or suspend an existing member.'
+                : 'You have one seat left on your current plan. Upgrade now to keep onboarding without interruption.'}
+              {' '}
+              <Link to="/billing" className="font-semibold underline">
+                {atSeatLimit ? 'Upgrade plan →' : 'See plans →'}
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center py-16">
