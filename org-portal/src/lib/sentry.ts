@@ -10,6 +10,90 @@
 //
 // `captureException` is exported as a safe no-op when Sentry isn't loaded
 // — call it from ErrorBoundary / friendlyError without conditional checks.
+//
+// PII scrubber: mirrors admin-portal/src/lib/sentry.ts. We ship error
+// reports to a shared Sentry project, so ABN, email, phone, TFN must
+// never appear in event messages, breadcrumbs, extras, or user records.
+// Anything that smells like one is replaced with `[redacted]` BEFORE the
+// SDK sends the event.
+
+// ── PII scrubbing ───────────────────────────────────────────────────────
+const PII_PATTERNS: Array<RegExp> = [
+  /\b\d{3}[- ]?\d{3}[- ]?\d{3}\b/g, // TFN (9 digits)
+  /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, // email
+  /\+?\d{1,3}[\s-]?\(?\d{2,4}\)?[\s-]?\d{3,4}[\s-]?\d{3,4}/g, // phone
+  /\b\d{11}\b/g, // ABN (11 digits)
+];
+
+function scrubString(s: string): string {
+  let out = s;
+  for (const p of PII_PATTERNS) {
+    out = out.replace(p, '[redacted]');
+  }
+  return out;
+}
+
+function scrubAny(value: unknown): unknown {
+  if (typeof value === 'string') return scrubString(value);
+  if (Array.isArray(value)) return value.map(scrubAny);
+  if (value && typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      if (/email|phone|tfn|abn|address|name|password|token/i.test(k)) {
+        out[k] = '[redacted]';
+      } else {
+        out[k] = scrubAny(v);
+      }
+    }
+    return out;
+  }
+  return value;
+}
+
+// Minimal subset of the Sentry event shape we touch. The SDK accepts any
+// extra fields, so this is intentionally narrow — it just types the
+// scrubber without pulling in the full @sentry/react types.
+interface SentryEventLike {
+  message?: string;
+  exception?: { values?: Array<{ value?: string }> };
+  breadcrumbs?: Array<{ message?: string; data?: Record<string, unknown> }>;
+  extra?: Record<string, unknown>;
+  contexts?: Record<string, unknown>;
+  user?: { id?: string | number; email?: string; ip_address?: string } | null;
+}
+
+function beforeSend(event: SentryEventLike): SentryEventLike {
+  if (event.message) {
+    event.message = scrubString(event.message);
+  }
+  if (event.exception?.values) {
+    for (const v of event.exception.values) {
+      if (v.value) v.value = scrubString(v.value);
+    }
+  }
+  if (event.breadcrumbs) {
+    event.breadcrumbs = event.breadcrumbs.map((b) => ({
+      ...b,
+      ...(b.message ? { message: scrubString(b.message) } : {}),
+      ...(b.data ? { data: scrubAny(b.data) as Record<string, unknown> } : {}),
+    }));
+  }
+  if (event.extra) {
+    event.extra = scrubAny(event.extra) as Record<string, unknown>;
+  }
+  if (event.contexts) {
+    event.contexts = scrubAny(event.contexts) as Record<string, unknown>;
+  }
+  // User: keep id only, drop email / ip — these classes of PII have no
+  // value in a triage context that the Supabase user_id doesn't already
+  // give us, and they're a Privacy Act 1988 liability on AU data.
+  if (event.user && event.user.id !== undefined) {
+    event.user = { id: event.user.id };
+  } else if (event.user) {
+    event.user = null;
+  }
+  return event;
+}
 
 type SentryLike = {
   init: (cfg: Record<string, unknown>) => void;
@@ -35,6 +119,10 @@ export async function initSentry(): Promise<void> {
       tracesSampleRate: 0.1,
       replaysSessionSampleRate: 0,
       replaysOnErrorSampleRate: 0,
+      // Newer Sentry SDKs default sendDefaultPii to false, but pinning
+      // explicit defends against a future bump flipping the default and
+      // documents the intent in code.
+      sendDefaultPii: false,
       // Stamp every event with portal=org so the shared Sentry project can
       // separate org-portal errors from admin-portal errors at the dashboard
       // level (filter / saved search / issue alert). The admin-portal sets
@@ -42,6 +130,7 @@ export async function initSentry(): Promise<void> {
       initialScope: {
         tags: { portal: 'org' },
       },
+      beforeSend,
     });
     sentry = mod;
   } catch (e) {
@@ -54,5 +143,13 @@ export function captureException(e: unknown, ctx?: Record<string, unknown>): voi
 }
 
 export function setUser(u: { id?: string; email?: string } | null): void {
-  if (sentry) sentry.setUser(u);
+  // Don't ship email even if a caller hands us one — strip before calling
+  // the SDK. ID is enough to correlate with Supabase. If id is absent,
+  // pass null (clear the user) rather than {id: undefined}.
+  if (!sentry) return;
+  if (!u || !u.id) {
+    sentry.setUser(null);
+    return;
+  }
+  sentry.setUser({ id: u.id });
 }
