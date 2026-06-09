@@ -40,6 +40,10 @@ interface MemberCard {
   adminTags?: string[];
   adminNotes?: string;
   rateOverride?: number | null;
+  // Only set on pending-invite cards: surface a warning badge when Resend
+  // failed (or we never tried, e.g. SMS channel) so the admin doesn't
+  // assume an unsent invite was actually delivered.
+  deliveryStatus?: 'pending' | 'sent' | 'failed' | 'skipped' | null;
 }
 
 export function MembersPage() {
@@ -50,7 +54,7 @@ export function MembersPage() {
 
   const [members, setMembers] = useState<OrgMembership[]>([]);
   const [profiles, setProfiles] = useState<Record<string, ProfileLite>>({});
-  const [pending, setPending] = useState<{ id: string; email_or_phone: string; role: MembershipRole; created_at: string }[]>([]);
+  const [pending, setPending] = useState<{ id: string; email_or_phone: string; role: MembershipRole; created_at: string; delivery_status: 'pending' | 'sent' | 'failed' | 'skipped' | null }[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [detailMember, setDetailMember] = useState<MemberCard | null>(null);
@@ -72,7 +76,7 @@ export function MembersPage() {
         .in('status', ['accepted', 'pending']),
       supabase
         .from('org_invitations')
-        .select('id, email_or_phone, role, created_at, expires_at')
+        .select('id, email_or_phone, role, created_at, expires_at, delivery_status')
         .eq('org_id', orgId)
         .is('accepted_at', null)
         // Hide expired invites so "pending" mirrors what the invitee can act on.
@@ -136,6 +140,7 @@ export function MembersPage() {
       role: i.role,
       status: 'pending',
       date: i.created_at,
+      deliveryStatus: i.delivery_status,
     }));
     return [...pendingCards, ...memberCards];
   }, [members, profiles, pending]);
@@ -195,7 +200,25 @@ export function MembersPage() {
                       <div className="mt-0.5 text-xs capitalize text-navy-400">{c.role}</div>
                     </div>
                   </div>
-                  <MemberStatusBadge status={c.status} />
+                  <div className="flex flex-shrink-0 flex-col items-end gap-1">
+                    <MemberStatusBadge status={c.status} />
+                    {c.status === 'pending' && c.deliveryStatus === 'failed' && (
+                      <span
+                        title="Email delivery failed. Copy the invite link and share manually."
+                        className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-700"
+                      >
+                        <span aria-hidden>⚠</span> email failed
+                      </span>
+                    )}
+                    {c.status === 'pending' && c.deliveryStatus === 'skipped' && (
+                      <span
+                        title="No SMS provider wired yet. Copy the invite link and share manually."
+                        className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800"
+                      >
+                        share link
+                      </span>
+                    )}
+                  </div>
                 </div>
                 {accepted ? (
                   <>
@@ -657,11 +680,37 @@ function InviteModal(props: {
       setShareLink(`${env.inviteBaseUrl}/invite/${data.token}`);
 
       // Fire-and-handle: email delivery via edge function. Link works regardless.
-      const { error: fnErr } = await supabase.functions.invoke('send-org-invite', {
+      // Tri-state outcome: sent | skipped (no provider for the channel) | failed
+      // (Resend down or rate-limited). The shareable link works in all three,
+      // but the toast must not lie — "sent" toast on a skipped/failed delivery
+      // makes the admin think the recipient got the email when they didn't.
+      const { data: fnData, error: fnErr } = await supabase.functions.invoke('send-org-invite', {
         body: { invitation_id: data.id },
       });
-      if (fnErr) notify('Invitation created — email delivery failed, share the link.', 'info');
-      else notify('Invitation sent', 'success');
+      const delivery = (fnData as { delivery?: string } | null)?.delivery;
+      if (fnErr) {
+        notify(
+          "Invitation created, but the email couldn't be delivered. Copy the link and share it manually.",
+          'error',
+        );
+      } else if (delivery === 'skipped') {
+        notify(
+          "Invitation created. We don't send SMS yet — copy the link and share it directly.",
+          'info',
+        );
+      } else if (delivery === 'sent') {
+        notify('Invitation sent — email on its way.', 'success');
+      } else {
+        // Edge function returned 200 but no delivery field — treat as sent
+        // for back-compat, but log so we notice if the contract drifts.
+        try {
+          const { captureException } = await import('@/lib/sentry');
+          captureException(new Error('send-org-invite missing delivery field'), {
+            source: 'members.invite.delivery_missing',
+          });
+        } catch { /* sentry not configured */ }
+        notify('Invitation created. Share the link if the email is slow.', 'info');
+      }
     } catch (err) {
       notify(friendlyError(err, 'Could not send invitation.'), 'error');
     } finally {
