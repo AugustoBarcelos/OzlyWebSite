@@ -32,7 +32,6 @@ const CATEGORIES: { title: string; rows: PrefRow[] }[] = [
     rows: [
       { key: 'work_unclaimed',   label: 'Offered job not accepted in 2h',     description: 'Push so you can re-offer to another sub before the start time.', defaultOn: true },
       { key: 'member_joined',    label: 'Sub-contractor accepted invite',     description: 'Push when an invited sub installs the app and accepts.',        defaultOn: true },
-      { key: 'member_compliance', label: 'Insurance / ABN issue surfaces',   description: 'Email when a sub\'s insurance is 14 days from expiry or ABN deregistered.', defaultOn: true },
     ],
   },
   {
@@ -95,15 +94,14 @@ export function NotificationPreferences({ userKey }: { userKey: string }) {
 
   if (!prefs) return null;
 
+  // Chrome (card + "Notifications" heading) comes from the CollapsibleSection
+  // wrapping this component in /settings.
   return (
-    <section className="ozly-card mb-4 p-5">
+    <div>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <div>
-          <h2 className="font-display text-sm font-bold text-navy-800">Notifications</h2>
-          <p className="mt-1 text-[12px] text-navy-500">
-            What lands in your inbox + on your phone. Toggle anything off you don't want.
-          </p>
-        </div>
+        <p className="text-[12px] text-navy-500">
+          Preferences apply to this browser for now.
+        </p>
         <button
           onClick={resetDefaults}
           className="text-[11px] font-semibold text-navy-500 hover:text-brand-700"
@@ -156,7 +154,7 @@ export function NotificationPreferences({ userKey }: { userKey: string }) {
       <p className="mt-5 text-[11px] text-navy-400">
         Changes save automatically. Push notifications require the Ozly mobile app installed and signed in.
       </p>
-    </section>
+    </div>
   );
 }
 

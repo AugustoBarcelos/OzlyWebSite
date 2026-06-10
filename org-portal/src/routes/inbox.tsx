@@ -2,6 +2,7 @@
 // "Send directly to org" flow. Listing + filter + detail drawer.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useOrg } from '@/lib/org';
 import { useToast } from '@/components/Toast';
@@ -19,8 +20,8 @@ const PAGE_SIZE = 50;
 const STATUS_FILTERS: Array<{ value: '' | InboxStatus; label: string }> = [
   { value: '',        label: 'All' },
   { value: 'sent',    label: 'Delivered' },
-  { value: 'queued',  label: 'Queued' },
-  { value: 'bounced', label: 'Bounced' },
+  { value: 'queued',  label: 'Sending' },
+  { value: 'bounced', label: 'Not delivered' },
   { value: 'failed',  label: 'Failed' },
 ];
 
@@ -35,8 +36,8 @@ function statusTone(s: InboxStatus): 'positive' | 'warning' | 'danger' | 'neutra
 
 function statusLabel(s: InboxStatus): string {
   return s === 'sent' ? 'Delivered'
-       : s === 'queued' ? 'Queued'
-       : s === 'bounced' ? 'Bounced'
+       : s === 'queued' ? 'Sending'
+       : s === 'bounced' ? 'Not delivered'
        : 'Failed';
 }
 
@@ -55,7 +56,9 @@ export function InboxPage() {
   const [loading, setLoading] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [migrationMissing, setMigrationMissing] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const seq = useSeqGuard();
+  const activeFilterCount = (status ? 1 : 0) + (dateFrom ? 1 : 0) + (dateTo ? 1 : 0);
 
   const searchDebounceRef = useRef<number | null>(null);
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -91,6 +94,7 @@ export function InboxPage() {
       const isMissingRpc = code === 'PGRST202' || code === '42883'
         || (error.message ?? '').includes('Could not find the function');
       if (isMissingRpc) {
+        console.warn('Inbox RPC missing — apply Supabase migration 20260602100000_org_inbox.sql');
         setMigrationMissing(true);
       } else {
         notify(friendlyError(error), 'error');
@@ -158,9 +162,7 @@ export function InboxPage() {
 
       {migrationMissing && (
         <div className="mb-5 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-xs leading-relaxed text-blue-900">
-          <strong className="font-semibold">Inbox not enabled yet.</strong>{' '}
-          Apply Supabase migration <code className="rounded bg-blue-100 px-1">20260602100000_org_inbox.sql</code>{' '}
-          to enable receiving direct-sent invoices. Until then this page stays empty.
+          <strong className="font-semibold">Inbox isn't available yet</strong> — contact support.
         </div>
       )}
 
@@ -172,63 +174,81 @@ export function InboxPage() {
         </div>
       )}
 
-      {/* Filters */}
-      <section className="ozly-card mb-4 flex flex-wrap items-end gap-3 p-4">
-        <div className="min-w-[180px] flex-1">
-          <label className="block text-[11px] font-medium text-navy-600">
-            Search
-            <input
-              type="search"
-              placeholder="Invoice # or sender email"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="mt-1 w-full rounded-md border border-navy-100 bg-white px-3 py-2 text-sm text-navy-700 focus:border-brand-500 focus:outline-none"
-            />
-          </label>
-        </div>
-        <div>
-          <label className="block text-[11px] font-medium text-navy-600">
-            Status
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value as '' | InboxStatus)}
-              className="mt-1 rounded-md border border-navy-100 bg-white px-3 py-2 text-sm text-navy-700 focus:border-brand-500 focus:outline-none"
-            >
-              {STATUS_FILTERS.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
-              ))}
-            </select>
-          </label>
-        </div>
-        <div>
-          <label className="block text-[11px] font-medium text-navy-600">
-            From
-            <input
-              type="date"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              className="mt-1 rounded-md border border-navy-100 bg-white px-3 py-2 text-sm text-navy-700 focus:border-brand-500 focus:outline-none"
-            />
-          </label>
-        </div>
-        <div>
-          <label className="block text-[11px] font-medium text-navy-600">
-            To
-            <input
-              type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              className="mt-1 rounded-md border border-navy-100 bg-white px-3 py-2 text-sm text-navy-700 focus:border-brand-500 focus:outline-none"
-            />
-          </label>
-        </div>
-        {(status || search || dateFrom || dateTo) && (
+      {/* Filters — search is always visible; status + dates fold behind a
+          "Filters" toggle (closed by default, count chip when active). */}
+      <section className="ozly-card mb-4 p-4">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="min-w-[180px] flex-1">
+            <label className="block text-[11px] font-medium text-navy-600">
+              Search
+              <input
+                type="search"
+                placeholder="Invoice # or sender email"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="mt-1 w-full rounded-md border border-navy-100 bg-white px-3 py-2 text-sm text-navy-700 focus:border-brand-500 focus:outline-none"
+              />
+            </label>
+          </div>
           <button
-            onClick={() => { setStatus(''); setSearch(''); setDateFrom(''); setDateTo(''); }}
-            className="rounded-md px-3 py-2 text-xs font-medium text-navy-500 hover:bg-navy-50"
+            onClick={() => setFiltersOpen((o) => !o)}
+            className="rounded-md px-3 py-2 text-xs font-medium text-navy-600 ring-1 ring-navy-100 hover:bg-navy-50"
           >
-            Clear
+            Filters {filtersOpen ? '▴' : '▾'}
+            {activeFilterCount > 0 && (
+              <span className="ml-1.5 rounded-full bg-brand-100 px-1.5 py-0.5 text-[10px] font-semibold text-brand-700">
+                {activeFilterCount}
+              </span>
+            )}
           </button>
+          {(status || search || dateFrom || dateTo) && (
+            <button
+              onClick={() => { setStatus(''); setSearch(''); setDateFrom(''); setDateTo(''); }}
+              className="rounded-md px-3 py-2 text-xs font-medium text-navy-500 hover:bg-navy-50"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+        {filtersOpen && (
+          <div className="mt-3 flex flex-wrap items-end gap-3 border-t border-navy-50 pt-3">
+            <div>
+              <label className="block text-[11px] font-medium text-navy-600">
+                Status
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as '' | InboxStatus)}
+                  className="mt-1 rounded-md border border-navy-100 bg-white px-3 py-2 text-sm text-navy-700 focus:border-brand-500 focus:outline-none"
+                >
+                  {STATUS_FILTERS.map((s) => (
+                    <option key={s.value} value={s.value}>{s.label}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div>
+              <label className="block text-[11px] font-medium text-navy-600">
+                From
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="mt-1 rounded-md border border-navy-100 bg-white px-3 py-2 text-sm text-navy-700 focus:border-brand-500 focus:outline-none"
+                />
+              </label>
+            </div>
+            <div>
+              <label className="block text-[11px] font-medium text-navy-600">
+                To
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="mt-1 rounded-md border border-navy-100 bg-white px-3 py-2 text-sm text-navy-700 focus:border-brand-500 focus:outline-none"
+                />
+              </label>
+            </div>
+          </div>
         )}
       </section>
 
@@ -343,23 +363,11 @@ function InboxDetailDrawer({ row, onClose }: DrawerProps) {
 
         <div className="flex-1 px-5 py-4">
           <dl className="grid grid-cols-3 gap-y-3 text-sm">
-            <dt className="col-span-1 text-xs text-navy-400">Sent</dt>
-            <dd className="col-span-2 text-navy-700">{formatDate(row.created_at)}</dd>
-
             <dt className="col-span-1 text-xs text-navy-400">From</dt>
             <dd className="col-span-2 text-navy-700">
               {row.sender_name && <div>{row.sender_name}</div>}
               <a className="text-xs text-brand-600 hover:underline" href={`mailto:${row.sender_email}`}>{row.sender_email}</a>
             </dd>
-
-            <dt className="col-span-1 text-xs text-navy-400">Delivered to</dt>
-            <dd className="col-span-2 text-navy-700 break-all">{row.delivered_to}</dd>
-
-            <dt className="col-span-1 text-xs text-navy-400">CC sender</dt>
-            <dd className="col-span-2 text-navy-700">{row.cc_sender ? 'Yes' : 'No'}</dd>
-
-            <dt className="col-span-1 text-xs text-navy-400">Issued</dt>
-            <dd className="col-span-2 text-navy-700">{formatDate(row.invoice_issue)}</dd>
 
             <dt className="col-span-1 text-xs text-navy-400">Total</dt>
             <dd className="col-span-2 font-semibold text-navy-800">{formatMoney(row.invoice_total)}</dd>
@@ -371,14 +379,37 @@ function InboxDetailDrawer({ row, onClose }: DrawerProps) {
                 <div className="mt-1 text-[11px] text-navy-400">{row.status_detail}</div>
               )}
             </dd>
-
-            {row.sent_at && (
-              <>
-                <dt className="col-span-1 text-xs text-navy-400">Delivered at</dt>
-                <dd className="col-span-2 text-navy-700">{formatDate(row.sent_at)}</dd>
-              </>
-            )}
           </dl>
+
+          <details className="mt-4 rounded-lg border border-navy-100 bg-navy-50/30">
+            <summary className="cursor-pointer list-none px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-navy-500">
+              Delivery details
+              <span className="ml-2 text-navy-300">▾</span>
+            </summary>
+            <dl className="grid grid-cols-3 gap-y-3 px-3 pb-3 pt-1 text-sm">
+              <dt className="col-span-1 text-xs text-navy-400">Sent</dt>
+              <dd className="col-span-2 text-navy-700">{formatDate(row.created_at)}</dd>
+
+              <dt className="col-span-1 text-xs text-navy-400">Issued</dt>
+              <dd className="col-span-2 text-navy-700">{formatDate(row.invoice_issue)}</dd>
+
+              <dt className="col-span-1 text-xs text-navy-400">Delivered to</dt>
+              <dd className="col-span-2 text-navy-700 break-all">{row.delivered_to}</dd>
+
+              <dt className="col-span-1 text-xs text-navy-400">CC sender</dt>
+              <dd className="col-span-2 text-navy-700">{row.cc_sender ? 'Yes' : 'No'}</dd>
+
+              {row.sent_at && (
+                <>
+                  <dt className="col-span-1 text-xs text-navy-400">Delivered at</dt>
+                  <dd className="col-span-2 text-navy-700">{formatDate(row.sent_at)}</dd>
+                </>
+              )}
+
+              <dt className="col-span-1 text-xs text-navy-400">Invoice id</dt>
+              <dd className="col-span-2 break-all text-xs text-navy-500">{row.invoice_id}</dd>
+            </dl>
+          </details>
 
           <div className="mt-6 rounded-lg bg-navy-50 p-3 text-[11px] leading-relaxed text-navy-500">
             The full invoice was sent as HTML email to{' '}
@@ -388,12 +419,12 @@ function InboxDetailDrawer({ row, onClose }: DrawerProps) {
         </div>
 
         <div className="border-t border-navy-100 px-5 py-3">
-          <a
-            href={`/invoices?invoice=${row.invoice_id}`}
+          <Link
+            to={`/invoices?invoice=${row.invoice_id}`}
             className="block rounded-md bg-brand-600 px-4 py-2 text-center text-sm font-medium text-white hover:bg-brand-500"
           >
             View in Invoices
-          </a>
+          </Link>
         </div>
       </aside>
     </div>

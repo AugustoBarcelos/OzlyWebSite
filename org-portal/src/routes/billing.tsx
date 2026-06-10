@@ -12,6 +12,7 @@ import { useOrg } from '@/lib/org';
 import { useToast } from '@/components/Toast';
 import { PageHeader } from '@/components/PageHeader';
 import { Spinner } from '@/components/Spinner';
+import { CollapsibleSection } from '@/components/CollapsibleSection';
 import { TierMeter } from '@/components/TierMeter';
 import { DowngradeReasonModal } from '@/components/DowngradeReasonModal';
 import { Avatar } from '@/components/Avatar';
@@ -58,6 +59,9 @@ export function BillingPage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [showDowngrade, setShowDowngrade] = useState<{ from: TierDefinition; to: TierDefinition; interval: BillingInterval; seats: number } | null>(null);
+  // Tier key awaiting the inline "Confirm upgrade?" step — one tap is too easy
+  // to fat-finger when it changes what Stripe charges.
+  const [pendingUpgrade, setPendingUpgrade] = useState<PriceLookupKey | null>(null);
   const [tierRpcMissing, setTierRpcMissing] = useState(false);
   const [members, setMembers] = useState<SeatMember[]>([]);
   const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([]);
@@ -213,6 +217,9 @@ export function BillingPage() {
       const isMissing = code === 'PGRST202' || code === '42883'
         || ((err as Error).message ?? '').includes('Could not find the function');
       if (isMissing) {
+        console.warn(
+          'Tier management RPC missing — apply Supabase migration 20260602110000_org_tier_management.sql to enable self-serve upgrade/downgrade.',
+        );
         setTierRpcMissing(true);
       } else {
         notify(friendlyError(err, 'Could not update the plan.'), 'error');
@@ -273,9 +280,7 @@ export function BillingPage() {
       <div className="max-w-2xl space-y-4">
         {tierRpcMissing && (
           <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-xs leading-relaxed text-blue-900">
-            <strong className="font-semibold">Tier management not enabled yet.</strong>{' '}
-            Apply Supabase migration <code className="rounded bg-blue-100 px-1">20260602110000_org_tier_management.sql</code>{' '}
-            to enable self-serve upgrade/downgrade.
+            Billing isn't available yet — contact support.
           </div>
         )}
 
@@ -355,7 +360,6 @@ export function BillingPage() {
           const billed = state.seatQuantity || state.acceptedMemberCount;
           const occupied = state.acceptedMemberCount;
           const empty = Math.max(0, billed - occupied);
-          const occupiedPct = billed > 0 ? Math.round((occupied / billed) * 100) : 0;
           const atCap = empty === 0 && billed > 0;
           // Drift = the Stripe subscription's seat_quantity is behind the
           // actual accepted-member count. The DB trigger sync runs on
@@ -366,29 +370,24 @@ export function BillingPage() {
                               && occupied > state.seatQuantity;
 
           return (
-            <section className="ozly-card p-5">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h2 className="text-sm font-semibold text-navy-700">Seats</h2>
-                  <p className="mt-1 text-[12.5px] text-navy-500">
-                    {occupied} of {billed} occupied · {empty} {empty === 1 ? 'seat' : 'seats'} available
-                    {pendingInvites.length > 0 && (
-                      <> · {pendingInvites.length} pending {pendingInvites.length === 1 ? 'invite' : 'invites'}</>
-                    )}
-                  </p>
-                </div>
+            <CollapsibleSection
+              id="billing-seats"
+              title="Seats"
+              subtitle={`${occupied} of ${billed} seats${pendingInvites.length > 0 ? ` · ${pendingInvites.length} pending` : ''}`}
+              defaultOpen={false}
+              action={
                 <Link
                   to="/members"
                   className="rounded-md px-3 py-1.5 text-xs font-semibold text-navy-700 ring-1 ring-navy-100 hover:bg-navy-50"
                 >
                   Manage members →
                 </Link>
-              </div>
-
+              }
+            >
               {overOccupied && (
                 <div
                   role="alert"
-                  className="mt-3 flex flex-wrap items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-[12.5px] text-amber-900"
+                  className="mb-4 flex flex-wrap items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-[12.5px] text-amber-900"
                 >
                   <span aria-hidden className="text-base leading-none">⚠️</span>
                   <div className="flex-1 space-y-1">
@@ -402,7 +401,7 @@ export function BillingPage() {
 
               {/* Slot grid — every seat is a square. Filled = avatar; pending
                   = dashed pill with the invitee email; empty = ghost slot. */}
-              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
                 {members.map((m) => (
                   <div
                     key={m.user_id}
@@ -447,39 +446,24 @@ export function BillingPage() {
                 ))}
               </div>
 
-              {/* Utilisation bar */}
-              <div className="mt-4">
-                <div className="mb-1.5 flex items-center justify-between text-[11px] font-medium uppercase tracking-wider text-navy-400">
-                  <span>Utilisation</span>
-                  <span>{occupiedPct}%</span>
-                </div>
-                <div className="h-2 overflow-hidden rounded-full bg-navy-50">
-                  <div
-                    className="h-full rounded-full transition-[width] duration-300"
-                    style={{
-                      width: `${occupiedPct}%`,
-                      background:
-                        'linear-gradient(90deg, var(--color-brand-500) 0%, var(--color-lime-400) 100%)',
-                    }}
-                  />
-                </div>
-              </div>
-
               {atCap && isOwner && state.hasSubscription && (
                 <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-900">
                   <strong>You're at seat cap.</strong> Upgrade to the next tier below to add more
                   members. Stripe pro-rates the difference automatically.
                 </div>
               )}
-            </section>
+            </CollapsibleSection>
           );
         })()}
 
         {/* Plan picker */}
-        <section className="ozly-card p-5">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-navy-700">Plan</h2>
-            {isOwner && currentTier && state.hasSubscription && (
+        <CollapsibleSection
+          id="billing-change-plan"
+          title="Change plan"
+          subtitle="Per-member price drops as your team grows"
+          defaultOpen={false}
+          action={
+            isOwner && currentTier && state.hasSubscription ? (
               <button
                 onClick={() => void switchInterval()}
                 disabled={busy === 'interval'}
@@ -491,11 +475,11 @@ export function BillingPage() {
                     ? 'Switch to monthly'
                     : 'Switch to annual (save 17%)'}
               </button>
-            )}
-          </div>
-
-          <p className="mt-2 text-xs text-navy-500">
-            Commitment-based per-seat pricing. Higher tiers unlock automatically — you pay the lower per-seat rate as your team grows.
+            ) : undefined
+          }
+        >
+          <p className="text-xs text-navy-500">
+            Price per member goes down as your team grows. Higher tiers unlock automatically — you pay the lower per-seat rate.
           </p>
 
           <div className="mt-4 grid gap-2">
@@ -558,17 +542,45 @@ export function BillingPage() {
                         Talk to sales →
                       </a>
                     ) : canSelfServe ? (
-                      <button
-                        onClick={() => targetKey && void changeTier(targetKey)}
-                        disabled={busy === 'change'}
-                        className={`rounded-lg px-3.5 py-2 text-xs font-semibold disabled:opacity-50 ${
-                          isUpgrade
-                            ? 'bg-brand-600 text-white hover:bg-brand-500'
-                            : 'bg-navy-50 text-navy-700 hover:bg-navy-100'
-                        }`}
-                      >
-                        {isUpgrade ? 'Upgrade →' : 'Downgrade'}
-                      </button>
+                      isUpgrade && pendingUpgrade === targetKey ? (
+                        <div className="flex w-full flex-wrap items-center justify-end gap-2">
+                          <span className="text-[12px] font-medium text-navy-700">
+                            Confirm {t.label} — {formatMoney(unit)}/member/mo? (Stripe pro-rates)
+                          </span>
+                          <button
+                            onClick={() => {
+                              setPendingUpgrade(null);
+                              if (targetKey) void changeTier(targetKey);
+                            }}
+                            disabled={busy === 'change'}
+                            className="rounded-lg bg-brand-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-brand-500 disabled:opacity-50"
+                          >
+                            Confirm
+                          </button>
+                          <button
+                            onClick={() => setPendingUpgrade(null)}
+                            className="rounded-lg bg-navy-50 px-3.5 py-2 text-xs font-semibold text-navy-700 hover:bg-navy-100"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            if (!targetKey) return;
+                            if (isUpgrade) setPendingUpgrade(targetKey);
+                            else void changeTier(targetKey);
+                          }}
+                          disabled={busy === 'change'}
+                          className={`rounded-lg px-3.5 py-2 text-xs font-semibold disabled:opacity-50 ${
+                            isUpgrade
+                              ? 'bg-brand-600 text-white hover:bg-brand-500'
+                              : 'bg-navy-50 text-navy-700 hover:bg-navy-100'
+                          }`}
+                        >
+                          {isUpgrade ? 'Upgrade →' : 'Downgrade'}
+                        </button>
+                      )
                     ) : null
                   )}
                 </div>
@@ -576,9 +588,9 @@ export function BillingPage() {
             })}
           </div>
           <p className="mt-3 text-[11px] text-navy-400">
-            Annual prepay = 17% off (monthly × 10). All AUD inc GST. Higher tiers unlock automatically as your team grows.
+            Annual prepay = 17% off (monthly × 10). All AUD inc GST.
           </p>
-        </section>
+        </CollapsibleSection>
 
         {/* Subscription state + manage */}
         {state.hasSubscription && (
@@ -605,7 +617,7 @@ export function BillingPage() {
               disabled={busy === 'manage'}
               className="mt-4 rounded-md bg-navy-50 px-3 py-1.5 text-xs font-semibold text-navy-700 hover:bg-navy-100 disabled:opacity-50"
             >
-              {busy === 'manage' ? 'Opening…' : 'Open Stripe portal (update card, view invoices)'}
+              {busy === 'manage' ? 'Opening…' : 'Update card & view receipts'}
             </button>
           </section>
         )}

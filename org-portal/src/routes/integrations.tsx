@@ -20,7 +20,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useOrg } from '@/lib/org';
 import { useToast } from '@/components/Toast';
 import { PageHeader } from '@/components/PageHeader';
+import { CollapsibleSection } from '@/components/CollapsibleSection';
+import { CalendarFeedsSection } from '@/components/CalendarFeedsSection';
 import { logOrgEvent } from '@/lib/telemetry';
+
+// Demo-only flag: the connect wizard + fake "Sync now" simulate a backend
+// that doesn't exist yet. Kept for dev demos, unreachable in prod builds.
+const DEMO_SYNC = import.meta.env.DEV;
 
 type IntegrationCategory = 'Job sources' | 'Accounting' | 'Payments';
 type IntegrationState = 'available' | 'coming_soon' | 'connected';
@@ -120,6 +126,7 @@ export function IntegrationsPage() {
   const [wizardStep, setWizardStep] = useState<0 | 1 | 2 | 3>(0);
   const [wizardScopes, setWizardScopes] = useState<Record<string, boolean>>({});
   const [syncingKey, setSyncingKey] = useState<string | null>(null);
+  const [calendarCount, setCalendarCount] = useState<number | null>(null);
 
   useEffect(() => {
     setWizardStep(0);
@@ -135,12 +142,12 @@ export function IntegrationsPage() {
   }
 
   function startWizard(): void {
-    if (!open) return;
+    if (!open || !DEMO_SYNC) return;
     setWizardStep(1);
   }
 
   function completeWizard(): void {
-    if (!open || !orgId) return;
+    if (!open || !orgId || !DEMO_SYNC) return;
     setWizardStep(3);
     window.setTimeout(() => {
       const isJobSource = open.category === 'Job sources';
@@ -164,7 +171,7 @@ export function IntegrationsPage() {
   }
 
   function syncNow(int: Integration): void {
-    if (syncingKey) return;
+    if (syncingKey || !DEMO_SYNC) return;
     setSyncingKey(int.key);
     window.setTimeout(() => {
       const isJobSource = int.category === 'Job sources';
@@ -217,21 +224,12 @@ export function IntegrationsPage() {
     setOpenKey(null);
   }
 
-  // Hero stats above the gallery — connected + total job sources
-  const connectedCount = integrations.filter((i) => i.state === 'connected').length;
-  const jobSourceConnected = integrations.filter((i) => i.category === 'Job sources' && i.state === 'connected').length;
-  const lastSyncAt = integrations
-    .filter((i) => i.state === 'connected' && i.lastSyncAt)
-    .map((i) => i.lastSyncAt!)
-    .sort()
-    .pop();
-
   return (
     <div>
       <PageHeader
         kicker="Account"
         title="Integrations"
-        subtitle="Pull jobs from your scheduling tools — offer them to sub-contractors in one click. Push the financial outcome out to your accounting."
+        subtitle="Connect your calendar and import jobs from CSV. Accounting integrations are coming."
         action={
           <Link
             to="/settings"
@@ -242,29 +240,17 @@ export function IntegrationsPage() {
         }
       />
 
-      {/* Connection summary strip */}
-      <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <div
-          className="rounded-xl border border-brand-200 bg-brand-50/40 p-3"
+      {/* Calendar feeds — the one integration that's real today, so it leads. */}
+      {orgId && (
+        <CollapsibleSection
+          id="integrations-calendar"
+          title="Calendar feeds"
+          badge={calendarCount !== null && calendarCount > 0 ? calendarCount : undefined}
+          defaultOpen={true}
         >
-          <div className="text-[10.5px] font-semibold uppercase tracking-wider text-brand-700">Active</div>
-          <div className="mt-0.5 font-display text-xl font-bold text-navy-800">
-            {connectedCount} <span className="text-sm font-medium text-navy-400">connected</span>
-          </div>
-        </div>
-        <div className="rounded-xl border border-navy-100 bg-white p-3">
-          <div className="text-[10.5px] font-semibold uppercase tracking-wider text-navy-400">Jobs flowing in</div>
-          <div className="mt-0.5 font-display text-xl font-bold text-navy-800">
-            {jobSourceConnected} <span className="text-sm font-medium text-navy-400">source{jobSourceConnected === 1 ? '' : 's'}</span>
-          </div>
-        </div>
-        <div className="col-span-2 rounded-xl border border-navy-100 bg-white p-3 sm:col-span-1">
-          <div className="text-[10.5px] font-semibold uppercase tracking-wider text-navy-400">Last sync</div>
-          <div className="mt-0.5 font-display text-xl font-bold text-navy-800">
-            {lastSyncAt ? relativeFromNow(lastSyncAt) : '—'}
-          </div>
-        </div>
-      </div>
+          <CalendarFeedsSection orgId={orgId} onCountChange={setCalendarCount} />
+        </CollapsibleSection>
+      )}
 
       <div
         className="mb-5 flex items-start gap-3 rounded-xl border border-navy-100 bg-navy-50/50 px-4 py-3 text-[12.5px] text-navy-500"
@@ -426,7 +412,8 @@ export function IntegrationsPage() {
               </>
             )}
 
-            {open.state === 'available' && wizardStep === 0 && (
+            {/* Simulated connect flow — dev demos only (see DEMO_SYNC). */}
+            {DEMO_SYNC && open.state === 'available' && wizardStep === 0 && (
               <>
                 <p className="mt-4 text-sm leading-relaxed text-navy-600">{open.longDescription}</p>
                 <div className="mt-6 rounded-xl border border-navy-100 bg-navy-50/40 p-4 text-[12.5px] text-navy-500">
@@ -443,7 +430,7 @@ export function IntegrationsPage() {
               </>
             )}
 
-            {open.state === 'available' && wizardStep > 0 && (
+            {DEMO_SYNC && open.state === 'available' && wizardStep > 0 && (
               <ConnectWizard
                 int={open}
                 step={wizardStep as 1 | 2 | 3}

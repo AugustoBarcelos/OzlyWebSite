@@ -292,6 +292,40 @@ export function InvoicesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Deep link: `?invoice=<id>` opens that invoice's detail modal (used by the
+  // Inbox "View in Invoices" button). The invoice may not be on the current
+  // page, so we fetch it by id once the org is known. Not found → ignore
+  // silently. Param is stripped from the URL right away so a refresh doesn't
+  // re-open the modal.
+  const deepLinkInvoiceId = useRef<string | null>(null);
+  useEffect(() => {
+    const id = searchParams.get('invoice');
+    if (!id) return;
+    deepLinkInvoiceId.current = id;
+    const next = new URLSearchParams(searchParams);
+    next.delete('invoice');
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (!orgId || !deepLinkInvoiceId.current) return;
+    const id = deepLinkInvoiceId.current;
+    deepLinkInvoiceId.current = null;
+    let active = true;
+    (async () => {
+      const { data } = await supabase
+        .from('invoices')
+        .select(INVOICE_SELECT)
+        .eq('org_visible_id', orgId)
+        .eq('id', id)
+        .maybeSingle();
+      if (active && data) setDetail(data as unknown as InvoiceRow);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [orgId]);
+
   async function refreshTotals() {
     if (!orgId) return;
     const { data } = await supabase.rpc('org_invoice_totals', { p_org_id: orgId, p_from: periodFrom, p_to: periodTo });
@@ -522,7 +556,7 @@ export function InvoicesPage() {
       downloadCsv(fn, csv);
       notify(
         inv.length >= 10_000
-          ? 'Export capped at 10,000 rows. Refine filters for a narrower export.'
+          ? 'Too many invoices for one file (max 10,000). Pick a shorter period and export again.'
           : `Exported ${inv.length} bills in Xero format — import in Bills to pay → Import.`,
         inv.length >= 10_000 ? 'info' : 'success',
       );
@@ -536,6 +570,7 @@ export function InvoicesPage() {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [confirmingBulkPay, setConfirmingBulkPay] = useState(false);
   // Mirror to a ref so the realtime channel callback (subscribed once per
   // orgId) can ignore events that fire DURING our own bulk mark-paid sweep,
   // avoiding a thundering-herd of reloads.
@@ -598,6 +633,14 @@ export function InvoicesPage() {
       return next;
     });
   }
+  // Select-all for the current page — paid rows stay unselectable (same rule
+  // as the per-row checkboxes).
+  const selectableRows = rows.filter((r) => r.status !== 'paid');
+  const allOnPageSelected = selectableRows.length > 0 && selectableRows.every((r) => selectedIds.has(r.id));
+  function toggleSelectAllOnPage() {
+    if (allOnPageSelected) setSelectedIds(new Set());
+    else setSelectedIds(new Set(selectableRows.map((r) => r.id)));
+  }
   function clearSelection() {
     setSelectedIds(new Set());
     setSelectMode(false);
@@ -653,7 +696,7 @@ export function InvoicesPage() {
       }
 
       if (payments.length === 0) {
-        notify('None of the selected subs have BSB + account on file.', 'error');
+        notify('None of the selected subs have BSB + account on file. Ask them to add bank details in the Ozly app (Profile → Bank details).', 'error');
         return;
       }
 
@@ -776,7 +819,7 @@ export function InvoicesPage() {
       const fn = `ozly-invoices-${timestampSuffix()}.csv`;
       downloadCsv(fn, csv);
       if (rows.length >= 10_000) {
-        notify('Export capped at 10,000 rows. Refine filters for a narrower export.', 'info');
+        notify('Too many invoices for one file (max 10,000). Pick a shorter period and export again.', 'info');
       } else {
         notify(`Exported ${rows.length} invoices to ${fn}`, 'success');
       }
@@ -876,7 +919,6 @@ export function InvoicesPage() {
             />
           </div>
         )}
-        <span className="text-xs text-navy-400">totals reflect this period · filter any column from its header ▾</span>
         <div className="ml-auto flex items-center gap-2">
           {columnFiltersActive && (
             <button
@@ -898,10 +940,10 @@ export function InvoicesPage() {
               e.target.value = '';
             }}
             value=""
-            className="rounded-md border border-navy-100 bg-white px-2 py-1.5 text-xs font-medium text-navy-700 focus:border-brand-500 focus:outline-none"
+            className="cursor-pointer appearance-none rounded-md bg-transparent px-2 py-1.5 text-xs font-medium text-navy-500 hover:bg-navy-50 focus:outline-none"
             title="Saved views"
           >
-            <option value="">Views ▾</option>
+            <option value="">⋯ Views</option>
             <option value="__save__">＋ Save current view…</option>
             {presets.length > 0 && (
               <optgroup label="Apply">
@@ -916,11 +958,12 @@ export function InvoicesPage() {
           </select>
           <button
             onClick={() => { setSelectMode((v) => !v); setSelectedIds(new Set()); }}
+            title="Bulk actions: mark paid, export, ABA"
             className={`rounded-md px-3 py-1.5 text-xs font-medium ${
               selectMode ? 'bg-brand-600 text-white hover:bg-brand-500' : 'text-navy-700 ring-1 ring-navy-100 hover:bg-navy-50'
             }`}
           >
-            {selectMode ? 'Done' : 'Select'}
+            {selectMode ? 'Done' : 'Select rows'}
           </button>
           {/* Collapse two separate Export buttons into a single dropdown.
               Two side-by-side buttons in identical styling fight for the
@@ -970,7 +1013,7 @@ export function InvoicesPage() {
               💸 Generate ABA file
             </button>
             <button
-              onClick={() => void bulkMarkPaid()}
+              onClick={() => setConfirmingBulkPay(true)}
               disabled={bulkBusy}
               className="rounded-md bg-brand-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-500 disabled:bg-brand-300"
             >
@@ -1014,7 +1057,17 @@ export function InvoicesPage() {
         </div>
       ) : total === 0 ? (
         filtersActive ? (
-          <EmptyState title="No invoices match your filters" />
+          <EmptyState
+            title="No invoices match your filters"
+            action={
+              <button
+                onClick={clearFilters}
+                className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-500"
+              >
+                Clear filters
+              </button>
+            }
+          />
         ) : (
           <EmptyState
             icon={<FileTextIcon />}
@@ -1037,15 +1090,27 @@ export function InvoicesPage() {
               <thead>
                 <tr className="border-b border-navy-50 text-left text-xs">
                   <th className="px-4 py-3">
-                    <ColumnFilter
-                      label="Sub-contractor"
-                      options={colOpts.sub}
-                      selected={filters.sub}
-                      onChange={setColFilter('sub')}
-                      sortDir={sortDirFor('sub')}
-                      onSort={onSort('sub')}
-                      searchPlaceholder="Search members…"
-                    />
+                    <div className="flex items-center gap-2.5">
+                      {selectMode && (
+                        <input
+                          type="checkbox"
+                          checked={allOnPageSelected}
+                          onChange={toggleSelectAllOnPage}
+                          disabled={selectableRows.length === 0}
+                          className="h-3.5 w-3.5 rounded border-navy-200 text-brand-600 focus:ring-brand-200"
+                          title="Select all unpaid invoices on this page"
+                        />
+                      )}
+                      <ColumnFilter
+                        label="Sub-contractor"
+                        options={colOpts.sub}
+                        selected={filters.sub}
+                        onChange={setColFilter('sub')}
+                        sortDir={sortDirFor('sub')}
+                        onSort={onSort('sub')}
+                        searchPlaceholder="Search members…"
+                      />
+                    </div>
                   </th>
                   <th className="px-4 py-3">
                     <ColumnFilter
@@ -1060,7 +1125,7 @@ export function InvoicesPage() {
                   </th>
                   <th className="px-4 py-3">
                     <DateColumnFilter
-                      label="Period"
+                      label="Dates"
                       dates={colOpts.issue_date?.map((o) => o.value)}
                       range={issueRange}
                       onChange={setIssueRange}
@@ -1152,9 +1217,15 @@ export function InvoicesPage() {
                     <td className="px-4 py-3">
                       <div className="flex flex-col items-start gap-1">
                         <InvoiceStatusBadge status={r.status} />
-                        <DivergenceBadge invoice={r} />
-                        <CorrectionBadge invoice={r} />
-                        <ReconBadge warnings={reconcileInvoice(r, rows)} />
+                        {/* At most ONE alert badge per row (divergence > recon
+                            > correction) — the detail modal carries the full
+                            panels for everything else. */}
+                        {(() => {
+                          if (r.is_edited || r.divergence_status !== 'none') return <DivergenceBadge invoice={r} />;
+                          const warnings = reconcileInvoice(r, rows);
+                          if (warnings.length > 0) return <ReconBadge warnings={warnings} />;
+                          return <CorrectionBadge invoice={r} />;
+                        })()}
                       </div>
                     </td>
                     <td className="px-4 py-3 text-navy-500">{formatDate(r.due_date)}</td>
@@ -1249,6 +1320,36 @@ export function InvoicesPage() {
           </div>
         </div>
       )}
+
+      {confirmingBulkPay && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy-900/30 p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg">
+            <h2 className="text-base font-semibold text-navy-700">
+              Mark {selectedIds.size} invoice{selectedIds.size === 1 ? '' : 's'} as paid?
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-navy-500">
+              Each sub-contractor will be asked to confirm they received the money.
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                onClick={() => setConfirmingBulkPay(false)}
+                className="rounded-md px-3 py-2 text-sm font-medium text-navy-500 hover:bg-navy-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setConfirmingBulkPay(false);
+                  void bulkMarkPaid();
+                }}
+                className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-500"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1275,7 +1376,7 @@ function InvoiceDetailModal(props: {
       orgAbn,
       items: items ?? [],
     });
-    if (!ok) alert('Allow popups for ozly.au to download the receipt PDF.');
+    if (!ok) notify('Allow popups for ozly.au to download the receipt PDF.', 'error');
   };
 
   useEffect(() => {

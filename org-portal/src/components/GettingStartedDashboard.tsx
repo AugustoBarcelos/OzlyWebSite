@@ -22,11 +22,14 @@ interface Props {
 
 export function GettingStartedDashboard({ orgId }: Props) {
   const [items, setItems] = useState<ChecklistItem[] | null>(null);
-  const [dismissed, setDismissed] = useState(false);
+  // Collapsed = one-line summary inside the same card, never gone for good.
+  // Persisted per org so the choice survives navigation and reloads.
+  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
-    const key = `ozly.gs.dismissed.${orgId}`;
-    setDismissed(localStorage.getItem(key) === '1');
+    try {
+      setCollapsed(localStorage.getItem(`ozly:gs:collapsed:${orgId}`) === '1');
+    } catch { /* localStorage unavailable — start expanded */ }
 
     (async () => {
       const [{ count: memberCount }, { count: invoiceCount }] = await Promise.all([
@@ -48,7 +51,7 @@ export function GettingStartedDashboard({ orgId }: Props) {
           key: 'integration',
           // Real integrations backend doesn't exist yet — treat as "explored"
           // via localStorage flag. Toggle when user opens the page.
-          label: 'Connect a job source',
+          label: 'See how to connect your calendar',
           to: '/settings/integrations',
           done: localStorage.getItem(`ozly.gs.int.${orgId}`) === '1',
           cta: 'Connect ServiceM8 / Tradify / Calendar',
@@ -65,22 +68,47 @@ export function GettingStartedDashboard({ orgId }: Props) {
           label: 'Receive your first invoice',
           to: '/invoices',
           done: (invoiceCount ?? 0) > 0,
-          cta: 'See how it lands',
+          cta: 'See your invoices',
         },
       ];
       setItems(list);
     })();
   }, [orgId]);
 
-  if (!items || dismissed) return null;
+  if (!items) return null;
 
   const doneCount = items.filter((i) => i.done).length;
   const pct = Math.round((doneCount / items.length) * 100);
   if (doneCount === items.length) return null;
 
-  function dismiss() {
-    localStorage.setItem(`ozly.gs.dismissed.${orgId}`, '1');
-    setDismissed(true);
+  function toggleCollapsed() {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(`ozly:gs:collapsed:${orgId}`, next ? '1' : '0');
+      } catch { /* localStorage unavailable — session-only state is fine */ }
+      return next;
+    });
+  }
+
+  if (collapsed) {
+    return (
+      <section className="ozly-card mb-5 overflow-hidden">
+        <button
+          type="button"
+          onClick={toggleCollapsed}
+          aria-expanded={false}
+          className="flex w-full items-center gap-2 px-5 py-3 text-left transition-colors hover:bg-navy-50/40"
+        >
+          <span aria-hidden="true" className="text-base">🚀</span>
+          <span className="font-display text-sm font-bold text-navy-800">
+            Setup {doneCount}/{items.length}
+          </span>
+          <span className="text-[11px] text-navy-400">{pct}% done</span>
+          <span aria-hidden="true" className="ml-auto text-navy-400">▾</span>
+        </button>
+      </section>
+    );
   }
 
   return (
@@ -98,11 +126,14 @@ export function GettingStartedDashboard({ orgId }: Props) {
         <div className="flex items-center gap-3">
           <div className="text-[11px] font-semibold text-brand-700">{pct}%</div>
           <button
-            onClick={dismiss}
-            className="text-[11px] font-medium text-navy-400 hover:text-navy-700"
-            title="Hide this card — you can revisit from Settings"
+            type="button"
+            onClick={toggleCollapsed}
+            aria-expanded={true}
+            aria-label="Collapse setup checklist"
+            className="text-[13px] font-medium text-navy-400 hover:text-navy-700"
+            title="Collapse to one line — your progress is kept"
           >
-            Dismiss
+            ▴
           </button>
         </div>
       </div>

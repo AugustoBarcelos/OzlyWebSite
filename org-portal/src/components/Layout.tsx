@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { useOrg } from '@/lib/org';
@@ -17,6 +17,7 @@ import {
   ChartIcon,
   SettingsIcon,
   GridIcon,
+  UploadIcon,
 } from '@/components/Icons';
 
 // Nav is grouped — "Operations" (the daily flow), "Money" (billing/financial),
@@ -41,7 +42,7 @@ const NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
       { to: '/invoices', label: 'Invoices', icon: <FileTextIcon /> },
       { to: '/inbox',    label: 'Inbox',    icon: <InboxIcon /> },
       { to: '/work',     label: 'Work',     icon: <BriefcaseIcon /> },
-      { to: '/import',   label: 'Import',   icon: <FileTextIcon /> },
+      { to: '/import',   label: 'Import',   icon: <UploadIcon /> },
       { to: '/members',  label: 'Members',  icon: <UsersIcon /> },
     ],
   },
@@ -87,10 +88,38 @@ function Wordmark({ compact = false }: { compact?: boolean }) {
   );
 }
 
+// Secondary groups can be folded away to keep the daily-flow nav short.
+// "Overview"/"Operations" stay always visible — they ARE the daily flow.
+const COLLAPSIBLE_GROUPS = ['Insights', 'Account'];
+const NAV_KEY_PREFIX = 'ozly:nav:';
+
+function readGroupOpen(label: string): boolean {
+  try {
+    return localStorage.getItem(NAV_KEY_PREFIX + label) !== '0';
+  } catch {
+    return true; // localStorage unavailable — default open
+  }
+}
+
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { signOut, user } = useAuth();
   const { orgs, currentOrg, setCurrentOrgId } = useOrg();
+  const [groupOpen, setGroupOpen] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(COLLAPSIBLE_GROUPS.map((g) => [g, readGroupOpen(g)])),
+  );
   if (!currentOrg) return null;
+
+  function toggleGroup(label: string) {
+    setGroupOpen((prev) => {
+      const next = { ...prev, [label]: !prev[label] };
+      try {
+        localStorage.setItem(NAV_KEY_PREFIX + label, next[label] ? '1' : '0');
+      } catch {
+        // localStorage unavailable — session-only state is fine.
+      }
+      return next;
+    });
+  }
 
   return (
     <>
@@ -139,26 +168,57 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       )}
 
       <nav className="mt-4 flex flex-1 flex-col">
-        {NAV_SECTIONS.map((section) => (
-          <div key={section.label}>
-            <div className="sidebar-section-label">{section.label}</div>
-            <div className="flex flex-col gap-0.5">
-              {section.items.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  onClick={onNavigate}
-                  className={({ isActive }) => `nav-item ${isActive ? 'nav-active' : ''}`}
+        {NAV_SECTIONS.map((section) => {
+          const collapsible = COLLAPSIBLE_GROUPS.includes(section.label);
+          const open = !collapsible || groupOpen[section.label] !== false;
+          return (
+            <div key={section.label}>
+              {collapsible ? (
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(section.label)}
+                  aria-expanded={open}
+                  className="sidebar-section-label flex w-full cursor-pointer items-center justify-between rounded-md hover:text-navy-600"
                 >
-                  <span className="flex h-4 w-4 items-center justify-center text-current opacity-80">
-                    {item.icon}
-                  </span>
-                  {item.label}
-                </NavLink>
-              ))}
+                  {section.label}
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                    className={`shrink-0 transition-transform duration-200 ${open ? '' : '-rotate-90'}`}
+                  >
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </button>
+              ) : (
+                <div className="sidebar-section-label">{section.label}</div>
+              )}
+              {open && (
+                <div className="flex flex-col gap-0.5">
+                  {section.items.map((item) => (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      onClick={onNavigate}
+                      className={({ isActive }) => `nav-item ${isActive ? 'nav-active' : ''}`}
+                    >
+                      <span className="flex h-4 w-4 items-center justify-center text-current opacity-80">
+                        {item.icon}
+                      </span>
+                      {item.label}
+                    </NavLink>
+                  ))}
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </nav>
 
       <div className="mt-3 flex items-center gap-2.5 border-t border-navy-100 pt-3">
@@ -181,6 +241,16 @@ export function Layout() {
   const { signOut } = useAuth();
   const { currentOrg, loading } = useOrg();
   const [navOpen, setNavOpen] = useState(false);
+
+  // Escape closes the mobile drawer — listener only attached while it's open.
+  useEffect(() => {
+    if (!navOpen) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setNavOpen(false);
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [navOpen]);
 
   if (loading) return <FullScreenSpinner label="Loading your organisation…" />;
 

@@ -49,7 +49,7 @@ export function TrialBanner({ thresholdDays = 14 }: Props) {
       <span className="font-semibold" style={{ color: `var(--${tone}-text-strong)` }}>
         {isUrgent ? '🔥' : '🕒'} Trial ends {dayLabel}.
       </span>{' '}
-      <span>Add a payment method now to keep coverage flowing —</span>{' '}
+      <span>Add a payment method so your subs' invoices keep coming —</span>{' '}
       <Link
         to="/billing"
         className="font-semibold underline hover:no-underline"

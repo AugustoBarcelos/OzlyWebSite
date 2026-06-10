@@ -123,6 +123,16 @@ export function PlugIcon() {
   );
 }
 
+export function UploadIcon() {
+  return (
+    <svg {...base}>
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <path d="m17 8-5-5-5 5" />
+      <path d="M12 3v12" />
+    </svg>
+  );
+}
+
 export function SettingsIcon() {
   return (
     <svg {...base}>

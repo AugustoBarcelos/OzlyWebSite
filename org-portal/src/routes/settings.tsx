@@ -5,9 +5,9 @@ import { useOrg } from '@/lib/org';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/components/Toast';
 import { PageHeader } from '@/components/PageHeader';
+import { CollapsibleSection } from '@/components/CollapsibleSection';
 import { NotificationPreferences } from '@/components/NotificationPreferences';
 import { CalendarFeedsSection } from '@/components/CalendarFeedsSection';
-import { formatDate } from '@/lib/format';
 import { SEAT_LIMIT } from '@/lib/types';
 import { friendlyError } from '@/lib/errors';
 import { useSeqGuard } from '@/lib/use-seq-guard';
@@ -34,6 +34,7 @@ export function SettingsPage() {
     currentOrg?.default_hourly_rate ? String(currentOrg.default_hourly_rate) : '',
   );
   const [savingRate, setSavingRate] = useState(false);
+  const [calendarCount, setCalendarCount] = useState<number | null>(null);
 
   useEffect(() => {
     setName(currentOrg?.name ?? '');
@@ -78,12 +79,10 @@ export function SettingsPage() {
       .eq('id', orgId);
     if (error) {
       // PG error 42703 = column does not exist (migration 20260602100000
-      // not applied yet). Surface a clear message instead of a generic one.
+      // not applied yet). Log the technical detail; keep the toast human.
       if ((error as { code?: string }).code === '42703') {
-        notify(
-          "Inbox feature isn't enabled on this DB yet. Apply migration 20260602100000 to use it.",
-          'error',
-        );
+        console.warn('billing_email column missing — apply migration 20260602100000.');
+        notify("Inbox isn't available yet — contact support.", 'error');
       } else {
         notify(friendlyError(error), 'error');
       }
@@ -106,7 +105,7 @@ export function SettingsPage() {
       .eq('id', orgId);
     if (error) notify(friendlyError(error), 'error');
     else {
-      notify('Reporting period updated', 'success');
+      notify('Pay cycle updated', 'success');
       await refresh();
     }
     setSavingPeriod(false);
@@ -155,40 +154,17 @@ export function SettingsPage() {
   const plan = currentOrg.billing_plan;
   const limit = SEAT_LIMIT[plan];
   const planLabel = plan.charAt(0).toUpperCase() + plan.slice(1);
+  const freqLabel = periodFreq.charAt(0).toUpperCase() + periodFreq.slice(1);
+  const rateLabel = defaultRate.trim() ? `$${defaultRate.trim()}/h` : '—';
+  // Auto-open the calendar panel when returning from the Google OAuth redirect
+  // (?calendar=ok|error) — CalendarFeedsSection's effect reads + clears the param.
+  const calendarReturn = new URLSearchParams(window.location.search).has('calendar');
 
   return (
     <>
       <PageHeader kicker="Account" title="Settings" subtitle="Organisation, plan and members" />
 
       <div className="max-w-2xl">
-      {/* Onboarding guide — print-ready PDF for handing to team / customers. */}
-      <Link
-        to="/print/onboarding"
-        target="_blank"
-        rel="noopener"
-        className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-navy-100 bg-white p-4 transition-colors hover:border-brand-200 hover:bg-brand-50/20"
-      >
-        <div className="flex items-center gap-3">
-          <div
-            className="flex h-10 w-10 items-center justify-center rounded-lg text-lg"
-            style={{
-              background: 'linear-gradient(135deg, var(--color-brand-500) 0%, var(--color-lime-400) 100%)',
-              color: '#ffffff',
-            }}
-            aria-hidden="true"
-          >
-            📖
-          </div>
-          <div>
-            <div className="text-sm font-semibold text-navy-800">Onboarding guide (PDF)</div>
-            <div className="text-[12px] text-navy-500">
-              6-page setup walkthrough — open + print to share with your team.
-            </div>
-          </div>
-        </div>
-        <span className="text-[11px] font-semibold text-brand-700">Open →</span>
-      </Link>
-
       {/* Integrations entry-point — full UI lives at /settings/integrations. */}
       <Link
         to="/settings/integrations"
@@ -216,9 +192,8 @@ export function SettingsPage() {
       </Link>
 
       {/* Organization */}
-      <section className="ozly-card mb-4 p-5">
-        <h2 className="text-sm font-semibold text-navy-700">Organisation</h2>
-        <label className="mt-4 block text-xs font-medium text-navy-600">
+      <CollapsibleSection id="settings-org" title="Organisation" defaultOpen={true}>
+        <label className="block text-xs font-medium text-navy-600">
           Name
           <input
             value={name}
@@ -248,12 +223,17 @@ export function SettingsPage() {
         >
           {saving ? 'Saving…' : 'Save changes'}
         </button>
-      </section>
+      </CollapsibleSection>
 
-      {/* Inbox email */}
-      <section id="billing-email" className="ozly-card mb-4 p-5">
-        <h2 className="text-sm font-semibold text-navy-700">Inbox email</h2>
-        <p className="mt-1 text-xs text-navy-400">
+      {/* Inbox email — div keeps the #billing-email anchor /inbox links to. */}
+      <div id="billing-email">
+      <CollapsibleSection
+        id="settings-inbox-email"
+        title="Inbox email"
+        subtitle={currentOrg.billing_email ?? 'Not set'}
+        defaultOpen={false}
+      >
+        <p className="text-xs text-navy-400">
           Where invoices sent directly by members will arrive (and where you'll see them surface in the{' '}
           <Link to="/inbox" className="text-brand-600 hover:underline">Inbox</Link>). Leave blank to disable direct delivery.
         </p>
@@ -279,13 +259,19 @@ export function SettingsPage() {
         >
           {savingBillingEmail ? 'Saving…' : 'Save inbox email'}
         </button>
-      </section>
+      </CollapsibleSection>
+      </div>
 
-      {/* Reporting period */}
-      <section className="ozly-card mb-4 p-5">
-        <h2 className="text-sm font-semibold text-navy-700">Reporting period</h2>
+      {/* Pay cycle + default rate — two saves, one panel */}
+      <CollapsibleSection
+        id="settings-pay-cycle"
+        title="Pay cycle & default rate"
+        subtitle={`${freqLabel} · ${rateLabel}`}
+        defaultOpen={false}
+      >
+        <h3 className="text-xs font-semibold text-navy-700">Pay cycle</h3>
         <p className="mt-1 text-xs text-navy-400">
-          How you view and total invoices — the Invoices screen offers “This{' '}
+          How often you total up invoices — the Invoices screen offers “This{' '}
           {periodFreq === 'monthly' ? 'month' : periodFreq === 'weekly' ? 'week' : 'fortnight'} / Last …”.
         </p>
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -318,13 +304,12 @@ export function SettingsPage() {
           disabled={savingPeriod}
           className="mt-4 rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-500 disabled:bg-brand-300"
         >
-          {savingPeriod ? 'Saving…' : 'Save period'}
+          {savingPeriod ? 'Saving…' : 'Save pay cycle'}
         </button>
-      </section>
 
-      {/* Default rate */}
-      <section className="ozly-card mb-4 p-5">
-        <h2 className="text-sm font-semibold text-navy-700">Default hourly rate</h2>
+        <div className="my-4 border-t border-navy-50" />
+
+        <h3 className="text-xs font-semibold text-navy-700">Default hourly rate</h3>
         <p className="mt-1 text-xs text-navy-400">
           Pre-fills the rate when you offer work. You can override it per member (Members → Rate) or
           per shift. Leave blank for no default.
@@ -351,67 +336,72 @@ export function SettingsPage() {
         >
           {savingRate ? 'Saving…' : 'Save default rate'}
         </button>
-      </section>
+      </CollapsibleSection>
 
-      {/* Plan */}
-      <section className="ozly-card mb-4 p-5">
-        <h2 className="text-sm font-semibold text-navy-700">Plan</h2>
-        <div className="mt-4 flex items-center justify-between">
+      {/* Plan entry-point — full UI lives at /billing. */}
+      <Link
+        to="/billing"
+        className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-navy-100 bg-white p-4 transition-colors hover:border-brand-200 hover:bg-brand-50/20"
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-lg"
+            style={{
+              background: 'linear-gradient(135deg, var(--color-brand-500) 0%, var(--color-lime-400) 100%)',
+              color: '#ffffff',
+            }}
+            aria-hidden="true"
+          >
+            💳
+          </div>
           <div>
-            <div className="text-sm font-medium text-navy-700">{planLabel}</div>
-            <div className="mt-0.5 text-xs text-navy-400">
-              {memberCount ?? '—'} active {memberCount === 1 ? 'member' : 'members'}
+            <div className="text-sm font-semibold text-navy-800">Plan & billing</div>
+            <div className="text-[12px] text-navy-500">
+              {planLabel} plan · {memberCount ?? '—'} active {memberCount === 1 ? 'member' : 'members'}
               {limit !== null ? ` of ${limit}` : ''}
             </div>
-            {currentOrg.trial_ends_at && (
-              <div className="mt-0.5 text-xs text-navy-400">
-                Trial ends {formatDate(currentOrg.trial_ends_at)}
-              </div>
-            )}
           </div>
-          <button
-            disabled
-            title="Coming soon — contact us"
-            className="cursor-not-allowed rounded-md bg-navy-100 px-4 py-2 text-sm font-medium text-navy-400"
-          >
-            Upgrade
-          </button>
         </div>
-        <p className="mt-3 rounded-md bg-navy-50 px-3 py-2 text-[11px] leading-relaxed text-navy-500">
-          $9.99 per member / month — each sub-contractor you add includes their ABN on the invoices
-          they send you.
-        </p>
-      </section>
+        <span className="text-[11px] font-semibold text-brand-700">Open →</span>
+      </Link>
 
-      {/* How org-subsidy works — admin awareness */}
-      <section className="ozly-card mb-4 border border-amber-100 bg-amber-50/40 p-5">
-        <h2 className="text-sm font-semibold text-amber-800">What you get when you pay for a member's ABN</h2>
-        <p className="mt-2 text-xs leading-relaxed text-amber-900/80">
-          While you're paying for a member's ABN, they can only invoice <strong>you</strong> through Ozly —
-          they can't use it to bill other clients on the side. If they want to bill other businesses too,
-          they upgrade their own ABN plan in the Ozly app (one tap, on their card). That way your seat fee
-          doesn't end up funding work you have nothing to do with, and the paperwork stays clean if you
-          ever change accountants.
-        </p>
-      </section>
-
-      {/* Members shortcut */}
-      <section className="ozly-card mb-4 p-5">
-        <h2 className="text-sm font-semibold text-navy-700">Members</h2>
-        <p className="mt-1 text-xs text-navy-400">Invite and manage your sub-contractors.</p>
-        <Link
-          to="/members"
-          className="mt-3 inline-block rounded-md bg-navy-50 px-4 py-2 text-sm font-medium text-navy-700 hover:bg-navy-100"
+      {orgId && (
+        <CollapsibleSection
+          id="settings-calendar"
+          title="Calendar feeds"
+          badge={calendarCount !== null && calendarCount > 0 ? calendarCount : undefined}
+          defaultOpen={calendarReturn}
         >
-          Manage members
+          <CalendarFeedsSection orgId={orgId} onCountChange={setCalendarCount} />
+        </CollapsibleSection>
+      )}
+
+      {user?.id && (
+        <CollapsibleSection
+          id="settings-notifications"
+          title="Notifications"
+          subtitle="Email & push"
+          defaultOpen={false}
+        >
+          <NotificationPreferences userKey={user.id} />
+        </CollapsibleSection>
+      )}
+
+      <CollapsibleSection id="settings-danger" title="Danger zone" defaultOpen={false}>
+        <DangerZone />
+      </CollapsibleSection>
+
+      {/* Onboarding guide — print-ready PDF for handing to team / customers. */}
+      <div className="mt-2 text-center text-[11px] text-navy-400">
+        <Link
+          to="/print/onboarding"
+          target="_blank"
+          rel="noopener"
+          className="font-medium hover:text-brand-700"
+        >
+          Onboarding guide (PDF) — open + print to share with your team →
         </Link>
-      </section>
-
-      {orgId && <CalendarFeedsSection orgId={orgId} />}
-
-      {user?.id && <NotificationPreferences userKey={user.id} />}
-
-      <DangerZone />
+      </div>
       </div>
     </>
   );
@@ -440,10 +430,10 @@ function DangerZone() {
     }
   }
 
+  // Chrome (card + heading) comes from the CollapsibleSection in SettingsPage.
   return (
-    <section className="ozly-card border border-rose-200 p-5">
-      <h2 className="text-sm font-semibold text-rose-700">Danger zone</h2>
-      <p className="mt-1 text-xs text-navy-500">
+    <div>
+      <p className="text-xs text-navy-500">
         Delete your Ozly account. This removes your sign-in, your contractor records, and your
         membership in any organisations. If you're the only owner of an organisation, transfer
         ownership first (or your team loses access).
@@ -491,6 +481,6 @@ function DangerZone() {
           </div>
         </div>
       )}
-    </section>
+    </div>
   );
 }

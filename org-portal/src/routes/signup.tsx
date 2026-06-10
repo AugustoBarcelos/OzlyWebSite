@@ -189,12 +189,18 @@ export function SignupPage() {
               .
             </p>
 
-            {/* Compliance (non-negotiable): no employment relationship. */}
-            <p className="mt-4 rounded-lg bg-navy-50/70 px-3.5 py-2.5 text-[11.5px] leading-relaxed text-navy-500">
-              Ozly is a tool and does not determine your relationship with members. Sub-contractors
-              accept engagements individually and remain independent under their own ABN — your Fair
-              Work, super and tax obligations remain yours.
-            </p>
+            {/* Compliance (non-negotiable): no employment relationship.
+                Collapsed by default — it must exist on the page, not dominate it. */}
+            <details className="mt-4 rounded-lg bg-navy-50/70 px-3.5 py-2.5 text-[11.5px] leading-relaxed text-navy-500">
+              <summary className="cursor-pointer select-none list-none font-medium [&::-webkit-details-marker]:hidden">
+                Important legal note ▾
+              </summary>
+              <p className="mt-2">
+                Ozly is a tool and does not determine your relationship with members. Sub-contractors
+                accept engagements individually and remain independent under their own ABN — your Fair
+                Work, super and tax obligations remain yours.
+              </p>
+            </details>
           </form>
 
           <p className="mt-5 text-sm text-navy-500">

@@ -20,6 +20,7 @@ import { useToast } from '@/components/Toast';
 import { Spinner } from '@/components/Spinner';
 import { friendlyError } from '@/lib/errors';
 import { KpiCard } from '@/components/KpiCard';
+import { CollapsibleSection } from '@/components/CollapsibleSection';
 import { GettingStartedDashboard } from '@/components/GettingStartedDashboard';
 import { LineChart } from '@/components/charts/LineChart';
 import { DonutChart } from '@/components/charts/DonutChart';
@@ -102,7 +103,7 @@ function QuickAction({
 
 function greeting(): string {
   const h = new Date().getHours();
-  if (h < 5)  return 'Burning the midnight oil';
+  if (h < 5)  return 'Working late';
   if (h < 12) return 'Good morning';
   if (h < 18) return 'Good afternoon';
   return 'Good evening';
@@ -311,7 +312,7 @@ export function DashboardPage() {
           <div className="flex flex-wrap items-center gap-2">
             <QuickAction to="/members" label="+ Invite member" primary />
             <QuickAction to="/work"     label="Offer work" />
-            <QuickAction to="/invoices" label="Mark paid" />
+            <QuickAction to="/invoices?status=sent,overdue" label="Mark paid" />
             <QuickAction to="/inbox"    label="Open inbox" />
           </div>
         </div>
@@ -416,8 +417,9 @@ export function DashboardPage() {
       </div>
 
       {/* Charts row — Revenue trend + Status mix */}
-      <div className="mb-5 grid gap-3 lg:grid-cols-2">
-        <section className="ozly-card p-5">
+      <CollapsibleSection id="dash-charts" title="Trends" defaultOpen={true}>
+      <div className="grid gap-3 lg:grid-cols-2">
+        <section className="rounded-xl border border-navy-100 p-4">
           <div className="mb-1 flex items-baseline justify-between">
             <h2 className="font-display text-sm font-bold text-navy-800">
               Revenue paid · {periodLabel.toLowerCase()}
@@ -437,7 +439,7 @@ export function DashboardPage() {
           />
         </section>
 
-        <section className="ozly-card p-5">
+        <section className="rounded-xl border border-navy-100 p-4">
           <div className="mb-1 flex items-baseline justify-between">
             <h2 className="font-display text-sm font-bold text-navy-800">Invoice status</h2>
             <Link to="/invoices" className="text-[11px] font-semibold text-brand-700 hover:text-brand-600">
@@ -461,10 +463,12 @@ export function DashboardPage() {
           />
         </section>
       </div>
+      </CollapsibleSection>
 
       {/* Bottom row — Top subs + Coming up */}
+      <CollapsibleSection id="dash-more" title="Top subs & coming up" defaultOpen={false}>
       <div className="grid gap-3 lg:grid-cols-2">
-        <section className="ozly-card p-5">
+        <section className="rounded-xl border border-navy-100 p-4">
           <div className="mb-3 flex items-baseline justify-between">
             <div>
               <h2 className="font-display text-sm font-bold text-navy-800">Top sub-contractors</h2>
@@ -508,7 +512,7 @@ export function DashboardPage() {
           </ul>
         </section>
 
-        <section className="ozly-card p-5">
+        <section className="rounded-xl border border-navy-100 p-4">
           <div className="mb-3 flex items-baseline justify-between">
             <h2 className="font-display text-sm font-bold text-navy-800">Coming up · next 7 days</h2>
             <Link to="/work" className="text-[11px] font-semibold text-brand-700 hover:text-brand-600">
@@ -550,6 +554,7 @@ export function DashboardPage() {
           )}
         </section>
       </div>
+      </CollapsibleSection>
     </div>
   );
 }
@@ -693,6 +698,9 @@ function StragglersPanel(props: {
   // operate on the full set regardless of expand state.
   const [stragglersExpanded, setStragglersExpanded] = useState(false);
   const STRAGGLERS_COLLAPSED_LIMIT = 5;
+  // Done + inactive rows fold behind a single toggle row (default closed) —
+  // they're confirmation, not action, so they shouldn't cost vertical space.
+  const [quietRowsOpen, setQuietRowsOpen] = useState(false);
   // Hide-recently-reminded filter — persists across this session so the
   // admin doesn't have to re-pick after every navigation. localStorage
   // because state is per-user, not per-org (their preference).
@@ -701,7 +709,8 @@ function StragglersPanel(props: {
       const v = localStorage.getItem('ozly:dashboard:hide-reminded');
       if (v === '24h' || v === '72h' || v === 'off') return v;
     } catch { /* SSR / private mode */ }
-    return 'off';
+    // Default fallback only — a stored user choice above always wins.
+    return '24h';
   });
   function setHideRemindedPersist(v: 'off' | '24h' | '72h') {
     setHideReminded(v);
@@ -802,7 +811,7 @@ function StragglersPanel(props: {
     return (
       <section className="ozly-card mb-5 p-5">
         <div className="flex items-center gap-2 text-xs text-navy-400">
-          <Spinner size="sm" label="Loading stragglers" /> Loading invoice status…
+          <Spinner size="sm" label="Loading invoice status" /> Loading invoice status…
         </div>
       </section>
     );
@@ -838,6 +847,108 @@ function StragglersPanel(props: {
     : stragglers.slice(0, STRAGGLERS_COLLAPSED_LIMIT);
   const stragglersOverflow = stragglers.length - visibleStragglers.length;
 
+  // Shared row renderer — used for the always-visible pending rows and for
+  // the done/inactive rows folded behind the toggle at the bottom.
+  function renderMemberRow(r: StragglerRow) {
+    const status: 'pending' | 'done' | 'inactive' =
+      r.uninvoiced_count > 0 ? 'pending'
+      : r.completed_job_count > 0 ? 'done'
+      : 'inactive';
+    return (
+      <li
+        key={r.member_user_id}
+        className={`flex items-center gap-3 rounded-lg p-2 ${
+          status === 'pending'
+            ? 'bg-amber-50/50'
+            : status === 'done'
+              ? 'bg-brand-50/40'
+              : 'bg-navy-50/30'
+        }`}
+      >
+        {status === 'pending' && stragglers.length > 1 ? (
+          <input
+            type="checkbox"
+            aria-label={`Select ${r.member_name}`}
+            checked={selectedIds.has(r.member_user_id)}
+            onChange={() => toggleSelected(r.member_user_id)}
+            className="h-3.5 w-3.5 shrink-0 rounded border-amber-400 text-amber-600 focus:ring-amber-500"
+          />
+        ) : (
+          <span
+            className={`h-2 w-2 shrink-0 rounded-full ${
+              status === 'pending' ? 'bg-amber-500'
+              : status === 'done'    ? 'bg-brand-500'
+              : 'bg-navy-300'
+            }`}
+          />
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 truncate text-[13px] font-semibold text-navy-800">
+            <span className="truncate">{r.member_name}</span>
+            {status === 'pending' && r.last_reminder_at && (() => {
+              const ago = relativeAgo(r.last_reminder_at);
+              if (!ago) return null;
+              return (
+                <span
+                  title={`Reminder sent ${new Date(r.last_reminder_at).toLocaleString()}`}
+                  className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700"
+                >
+                  Reminded {ago}
+                </span>
+              );
+            })()}
+          </div>
+          <div className="truncate text-[11px] text-navy-500">
+            {status === 'pending' && (
+              <>
+                <strong className="text-amber-700">{r.uninvoiced_count} uninvoiced</strong>
+                {' · '}
+                {r.completed_job_count} done
+                {r.invoiced_count > 0 && <> · {r.invoiced_count} billed</>}
+                {r.completed_job_value > 0 && <> · ~{formatMoney(Math.round(r.completed_job_value))}</>}
+              </>
+            )}
+            {status === 'done' && (
+              <>
+                All {r.completed_job_count} job{r.completed_job_count === 1 ? '' : 's'} invoiced
+                {r.invoice_count_in_period > 0 && <> · {r.invoice_count_in_period} sent</>}
+              </>
+            )}
+            {status === 'inactive' && (
+              <>No completed work this period</>
+            )}
+          </div>
+        </div>
+        {status === 'pending' && (() => {
+          // After 4 hours of staying uninvoiced, allow another reminder.
+          // Inside that window we still let the admin click, but the
+          // label changes from "Send reminder" → "Remind again" so the
+          // intent is explicit.
+          const lastIso = r.last_reminder_at;
+          const recentlyReminded = lastIso
+            ? (Date.now() - new Date(lastIso).getTime()) < 4 * 3_600_000
+            : false;
+          const label = reminding === r.member_user_id
+            ? 'Sending…'
+            : recentlyReminded ? 'Remind again' : 'Send reminder';
+          return (
+            <button
+              onClick={() => void sendReminder(r)}
+              disabled={reminding === r.member_user_id}
+              className={`shrink-0 rounded-md px-2.5 py-1 text-[11px] font-semibold disabled:opacity-50 ${
+                recentlyReminded
+                  ? 'bg-amber-100 text-amber-800 ring-1 ring-amber-200 hover:bg-amber-200'
+                  : 'bg-amber-600 text-white hover:bg-amber-500'
+              }`}
+            >
+              {label}
+            </button>
+          );
+        })()}
+      </li>
+    );
+  }
+
   return (
     <section className="ozly-card mb-5 p-5">
       <div className="mb-3 flex items-baseline justify-between gap-2">
@@ -846,13 +957,13 @@ function StragglersPanel(props: {
             Who's billed · {periodLabel.toLowerCase()}
           </h2>
           <p className="mt-0.5 text-[11.5px] text-navy-400">
-            Stragglers first. <strong>Send reminder</strong> pushes a notification + email asking for the invoice.
+            Members waiting to invoice show first. <strong>Send reminder</strong> pushes a notification + email asking for the invoice.
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2 text-[10.5px] font-semibold">
           {allPendingStragglers.length > 1 && (
             <select
-              aria-label="Hide recently reminded stragglers"
+              aria-label="Hide recently reminded members"
               value={hideReminded}
               onChange={(e) => setHideRemindedPersist(e.target.value as 'off' | '24h' | '72h')}
               className="rounded-md border border-navy-200 bg-white px-2 py-0.5 text-[10.5px] font-medium text-navy-700"
@@ -879,7 +990,7 @@ function StragglersPanel(props: {
         <div className="mb-2 flex items-center justify-between gap-2 rounded-md bg-navy-50/60 px-3 py-1.5 text-[11.5px] text-navy-500">
           <span>
             <strong className="font-semibold text-navy-700">{hiddenCount}</strong>
-            {' '}straggler{hiddenCount === 1 ? '' : 's'} hidden — reminded recently.
+            {' '}member{hiddenCount === 1 ? '' : 's'} waiting to invoice hidden — reminded recently.
           </span>
           <button
             type="button"
@@ -954,105 +1065,7 @@ function StragglersPanel(props: {
       )}
 
       <ul className="space-y-1">
-        {[...visibleStragglers, ...allDone, ...inactive].map((r) => {
-          const status: 'pending' | 'done' | 'inactive' =
-            r.uninvoiced_count > 0 ? 'pending'
-            : r.completed_job_count > 0 ? 'done'
-            : 'inactive';
-          return (
-            <li
-              key={r.member_user_id}
-              className={`flex items-center gap-3 rounded-lg p-2 ${
-                status === 'pending'
-                  ? 'bg-amber-50/50'
-                  : status === 'done'
-                    ? 'bg-brand-50/40'
-                    : 'bg-navy-50/30'
-              }`}
-            >
-              {status === 'pending' && stragglers.length > 1 ? (
-                <input
-                  type="checkbox"
-                  aria-label={`Select ${r.member_name}`}
-                  checked={selectedIds.has(r.member_user_id)}
-                  onChange={() => toggleSelected(r.member_user_id)}
-                  className="h-3.5 w-3.5 shrink-0 rounded border-amber-400 text-amber-600 focus:ring-amber-500"
-                />
-              ) : (
-                <span
-                  className={`h-2 w-2 shrink-0 rounded-full ${
-                    status === 'pending' ? 'bg-amber-500'
-                    : status === 'done'    ? 'bg-brand-500'
-                    : 'bg-navy-300'
-                  }`}
-                />
-              )}
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 truncate text-[13px] font-semibold text-navy-800">
-                  <span className="truncate">{r.member_name}</span>
-                  {status === 'pending' && r.last_reminder_at && (() => {
-                    const ago = relativeAgo(r.last_reminder_at);
-                    if (!ago) return null;
-                    return (
-                      <span
-                        title={`Reminder sent ${new Date(r.last_reminder_at).toLocaleString()}`}
-                        className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700"
-                      >
-                        Reminded {ago}
-                      </span>
-                    );
-                  })()}
-                </div>
-                <div className="truncate text-[11px] text-navy-500">
-                  {status === 'pending' && (
-                    <>
-                      <strong className="text-amber-700">{r.uninvoiced_count} uninvoiced</strong>
-                      {' · '}
-                      {r.completed_job_count} done
-                      {r.invoiced_count > 0 && <> · {r.invoiced_count} billed</>}
-                      {r.completed_job_value > 0 && <> · ~${Math.round(r.completed_job_value)}</>}
-                    </>
-                  )}
-                  {status === 'done' && (
-                    <>
-                      All {r.completed_job_count} job{r.completed_job_count === 1 ? '' : 's'} invoiced
-                      {r.invoice_count_in_period > 0 && <> · {r.invoice_count_in_period} sent</>}
-                    </>
-                  )}
-                  {status === 'inactive' && (
-                    <>No completed work this period</>
-                  )}
-                </div>
-              </div>
-              {status === 'pending' && (() => {
-                // After 4 hours of staying uninvoiced, allow another reminder.
-                // Inside that window we still let the admin click, but the
-                // label changes from "Send reminder" → "Remind again" so the
-                // intent is explicit.
-                const lastIso = r.last_reminder_at;
-                const recentlyReminded = lastIso
-                  ? (Date.now() - new Date(lastIso).getTime()) < 4 * 3_600_000
-                  : false;
-                const label = reminding === r.member_user_id
-                  ? 'Sending…'
-                  : recentlyReminded ? 'Remind again' : 'Send reminder';
-                return (
-                  <button
-                    onClick={() => void sendReminder(r)}
-                    disabled={reminding === r.member_user_id}
-                    className={`shrink-0 rounded-md px-2.5 py-1 text-[11px] font-semibold disabled:opacity-50 ${
-                      recentlyReminded
-                        ? 'bg-amber-100 text-amber-800 ring-1 ring-amber-200 hover:bg-amber-200'
-                        : 'bg-amber-600 text-white hover:bg-amber-500'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                );
-              })()}
-            </li>
-          );
-        })}
+        {visibleStragglers.map((r) => renderMemberRow(r))}
       </ul>
 
       {stragglersTooMany && (
@@ -1066,6 +1079,29 @@ function StragglersPanel(props: {
               ? 'Show less ↑'
               : `Show ${stragglersOverflow} more →`}
           </button>
+        </div>
+      )}
+
+      {/* Done + inactive rows folded behind one quiet toggle — they confirm
+          things are fine, so they stay out of the way by default. */}
+      {(allDone.length > 0 || inactive.length > 0) && (
+        <div className="mt-2">
+          <button
+            type="button"
+            onClick={() => setQuietRowsOpen((v) => !v)}
+            aria-expanded={quietRowsOpen}
+            className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-navy-50/50 px-3 py-1.5 text-[11.5px] font-medium text-navy-500 transition-colors hover:bg-navy-50 hover:text-navy-700"
+          >
+            <span>
+              ✓ {allDone.length} all invoiced · {inactive.length} no work this period
+            </span>
+            <span aria-hidden="true">{quietRowsOpen ? '▴' : '▾'}</span>
+          </button>
+          {quietRowsOpen && (
+            <ul className="mt-1 space-y-1">
+              {[...allDone, ...inactive].map((r) => renderMemberRow(r))}
+            </ul>
+          )}
         </div>
       )}
     </section>

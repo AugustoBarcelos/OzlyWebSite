@@ -54,7 +54,14 @@ function relTime(iso: string | null): string {
 
 type AddMode = null | 'choose' | 'google' | 'ical';
 
-export function CalendarFeedsSection({ orgId }: { orgId: string }) {
+export function CalendarFeedsSection({
+  orgId,
+  onCountChange,
+}: {
+  orgId: string;
+  /** Reports the connection count so the wrapping CollapsibleSection can badge it. */
+  onCountChange?: (count: number) => void;
+}) {
   const { notify } = useToast();
   const [rows, setRows] = useState<CalendarConnection[] | null>(null);
   const [members, setMembers] = useState<MemberOption[]>([]);
@@ -85,10 +92,13 @@ export function CalendarFeedsSection({ orgId }: { orgId: string }) {
     if (error) {
       notify(friendlyError(error, 'Could not load calendar feeds.'), 'error');
       setRows([]);
+      onCountChange?.(0);
       return;
     }
-    setRows((data ?? []) as CalendarConnection[]);
-  }, [orgId, notify]);
+    const list = (data ?? []) as CalendarConnection[];
+    setRows(list);
+    onCountChange?.(list.length);
+  }, [orgId, notify, onCountChange]);
 
   useEffect(() => {
     void load();
@@ -151,17 +161,16 @@ export function CalendarFeedsSection({ orgId }: { orgId: string }) {
     await load();
   }
 
+  // Chrome (card + "Calendar feeds" heading) comes from the CollapsibleSection
+  // wrapping this component in /settings and /settings/integrations.
   return (
-    <section className="ozly-card mb-4 p-5">
+    <div>
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-sm font-semibold text-navy-700">Calendar feeds</h2>
-          <p className="mt-1 max-w-md text-xs text-navy-400">
-            Connect your Google Calendar (official OAuth) so events
-            matching an accepted member become job offers automatically.
-            iCal URL is supported as a fallback for Outlook / Apple.
-          </p>
-        </div>
+        <p className="max-w-md text-xs text-navy-400">
+          Connect your Google Calendar (official OAuth) so events
+          matching an accepted member become job offers automatically.
+          iCal URL is supported as a fallback for Outlook / Apple.
+        </p>
         {addMode === null && (
           <button
             type="button"
@@ -292,7 +301,7 @@ export function CalendarFeedsSection({ orgId }: { orgId: string }) {
           </div>
         ))}
       </div>
-    </section>
+    </div>
   );
 }
 
@@ -534,36 +543,42 @@ function AddGoogleFlow(props: {
           className={field}
         />
       </label>
-      <label className="mt-3 block text-xs font-medium text-navy-700">
-        Default member <span className="text-navy-300">(optional)</span>
-        <select
-          value={defaultMember}
-          onChange={(e) => setDefaultMember(e.target.value)}
-          className={field}
-        >
-          <option value="">— none, skip unmatched events —</option>
-          {members.map((m) => (
-            <option key={m.user_id} value={m.user_id}>{m.label}</option>
-          ))}
-        </select>
-        <span className="mt-1 block text-[10.5px] text-navy-400">
-          We match by attendee email or by member name in the event title.
-          Unmatched events go to the default member (or are skipped).
-        </span>
-      </label>
-      <label className="mt-3 flex items-start gap-2 text-xs text-navy-700">
-        <input
-          type="checkbox"
-          checked={autoSend}
-          onChange={(e) => setAutoSend(e.target.checked)}
-          className="mt-0.5 h-4 w-4 rounded border-navy-300 text-brand-600 focus:ring-brand-200"
-        />
-        <span>
-          <strong>Auto-send to the matched member.</strong> When off (recommended
-          for the first week), imported events sit as drafts in /work for you
-          to review and send manually.
-        </span>
-      </label>
+      {/* Optional fields tucked away — the happy path is Label → Continue with Google. */}
+      <details className="mt-3">
+        <summary className="cursor-pointer select-none text-xs font-semibold text-navy-500 hover:text-navy-700">
+          Options ▾
+        </summary>
+        <label className="mt-3 block text-xs font-medium text-navy-700">
+          Default member <span className="text-navy-300">(optional)</span>
+          <select
+            value={defaultMember}
+            onChange={(e) => setDefaultMember(e.target.value)}
+            className={field}
+          >
+            <option value="">— none, skip unmatched events —</option>
+            {members.map((m) => (
+              <option key={m.user_id} value={m.user_id}>{m.label}</option>
+            ))}
+          </select>
+          <span className="mt-1 block text-[10.5px] text-navy-400">
+            We match by attendee email or by member name in the event title.
+            Unmatched events go to the default member (or are skipped).
+          </span>
+        </label>
+        <label className="mt-3 flex items-start gap-2 text-xs text-navy-700">
+          <input
+            type="checkbox"
+            checked={autoSend}
+            onChange={(e) => setAutoSend(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-navy-300 text-brand-600 focus:ring-brand-200"
+          />
+          <span>
+            <strong>Auto-send to the matched member.</strong> When off (recommended
+            for the first week), imported events sit as drafts in /work for you
+            to review and send manually.
+          </span>
+        </label>
+      </details>
       <div className="mt-3 rounded-md bg-white px-3 py-2 text-[10.5px] leading-snug text-navy-500 ring-1 ring-navy-100">
         Clicking <strong>Continue with Google</strong> will redirect you to a
         Google consent screen. We only ask for read access to your calendar

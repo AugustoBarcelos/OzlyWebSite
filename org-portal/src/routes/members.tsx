@@ -192,7 +192,7 @@ export function MembersPage() {
             </div>
             <div>
               {atSeatLimit
-                ? 'You can\'t invite anyone else until you upgrade your plan or suspend an existing member.'
+                ? "You've reached your plan's member limit. Upgrade your plan to invite more."
                 : 'You have one seat left on your current plan. Upgrade now to keep onboarding without interruption.'}
               {' '}
               <Link to="/billing" className="font-semibold underline">
@@ -689,6 +689,15 @@ function MemberDetailModal(props: {
   );
 }
 
+// Plain-words description of what each role can do, shown under the role
+// picker. 'owner' is never invitable but the Record stays total for safety.
+const ROLE_HELP: Record<MembershipRole, string> = {
+  owner: 'Full control of the organisation.',
+  admin: 'Can do everything you can.',
+  member: 'Does the work and sends you invoices.',
+  accountant: "Can see and download everything, but can't change anything.",
+};
+
 function InviteModal(props: {
   orgId: string;
   planIsFree: boolean;
@@ -812,16 +821,18 @@ function InviteModal(props: {
         ) : (
           <form onSubmit={onSubmit} className="mt-4">
             <div className="inline-flex rounded-md bg-navy-50 p-0.5 text-xs font-medium">
+              {/* "phone" channel never sends an SMS — the flow only produces a
+                  copyable link, so the label says what actually happens. */}
               {(['email', 'phone'] as const).map((c) => (
                 <button
                   key={c}
                   type="button"
                   onClick={() => setChannel(c)}
-                  className={`rounded px-3 py-1 capitalize ${
+                  className={`rounded px-3 py-1 ${
                     channel === c ? 'bg-white text-brand-700 shadow-sm' : 'text-navy-400'
                   }`}
                 >
-                  {c}
+                  {c === 'email' ? 'Email' : 'Share link'}
                 </button>
               ))}
             </div>
@@ -845,15 +856,12 @@ function InviteModal(props: {
                 <option value="admin">Admin (full access)</option>
                 <option value="accountant">Accountant (read-only, can export)</option>
               </select>
-              <p className="mt-1 text-[11px] text-navy-400">
-                Accountants see invoices/work/activity and run exports but can't mark paid, request invoices, or change settings.
-              </p>
+              <p className="mt-1 text-[11px] text-navy-400">{ROLE_HELP[role]}</p>
             </label>
 
             {channel === 'phone' && (
               <p className="mt-2 text-[11px] text-navy-400">
-                SMS delivery isn't available yet — we'll create the invitation and give you a link to
-                share.
+                Copy the invite link and send it any way you like.
               </p>
             )}
 

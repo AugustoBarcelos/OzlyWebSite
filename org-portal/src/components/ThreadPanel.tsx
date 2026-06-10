@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type SyntheticEvent } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Spinner } from '@/components/Spinner';
 import { friendlyError } from '@/lib/errors';
@@ -23,6 +23,10 @@ export function ThreadPanel({
   const [messages, setMessages] = useState<ThreadMessageRow[] | null>(null);
   const [body, setBody] = useState('');
   const [sending, setSending] = useState(false);
+  // Collapsed by default; opens itself once when the initial load finds
+  // messages. After that, the admin's manual toggle wins.
+  const [open, setOpen] = useState(false);
+  const autoOpened = useRef(false);
   const listEnd = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
@@ -43,6 +47,13 @@ export function ThreadPanel({
     listEnd.current?.scrollIntoView({ block: 'nearest' });
   }, [messages]);
 
+  useEffect(() => {
+    if (!autoOpened.current && messages !== null && messages.length > 0) {
+      autoOpened.current = true;
+      setOpen(true);
+    }
+  }, [messages]);
+
   async function send() {
     const text = body.trim();
     if (!text) return;
@@ -61,18 +72,27 @@ export function ThreadPanel({
     await load();
   }
 
+  function onToggle(e: SyntheticEvent<HTMLDetailsElement>) {
+    setOpen(e.currentTarget.open);
+  }
+
   return (
-    <div className="mt-4 rounded-lg border border-navy-100 bg-navy-50/40 p-3">
-      <div className="mb-2 text-[11px] font-medium uppercase tracking-wide text-navy-400">
+    <details
+      className="mt-4 rounded-lg border border-navy-100 bg-navy-50/40"
+      open={open}
+      onToggle={onToggle}
+    >
+      <summary className="cursor-pointer list-none px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-navy-500 [&::-webkit-details-marker]:hidden">
         Messages with {memberName}
-      </div>
+        {messages !== null && messages.length > 0 && ` · ${messages.length}`}
+      </summary>
+      <div className="px-3 pb-3">
 
       {messages === null ? (
         <div className="py-2"><Spinner size="sm" /></div>
       ) : messages.length === 0 ? (
         <p className="py-2 text-xs text-navy-400">
-          No messages yet. Use this to ask about a change or clarify an invoice — the sub-contractor
-          sees it in the Ozly app.
+          No messages yet. Ask a question — they'll see it in the Ozly app.
         </p>
       ) : (
         <div className="max-h-56 space-y-2 overflow-y-auto pr-1">
@@ -122,9 +142,10 @@ export function ThreadPanel({
           disabled={sending || !body.trim()}
           className="rounded-md bg-brand-600 px-3 py-2 text-xs font-medium text-white hover:bg-brand-500 disabled:bg-brand-300"
         >
-          {sending ? '…' : 'Send'}
+          {sending ? 'Sending…' : 'Send'}
         </button>
       </div>
-    </div>
+      </div>
+    </details>
   );
 }

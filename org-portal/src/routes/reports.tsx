@@ -10,6 +10,7 @@ import { useOrg } from '@/lib/org';
 import { useToast } from '@/components/Toast';
 import { PageHeader } from '@/components/PageHeader';
 import { Spinner } from '@/components/Spinner';
+import { CollapsibleSection } from '@/components/CollapsibleSection';
 import { formatMoney, formatDate } from '@/lib/format';
 import { friendlyError } from '@/lib/errors';
 import { toCsv, downloadCsv, timestampSuffix } from '@/lib/csv';
@@ -93,6 +94,9 @@ export function ReportsPage() {
       const isMissingRpc = code === 'PGRST202' || code === '42883'
         || (error.message ?? '').includes('Could not find the function');
       if (isMissingRpc) {
+        console.warn(
+          'Reports RPC missing — apply Supabase migration 20260605200000_org_bas_pnl.sql to enable BAS export + P&L summaries.',
+        );
         setReportsMissing(true);
         setBasRows([]); // clear stale data from previous successful load
         return;
@@ -128,7 +132,14 @@ export function ReportsPage() {
       const code = (error as { code?: string }).code;
       const isMissingRpc = code === 'PGRST202' || code === '42883'
         || (error.message ?? '').includes('Could not find the function');
-      if (isMissingRpc) { setReportsMissing(true); setPnl(null); return; }
+      if (isMissingRpc) {
+        console.warn(
+          'Reports RPC missing — apply Supabase migration 20260605200000_org_bas_pnl.sql to enable BAS export + P&L summaries.',
+        );
+        setReportsMissing(true);
+        setPnl(null);
+        return;
+      }
       notify(friendlyError(error), 'error');
       setPnl(null);
       return;
@@ -172,20 +183,18 @@ export function ReportsPage() {
 
       {reportsMissing && (
         <div className="mb-5 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-xs leading-relaxed text-blue-900">
-          <strong className="font-semibold">Reports not enabled yet.</strong>{' '}
-          Apply Supabase migration <code className="rounded bg-blue-100 px-1">20260605200000_org_bas_pnl.sql</code>{' '}
-          to enable BAS export + P&L summaries.
+          Reports aren't available yet — contact support.
         </div>
       )}
 
       {/* BAS */}
-      <section className="ozly-card mb-5 p-5">
-        <h2 className="text-sm font-semibold text-navy-700">BAS — quarterly</h2>
-        <p className="mt-1 text-xs text-navy-400">
-          Australian fiscal year (Jul→Jun). Columns map directly to ATO portal fields.
-        </p>
-
-        <div className="mt-4 flex flex-wrap items-end gap-3">
+      <CollapsibleSection
+        id="reports-bas"
+        title="BAS — quarterly"
+        subtitle="Australian fiscal year (Jul→Jun). Columns map directly to ATO portal fields."
+        defaultOpen={true}
+      >
+        <div className="flex flex-wrap items-end gap-3">
           <label className="block text-[11px] font-medium text-navy-600">
             Fiscal year
             <select
@@ -231,8 +240,16 @@ export function ReportsPage() {
               <Stat label="GST collected" value={basTotals.gst} accent="text-brand-700" />
               <Stat label="Total invoiced" value={basTotals.total} />
             </div>
-            <div className="mt-4 max-h-80 overflow-auto rounded-md border border-navy-100">
-              <table className="min-w-full text-left text-xs">
+            {/* Invoice rows folded away by default — totals above answer the
+                BAS question; the row-level detail is for spot checks only.
+                Styled to match the invoices page audit trail. */}
+            <details className="mt-4 rounded-lg border border-navy-100 bg-navy-50/30">
+              <summary className="cursor-pointer list-none px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-navy-500">
+                Show invoices · {basRows.length}
+                <span className="ml-2 text-navy-300">▾</span>
+              </summary>
+              <div className="max-h-80 overflow-auto border-t border-navy-100">
+                <table className="min-w-full text-left text-xs">
                 <thead className="bg-navy-50 text-[10px] uppercase tracking-wide text-navy-500">
                   <tr>
                     <th className="px-2 py-2 font-medium">#</th>
@@ -255,18 +272,21 @@ export function ReportsPage() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
-            </div>
+                </table>
+              </div>
+            </details>
           </>
         )}
-      </section>
+      </CollapsibleSection>
 
       {/* P&L */}
-      <section className="ozly-card p-5">
-        <h2 className="text-sm font-semibold text-navy-700">P&amp;L summary</h2>
-        <p className="mt-1 text-xs text-navy-400">Default range = current fiscal year. Adjust to drill down.</p>
-
-        <div className="mt-4 flex flex-wrap items-end gap-3">
+      <CollapsibleSection
+        id="reports-pnl"
+        title="Money in & out (P&L)"
+        subtitle="Default range = current fiscal year. Adjust to drill down."
+        defaultOpen={false}
+      >
+        <div className="flex flex-wrap items-end gap-3">
           <label className="block text-[11px] font-medium text-navy-600">
             From
             <input
@@ -309,7 +329,7 @@ export function ReportsPage() {
             )}
           </div>
         )}
-      </section>
+      </CollapsibleSection>
     </>
   );
 }
