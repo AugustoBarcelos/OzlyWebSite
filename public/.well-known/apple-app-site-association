@@ -9,7 +9,8 @@
           "/refer/*",
           "/v/*",
           "/me/*",
-          "/me/auth"
+          "/me/auth",
+          "/invite/*"
         ]
       }
     ]

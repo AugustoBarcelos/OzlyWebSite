@@ -167,6 +167,28 @@ export function SignupPage() {
               {submitting ? 'Creating…' : 'Start free trial →'}
             </button>
 
+            <p className="mt-3 text-center text-[11.5px] text-navy-400">
+              By creating an organisation you agree to the{' '}
+              <a
+                href="https://ozly.au/terms-of-use/business"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-brand-700 hover:text-brand-600"
+              >
+                Business Terms
+              </a>{' '}
+              and{' '}
+              <a
+                href="https://ozly.au/privacy-policy/business"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-brand-700 hover:text-brand-600"
+              >
+                Privacy Policy
+              </a>
+              .
+            </p>
+
             {/* Compliance (non-negotiable): no employment relationship. */}
             <p className="mt-4 rounded-lg bg-navy-50/70 px-3.5 py-2.5 text-[11.5px] leading-relaxed text-navy-500">
               Ozly is a tool and does not determine your relationship with members. Sub-contractors

@@ -618,13 +618,16 @@ export function InvoicesPage() {
         return;
       }
 
-      // Fetch each sub's business banking once. We could batch this in a
-      // single .in() query — doing that for performance.
+      // Bank details are owner-only under RLS, so a direct user_businesses
+      // read returns nothing for an org admin. org_aba_payment_details is the
+      // sanctioned path: SECURITY DEFINER, admin-gated, scoped to accepted
+      // members of this org.
       const userIds = [...new Set(selected.map((r) => r.user_id))];
-      const { data: businesses } = await supabase
-        .from('user_businesses')
-        .select('user_id, bsb, account_number, company_name')
-        .in('user_id', userIds);
+      const { data: businesses, error: bankError } = await supabase.rpc('org_aba_payment_details', {
+        p_org_id: orgId,
+        p_user_ids: userIds,
+      });
+      if (bankError) throw bankError;
       const bankByUser = new Map<string, { bsb: string; account_number: string; company_name: string }>();
       ((businesses ?? []) as { user_id: string; bsb: string; account_number: string; company_name: string }[]).forEach((b) => {
         bankByUser.set(b.user_id, b);

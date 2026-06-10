@@ -16,6 +16,7 @@ const ReferralLanding = lazy(() => import("./pages/ReferralLanding"));
 const AffiliateDashboard = lazy(() => import("./pages/AffiliateDashboard"));
 const AffiliateAuth = lazy(() => import("./pages/AffiliateAuth"));
 const AffiliateApply = lazy(() => import("./pages/AffiliateApply"));
+const InviteLanding = lazy(() => import("./pages/InviteLanding"));
 
 function RouteFallback() {
   return (
@@ -50,6 +51,9 @@ export default function App() {
             <Route path="/me/:code" element={<AffiliateDashboard />} />
             {/* Form público de aplicação pra virar afiliado. */}
             <Route path="/affiliates/apply" element={<AffiliateApply />} />
+            {/* Fallback web dos convites de organização — o app intercepta
+                via Universal/App Link; sem app instalado cai aqui. */}
+            <Route path="/invite/:token" element={<InviteLanding />} />
           </Routes>
         </Suspense>
       </main>

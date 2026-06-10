@@ -38,11 +38,18 @@ export interface AbaFileOptions {
   processingDate?: string;
 }
 
+// Fixed-width records: any control char (CR/LF especially) or non-ASCII byte
+// in a free-text field would shift or fabricate record columns in the bank
+// file. Sub-controlled fields (company/account names) flow in here, so this
+// is a security boundary, not just tidiness.
+function toAbaAscii(s: string): string {
+  return (s ?? '').replace(/[^\x20-\x7E]/g, ' ');
+}
 function padRight(s: string, len: number): string {
-  return (s ?? '').slice(0, len).padEnd(len, ' ');
+  return toAbaAscii(s).slice(0, len).padEnd(len, ' ');
 }
 function padLeft(s: string, len: number): string {
-  return (s ?? '').slice(0, len).padStart(len, '0');
+  return toAbaAscii(s).replace(/ /g, '').slice(0, len).padStart(len, '0');
 }
 function normaliseBsb(bsb: string): string {
   // Accept "123456" or "123-456" → return "123-456" (with dash).
