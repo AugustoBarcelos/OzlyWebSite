@@ -22,7 +22,7 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - run: |
           test -f help/index.html || { echo "::error::help/index.html missing"; exit 1; }
           grep -q '<html' help/index.html || { echo "::error::no <html> tag"; exit 1; }
@@ -32,11 +32,11 @@ jobs:
     if: vars.ENABLE_HELP_DEPLOY == 'true' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: cloudflare/pages-action@v1
+      - uses: actions/checkout@v6
+      # pages-action@v1 is deprecated (stuck on Node 20) — wrangler-action is
+      # Cloudflare's supported path; `pages deploy` is the same publish flow.
+      - uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          projectName: ozly-help
-          directory: help
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          command: pages deploy help --project-name=ozly-help --branch=main

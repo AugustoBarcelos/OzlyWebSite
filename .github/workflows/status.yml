@@ -26,7 +26,7 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Verify required files
         run: |
           test -f status/index.html || { echo "::error::status/index.html missing"; exit 1; }
@@ -39,13 +39,13 @@ jobs:
     if: vars.ENABLE_STATUS_DEPLOY == 'true' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
+      # pages-action@v1 is deprecated (stuck on Node 20) — wrangler-action is
+      # Cloudflare's supported path; `pages deploy` is the same publish flow.
       - name: Deploy to Cloudflare Pages
-        uses: cloudflare/pages-action@v1
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          projectName: ozly-status
-          directory: status
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          command: pages deploy status --project-name=ozly-status --branch=main
