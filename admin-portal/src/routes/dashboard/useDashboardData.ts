@@ -12,6 +12,7 @@ import type {
   GeoSplitResponse,
   JobsTimeseriesResponse,
   KpiDashboardResponse,
+  PendingCancellationsResponse,
   Period,
   RecentAdminActionsResponse,
   RevenueSummaryResponse,
@@ -48,6 +49,7 @@ export interface DashboardData {
   activationFunnel: ActivationFunnelResponse | null;
   timeToActivation: TimeToActivationResponse | null;
   downloadsByPlatform: DownloadsByPlatformResponse | null;
+  pendingCancellations: PendingCancellationsResponse | null;
 }
 
 const EMPTY: DashboardData = {
@@ -69,6 +71,7 @@ const EMPTY: DashboardData = {
   activationFunnel: null,
   timeToActivation: null,
   downloadsByPlatform: null,
+  pendingCancellations: null,
 };
 
 async function safeCall<T>(
@@ -124,6 +127,7 @@ export function useDashboardData(period: Period) {
         activationFunnel,
         timeToActivation,
         downloadsByPlatform,
+        pendingCancellations,
       ] = await Promise.all([
         callRpc<KpiDashboardResponse>('admin_kpi_dashboard', {
           p_period_days: period,
@@ -169,6 +173,9 @@ export function useDashboardData(period: Period) {
         safeCall<DownloadsByPlatformResponse>('admin_downloads_by_platform', {
           p_period_days: period,
         }),
+        safeCall<PendingCancellationsResponse>('admin_pending_cancellations', {
+          p_window_days: 30,
+        }),
       ]);
       setData({
         kpi,
@@ -189,6 +196,7 @@ export function useDashboardData(period: Period) {
         activationFunnel,
         timeToActivation,
         downloadsByPlatform,
+        pendingCancellations,
       });
     } catch (e) {
       const msg =

@@ -15,7 +15,7 @@ interface Props {
 const COHORT_CELLS = ['D1', 'D7', 'D14', 'D30', 'D60'];
 
 export function BoardTab({ data, loading, period }: Props) {
-  const { kpi, revenue, cohort, loginRetention, timeseries } = data;
+  const { kpi, revenue, cohort, loginRetention, timeseries, pendingCancellations } = data;
   const retentionSource = loginRetention ?? cohort;
   const retentionLabel = loginRetention
     ? 'Login retention by signup cohort'
@@ -49,7 +49,7 @@ export function BoardTab({ data, loading, period }: Props) {
 
   return (
     <div className="space-y-6">
-      <Grid numItemsSm={2} numItemsMd={3} numItemsLg={5} className="gap-4">
+      <Grid numItemsSm={2} numItemsMd={3} numItemsLg={6} className="gap-4">
         <KpiHero
           label="MRR"
           value={mrr}
@@ -86,11 +86,24 @@ export function BoardTab({ data, loading, period }: Props) {
         <KpiHero
           label={`Churn · ${period}d`}
           value={churn}
-          hint={churn === null ? 'Pending RC sync' : 'Cancellations in period'}
+          hint={churn === null ? 'Pending RC sync' : 'Paid subs expired in period'}
           loading={loading && !kpi}
           tone="warning"
           isIncreasePositive={false}
           href="/users?status=churned"
+        />
+        <KpiHero
+          label="Cancel scheduled"
+          value={pendingCancellations?.count ?? null}
+          hint={
+            pendingCancellations === null
+              ? 'Pending RC sync'
+              : `Auto-renew off — ${formatCurrencyAUD(pendingCancellations.potential_mrr_loss_aud)} MRR at risk`
+          }
+          loading={loading && !pendingCancellations}
+          tone="warning"
+          isIncreasePositive={false}
+          href="/inbox"
         />
       </Grid>
 

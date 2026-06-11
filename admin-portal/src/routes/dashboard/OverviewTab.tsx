@@ -92,7 +92,7 @@ export function OverviewTab({ data, loading, period }: Props) {
           hint={
             (kpi?.churn_period ?? revenue?.churn_period) === null
               ? 'Pending RevenueCat sync'
-              : 'Cancellations in period'
+              : 'Paid subs expired in period'
           }
           loading={loading && !kpi}
           tone="warning"
