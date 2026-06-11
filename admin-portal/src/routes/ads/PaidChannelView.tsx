@@ -78,28 +78,36 @@ export function PaidChannelView({ channel, stubProps }: Props) {
       {/* KPIs */}
       <Grid numItemsSm={2} numItemsLg={4} className="gap-4">
         <KpiCard
-          title="Spend (30d)"
+          title="Gasto (30d)"
           value={totals.total_spend_cents}
           formatter={(v) => (v === null ? '—' : formatCents(v, currency))}
+          href="#campaigns-table"
+          subtitle="clique pra ver por campanha"
         />
         <KpiCard
           title="Conversões (30d)"
           value={totals.total_conversions}
+          to="/growth/funnel"
+          subtitle="clique pra ver o funil completo"
         />
         <KpiCard
-          title="CPA médio"
+          title="Custo por conversão (CPA)"
           value={totals.avg_cpa_cents}
           formatter={(v) => (v === null ? '—' : formatCents(v, currency))}
           isIncreasePositive={false}
+          href="#campaigns-table"
+          subtitle="quanto custa trazer 1 pessoa"
         />
         <KpiCard
           title="Campanhas ativas"
           value={totals.campaigns_count}
+          href="#campaigns-table"
+          subtitle="clique pra ver a lista"
         />
       </Grid>
 
       {/* Campaigns table */}
-      <Card>
+      <Card id="campaigns-table">
         <Title>Campanhas</Title>
         <Text className="mt-1 text-xs text-navy-300">
           Ordenadas por spend (30d). Status reflete o snapshot mais recente.

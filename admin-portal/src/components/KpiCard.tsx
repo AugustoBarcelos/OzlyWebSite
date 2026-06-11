@@ -1,4 +1,7 @@
+import type { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import { BadgeDelta, Card, Metric, Text } from '@tremor/react';
+import { ArrowUpRightIcon } from '@/components/Icons';
 import { formatNumber } from '@/lib/format';
 
 /**
@@ -9,6 +12,9 @@ import { formatNumber } from '@/lib/format';
  *  - `loading` → renders an animate-pulse skeleton instead of the metric.
  *  - `delta` → optional BadgeDelta. Sign of delta drives the badge type
  *    unless `isIncreasePositive` is overridden (e.g. churn going up is bad).
+ *  - `to` / `href` → todo quadro deve ser clicável e levar pro detalhe.
+ *    `to` = rota interna (react-router); `href` = âncora na própria página
+ *    ("#tabela") ou link externo (http…, abre em nova aba).
  */
 
 export interface KpiCardProps {
@@ -22,12 +28,25 @@ export interface KpiCardProps {
   /** Custom formatter; defaults to `formatNumber`. */
   formatter?: (n: number | null) => string;
   loading?: boolean;
+  /** Internal route — card becomes a react-router Link. */
+  to?: string;
+  /** Anchor ("#id") or external URL — card becomes an <a>. */
+  href?: string;
 }
 
 function deltaTypeFor(delta: number): 'increase' | 'decrease' | 'unchanged' {
   if (delta > 0.005) return 'increase';
   if (delta < -0.005) return 'decrease';
   return 'unchanged';
+}
+
+const CLICKABLE_CARD_CLASS =
+  'group relative block cursor-pointer transition-all hover:border-brand-200 hover:shadow-md';
+
+function ClickableArrow() {
+  return (
+    <ArrowUpRightIcon className="absolute right-3 top-3 h-3.5 w-3.5 text-navy-100 transition-colors group-hover:text-brand-500" />
+  );
 }
 
 export function KpiCard({
@@ -38,9 +57,13 @@ export function KpiCard({
   subtitle,
   formatter = formatNumber,
   loading = false,
+  to,
+  href,
 }: KpiCardProps) {
-  return (
-    <Card>
+  const clickable = Boolean(to ?? href);
+  const body: ReactNode = (
+    <>
+      {clickable && <ClickableArrow />}
       <div className="flex items-start justify-between gap-2">
         <Text>{title}</Text>
         {!loading && delta !== undefined && Number.isFinite(delta) && (
@@ -48,6 +71,7 @@ export function KpiCard({
             deltaType={deltaTypeFor(delta)}
             isIncreasePositive={isIncreasePositive}
             size="xs"
+            className={clickable ? 'mr-4' : undefined}
           >
             {`${delta >= 0 ? '+' : ''}${(delta * 100).toFixed(1)}%`}
           </BadgeDelta>
@@ -66,6 +90,27 @@ export function KpiCard({
       {subtitle && loading && (
         <div className="mt-2 h-3 w-32 animate-pulse rounded bg-navy-50" />
       )}
-    </Card>
+    </>
   );
+
+  if (to) {
+    return (
+      <Link to={to} className="block">
+        <Card className={CLICKABLE_CARD_CLASS}>{body}</Card>
+      </Link>
+    );
+  }
+  if (href) {
+    const external = href.startsWith('http');
+    return (
+      <a
+        href={href}
+        {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+        className="block"
+      >
+        <Card className={CLICKABLE_CARD_CLASS}>{body}</Card>
+      </a>
+    );
+  }
+  return <Card>{body}</Card>;
 }

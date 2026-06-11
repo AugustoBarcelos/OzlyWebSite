@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, Grid, Title, Text } from '@tremor/react';
-import { ExternalLinkIcon } from '@/components/Icons';
+import { ArrowUpRightIcon, ExternalLinkIcon } from '@/components/Icons';
 import { Spinner } from '@/components/Spinner';
 import { callRpc, RpcError } from '@/lib/rpc';
 import { callEdge } from '@/lib/edge';
@@ -134,47 +135,51 @@ export function OverviewTab({ period }: Props) {
       <Grid numItemsSm={2} numItemsLg={4} className="gap-4">
         <KpiCard
           icon="🌐"
-          label="Site sessions · 30d (GA4)"
+          label="Visitas no site · 30d"
           value={data.ga4_sessions}
           loading={loading && data.ga4_sessions === null}
           formatter={formatNumber}
           hint={
             data.ga4_users != null
-              ? `${formatNumber(data.ga4_users)} usuários únicos`
-              : 'GA4 ozly.au'
+              ? `${formatNumber(data.ga4_users)} pessoas diferentes — clique pra ver o tráfego`
+              : 'GA4 ozly.au — clique pra ver o tráfego'
           }
+          to="/insights"
         />
         <KpiCard
           icon="✨"
-          label={`Signups · ${period}d`}
+          label={`Novos cadastros · ${period}d`}
           value={data.signups_30d}
           loading={loading && data.signups_30d === null}
           formatter={formatNumber}
           hint={
             siteConv != null
-              ? `${siteConv.toFixed(2)}% de site → app (GA4 fixo 30d)`
-              : 'Novos cadastros no app'
+              ? `${siteConv.toFixed(2)}% das visitas viram cadastro — clique pra ver quem`
+              : 'Novos cadastros no app — clique pra ver quem'
           }
+          to="/users"
         />
         <KpiCard
           icon="💰"
-          label="Pagantes ativos"
+          label="Pessoas pagando hoje"
           value={data.paying_total}
           loading={loading && data.paying_total === null}
           formatter={formatNumber}
           hint={
             signupToPaying != null
-              ? `${signupToPaying.toFixed(1)}% signup → paying (${period}d)`
-              : 'TFN + ABN + PRO'
+              ? `${signupToPaying.toFixed(1)}% dos cadastros viram pagantes — clique pra ver a receita`
+              : 'Clique pra ver a receita em detalhe'
           }
+          to="/revenue"
         />
         <KpiCard
           icon="📈"
-          label="MRR estimado"
+          label="Entra por mês (MRR)"
           value={data.mrr_aud}
           loading={loading && data.mrr_aud === null}
           formatter={(v) => (v == null ? '—' : `$${v.toFixed(0)}`)}
-          hint="AUD · pagantes ativos × preço médio"
+          hint="AUD, se nada mudar — clique pra ver a receita"
+          to="/revenue"
         />
       </Grid>
 
@@ -281,6 +286,7 @@ function KpiCard({
   loading,
   formatter,
   hint,
+  to,
 }: {
   icon: string;
   label: string;
@@ -288,9 +294,16 @@ function KpiCard({
   loading: boolean;
   formatter: (v: number) => string;
   hint: string;
+  /** Todo quadro abre o detalhe ao clicar. */
+  to?: string;
 }) {
-  return (
-    <Card className="!p-4">
+  const card = (
+    <Card
+      className={`!p-4 ${to ? 'group relative transition-all hover:border-brand-200 hover:shadow-md' : ''}`}
+    >
+      {to && (
+        <ArrowUpRightIcon className="absolute right-3 top-3 h-3.5 w-3.5 text-navy-100 transition-colors group-hover:text-brand-500" />
+      )}
       <div className="flex items-start gap-3">
         <span className="text-xl">{icon}</span>
         <div className="min-w-0 flex-1">
@@ -313,4 +326,12 @@ function KpiCard({
       </div>
     </Card>
   );
+  if (to) {
+    return (
+      <Link to={to} className="block">
+        {card}
+      </Link>
+    );
+  }
+  return card;
 }

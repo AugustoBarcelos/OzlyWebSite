@@ -140,27 +140,31 @@ function Ga4Section({ summary }: { summary: Ga4Summary | { error: string } }) {
         <>
           <Grid numItemsSm={2} numItemsLg={4} className="gap-3">
             <KpiCard
-              title="Sessions"
+              title="Visitas (sessions)"
               value={summary.sessions}
               delta={deltaFraction(summary.sessions, summary.prev.sessions)}
+              href="https://analytics.google.com"
             />
             <KpiCard
-              title="Users"
+              title="Pessoas diferentes"
               value={summary.users}
               delta={deltaFraction(summary.users, summary.prev.users)}
+              href="https://analytics.google.com"
             />
             <KpiCard
-              title="Pageviews"
+              title="Páginas vistas"
               value={summary.pageviews}
               delta={deltaFraction(summary.pageviews, summary.prev.pageviews)}
+              href="https://analytics.google.com"
             />
             <KpiCard
-              title="Engagement"
+              title="Engajamento"
               value={summary.engagement_rate}
               delta={deltaFraction(summary.engagement_rate, summary.prev.engagement_rate)}
               formatter={(n) =>
                 n === null || !Number.isFinite(n) ? '—' : `${(n * 100).toFixed(1)}%`
               }
+              href="https://analytics.google.com"
             />
           </Grid>
 
@@ -248,25 +252,28 @@ function GscSection({ summary }: { summary: GscSummary | { error: string } }) {
         <>
           <Grid numItemsSm={2} numItemsLg={4} className="gap-3">
             <KpiCard
-              title="Clicks"
+              title="Cliques no Google"
               value={summary.clicks}
               delta={deltaFraction(summary.clicks, summary.prev.clicks)}
+              href="https://search.google.com/search-console"
             />
             <KpiCard
-              title="Impressions"
+              title="Vezes que apareceu"
               value={summary.impressions}
               delta={deltaFraction(summary.impressions, summary.prev.impressions)}
+              href="https://search.google.com/search-console"
             />
             <KpiCard
-              title="CTR"
+              title="% que clicou (CTR)"
               value={summary.ctr}
               delta={deltaFraction(summary.ctr, summary.prev.ctr)}
               formatter={(n) =>
                 n === null || !Number.isFinite(n) ? '—' : `${(n * 100).toFixed(2)}%`
               }
+              href="https://search.google.com/search-console"
             />
             <KpiCard
-              title="Avg position"
+              title="Posição média no Google"
               value={summary.position}
               // Lower position is better — invert delta semantics.
               delta={deltaFraction(summary.position, summary.prev.position)}
@@ -274,6 +281,7 @@ function GscSection({ summary }: { summary: GscSummary | { error: string } }) {
               formatter={(n) =>
                 n === null || !Number.isFinite(n) ? '—' : n.toFixed(1)
               }
+              href="https://search.google.com/search-console"
             />
           </Grid>
 
@@ -375,17 +383,21 @@ interface InlineKpiProps {
   delta?: number | undefined;
   isIncreasePositive?: boolean;
   formatter?: (n: number | null) => string;
+  /** Todo quadro é clicável — abre a ferramenta de origem em nova aba. */
+  href?: string;
 }
 
 function KpiCard({
-  title, value, delta, isIncreasePositive = true, formatter = formatNumber,
+  title, value, delta, isIncreasePositive = true, formatter = formatNumber, href,
 }: InlineKpiProps) {
   const deltaType =
     delta === undefined
       ? 'unchanged'
       : delta > 0.005 ? 'increase' : delta < -0.005 ? 'decrease' : 'unchanged';
-  return (
-    <Card>
+  const card = (
+    <Card
+      className={href ? 'group relative transition-all hover:border-brand-200 hover:shadow-md' : undefined}
+    >
       <div className="flex items-start justify-between gap-2">
         <Text>{title}</Text>
         {delta !== undefined && Number.isFinite(delta) && (
@@ -397,6 +409,14 @@ function KpiCard({
       <Metric className="mt-2">{formatter(value)}</Metric>
     </Card>
   );
+  if (href) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className="block">
+        {card}
+      </a>
+    );
+  }
+  return card;
 }
 
 function ApiErrorBox({ label, message }: { label: string; message: string }) {
