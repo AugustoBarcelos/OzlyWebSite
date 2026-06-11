@@ -38,8 +38,10 @@ import { KeyboardShortcutsHelp, useKeyboardHelp } from './KeyboardShortcutsHelp'
 /**
  * Persistent layout for authenticated admin routes.
  *
- * IA v3 (9 hubs founder cockpit — see docs/ADMIN_PORTAL_UX_PLAN.md):
- *  - Cockpit · Inbox · Growth · Marketing · Finance · Product · Users · Operations · Tech
+ * IA v4 ("menu de leigo" — PT-BR, ordenado por frequência de uso):
+ *  - Dia a dia: Cockpit · Inbox · Usuários (flat, sempre visíveis)
+ *  - Negócio: Dinheiro · Produto | Crescimento: Marketing · Anúncios & funil · Afiliados
+ *  - Avançado: Data Hub · Operações · Técnico (raro, fica no fim)
  *  - Sidebar (240px desktop, off-canvas on mobile)
  *  - Topbar with breadcrumbs + cmd-K trigger + external dashboard links
  *  - Main area renders nested routes via <Outlet />.
@@ -121,47 +123,64 @@ function useNavGroups(): ReadonlyArray<NavGroup> {
   const { isAdmin, grants } = useAuth();
   return useMemo(() => {
     if (isAdmin) {
+      // IA v4 — "menu de leigo": PT-BR, ordenado por frequência de uso.
+      // Dia a dia em cima (flat), negócio e marketing no meio (branches
+      // fechadas por padrão), técnico/raro no fim em "Avançado". Nenhuma
+      // rota foi removida — só reagrupada; cmd-K continua achando tudo.
       return [
         {
           items: [
             { label: 'Cockpit', to: '/cockpit', icon: HomeIcon, end: true },
-            { label: 'Data Hub', to: '/data', icon: LayoutDashboardIcon },
             { label: 'Inbox', to: '/inbox', icon: InboxIcon },
+            { label: 'Usuários', to: '/users', icon: UsersIcon },
+          ],
+        },
+        {
+          label: 'Negócio',
+          items: [
+            {
+              label: 'Dinheiro',
+              icon: DollarSignIcon,
+              to: '/revenue',
+              children: [
+                { label: 'Receita & assinaturas', to: '/revenue' },
+                { label: 'Custos (automático)', to: '/finance/cost-monitor' },
+                { label: 'Custos (manual)', to: '/finance/costs' },
+                { label: 'Lucro (P&L)', to: '/finance/pnl' },
+                { label: 'Previsão & caixa', to: '/finance/forecast' },
+                { label: 'Conciliação', to: '/finance/reconciliation' },
+                { label: 'Impostos & relatórios', to: '/finance/tax' },
+                { label: 'Hub financeiro', to: '/finance', end: true },
+              ],
+            },
+            {
+              label: 'Produto',
+              icon: PackageIcon,
+              to: '/product',
+              children: [
+                { label: 'Hub', to: '/product', end: true },
+                { label: 'Ativação (primeiros passos)', to: '/product/activation' },
+                { label: 'Retenção (quem volta)', to: '/product/retention' },
+                { label: 'Engajamento', to: '/product/engagement' },
+                { label: 'Uso das funcionalidades', to: '/product/features' },
+                { label: 'Feedback', to: '/product/feedback' },
+              ],
+            },
           ],
         },
         {
           label: 'Crescimento',
           items: [
             {
-              label: 'Growth',
-              icon: TrendingUpIcon,
-              to: '/growth',
-              children: [
-                { label: 'Hub', to: '/growth', end: true },
-                { label: 'Sales Funnel', to: '/growth/funnel', icon: FunnelIcon },
-                { label: 'Insights (GA4)', to: '/insights' },
-                { label: 'Google Ads', to: '/ads/google' },
-                { label: 'Meta Ads', to: '/ads/meta' },
-                { label: 'Apple Search Ads', to: '/ads/asa' },
-                { label: 'TikTok Ads', to: '/ads/tiktok' },
-                { label: 'Attribution / UTM', to: '/ads/attribution' },
-              ],
-            },
-            {
-              label: 'Affiliates',
-              icon: HandshakeIcon,
-              to: '/affiliates',
-            },
-            {
               label: 'Marketing',
               icon: MegaphoneIcon,
               to: '/marketing',
               children: [
-                { label: 'Calendar', to: '/marketing/calendar' },
+                { label: 'Calendário', to: '/marketing/calendar' },
+                { label: 'Posts', to: '/marketing/posts' },
                 { label: 'Composer', to: '/marketing/composer' },
                 { label: 'AI Composer', to: '/marketing/ai-composer' },
-                { label: 'Posts', to: '/marketing/posts' },
-                { label: 'Channels (organic)', to: '/marketing/channels' },
+                { label: 'Canais (orgânico)', to: '/marketing/channels' },
                 { label: 'SEO & Site', to: '/marketing/seo' },
                 { label: 'ASO (App Store)', to: '/marketing/aso' },
                 { label: 'Email', to: '/messaging/email' },
@@ -170,72 +189,55 @@ function useNavGroups(): ReadonlyArray<NavGroup> {
                 { label: 'SMS', to: '/messaging/sms' },
               ],
             },
+            {
+              label: 'Anúncios & funil',
+              icon: TrendingUpIcon,
+              to: '/growth',
+              children: [
+                { label: 'Hub', to: '/growth', end: true },
+                { label: 'Funil de vendas', to: '/growth/funnel', icon: FunnelIcon },
+                { label: 'Tráfego do site (GA4)', to: '/insights' },
+                { label: 'Google Ads', to: '/ads/google' },
+                { label: 'Meta Ads', to: '/ads/meta' },
+                { label: 'Apple Search Ads', to: '/ads/asa' },
+                { label: 'TikTok Ads', to: '/ads/tiktok' },
+                { label: 'Atribuição / UTM', to: '/ads/attribution' },
+              ],
+            },
+            { label: 'Afiliados', to: '/affiliates', icon: HandshakeIcon },
           ],
         },
         {
-          label: 'Negócio',
+          label: 'Avançado',
           items: [
+            { label: 'Data Hub', to: '/data', icon: LayoutDashboardIcon },
             {
-              label: 'Finance',
-              icon: DollarSignIcon,
-              to: '/finance',
-              children: [
-                { label: 'Hub', to: '/finance', end: true },
-                { label: 'Revenue', to: '/revenue' },
-                { label: 'Cost Monitor', to: '/finance/cost-monitor' },
-                { label: 'Costs (manual)', to: '/finance/costs' },
-                { label: 'P&L', to: '/finance/pnl' },
-                { label: 'Forecast & Runway', to: '/finance/forecast' },
-                { label: 'Reconciliation', to: '/finance/reconciliation' },
-                { label: 'Tax & Reports', to: '/finance/tax' },
-              ],
-            },
-            {
-              label: 'Product',
-              icon: PackageIcon,
-              to: '/product',
-              children: [
-                { label: 'Hub', to: '/product', end: true },
-                { label: 'Activation Funnel', to: '/product/activation' },
-                { label: 'Retention Cohorts', to: '/product/retention' },
-                { label: 'Engagement', to: '/product/engagement' },
-                { label: 'Feature Adoption', to: '/product/features' },
-                { label: 'Feedback', to: '/product/feedback' },
-              ],
-            },
-            { label: 'Users', to: '/users', icon: UsersIcon },
-          ],
-        },
-        {
-          label: 'Plataforma',
-          items: [
-            {
-              label: 'Operations',
+              label: 'Operações',
               icon: ScrollTextIcon,
               to: '/operations',
               children: [
                 { label: 'Hub', to: '/operations', end: true },
                 { label: 'Roadmap', to: '/operations/roadmap' },
-                { label: 'Incidents', to: '/operations/incidents' },
+                { label: 'Incidentes', to: '/operations/incidents' },
                 { label: 'Releases', to: '/operations/releases' },
                 { label: 'Runbooks', to: '/operations/runbooks' },
-                { label: 'Grants', to: '/ops/grants' },
-                { label: 'Organisations', to: '/ops/orgs' },
-                { label: 'Audit', to: '/ops/audit' },
+                { label: 'Permissões', to: '/ops/grants' },
+                { label: 'Organizações', to: '/ops/orgs' },
+                { label: 'Auditoria', to: '/ops/audit' },
               ],
             },
             {
-              label: 'Tech',
+              label: 'Técnico',
               icon: ServerIcon,
               to: '/tech',
               children: [
                 { label: 'Hub', to: '/tech', end: true },
-                { label: 'Errors', to: '/tech/errors' },
-                { label: 'Reliability', to: '/reliability', icon: ShieldCheckIcon },
-                { label: 'System Health', to: '/reliability/system-health' },
+                { label: 'Erros do app', to: '/tech/errors' },
+                { label: 'Confiabilidade', to: '/reliability', icon: ShieldCheckIcon },
+                { label: 'Saúde do sistema', to: '/reliability/system-health' },
                 { label: 'Compliance', to: '/reliability/compliance' },
                 { label: 'Edge Functions', to: '/tech/edge-functions' },
-                { label: 'Database', to: '/tech/database' },
+                { label: 'Banco de dados', to: '/tech/database' },
                 { label: 'Cron Jobs', to: '/tech/cron' },
                 { label: 'CI/CD', to: '/tech/cicd', icon: WorkflowIcon, soon: true },
               ],

@@ -55,6 +55,8 @@ export interface PendingCancellationRow {
   full_name: string | null;
   plan: string | null;
   store: string | null;
+  /** revenuecat_snapshot.status — 'trial' | 'paying' | 'grace_period' | … (null before the 20260619 migration). */
+  status?: string | null;
   period_type: string | null;
   monthly_price_aud: number | null;
   current_period_end: string;
@@ -65,6 +67,10 @@ export interface PendingCancellationRow {
 export interface PendingCancellationsResponse {
   window_days: number;
   count: number;
+  /** Paying subs that switched auto-renew off (absent before the 20260619 migration). */
+  count_paying?: number;
+  /** Trials that won't convert when the trial ends (absent before the 20260619 migration). */
+  count_trial?: number;
   potential_mrr_loss_aud: number;
   rows: PendingCancellationRow[];
 }

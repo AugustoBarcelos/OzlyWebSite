@@ -17,7 +17,7 @@ import {
 import { formatCurrencyAUD, formatNumber } from '@/lib/format';
 import { useGlobalFilters } from '@/lib/useGlobalFilters';
 import { useDashboardData } from '@/routes/dashboard/useDashboardData';
-import type { Period } from '@/routes/dashboard/types';
+import type { PendingCancellationRow, Period } from '@/routes/dashboard/types';
 
 /**
  * Cockpit — "como está o app?" em 30 segundos, em linguagem de gente.
@@ -146,15 +146,30 @@ export function CockpitPage() {
   }, [data.kpi]);
   const mrr = data.kpi?.mrr_estimate_aud ?? data.revenue?.mrr_total ?? null;
   const churn = data.kpi?.churn_period ?? null;
-  const cancelScheduled = data.pendingCancellations?.count ?? null;
-  const mrrAtRisk = data.pendingCancellations?.potential_mrr_loss_aud ?? null;
+  const pc = data.pendingCancellations;
+  const mrrAtRisk = pc?.potential_mrr_loss_aud ?? null;
+  // Trial que não vai converter ≠ pagante que pediu cancelamento — situações
+  // diferentes, ações diferentes. O RPC novo manda count_paying/count_trial;
+  // antes da migração 20260619 inferimos pelas rows (trial = sem preço mensal
+  // e não-promocional — trials nunca têm monthly_price_aud).
+  const isTrialRow = (r: PendingCancellationRow) =>
+    r.status != null
+      ? r.status === 'trial'
+      : r.monthly_price_aud === null && r.store !== 'promotional';
+  const cancelPaying = pc
+    ? pc.count_paying ?? pc.rows.filter((r) => !isTrialRow(r)).length
+    : null;
+  const cancelTrial = pc
+    ? pc.count_trial ?? pc.rows.filter(isTrialRow).length
+    : null;
   // Mesmos thresholds do inbox/alerts.tsx: churn > 5 amarelo, > 10 vermelho.
+  // Trial que não converte NÃO acende o semáforo — é normal, não é dinheiro saindo.
   const moneyLight: Light =
     paidActiveTotal === null
       ? 'grey'
       : (churn ?? 0) > 10
         ? 'red'
-        : (churn ?? 0) > 5 || (cancelScheduled ?? 0) > 0
+        : (churn ?? 0) > 5 || (cancelPaying ?? 0) > 0
           ? 'yellow'
           : 'green';
 
@@ -273,17 +288,20 @@ export function CockpitPage() {
             value={formatNumber(activeToday)}
             label="abriram o app no último dia"
             loading={loading}
+            to="/users"
           />
           <PlainStat
             value={formatNumber(activeAvg)}
             label={`usam por dia, em média (${period}d)`}
             loading={loading}
             {...trendNote(activeTrend)}
+            to="/product/engagement"
           />
           <PlainStat
             value={formatNumber(data.kpi?.signups_period ?? null)}
             label={`novos cadastros em ${period} dias`}
             loading={loading}
+            to="/users"
           />
         </div>
         {activeChart.length > 1 && (
@@ -314,11 +332,13 @@ export function CockpitPage() {
               label={`trabalhos registrados em ${period} dias`}
               loading={loading}
               {...trendNote(jobsTrend)}
+              to="/product/engagement"
             />
             <PlainStat
               value={formatNumber(data.kpi?.activations_period ?? null)}
               label="novatos que já registraram trabalho nas primeiras 48h"
               loading={loading}
+              to="/product/activation"
             />
           </div>
           <div>
@@ -344,37 +364,52 @@ export function CockpitPage() {
         linkTo="/revenue"
         linkLabel="Ver receita"
       >
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
           <PlainStat
             value={formatNumber(paidActiveTotal)}
             label="pessoas pagando assinatura hoje"
             loading={loading}
+            to="/revenue"
           />
           <PlainStat
             value={mrr === null ? '—' : formatCurrencyAUD(mrr)}
             label="entram por mês se nada mudar"
             loading={loading}
+            to="/revenue"
           />
           <PlainStat
-            value={formatNumber(cancelScheduled)}
+            value={formatNumber(cancelPaying)}
             label={
-              cancelScheduled
-                ? `pediram cancelamento${mrrAtRisk ? ` — ${formatCurrencyAUD(mrrAtRisk)}/mês em risco` : ''}`
-                : 'pediram cancelamento (ninguém 🎉)'
+              cancelPaying
+                ? `pagante${cancelPaying > 1 ? 's' : ''} pediu cancelamento${mrrAtRisk ? ` — ${formatCurrencyAUD(mrrAtRisk)}/mês em risco` : ''}`
+                : 'pagantes pediram cancelamento (ninguém 🎉)'
             }
             loading={loading}
-            tone={cancelScheduled ? 'warn' : 'ok'}
+            tone={cancelPaying ? 'warn' : 'ok'}
+            to="/inbox"
+          />
+          <PlainStat
+            value={formatNumber(cancelTrial)}
+            label={
+              cancelTrial
+                ? 'no teste grátis e não vão continuar'
+                : 'no teste grátis desistiram (ninguém)'
+            }
+            loading={loading}
+            to="/inbox"
           />
           <PlainStat
             value={formatNumber(churn)}
             label={`assinaturas acabaram de vez em ${period} dias`}
             loading={loading}
             tone={(churn ?? 0) > 5 ? 'warn' : undefined}
+            to="/revenue"
           />
         </div>
         <p className="mt-3 text-xs text-navy-400">
-          "Pediu cancelamento" = desligou a renovação mas ainda tem acesso. Vira
-          cancelamento de vez quando o período pago termina.
+          "Pediu cancelamento" = pagante que desligou a renovação mas ainda tem
+          acesso — dá pra tentar recuperar. Quem está no teste grátis e não
+          continua nunca chegou a pagar, então não conta como dinheiro perdido.
         </p>
       </SectionCard>
 
@@ -392,11 +427,13 @@ export function CockpitPage() {
             label={`erros nos últimos ${Math.min(period, 90)} dias`}
             loading={loading}
             tone={techLight === 'red' ? 'warn' : techLight === 'green' ? 'ok' : undefined}
+            to="/tech/errors"
           />
           <PlainStat
             value={formatNumber(errBefore)}
             label="erros no período anterior (comparação)"
             loading={loading}
+            to="/tech/errors"
           />
           <PlainStat
             value={
@@ -421,6 +458,7 @@ export function CockpitPage() {
                   : 'ok'
                 : undefined
             }
+            to="/tech/errors"
           />
         </div>
       </SectionCard>
@@ -554,15 +592,18 @@ function PlainStat({
   loading,
   note,
   tone,
+  to,
 }: {
   value: string;
   label: string;
   loading: boolean;
   note?: string | undefined;
   tone?: 'ok' | 'warn' | undefined;
+  /** Todo card abre o detalhe ao clicar — sempre passe o destino. */
+  to?: string | undefined;
 }) {
-  return (
-    <div className="rounded-md border border-navy-50 bg-white p-3">
+  const inner = (
+    <>
       {loading ? (
         <div className="h-8 w-20 animate-pulse rounded bg-navy-50" />
       ) : (
@@ -582,6 +623,19 @@ function PlainStat({
       >
         {label}
       </div>
-    </div>
+    </>
   );
+
+  if (to) {
+    return (
+      <Link
+        to={to}
+        className="group relative block rounded-md border border-navy-50 bg-white p-3 transition-all hover:border-brand-200 hover:shadow-sm"
+      >
+        <ArrowUpRightIcon className="absolute right-2 top-2 h-3.5 w-3.5 text-navy-100 transition-colors group-hover:text-brand-500" />
+        {inner}
+      </Link>
+    );
+  }
+  return <div className="rounded-md border border-navy-50 bg-white p-3">{inner}</div>;
 }
