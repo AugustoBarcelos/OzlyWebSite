@@ -106,35 +106,34 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
       </SectionCard>
 
       {/* ─── 3. WELCOME TRIAL ─── */}
-      <SectionCard id="welcome-trial" title="3. Welcome and Trial Plan Selection">
-        <P>After Setup, you'll see a welcome screen with the 3 available plans. Your <B>14-day free trial</B> starts here.</P>
+      <SectionCard id="welcome-trial" title="3. Your First Invoice (Free) and Choosing a Plan">
+        <P>Ozly gets you to value first: right after Setup, we walk you through creating <B>your very first invoice for free</B> — no card, no plan, no commitment. You only pick a plan <B>after</B> you've sent that first one.</P>
 
-        <SubSection title="The 3 Plans">
+        <SubSection title="Create your first invoice (free)">
+          <StepList>
+            <li><B>"Let's set up your first invoice"</B> — type the <B>client name</B> (and email, optional). Tap <B>"Next"</B>.</li>
+            <li><B>"What did you do for them?"</B> — type a short <B>job description</B>, the <B>total amount</B> and the <B>date</B>. Tap <B>"Review my invoice"</B>.</li>
+            <li>Review the invoice on the next screen, then send it. <B>This first invoice is free</B> — a subscription is only needed to send more.</li>
+          </StepList>
+          <Tip>Prefer to explore first? You can skip and reach everything from the Dashboard — but creating that first invoice is the fastest way to see what Ozly does.</Tip>
+        </SubSection>
+
+        <SubSection title="The 2 plans">
+          <P>When you go to send a second invoice (or open a Pro feature), Ozly offers a <B>14-day free trial</B> on one of two plans:</P>
           <SimpleTable
-            headers={["Card", "Who it's for"]}
+            headers={["Plan", "Who it's for"]}
             rows={[
-              ["TFN", "Employees — paid under TFN"],
-              ["ABN", "Contractors / freelancers — issue invoices"],
-              ["PRO", "Both — switch between modes"],
+              ["ABN", "Contractors / freelancers — issue invoices, manage clients, OCR expenses, tax analytics"],
+              ["PRO", "Everything in ABN + advanced tax tools — best value"],
             ]}
           />
         </SubSection>
 
-        <SubSection title="Automatic Pre-selection">
-          <P>Ozly pre-selects a plan based on what you picked as <B>Work Type</B> in Setup:</P>
-          <BulletList>
-            <li>Chose "TFN" → TFN plan pre-selected</li>
-            <li>Chose "ABN" → ABN plan pre-selected</li>
-            <li>Chose "Both" → PRO plan pre-selected</li>
-          </BulletList>
-          <P>You can tap any other card to switch.</P>
+        <SubSection title="Start the trial">
+          <P>Pick a plan, tap <B>"Start Free Trial"</B>, and confirm with the App Store / Google Play. You get <B>14 days of full access</B> with nothing charged.</P>
         </SubSection>
 
-        <SubSection title="Continue">
-          <P>Tap <B>"Get Started"</B>. You land on the Dashboard with 14 days of full access to every Pro feature.</P>
-        </SubSection>
-
-        <Tip>The trial starts right away and nothing is charged. You can cancel before it ends through the App Store / Google Play with no charge.</Tip>
+        <Tip>The trial starts right away and nothing is charged up front. Cancel before it ends through the App Store / Google Play with no charge.</Tip>
       </SectionCard>
 
       {/* ─── 4. DASHBOARD ─── */}
@@ -176,7 +175,7 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
         <Tip>Pull the screen down (pull-to-refresh) to force a full sync.</Tip>
       </SectionCard>
 
-      {/* ─── 4. MENU LATERAL ─── */}
+      {/* ─── 5. MENU LATERAL ─── */}
       <SectionCard id="menu-lateral" title="5. Side Menu (Drawer)">
         <InfoBox>
           <B>Video:</B>{" "}
@@ -187,15 +186,16 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
         <P>Access by swiping from left to right or tapping the hamburger menu.</P>
 
         <SubSection title="Navigation">
+          <P>The menu groups items by what you do most: <B>Jobs</B> and <B>Financial</B> at the top, then your tools.</P>
           <SimpleTable
             headers={["Item", "Goes to", "Note"]}
             rows={[
-              ["Contractors", "Contractors Screen", "—"],
               ["Jobs", "Jobs Screen", "—"],
               ["Financial", "Financial Screen", "—"],
+              ["Expenses", "Expenses Screen", "—"],
+              ["Contractors", "Contractors Screen", "—"],
+              ["Organisations", "Organisations Screen", "Only if a company invited you"],
               ["Fiscal", "Fiscal Screen", "Requires Pro"],
-              ["Expenses", "Expenses Screen", "Requires Pro"],
-              ["Hours Comparison", "ABN hours comparison", "Requires Pro + ABN"],
               ["Visa Shield", "Hours Monitor", "Requires Pro + work/student visa"],
               ["Hustle", "Gamification (XP)", "—"],
               ["Settings", "Settings", "—"],
@@ -215,7 +215,7 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
         </SubSection>
       </SectionCard>
 
-      {/* ─── 5. JOBS ─── */}
+      {/* ─── 6. JOBS ─── */}
       <SectionCard id="jobs" title="6. Jobs">
         <InfoBox>
           <B>Video:</B>{" "}
@@ -306,58 +306,8 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
         </SubSection>
       </SectionCard>
 
-      {/* ─── 7. TIMESHEETS ─── */}
-      <SectionCard id="timesheets" title="7. Timesheets and Daily Earnings Logging (TFN)">
-        <InfoBox>
-          <B>Video:</B>{" "}
-          <a href="https://youtube.com/shorts/b-8qKewF3A8?feature=share" target="_blank" rel="noopener noreferrer" className="underline font-semibold">
-            How to create a Timesheet (YouTube)
-          </a>
-        </InfoBox>
-        <P>For those paid as <B>employees (TFN)</B>, Ozly has timesheet tools to log hours and earnings without creating an invoice.</P>
-
-        <SubSection title="Timesheets Hub">
-          <P>Side menu → <B>"Timesheets"</B>. Central place to view every timesheet you've saved (current week, previous, and drafts).</P>
-          <BulletList>
-            <li><B>Current Week</B> — timesheet for the week in progress</li>
-            <li><B>Previous Weeks</B> — rolling history</li>
-            <li><B>Saved</B> — finalized timesheets with generated PDF</li>
-          </BulletList>
-        </SubSection>
-
-        <SubSection title="Fill a Weekly Timesheet">
-          <StepList>
-            <li>Pick the week (period selector at the top)</li>
-            <li>For each day: tap and fill start time, end time, and unpaid break</li>
-            <li>Day and week totals calculate automatically</li>
-            <li>Add <B>break minutes</B> (unpaid) if applicable</li>
-            <li>Tap <B>"Save"</B> to keep it, or <B>"Generate PDF"</B> to produce a record</li>
-          </StepList>
-        </SubSection>
-
-        <SubSection title="Log Daily Earnings">
-          <P>Quick shortcut on the Dashboard — <B>"Log Earnings"</B> button. Use it when you already received the payment and just need to log it.</P>
-          <StepList>
-            <li>Pick the date</li>
-            <li>Type the total received (big field with "$")</li>
-            <li>Pick the platform/employer from the dropdown</li>
-            <li>Tap <B>"Log Earnings"</B></li>
-          </StepList>
-          <P>The amount is recorded as income without going through the invoice flow.</P>
-        </SubSection>
-
-        <SubSection title="Share Timesheet">
-          <P>Once the PDF is generated, you get the same options as invoices:</P>
-          <BulletList>
-            <li>WhatsApp, Email, SMS, Share PDF, Download, Print</li>
-          </BulletList>
-        </SubSection>
-
-        <Tip>If you have hybrid contracts (TFN + ABN), use Timesheets for TFN jobs and Invoices for ABN jobs — totals show up separately in Financial.</Tip>
-      </SectionCard>
-
-      {/* ─── 8. CONTRACTORS ─── */}
-      <SectionCard id="contractors" title="8. Contractors">
+      {/* ─── 7. CONTRACTORS ─── */}
+      <SectionCard id="contractors" title="7. Contractors">
         <InfoBox>
           <B>Video:</B>{" "}
           <a href="https://youtube.com/shorts/fBN6d0GEeNs?feature=share" target="_blank" rel="noopener noreferrer" className="underline font-semibold">
@@ -393,8 +343,8 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
         </SubSection>
       </SectionCard>
 
-      {/* ─── 7. INVOICES ─── */}
-      <SectionCard id="invoices" title="9. Invoices">
+      {/* ─── 8. INVOICES ─── */}
+      <SectionCard id="invoices" title="8. Invoices">
         <InfoBox>
           <B>Video:</B>{" "}
           <a href="https://youtube.com/shorts/4PrnOG9wh50?feature=share" target="_blank" rel="noopener noreferrer" className="underline font-semibold">
@@ -444,10 +394,68 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
               ["Close", "Closes without sending (saves as draft)"],
             ]}
           />
+          <InfoBox>Billing a company that uses Ozly for Business? An extra <B>"Send directly to [Company]"</B> option appears so the invoice lands in their portal — see section 9 (Organisations).</InfoBox>
         </SubSection>
       </SectionCard>
 
-      {/* ─── 8. EXPENSES ─── */}
+      {/* ─── 9. ORGANISATIONS ─── */}
+      <SectionCard id="organisations" title="9. Organisations (Work for a Company)">
+        <P>If a cleaning company or agency runs <B>Ozly for Business</B>, they can invite you as a <B>sub-contractor</B>. You stay 100% independent — Ozly never creates an employment relationship — but the invoices you issue <B>to that company</B> show up directly in their portal, and they can offer you work.</P>
+
+        <SubSection title="Accept an invite">
+          <StepList>
+            <li>The company sends you an <B>invite link</B> (looks like <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded">ozly.au/invite/…</code>) via WhatsApp, SMS or email.</li>
+            <li>Tap the link — Ozly opens the <B>"[Company] has invited you to join as a sub-contractor"</B> screen. (No link handy? Side menu → <B>Organisations</B> → <B>"Have an invite link?"</B> → paste it.)</li>
+            <li>Read the note: by accepting, the company sees the invoices you issue <B>to them</B> — nothing else. You can revoke any time.</li>
+            <li>Tap <B>"Accept invitation"</B> (or <B>"Decline"</B>).</li>
+            <li><B>One last step</B> — link a contractor record to the company. Pick <B>"Create a new contractor named '[Company]'"</B> (recommended) or choose an existing one, then tap <B>"Continue"</B>.</li>
+            <li>Done — <B>"You're in."</B> Invoices you issue to this organisation are now visible to them.</li>
+          </StepList>
+        </SubSection>
+
+        <SubSection title="The Organisations screen">
+          <P>Side menu → <B>Organisations</B>. Each company you've joined shows as a card with:</P>
+          <BulletList>
+            <li><B>Status</B> — <B>Active</B> (teal), <B>Pending</B> (amber) or <B>Declined</B> (gray)</li>
+            <li><B>Your role</B> — usually "Member"</li>
+            <li><B>Billing cadence</B> — how often they group your invoices (Weekly / Fortnightly / Monthly) and when the cycle starts</li>
+            <li><B>Subsidy hint</B> — if the company covers your ABN plan, you'll see how much you save</li>
+          </BulletList>
+          <InfoBox>If the company edits the terms of a job you agreed to, a yellow banner appears: <B>"N engagement(s) need your re-confirmation"</B> — tap through to Jobs to accept or reject the change (see below).</InfoBox>
+        </SubSection>
+
+        <SubSection title="Send an invoice straight to the company">
+          <P>When you create an invoice for a contractor that's linked to an organisation, an extra block appears in the invoice composer:</P>
+          <BulletList>
+            <li><B>"Send directly to [Company]"</B> toggle (ON by default) — emails the PDF to the company's billing inbox so it lands in their portal.</li>
+            <li><B>"Email me a copy"</B> — tick to also receive the PDF yourself.</li>
+          </BulletList>
+          <P>After you send, a small <B>delivery badge</B> shows the status next to the invoice:</P>
+          <SimpleTable
+            headers={["Badge", "Meaning"]}
+            rows={[
+              ["📤 ✓ Delivered", "The company received the email"],
+              ["📤 ⏱ Queued", "Sending — check back shortly"],
+              ["📤 ⚠ Bounced", "Wrong or blocked inbox — see below"],
+              ["📤 ❌ Failed", "Send failed — retry"],
+            ]}
+          />
+          <P>Tap the badge to open the details. If it bounced or failed, tap <B>"Try sending again"</B> after the company confirms their billing email.</P>
+        </SubSection>
+
+        <SubSection title="Job changes & payment confirmation">
+          <P><B>Job change proposed</B> — When the company adjusts a job (time, place, rate…), you get a push notification and a banner on that job: <B>"Your business proposed a change"</B> showing old vs new. Tap <B>"Accept change"</B> or <B>"Reject"</B>.</P>
+          <P><B>Confirm payment received</B> — When the company marks one of your invoices as paid, it appears in Financial with a <B>"Confirm payment received"</B> button. Tap it once the money actually lands — this keeps your records and theirs in sync.</P>
+        </SubSection>
+
+        <SubSection title="Messaging the company (2-way)">
+          <P>Invoices and jobs linked to an organisation have a <B>Messages</B> button that opens a chat thread with the company. Your messages sit on the right; theirs (labelled <B>"Business"</B>) on the left — handy for sorting out a correction without leaving the app.</P>
+        </SubSection>
+
+        <Tip>Working for a company through Ozly doesn't change your tax setup — you still issue your own invoices under your own ABN and stay independent.</Tip>
+      </SectionCard>
+
+      {/* ─── 10. EXPENSES ─── */}
       <SectionCard id="expenses" title="10. Expenses">
         <InfoBox>
           <B>Video:</B>{" "}
@@ -491,47 +499,8 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
         </SubSection>
       </SectionCard>
 
-      {/* ─── 11. REIMBURSEMENTS ─── */}
-      <SectionCard id="reimbursements" title="11. Reimbursements">
-        <P>Reimbursements are <B>amounts you paid on behalf of a client/contractor</B> and need to recover — separate from tax-deductible expenses.</P>
-
-        <SubSection title="Difference between Expense and Reimbursement">
-          <SimpleTable
-            headers={["Type", "Who pays", "Use"]}
-            rows={[
-              ["Expense", "You pay out of pocket", "Tax deduction (ATO)"],
-              ["Reimbursement", "You front, client pays back", "Extra line on invoice"],
-            ]}
-          />
-        </SubSection>
-
-        <SubSection title="Add a Reimbursement">
-          <StepList>
-            <li>Side menu → <B>"Reimbursements"</B> → FAB <B>"+"</B></li>
-            <li>Pick the <B>Contractor</B> this relates to</li>
-            <li>Fill <B>Date</B>, <B>Amount</B>, <B>Description</B>, <B>Category</B></li>
-            <li>(Optional) Take a photo of the receipt</li>
-            <li>Tap <B>"Save"</B></li>
-          </StepList>
-        </SubSection>
-
-        <SubSection title="Add Reimbursements to an Invoice">
-          <P>When you create an invoice for the contractor, pending reimbursements appear automatically as an option to include. Tick the ones you want to bill and they turn into separate line items on the invoice.</P>
-        </SubSection>
-
-        <SubSection title="List and Filter">
-          <BulletList>
-            <li>By contractor</li>
-            <li>By status: Pending / Reimbursed</li>
-            <li>By period</li>
-          </BulletList>
-        </SubSection>
-
-        <Tip>Reimbursements are <B>not deductible</B> — after all the money comes back to you. Use Expenses for costs that will be deducted at tax time.</Tip>
-      </SectionCard>
-
-      {/* ─── 12. FINANCIAL ─── */}
-      <SectionCard id="financial" title="12. Financial">
+      {/* ─── 11. FINANCIAL ─── */}
+      <SectionCard id="financial" title="11. Financial">
         <P>Side menu → <B>"Financial"</B>.</P>
 
         <SubSection title="Summary Cards">
@@ -574,8 +543,8 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
         </SubSection>
       </SectionCard>
 
-      {/* ─── 10. FISCAL ─── */}
-      <SectionCard id="fiscal" title="13. Fiscal (Taxes)">
+      {/* ─── 12. FISCAL ─── */}
+      <SectionCard id="fiscal" title="12. Fiscal (Taxes)">
         <P>Side menu → <B>"Fiscal"</B> (requires Pro).</P>
 
         <SubSection title="Tax Tables (ATO 2024-26)">
@@ -644,8 +613,8 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
         <InfoBox>Estimates only. Based on ATO 2024-26 tax tables. Consult a registered tax agent.</InfoBox>
       </SectionCard>
 
-      {/* ─── 11. VISA SHIELD ─── */}
-      <SectionCard id="visa-shield" title="14. Visa Shield (Hours Control)">
+      {/* ─── 13. VISA SHIELD ─── */}
+      <SectionCard id="visa-shield" title="13. Visa Shield (Hours Control)">
         <P>Side menu → <B>"Visa Shield"</B> (Pro, work/student visa only).</P>
 
         <SubSection title="Main Screen">
@@ -665,8 +634,8 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
         <InfoBox>Visa Shield adds up hours from ALL your ABNs automatically. The fortnight is rolling — always the last 14 consecutive days.</InfoBox>
       </SectionCard>
 
-      {/* ─── 12. HUSTLE SCORE ─── */}
-      <SectionCard id="hustle-score" title="15. Hustle Score (Gamification)">
+      {/* ─── 14. HUSTLE SCORE ─── */}
+      <SectionCard id="hustle-score" title="14. Hustle Score (Gamification)">
         <P>Side menu → <B>"Hustle"</B>.</P>
 
         <SubSection title="How to earn XP">
@@ -746,8 +715,8 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
         <InfoBox>If you go 3+ days without using the app, a "You're getting rusty!" overlay appears with a motivational message. Any action (opening the app, completing a job, creating an invoice) clears the overlay.</InfoBox>
       </SectionCard>
 
-      {/* ─── 13. GOOGLE CALENDAR ─── */}
-      <SectionCard id="google-calendar" title="16. Google Calendar">
+      {/* ─── 15. GOOGLE CALENDAR ─── */}
+      <SectionCard id="google-calendar" title="15. Google Calendar">
         <SubSection title="Connect">
           <StepList>
             <li>Go to <B>Settings → Integrations</B></li>
@@ -783,8 +752,8 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
         </SubSection>
       </SectionCard>
 
-      {/* ─── 14. PERFIL ─── */}
-      <SectionCard id="perfil" title="17. Profile">
+      {/* ─── 16. PERFIL ─── */}
+      <SectionCard id="perfil" title="16. Profile">
         <SubSection title="How to get there">
           <BulletList>
             <li>Side menu → Tap the avatar or name</li>
@@ -830,8 +799,8 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
         </SubSection>
       </SectionCard>
 
-      {/* ─── 15. CONFIGURAÇÕES ─── */}
-      <SectionCard id="settings" title="18. Settings">
+      {/* ─── 17. CONFIGURAÇÕES ─── */}
+      <SectionCard id="settings" title="17. Settings">
         <P>Side menu → <B>"Settings"</B>.</P>
 
         <SubSection title="General">
@@ -859,15 +828,24 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
           <P>Português / English / Español</P>
         </SubSection>
 
+        <SubSection title="Redeem a promo code">
+          <P>Got a code from a referral, a gift or a campaign? Tap <B>"Redeem promo code"</B> in Settings.</P>
+          <BulletList>
+            <li><B>iOS</B> — Apple's built-in redemption sheet opens; type the code there.</li>
+            <li><B>Android</B> — paste the code in the dialog (<B>"Paste the code you received…"</B>) and tap <B>"Redeem"</B>; Ozly hands it to the Play Store to finish.</li>
+          </BulletList>
+        </SubSection>
+
         <SubSection title="Notifications">
           <P>Individual toggle for each notification type:</P>
           <BulletList>
             <li><B>Morning Briefing</B> — Daily summary at 7 AM</li>
             <li><B>End of Shift</B> — Post-job reminder</li>
             <li><B>Expense Reminder</B> — Wednesdays at noon</li>
-            <li><B>Friday Sweeper</B> — Weekly summary</li>
+            <li><B>Friday Sweeper</B> — Weekly summary on Fridays</li>
             <li><B>Weekly Summary</B> — Stats on Sundays</li>
           </BulletList>
+          <P>If a company you work for uses Ozly for Business, you'll also get <B>push notifications</B> when they offer you work, propose a job change, send you a message, or mark one of your invoices as paid or delivered (see section 21).</P>
         </SubSection>
 
         <SubSection title="Job reminders (customizable)">
@@ -898,23 +876,30 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
         </SubSection>
       </SectionCard>
 
-      {/* ─── 16. ASSINATURA PRO ─── */}
-      <SectionCard id="assinatura-pro" title="19. Pro Subscription">
-        <P>Settings → <B>"Upgrade to Pro"</B> or tap any item that requires Pro.</P>
+      {/* ─── 18. ASSINATURA PRO ─── */}
+      <SectionCard id="assinatura-pro" title="18. Pro Subscription">
+        <P>Settings → <B>"Upgrade to Pro"</B> or tap any item that requires Pro. Remember: <B>your first invoice is always free</B> — the paywall only shows up when you go to send more or open a Pro tool.</P>
 
         <SubSection title="Available Plans">
           <SimpleTable
-            headers={["Plan", "Price", "Includes"]}
+            headers={["Plan", "Subtitle", "Includes"]}
             rows={[
-              ["TFN", "$12.50/mo*", "Employees — shifts, OCR expenses, Visa Shield, Calendar Sync, tax analytics"],
-              ["ABN", "$12.50/mo*", "ABN holders — everything in TFN + PDF invoices, hours comparison, multiple businesses"],
-              ["PRO", "$16.67/mo*", "TFN + ABN combined — full access + toggle mode"],
+              ["ABN", "For Contractors", "Professional PDF invoices, contractor management, financial reports, OCR expense tracking, tax analytics"],
+              ["PRO", "Everything — best value", "Everything in ABN + advanced tax tools, with mode switching"],
             ]}
           />
           <BulletList>
-            <li><B>14-day free trial</B> on all plans</li>
-            <li>Options: <B>Annual</B> (recommended) and <B>Monthly</B></li>
-            <li>Prices may vary by region (managed via RevenueCat)</li>
+            <li><B>14-day free trial</B> on every plan</li>
+            <li>Options: <B>Annual</B> (recommended — shows the % you save) and <B>Monthly</B></li>
+            <li>Exact prices are shown in-app and may vary by region (managed via the App Store / Google Play)</li>
+          </BulletList>
+        </SubSection>
+
+        <SubSection title="On an organisation's plan (ABN top-up)">
+          <P>If a company you work for covers your ABN, you can use Ozly to bill <B>that company</B> at no cost to you. You'll see a gold banner: <B>"You're on [Company]'s plan — Invoices are limited to that organisation. Unlock all clients for +$5/month."</B></P>
+          <BulletList>
+            <li>Keep it as-is to bill only that organisation for free.</li>
+            <li>Tap <B>"Unlock"</B> to add the <B>+$5/month ABN top-up</B> and bill <B>any</B> client.</li>
           </BulletList>
         </SubSection>
 
@@ -967,8 +952,8 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
         </SubSection>
       </SectionCard>
 
-      {/* ─── 20. MODO OFFLINE ─── */}
-      <SectionCard id="modo-offline" title="20. Offline Mode and Sync">
+      {/* ─── 19. MODO OFFLINE ─── */}
+      <SectionCard id="modo-offline" title="19. Offline Mode and Sync">
         <P>Ozly is <B>offline-first</B> — all data is stored on your phone in an encrypted database (SQLCipher).</P>
 
         <SimpleTable
@@ -1000,8 +985,8 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
         </SubSection>
       </SectionCard>
 
-      {/* ─── 18. INDICAÇÃO ─── */}
-      <SectionCard id="indicacao" title="21. Referral">
+      {/* ─── 20. INDICAÇÃO ─── */}
+      <SectionCard id="indicacao" title="20. Referral">
         <StepList>
           <li>On the Dashboard, find the green <B>"Earn 1 Free Month"</B> card</li>
           <li>Tap the card</li>
@@ -1019,24 +1004,41 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
         </SubSection>
       </SectionCard>
 
-      {/* ─── 19. NOTIFICAÇÕES ─── */}
-      <SectionCard id="notificacoes" title="22. Automatic Notifications">
-        <P>Ozly sends smart local notifications:</P>
-        <SimpleTable
-          headers={["Notification", "When", "What it shows"]}
-          rows={[
-            ["Morning Briefing", "Every day at 7:00 AM", "Today's jobs + overdue invoices"],
-            ["End of Shift", "15 min after job ends", "Complete and invoice this job"],
-            ["Expense Reminder", "Wednesdays at 12:00 PM", "Log your receipts from the week"],
-            ["Friday Sweeper", "Fridays at 4:00 PM", "Weekly summary"],
-            ["Weekly Summary", "Sundays at 6:00 PM", "Weekly stats"],
-          ]}
-        />
-        <P>On tap: navigates to the relevant screen. Buttons: "Complete", "Snooze 1h", "Mark Paid".</P>
+      {/* ─── 21. NOTIFICAÇÕES ─── */}
+      <SectionCard id="notificacoes" title="21. Automatic Notifications">
+        <SubSection title="Smart reminders (scheduled on your phone)">
+          <SimpleTable
+            headers={["Notification", "When", "What it shows"]}
+            rows={[
+              ["Morning Briefing", "Every day at 7:00 AM", "Today's jobs + overdue invoices"],
+              ["End of Shift", "15 min after job ends", "Complete and invoice this job"],
+              ["Expense Reminder", "Wednesdays at 12:00 PM", "Log your receipts from the week"],
+              ["Friday Sweeper", "Fridays at 4:00 PM", "Weekly summary"],
+              ["Weekly Summary", "Sundays at 6:00 PM", "Weekly stats"],
+              ["Job reminders", "Before each job (your presets)", "Upcoming job — see Settings"],
+              ["Trial ending", "3 days / 1 day / day-of", "Your trial is about to end"],
+            ]}
+          />
+          <P>On tap: navigates to the relevant screen. Buttons: "Complete", "Snooze 1h", "Mark Paid".</P>
+        </SubSection>
+
+        <SubSection title="Live updates from a company (push)">
+          <P>If you work for a company that uses <B>Ozly for Business</B>, you'll receive real-time push notifications. Tapping one takes you straight to the right place:</P>
+          <SimpleTable
+            headers={["You get notified when…", "Tap opens"]}
+            rows={[
+              ["The company offers you work", "Jobs"],
+              ["The company proposes a job change", "Jobs (with the change banner)"],
+              ["The company sends you a message", "The conversation thread"],
+              ["An invoice is marked paid / delivered", "Financial"],
+              ["The company asks you to correct an invoice", "Financial"],
+            ]}
+          />
+        </SubSection>
       </SectionCard>
 
-      {/* ─── 20. SEGURANÇA ─── */}
-      <SectionCard id="seguranca" title="23. Security and Privacy">
+      {/* ─── 22. SEGURANÇA ─── */}
+      <SectionCard id="seguranca" title="22. Security and Privacy">
         <SimpleTable
           headers={["Layer", "Protection"]}
           rows={[
@@ -1055,8 +1057,8 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
         </SubSection>
       </SectionCard>
 
-      {/* ─── 21. CAMINHOS ALTERNATIVOS ─── */}
-      <SectionCard id="caminhos-alternativos" title="24. All Alternative Paths">
+      {/* ─── 23. CAMINHOS ALTERNATIVOS ─── */}
+      <SectionCard id="caminhos-alternativos" title="23. All Alternative Paths">
         <SubSection title="Create Invoice (6 paths)">
           <StepList>
             <li>Financial → "+" or FAB</li>
@@ -1117,23 +1119,24 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
           <Tip>The same button toggles to <B>"Mark Unpaid"</B> on the invoice detail sheet if you ever need to revert.</Tip>
         </SubSection>
 
-        <SubSection title="What's new in 1.0.18">
+        <SubSection title="What's new in 1.5.4">
           <BulletList>
-            <li>Customizable <B>Job reminders</B> in Settings → Notifications.</li>
-            <li><B>Google Calendar auto-sync</B> when the app comes back from background.</li>
-            <li><B>Mark Paid / Mark Unpaid</B> toggle on invoices.</li>
-            <li><B>Public holiday warning</B> when creating a job on an Australian holiday.</li>
-            <li><B>Custom recurrence</B> intervals (1–4 weeks) and end dates (1 / 6 / 12 months or custom).</li>
-            <li><B>Referral code field</B> on Sign Up (pre-filled & locked when arriving from a referral link).</li>
-            <li>Faster image loading across screens.</li>
-            <li>Fix: <B>Share</B> dialog now works correctly on iPad and other iOS layouts.</li>
-            <li>App version: <B>1.0.18+411</B> — visible in Settings → Help.</li>
+            <li><B>Free first invoice</B> — create and send your very first invoice with no plan or card; the paywall only appears afterwards.</li>
+            <li><B>Organisations</B> — accept a company's invite, receive work offers, send invoices straight to their portal, and track delivery status (section 9).</li>
+            <li><B>Send-to-org delivery</B> with status badges (Delivered / Queued / Bounced / Failed) and one-tap retry.</li>
+            <li><B>Job-change confirmation</B> and <B>payment confirmation</B> when you work for a company.</li>
+            <li><B>2-way messaging</B> with the company on any invoice or job.</li>
+            <li><B>Real push notifications</B> for work offers, job changes, messages, and invoice updates.</li>
+            <li><B>ABN top-up (+$5/mo)</B> to unlock billing for all clients when you're on a company's plan.</li>
+            <li><B>Redeem promo code</B> in Settings.</li>
+            <li>Plans simplified to <B>ABN</B> and <B>PRO</B>, each with a 14-day free trial.</li>
+            <li>App version: <B>1.5.4+423</B> — visible in Settings → Help.</li>
           </BulletList>
         </SubSection>
       </SectionCard>
 
-      {/* ─── 22. FAQ ─── */}
-      <SectionCard id="faq" title="25. Frequently Asked Questions (FAQ)">
+      {/* ─── 24. FAQ ─── */}
+      <SectionCard id="faq" title="24. Frequently Asked Questions (FAQ)">
         <SubSection title="Account">
           <div className="space-y-2">
             <FaqItem q="Can I use it without an ABN?" a="Yes! ABN is optional during sign-up. Complete it when you create your first invoice." />
@@ -1200,9 +1203,20 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
 
         <SubSection title="Subscription">
           <div className="space-y-2">
-            <FaqItem q="What's the difference between TFN, ABN, and PRO?" a="TFN ($12.50/mo annual, $14.99/mo monthly): for individual contractors — shifts, expenses, taxes, Visa Shield. ABN ($12.50/mo annual, $14.99/mo monthly): everything in TFN + PDF invoices, multiple businesses, hours comparison. PRO ($16.67/mo annual, $19.99/mo monthly): TFN + ABN combined with mode switching." />
+            <FaqItem q="Is my first invoice really free?" a="Yes. You can create and send your very first invoice with no plan and no card. A subscription is only needed to send more invoices or open Pro tools." />
+            <FaqItem q="What's the difference between ABN and PRO?" a="ABN: professional PDF invoices, contractor management, financial reports, OCR expense tracking and tax analytics — for contractors. PRO (best value): everything in ABN plus advanced tax tools, with mode switching. Both have a 14-day free trial; exact prices are shown in-app and can vary by region." />
             <FaqItem q="Is the trial really free?" a="Yes! 14 days of full access with no charge. Cancel anytime through the App Store or Google Play before the trial ends." />
             <FaqItem q="How do I cancel my subscription?" a="Go to the App Store (iOS) or Google Play (Android) → Subscriptions → Ozly → Cancel. You keep access until the current billing period ends." />
+            <FaqItem q="How do I redeem a promo code?" a="Settings → Redeem promo code. On iOS, type it in Apple's redemption sheet; on Android, paste it in the dialog and tap Redeem." />
+          </div>
+        </SubSection>
+
+        <SubSection title="Organisations">
+          <div className="space-y-2">
+            <FaqItem q="A company sent me an invite link — what is it?" a="A company using Ozly for Business invited you as an independent sub-contractor. Accepting lets the invoices you issue to them appear in their portal, and they can offer you work. You stay independent — it isn't employment." />
+            <FaqItem q="Does working for a company cost me anything?" a="No. If the company covers your ABN, you can bill that company for free. To bill other clients too, add the +$5/month ABN top-up (or a full plan)." />
+            <FaqItem q="The company marked my invoice paid but I don't see the money yet." a="Tap 'Confirm payment received' only once the money actually lands in your account. This keeps your records and theirs in sync." />
+            <FaqItem q="My invoice to the company shows 'Bounced'. What now?" a="The billing email may be wrong or blocked. Ask the company to confirm their billing inbox, then tap the delivery badge → 'Try sending again'." />
           </div>
         </SubSection>
 
