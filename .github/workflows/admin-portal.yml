@@ -41,13 +41,13 @@ jobs:
     # below sets working-directory explicitly when it needs to be in admin-portal/.
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           # Trufflehog needs full history to diff against base ref.
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '22'
           cache: 'npm'
@@ -172,7 +172,7 @@ jobs:
       # ── Persist build for the deploy job ─────────────────────────────────
       - name: Upload dist artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: admin-portal-dist
           path: admin-portal/dist
@@ -196,10 +196,10 @@ jobs:
       deployments: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Download dist artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: admin-portal-dist
           path: admin-portal/dist
@@ -208,13 +208,12 @@ jobs:
       # inside the static-assets directory. Pointing workingDirectory at
       # admin-portal/ lets it pick up admin-portal/functions/ alongside the
       # dist/ artifact we just downloaded.
+      # pages-action@v1 is deprecated (stuck on Node 20) — wrangler-action is
+      # Cloudflare's supported path; `pages deploy` is the same publish flow.
       - name: Publish to Cloudflare Pages
-        uses: cloudflare/pages-action@v1
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          projectName: ozly-admin
-          directory: dist
           workingDirectory: admin-portal
-          branch: main
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          command: pages deploy dist --project-name=ozly-admin --branch=main

@@ -43,13 +43,13 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           # TruffleHog needs full history to diff against base.
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '22'
           cache: 'npm'
@@ -166,7 +166,7 @@ jobs:
       # ── Persist artifact for deploy ──────────────────────────────────────
       - name: Upload dist artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: org-portal-dist
           path: org-portal/dist
@@ -189,21 +189,20 @@ jobs:
       deployments: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Download dist artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: org-portal-dist
           path: org-portal/dist
 
+      # pages-action@v1 is deprecated (stuck on Node 20) — wrangler-action is
+      # Cloudflare's supported path; `pages deploy` is the same publish flow.
       - name: Publish to Cloudflare Pages
-        uses: cloudflare/pages-action@v1
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          projectName: ozly-org-portal
-          directory: dist
           workingDirectory: org-portal
-          branch: main
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          command: pages deploy dist --project-name=ozly-org-portal --branch=main
