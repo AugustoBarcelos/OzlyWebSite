@@ -84,27 +84,21 @@
     "perMonth": "/mes",
     "perWeek": "/sem",
     "currency": "AUD",
-    "tfn": {
-      "name": "TFN",
-      "desc": "Para contractors individuales",
-      "price": "$2.88",
-      "priceNote": "$12.50/mes en plan anual*"
-    },
     "abn": {
       "name": "ABN",
-      "desc": "Para negocios con ABN",
+      "desc": "Para contractors",
       "price": "$2.88",
       "priceNote": "$12.50/mes en plan anual*"
     },
     "pro": {
       "name": "PRO",
-      "desc": "TFN + ABN combinados",
+      "desc": "Todo lo de ABN + herramientas avanzadas",
       "price": "$3.85",
       "priceNote": "$16.67/mes en plan anual*"
     },
     "seeAll": "Ver todas las funciones",
-    "annualNote": "* Plan anual: TFN/ABN $149.99/año | PRO $199.99/año. Todos incluyen 14 días gratis.",
-    "monthlyNote": "** Plan mensual: TFN/ABN $14.99/mes | PRO $19.99/mes.",
+    "annualNote": "* Plan anual: ABN $149.99/año | PRO $199.99/año. Todos incluyen 14 días gratis.",
+    "monthlyNote": "** Plan mensual: ABN $14.99/mes | PRO $19.99/mes.",
     "calendarNote": "*** Actualmente integra con Google Calendar. Compatible con apps que sincronizan con Google Calendar.",
     "features": {
       "shifts": "Shifts & Control de Jobs",
@@ -116,20 +110,18 @@
       "invoices": "Invoices PDF Profesionales",
       "hoursComparison": "Comparación de Horas (ABN peers)",
       "multiBusinesses": "Múltiples Negocios",
-      "toggleMode": "Alterna TFN ↔ ABN cuando quieras",
+      "toggleMode": "Alterna ABN ↔ TFN cuando quieras",
       "penaltyRates": "Penalty Rates (Sáb/Dom/Feriados)",
       "taxThermometer": "Termómetro de Tax Return",
       "netSalary": "Pronóstico Sueldo Neto (PAYG)",
       "bulkEdit": "Edición en Lote de Jobs",
-      "timesheets": "Timesheet PDF por Empleador",
       "levelUp": "Celebración de Level Up",
       "quickExpense": "Gasto Rápido & Inteligente",
       "salaryModes": "Sueldo: Horario / Anual / Mensual / Quincenal",
-      "reimbursements": "Reembolsos con Exportación PDF",
       "messageTemplates": "Templates de Email Personalizables",
       "rateComparison": "Benchmark de Tarifa/Hora vs Mercado",
-      "proAllTfn": "Todas las funciones TFN incluidas",
-      "proAllAbn": "Todas las funciones ABN incluidas"
+      "proAllAbn": "Todo lo de ABN incluido",
+      "proAdvancedTax": "Herramientas fiscales avanzadas y pronósticos"
     }
   },
   "homeFaq": {
@@ -446,7 +438,7 @@
     "q80": "No estoy recibiendo notificaciones. ¿Qué hago?",
     "a80": "Verifica tres cosas: (1) Configuraciones → Notificaciones dentro de Ozly — confirma que están activas; (2) Configuraciones del iOS/Android → Ozly → Notificaciones activas; (3) optimización de batería — desactiva el modo ahorro para Ozly para que las notificaciones en background puedan dispararse.",
     "q81": "¿Cuánto cuesta cada plan?",
-    "a81": "TFN: AUD $12.50/mes en plan anual ($14.99/mes mensual) — para empleados, incluye Net Salary Forecast, Tax Thermometer, Visa Shield, Reembolsos. ABN: AUD $12.50/mes en plan anual ($14.99/mes mensual) — para contractors, incluye Invoices, Contractors, Reportes Fiscales, OCR de gastos. Pro: AUD $16.67/mes en plan anual ($19.99/mes mensual) — todo de TFN + ABN, más toggle 3 estados, Dashboard Consolidado y Rate Comparison. Todos incluyen 14 días de trial gratis sin tarjeta.",
+    "a81": "ABN: AUD $12.50/mes en plan anual ($14.99/mes mensual) — para contractors; incluye invoices PDF profesionales, gestión de contractors, reportes financieros, OCR de gastos y análisis fiscal. Pro: AUD $16.67/mes en plan anual ($19.99/mes mensual) — todo lo de ABN más herramientas fiscales avanzadas y cambio de modo ABN↔TFN. Ambos incluyen 14 días de trial gratis, y tu primera invoice es gratis — sin tarjeta.",
     "q82": "¿Cómo restauro mis compras en un celular nuevo?",
     "a82": "Abre Ozly y ve a Paywall → Restore Purchases (o Configuraciones → Subscription → Restore). Inicia sesión con la misma Apple ID o Google Account que usaste para suscribirte y tu plan se reactiva automáticamente.",
     "q83": "¿Cómo hago upgrade o downgrade del plan?",

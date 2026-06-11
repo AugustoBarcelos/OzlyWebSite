@@ -84,27 +84,21 @@
     "perMonth": "/mo",
     "perWeek": "/wk",
     "currency": "AUD",
-    "tfn": {
-      "name": "TFN",
-      "desc": "For individual contractors",
-      "price": "$2.88",
-      "priceNote": "$12.50/mo on annual plan*"
-    },
     "abn": {
       "name": "ABN",
-      "desc": "For ABN businesses",
+      "desc": "For contractors",
       "price": "$2.88",
       "priceNote": "$12.50/mo on annual plan*"
     },
     "pro": {
       "name": "PRO",
-      "desc": "TFN + ABN combined",
+      "desc": "Everything in ABN + advanced tools",
       "price": "$3.85",
       "priceNote": "$16.67/mo on annual plan*"
     },
     "seeAll": "See all features",
-    "annualNote": "* Annual plan: TFN/ABN $149.99/yr | PRO $199.99/yr. All plans include a 14-day free trial.",
-    "monthlyNote": "** Monthly plan: TFN/ABN $14.99/mo | PRO $19.99/mo.",
+    "annualNote": "* Annual plan: ABN $149.99/yr | PRO $199.99/yr. All plans include a 14-day free trial.",
+    "monthlyNote": "** Monthly plan: ABN $14.99/mo | PRO $19.99/mo.",
     "calendarNote": "*** Currently integrates with Google Calendar. Compatible with apps that sync with Google Calendar.",
     "features": {
       "shifts": "Shifts & Job Tracking",
@@ -116,20 +110,18 @@
       "invoices": "Professional PDF Invoices",
       "hoursComparison": "Hours Comparison (ABN peers)",
       "multiBusinesses": "Multiple Businesses",
-      "toggleMode": "Switch TFN ↔ ABN anytime",
+      "toggleMode": "Switch ABN ↔ TFN mode anytime",
       "penaltyRates": "Penalty Rates (Sat/Sun/Holidays)",
       "taxThermometer": "Tax Return Thermometer",
       "netSalary": "Net Salary Forecast (PAYG)",
       "bulkEdit": "Bulk Edit & Delete Jobs",
-      "timesheets": "Timesheet PDF per Employer",
       "levelUp": "Hustle Level Up Celebrations",
       "quickExpense": "Smart & Quick Expense Entry",
       "salaryModes": "Salary: Hourly / Annual / Monthly / Fortnightly",
-      "reimbursements": "Reimbursement Claims with PDF Export",
       "messageTemplates": "Customisable Email Templates",
       "rateComparison": "Hourly Rate Benchmark vs Market",
-      "proAllTfn": "All TFN features included",
-      "proAllAbn": "All ABN features included"
+      "proAllAbn": "Everything in ABN included",
+      "proAdvancedTax": "Advanced tax tools & forecasts"
     }
   },
   "homeFaq": {
@@ -446,7 +438,7 @@
     "q80": "I'm not getting notifications. What can I do?",
     "a80": "Check three things: (1) Settings → Notifications inside Ozly — make sure they're enabled; (2) iOS/Android system settings → Ozly → Notifications enabled; (3) battery optimisation — disable battery saver for Ozly so background notifications can fire.",
     "q81": "How much does each plan cost?",
-    "a81": "TFN: AUD $12.50/month on annual plan ($14.99/month monthly) — for employees, includes Net Salary Forecast, Tax Thermometer, Visa Shield, Reimbursements. ABN: AUD $12.50/month on annual plan ($14.99/month monthly) — for contractors, includes Invoices, Contractors, Tax Reports, Expense OCR. Pro: AUD $16.67/month on annual plan ($19.99/month monthly) — everything from TFN + ABN, plus 3-way Toggle, Consolidated Dashboard and Rate Comparison. All include a 14-day free trial with no card required.",
+    "a81": "ABN: AUD $12.50/month on annual plan ($14.99/month monthly) — for contractors; includes professional PDF invoices, contractor management, financial reports, OCR expense tracking and tax analytics. Pro: AUD $16.67/month on annual plan ($19.99/month monthly) — everything in ABN plus advanced tax tools and ABN↔TFN mode switching. Both include a 14-day free trial, and your very first invoice is free — no card required.",
     "q82": "How do I restore my purchases on a new phone?",
     "a82": "Open Ozly and go to Paywall → Restore Purchases (or Settings → Subscription → Restore). Sign in with the same Apple ID or Google Account you used to subscribe and your plan reactivates automatically.",
     "q83": "How do I upgrade or downgrade my plan?",

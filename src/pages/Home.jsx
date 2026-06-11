@@ -571,40 +571,33 @@ function Comparison() {
 }
 
 /* ═══════════════════════ PRICING ═══════════════════════ */
-// All features for TFN and ABN columns (sorted: included first, excluded last)
+// ABN feature list (PRO includes all of these plus the Pro-exclusive extras below)
 const allFeatures = [
-  { key: "shifts",                  tfn: true,  abn: true  },
-  { key: "expensesOcr",             tfn: true,  abn: true  },
-  { key: "calendarSync",            tfn: true,  abn: true  },
-  { key: "taxAnalytics",            tfn: true,  abn: true  },
-  { key: "quickExpense",            tfn: true,  abn: true  },
-  { key: "bulkEdit",                tfn: true,  abn: true  },
-  { key: "timesheets",              tfn: true,  abn: true  },
-  { key: "levelUp",                 tfn: true,  abn: true  },
-  { key: "messageTemplates",        tfn: true,  abn: true  },
-  { key: "taxThermometer",          tfn: true,  abn: false },
-  { key: "penaltyRates",            tfn: true,  abn: false },
-  { key: "netSalary",               tfn: true,  abn: false },
-  { key: "salaryModes",             tfn: true,  abn: false },
-  { key: "visaShield",              tfn: true,  abn: false },
-  { key: "reimbursements",          tfn: true,  abn: false },
-  { key: "invoices",                tfn: false, abn: true  },
-  { key: "contractors",             tfn: false, abn: true  },
-  { key: "hoursComparison",         tfn: false, abn: true  },
-  { key: "multiBusinesses",         tfn: false, abn: true  },
+  { key: "invoices",         abn: true },
+  { key: "contractors",      abn: true },
+  { key: "expensesOcr",      abn: true },
+  { key: "taxAnalytics",     abn: true },
+  { key: "shifts",           abn: true },
+  { key: "calendarSync",     abn: true },
+  { key: "quickExpense",     abn: true },
+  { key: "messageTemplates", abn: true },
+  { key: "bulkEdit",         abn: true },
+  { key: "multiBusinesses",  abn: true },
+  { key: "hoursComparison",  abn: true },
+  { key: "levelUp",          abn: true },
 ];
 
 // Features shown by default (first 9 — key highlights)
-const coreFeatures = allFeatures.slice(0, 9).map(f => ({ ...f, pro: true }));
+const coreFeatures = allFeatures.slice(0, 9);
 
 // Extra features revealed on "See all"
-const extraFeatures = allFeatures.slice(9).map(f => ({ ...f, pro: true }));
+const extraFeatures = allFeatures.slice(9);
 
-// Pro-exclusive features (shown instead of full list)
+// Pro-exclusive value (shown instead of the full ABN list)
 const proExclusiveFeatures = [
-  { key: "proAllTfn" },
   { key: "proAllAbn" },
   { key: "toggleMode" },
+  { key: "proAdvancedTax" },
   { key: "rateComparison" },
 ];
 
@@ -624,7 +617,6 @@ function Pricing() {
   };
 
   const plans = [
-    { id: "tfn", ...p.tfn, color: "brand",  highlight: false },
     { id: "abn", ...p.abn, color: "brand",  highlight: false },
     { id: "pro", ...p.pro, color: "amber",  highlight: true  },
   ];
@@ -645,7 +637,7 @@ function Pricing() {
         </ScrollReveal>
 
         {/* ── Pricing cards (3 side by side on desktop, stacked on mobile) ── */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 mb-16 max-w-3xl mx-auto">
           {plans.map((plan, pi) => (
             <ScrollReveal key={plan.id} delay={0.1 * pi}>
               <div className={`relative rounded-2xl bg-white dark:bg-slate-800 p-5 sm:p-8 h-full flex flex-col transition-all duration-300 ${
@@ -686,7 +678,7 @@ function Pricing() {
                 {/* Feature list */}
                 <ul className="space-y-3 mb-4 flex-1">
                   {plan.id === "pro" ? (
-                    // Pro: simplified list — "All TFN + All ABN + exclusives"
+                    // Pro: simplified list — "Everything in ABN + Pro extras"
                     proExclusiveFeatures.map(({ key }) => (
                       <li key={key} className="flex items-center gap-3 text-sm">
                         <CheckCircle size={16} className="text-brand-500 flex-shrink-0" />
