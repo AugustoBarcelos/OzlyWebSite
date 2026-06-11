@@ -569,7 +569,7 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
             <li><B>Tax Resident</B> — Toggle. Impact: $18,200 tax-free threshold vs 30% from $1</li>
             <li><B>Medicare Levy</B> — 2% on taxable income (residents/PR only, not WHM)</li>
             <li><B>GST</B> — Manual toggle or automatic alert if revenue {">"} $75k</li>
-            <li><B>Work Type</B> — ABN, TFN, or both</li>
+            <li><B>Work Type</B> — ABN</li>
           </BulletList>
         </SubSection>
 
@@ -733,7 +733,7 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
             <li>Ozly filters with smart keywords (recognizes: shift, cleaning, bond clean, turno, trabalho, etc.).</li>
             <li>If any event <B>conflicts</B> with an existing job, a sheet appears with 3 options: <B>Keep Ozly</B>, <B>Keep Google</B>, or <B>Keep both</B> (creates a new job alongside).</li>
             <li>Select events to import with checkboxes.</li>
-            <li>On the Review screen, select items and choose <B>Contractor</B>, <B>ABN</B>, <B>ABN/TFN</B> and <B>hourly rate</B> from the top panel — it applies instantly to all selected (no "Apply" button). Tap a specific item to override individually.</li>
+            <li>On the Review screen, select items and choose <B>Contractor</B>, <B>ABN</B> and <B>hourly rate</B> from the top panel — it applies instantly to all selected (no "Apply" button). Tap a specific item to override individually.</li>
             <li>Tap <B>"Import"</B>.</li>
           </StepList>
         </SubSection>

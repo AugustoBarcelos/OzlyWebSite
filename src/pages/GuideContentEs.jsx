@@ -569,7 +569,7 @@ export default function GuideContentEs({ SectionCard, SubSection, StepList, Bull
             <li><B>Tax Resident</B> — Toggle. Impacto: rango exento $18.200 vs 30% desde $1</li>
             <li><B>Medicare Levy</B> — 2% sobre ingreso gravable (solo residentes/PR, no WHM)</li>
             <li><B>GST</B> — Toggle manual o alerta automática si los ingresos {">"} $75k</li>
-            <li><B>Work Type</B> — ABN, TFN o ambos</li>
+            <li><B>Work Type</B> — ABN</li>
           </BulletList>
         </SubSection>
 
@@ -732,7 +732,7 @@ export default function GuideContentEs({ SectionCard, SubSection, StepList, Bull
             <li>Ozly filtra con palabras clave inteligentes (reconoce: shift, cleaning, bond clean, turno, trabalho, etc.).</li>
             <li>Si hay <B>conflicto</B> de horario con un job existente, aparece una hoja con 3 opciones: <B>Mantener Ozly</B>, <B>Mantener Google</B> o <B>Mantener ambos</B> (crea un job nuevo al lado).</li>
             <li>Seleccioná los eventos a importar con los checkboxes.</li>
-            <li>En la pantalla de Review, seleccioná items y elegí <B>Contractor</B>, <B>ABN</B>, <B>ABN/TFN</B> y <B>valor/hora</B> en el panel de arriba — se aplica al instante a todos los seleccionados (sin botón "Aplicar"). Tocá un item específico para ajustarlo individualmente.</li>
+            <li>En la pantalla de Review, seleccioná items y elegí <B>Contractor</B>, <B>ABN</B> y <B>valor/hora</B> en el panel de arriba — se aplica al instante a todos los seleccionados (sin botón "Aplicar"). Tocá un item específico para ajustarlo individualmente.</li>
             <li>Tocá <B>"Import"</B>.</li>
           </StepList>
         </SubSection>

@@ -8,10 +8,10 @@ const CATEGORIES = [
   { key: "cat_general", questions: ["q1", "q7"] },
   { key: "cat_account", questions: ["q10", "q31", "q32", "q33", "q34", "q35"] },
   { key: "cat_setup", questions: ["q36", "q37", "q38"] },
-  { key: "cat_dashboard", questions: ["q24", "q25", "q39", "q40", "q41", "q42"] },
+  { key: "cat_dashboard", questions: ["q25", "q39", "q40", "q41", "q42"] },
   {
     key: "cat_jobs",
-    questions: ["q13", "q14", "q16", "q43", "q44", "q45", "q46", "q47", "q48", "q49", "q50"],
+    questions: ["q16", "q43", "q44", "q45", "q46", "q47", "q48", "q49", "q50"],
   },
   { key: "cat_contractors", questions: ["q51", "q52", "q53", "q54"] },
   {
@@ -21,19 +21,18 @@ const CATEGORIES = [
   { key: "cat_expenses", questions: ["q3", "q15", "q61", "q62", "q63", "q64"] },
   { key: "cat_tax", questions: ["q4", "q26", "q65", "q66", "q67", "q68", "q69"] },
   { key: "cat_visa", questions: ["q8", "q28", "q70"] },
-  { key: "cat_reimbursements", questions: ["q18", "q19", "q71", "q72"] },
-  { key: "cat_settings", questions: ["q5", "q73", "q74", "q75", "q76", "q77"] },
+    { key: "cat_settings", questions: ["q5", "q73", "q74", "q75", "q76", "q77"] },
   { key: "cat_hustle", questions: ["q9", "q78", "q79"] },
   { key: "cat_notifications", questions: ["q80"] },
   {
     key: "cat_subscription",
-    questions: ["q12", "q22", "q23", "q29", "q81", "q82", "q83"],
+    questions: ["q22", "q23", "q29", "q81", "q82", "q83"],
   },
   { key: "cat_sync", questions: ["q2", "q84", "q85"] },
   { key: "cat_legal", questions: ["q27", "q30"] },
   {
     key: "cat_support",
-    questions: ["q11", "q17", "q20", "q86", "q87", "q88", "q89"],
+    questions: ["q11", "q20", "q86", "q87", "q88", "q89"],
   },
 ];
 

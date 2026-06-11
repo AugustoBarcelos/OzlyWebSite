@@ -583,7 +583,6 @@ const allFeatures = [
   { key: "messageTemplates", abn: true },
   { key: "bulkEdit",         abn: true },
   { key: "multiBusinesses",  abn: true },
-  { key: "hoursComparison",  abn: true },
   { key: "levelUp",          abn: true },
 ];
 
@@ -596,9 +595,9 @@ const extraFeatures = allFeatures.slice(9);
 // Pro-exclusive value (shown instead of the full ABN list)
 const proExclusiveFeatures = [
   { key: "proAllAbn" },
-  { key: "toggleMode" },
-  { key: "proAdvancedTax" },
   { key: "rateComparison" },
+  { key: "hoursComparison" },
+  { key: "visaShield" },
 ];
 
 function Pricing() {
@@ -686,7 +685,7 @@ function Pricing() {
                       </li>
                     ))
                   ) : (
-                    // TFN / ABN: sorted (included first, excluded last)
+                    // ABN: sorted (included first, excluded last)
                     sortedForPlan(visibleFeatures, plan.id).map(({ key, [plan.id]: has }) => (
                       <li key={key} className="flex items-center gap-3 text-sm">
                         {has
