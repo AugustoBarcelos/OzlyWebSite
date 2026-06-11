@@ -76,9 +76,8 @@ export default function TermsOfUse() {
                 </tr>
               </thead>
               <tbody className="text-slate-700">
-                <tr><td className="border border-amber-200 px-3 py-2 font-medium">TFN Access</td><td className="border border-amber-200 px-3 py-2">Features designed for individual contractors operating under a Tax File Number.</td></tr>
-                <tr><td className="border border-amber-200 px-3 py-2 font-medium">ABN Access</td><td className="border border-amber-200 px-3 py-2">Features designed for contractors and businesses operating under an Australian Business Number.</td></tr>
-                <tr><td className="border border-amber-200 px-3 py-2 font-medium">Pro Mode</td><td className="border border-amber-200 px-3 py-2">Full access to both TFN and ABN features for users who hold both entitlements.</td></tr>
+                <tr><td className="border border-amber-200 px-3 py-2 font-medium">ABN</td><td className="border border-amber-200 px-3 py-2">Features designed for contractors and businesses operating under an Australian Business Number — invoicing, contractor management, expense tracking and financial reports.</td></tr>
+                <tr><td className="border border-amber-200 px-3 py-2 font-medium">Pro</td><td className="border border-amber-200 px-3 py-2">Everything in ABN plus advanced tools — rate benchmarking vs market, ABN hours comparison and Visa Shield.</td></tr>
               </tbody>
             </table>
           </div>
