@@ -400,12 +400,12 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
 
       {/* ─── 9. ORGANISATIONS ─── */}
       <SectionCard id="organisations" title="9. Organisations (Work for a Company)">
-        <P>If a cleaning company or agency runs <B>Ozly for Business</B>, they can invite you as a <B>sub-contractor</B>. You stay 100% independent — Ozly never creates an employment relationship — but the invoices you issue <B>to that company</B> show up directly in their portal, and they can offer you work.</P>
+        <P>If a cleaning company or agency runs <B>Ozly for Business</B>, they can invite you to invoice them under your own <B>ABN</B>. You stay 100% independent — Ozly never creates an employment relationship — but the invoices you issue <B>to that company</B> show up directly in their portal, and they can offer you work.</P>
 
         <SubSection title="Accept an invite">
           <StepList>
             <li>The company sends you an <B>invite link</B> (looks like <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded">ozly.au/invite/…</code>) via WhatsApp, SMS or email.</li>
-            <li>Tap the link — Ozly opens the <B>"[Company] has invited you to join as a sub-contractor"</B> screen. (No link handy? Side menu → <B>Organisations</B> → <B>"Have an invite link?"</B> → paste it.)</li>
+            <li>Tap the link — Ozly opens the invite screen from <B>[Company]</B>. (No link handy? Side menu → <B>Organisations</B> → <B>"Have an invite link?"</B> → paste it.)</li>
             <li>Read the note: by accepting, the company sees the invoices you issue <B>to them</B> — nothing else. You can revoke any time.</li>
             <li>Tap <B>"Accept invitation"</B> (or <B>"Decline"</B>).</li>
             <li><B>One last step</B> — link a contractor record to the company. Pick <B>"Create a new contractor named '[Company]'"</B> (recommended) or choose an existing one, then tap <B>"Continue"</B>.</li>
@@ -1213,7 +1213,7 @@ export default function GuideContentEn({ SectionCard, SubSection, StepList, Bull
 
         <SubSection title="Organisations">
           <div className="space-y-2">
-            <FaqItem q="A company sent me an invite link — what is it?" a="A company using Ozly for Business invited you as an independent sub-contractor. Accepting lets the invoices you issue to them appear in their portal, and they can offer you work. You stay independent — it isn't employment." />
+            <FaqItem q="A company sent me an invite link — what is it?" a="A company using Ozly for Business invited you to invoice them under your own ABN. Accepting lets the invoices you issue to them appear in their portal, and they can offer you work. You stay independent — it isn't employment." />
             <FaqItem q="Does working for a company cost me anything?" a="No. If the company covers your ABN, you can bill that company for free. To bill other clients too, add the +$5/month ABN top-up (or a full plan)." />
             <FaqItem q="The company marked my invoice paid but I don't see the money yet." a="Tap 'Confirm payment received' only once the money actually lands in your account. This keeps your records and theirs in sync." />
             <FaqItem q="My invoice to the company shows 'Bounced'. What now?" a="The billing email may be wrong or blocked. Ask the company to confirm their billing inbox, then tap the delivery badge → 'Try sending again'." />

@@ -44,8 +44,8 @@ export default function BusinessLanding() {
       {/* Value props */}
       <section className="px-4 py-16 sm:px-6">
         <div className="mx-auto max-w-5xl grid grid-cols-1 gap-6 md:grid-cols-3">
-          <Card title="Invoices flow in" body="Your sub-contractors emit their own ABN invoices in the Ozly app — you receive them in the portal Inbox, ready to pay or export." />
-          <Card title="Cover ABN access (optional)" body="From $7.99/seat/mo, cover your sub-contractors' ABN access on Ozly. While you cover their access, their Ozly invoicing is set to your org. They stay free to work and bill anyone else — a $5/mo personal top-up simply re-opens Ozly invoicing to other clients too." />
+          <Card title="Invoices flow in" body="The ABN holders you work with emit their own invoices in the Ozly app — you receive them in the portal Inbox, ready to pay or export." />
+          <Card title="Cover ABN access (optional)" body="From $7.99/seat/mo, cover your ABN holders' access on Ozly. While you cover their access, their Ozly invoicing is set to your org. They stay free to work and bill anyone else — a $5/mo personal top-up simply re-opens Ozly invoicing to other clients too." />
           <Card title="Built on the sub-contractor framework" body="Ozly is a record-keeping tool, not your employer-of-record. Flows and retention are built around the sub-contractor framework — but your Fair Work, super, payroll-tax and workers'-comp obligations remain yours. We help you document them, not avoid them." />
         </div>
       </section>
@@ -86,7 +86,7 @@ export default function BusinessLanding() {
       <section className="px-4 py-16 sm:px-6">
         <div className="mx-auto max-w-2xl rounded-2xl bg-navy-700 px-6 py-12 text-center text-white shadow-lg sm:px-10">
           <h2 className="font-display text-2xl font-bold sm:text-3xl">Try it free for 14 days</h2>
-          <p className="mt-3 text-sm text-navy-200">No card required. Invite your first sub-contractor in 2 minutes.</p>
+          <p className="mt-3 text-sm text-navy-200">No card required. Invite your first ABN holder in 2 minutes.</p>
           <a
             href={`${ORG_PORTAL}/signup`}
             className="mt-6 inline-block rounded-lg bg-brand-500 px-6 py-3 text-sm font-semibold text-navy-900 hover:bg-brand-400"

@@ -400,12 +400,12 @@ export default function GuideContentPt({ SectionCard, SubSection, StepList, Bull
 
       {/* ─── 9. ORGANISATIONS ─── */}
       <SectionCard id="organisations" title="9. Organizações (Trabalhar para uma Empresa)">
-        <P>Se uma empresa de limpeza ou agência usa o <B>Ozly for Business</B>, ela pode te convidar como <B>sub-contractor</B>. Você continua 100% independente — o Ozly nunca cria vínculo empregatício — mas as invoices que você emite <B>para essa empresa</B> aparecem direto no portal dela, e ela pode te oferecer trabalho.</P>
+        <P>Se uma empresa de limpeza ou agência usa o <B>Ozly for Business</B>, ela pode te convidar pra faturar pra ela com o seu próprio <B>ABN</B>. Você continua 100% independente — o Ozly nunca cria vínculo empregatício — mas as invoices que você emite <B>para essa empresa</B> aparecem direto no portal dela, e ela pode te oferecer trabalho.</P>
 
         <SubSection title="Aceitar um convite">
           <StepList>
             <li>A empresa te envia um <B>link de convite</B> (parecido com <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded">ozly.au/invite/…</code>) por WhatsApp, SMS ou email.</li>
-            <li>Toque no link — o Ozly abre a tela <B>"[Company] te convidou para entrar como sub-contractor"</B>. (Sem o link em mãos? Menu lateral → <B>Organisations</B> → <B>"Have an invite link?"</B> → cole.)</li>
+            <li>Toque no link — o Ozly abre a tela de convite da <B>[Company]</B>. (Sem o link em mãos? Menu lateral → <B>Organisations</B> → <B>"Have an invite link?"</B> → cole.)</li>
             <li>Leia o aviso: ao aceitar, a empresa vê as invoices que você emite <B>para ela</B> — nada mais. Você pode revogar a qualquer momento.</li>
             <li>Toque em <B>"Accept invitation"</B> (ou <B>"Decline"</B>).</li>
             <li><B>Um último passo</B> — vincule um registro de contractor à empresa. Escolha <B>"Create a new contractor named '[Company]'"</B> (recomendado) ou selecione um existente, e toque em <B>"Continue"</B>.</li>
@@ -1212,7 +1212,7 @@ export default function GuideContentPt({ SectionCard, SubSection, StepList, Bull
 
         <SubSection title="Organizações">
           <div className="space-y-2">
-            <FaqItem q="Uma empresa me mandou um link de convite — o que é isso?" a="Uma empresa que usa o Ozly for Business te convidou como sub-contractor independente. Ao aceitar, as invoices que você emite para ela passam a aparecer no portal dela, e ela pode te oferecer trabalho. Você continua independente — não é emprego." />
+            <FaqItem q="Uma empresa me mandou um link de convite — o que é isso?" a="Uma empresa que usa o Ozly for Business te convidou pra faturar com o seu próprio ABN. Ao aceitar, as invoices que você emite para ela passam a aparecer no portal dela, e ela pode te oferecer trabalho. Você continua independente — não é emprego." />
             <FaqItem q="Trabalhar para uma empresa me custa algo?" a="Não. Se a empresa cobre seu ABN, você pode faturar essa empresa de graça. Para faturar outros clientes também, adicione o ABN top-up de +$5/mês (ou um plano completo)." />
             <FaqItem q="A empresa marcou minha invoice como paga mas ainda não vejo o dinheiro." a="Toque em 'Confirm payment received' só quando o dinheiro realmente cair na sua conta. Isso mantém seus registros e os dela sincronizados." />
             <FaqItem q="Minha invoice para a empresa aparece como 'Bounced'. E agora?" a="O email de faturamento pode estar errado ou bloqueado. Peça para a empresa confirmar a caixa de faturamento, depois toque no badge de entrega → 'Try sending again'." />
