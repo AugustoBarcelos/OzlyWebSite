@@ -94,11 +94,22 @@ export function BoardTab({ data, loading, period }: Props) {
         />
         <KpiHero
           label="Cancel scheduled"
-          value={pendingCancellations?.count ?? null}
+          value={
+            // Só pagantes — trial que não converte não é receita em risco.
+            pendingCancellations
+              ? pendingCancellations.count_paying ??
+                pendingCancellations.rows.filter(
+                  (r) =>
+                    r.status != null
+                      ? r.status !== 'trial'
+                      : r.monthly_price_aud !== null || r.store === 'promotional',
+                ).length
+              : null
+          }
           hint={
             pendingCancellations === null
               ? 'Pending RC sync'
-              : `Auto-renew off — ${formatCurrencyAUD(pendingCancellations.potential_mrr_loss_aud)} MRR at risk`
+              : `Auto-renew off (paying) — ${formatCurrencyAUD(pendingCancellations.potential_mrr_loss_aud)} MRR at risk`
           }
           loading={loading && !pendingCancellations}
           tone="warning"

@@ -109,6 +109,8 @@ interface PendingCancellationRow {
   full_name: string | null;
   plan: string | null;
   store: string | null;
+  /** 'trial' | 'paying' | … (null antes da migração 20260619). */
+  status?: string | null;
   period_type: string | null;
   monthly_price_aud: number | null;
   current_period_end: string;
@@ -118,8 +120,18 @@ interface PendingCancellationRow {
 interface PendingCancellationsResp {
   window_days: number;
   count: number;
+  count_paying?: number;
+  count_trial?: number;
   potential_mrr_loss_aud: number;
   rows: PendingCancellationRow[];
+}
+
+/** Trial que não converte ≠ pagante cancelando. Fallback pré-migração:
+ *  trials nunca têm monthly_price_aud (gross $0). */
+function isTrialCancelRow(r: PendingCancellationRow): boolean {
+  return r.status != null
+    ? r.status === 'trial'
+    : r.monthly_price_aud === null && r.store !== 'promotional';
 }
 
 export function InboxPage() {
@@ -180,6 +192,13 @@ export function InboxPage() {
   const totalActions = actions?.length ?? 0;
   const totalRefunds = refunds?.count ?? 0;
   const totalCancellations = cancellations?.count ?? 0;
+  const cancelPaying = cancellations
+    ? cancellations.count_paying ??
+      cancellations.rows.filter((r) => !isTrialCancelRow(r)).length
+    : 0;
+  const cancelTrial = cancellations
+    ? cancellations.count_trial ?? cancellations.rows.filter(isTrialCancelRow).length
+    : 0;
   const mrrAtRisk = cancellations?.potential_mrr_loss_aud ?? 0;
 
   return (
@@ -213,7 +232,7 @@ export function InboxPage() {
           icon={ArrowDownRightIcon}
           label="Cancelando (30d)"
           count={totalCancellations}
-          tone={totalCancellations > 0 ? 'warning' : 'lime'}
+          tone={cancelPaying > 0 ? 'warning' : 'lime'}
           to="#cancellations-pending"
         />
         <CounterTile
@@ -499,7 +518,17 @@ export function InboxPage() {
         title="Cancelando — janela de save (30d)"
         subtitle={
           totalCancellations > 0
-            ? `${totalCancellations} pagante${totalCancellations === 1 ? '' : 's'} desligou auto-renew · A$${mrrAtRisk.toFixed(2)} de MRR em risco`
+            ? [
+                cancelPaying > 0
+                  ? `${cancelPaying} pagante${cancelPaying === 1 ? '' : 's'} desligou auto-renew`
+                  : null,
+                cancelTrial > 0
+                  ? `${cancelTrial} em teste grátis não vai continuar`
+                  : null,
+                cancelPaying > 0 ? `A$${mrrAtRisk.toFixed(2)} de MRR em risco` : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')
             : 'Pagantes que desligaram auto-renew mas ainda têm acesso até o fim do período.'
         }
         rightSlot={
@@ -537,6 +566,11 @@ export function InboxPage() {
                       {r.plan && (
                         <span className="rounded-full bg-navy-50 px-1.5 py-0.5 text-[10px] font-medium uppercase text-navy-500">
                           {r.plan}
+                        </span>
+                      )}
+                      {isTrialCancelRow(r) && (
+                        <span className="rounded-full bg-sky-100 px-1.5 py-0.5 text-[10px] font-semibold text-sky-800">
+                          teste grátis
                         </span>
                       )}
                       <span

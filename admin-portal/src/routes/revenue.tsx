@@ -186,10 +186,21 @@ export function RevenuePage() {
         />
         <KpiHero
           label="Cancel scheduled"
-          value={data?.pendingCancellations?.count ?? null}
+          value={
+            // Só pagantes — trial que não converte não é cancelamento de receita.
+            data?.pendingCancellations
+              ? data.pendingCancellations.count_paying ??
+                data.pendingCancellations.rows.filter(
+                  (r) =>
+                    r.status != null
+                      ? r.status !== 'trial'
+                      : r.monthly_price_aud !== null || r.store === 'promotional',
+                ).length
+              : null
+          }
           hint={
             data?.pendingCancellations
-              ? `Auto-renew off — ${formatCurrencyAUD(data.pendingCancellations.potential_mrr_loss_aud)} MRR at risk (30d)`
+              ? `Auto-renew off (paying) — ${formatCurrencyAUD(data.pendingCancellations.potential_mrr_loss_aud)} MRR at risk (30d)`
               : 'Pending RC sync'
           }
           loading={loading && !data}
