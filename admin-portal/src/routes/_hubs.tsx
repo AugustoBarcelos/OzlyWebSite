@@ -86,56 +86,56 @@ export function InboxPage() {
 export function GrowthHubPage() {
   return (
     <HubPlaceholder
-      title="Growth"
-      subtitle="Aquisição, atribuição e otimização de canais."
+      title="Anúncios & funil"
+      subtitle="De onde vêm os novos usuários e quanto custa trazer cada um."
       icon={TrendingUpIcon}
       links={[
         {
-          label: 'Sales Funnel',
+          label: 'Funil de vendas',
           to: '/growth/funnel',
-          description: 'Impression → Click → Install → Signup → Activation → Trial → Paid → Retained.',
+          description: 'O caminho todo: viu o anúncio → baixou → cadastrou → pagou.',
           icon: FunnelIcon,
         },
         {
-          label: 'Insights (GA4)',
+          label: 'Tráfego do site',
           to: '/insights',
-          description: 'GA4 sessions/users/conversion existentes.',
+          description: 'Quanta gente visita o site ozly.au e de onde vem.',
           icon: ActivityIcon,
         },
         {
           label: 'Google Ads',
           to: '/ads/google',
-          description: 'Campanhas, spend, CPA, ROAS — Google Ads.',
+          description: 'Anúncios no Google: quanto gastou e quanto trouxe.',
           icon: ArrowUpRightIcon,
         },
         {
           label: 'Meta Ads',
           to: '/ads/meta',
-          description: 'Campanhas Facebook + Instagram Ads.',
+          description: 'Anúncios no Facebook e Instagram.',
           icon: ArrowUpRightIcon,
         },
         {
           label: 'Apple Search Ads',
           to: '/ads/asa',
-          description: 'ASA pipeline (já operacional via JWT ES256).',
+          description: 'Anúncios na busca da App Store.',
           icon: ArrowUpRightIcon,
         },
         {
           label: 'TikTok Ads',
           to: '/ads/tiktok',
-          description: 'Campanhas TikTok + cost per install.',
+          description: 'Anúncios no TikTok e custo por instalação.',
           icon: ArrowUpRightIcon,
         },
         {
-          label: 'Attribution / UTM',
+          label: 'Links rastreados (UTM)',
           to: '/ads/attribution',
-          description: 'Gerador de UTM links curtos + tracking.',
+          description: 'Criar links curtos que mostram de onde cada cadastro veio.',
           icon: ActivityIcon,
         },
         {
-          label: 'Affiliates',
+          label: 'Afiliados',
           to: '/affiliates',
-          description: 'Programa de afiliados — payouts, commissions, bonuses.',
+          description: 'Quem indica o app e quanto ganha de comissão.',
           icon: HandshakeIcon,
         },
       ]}
@@ -147,57 +147,56 @@ export function GrowthHubPage() {
 export function MarketingHubPage() {
   return (
     <HubPlaceholder
-      title="Marketing Studio"
-      subtitle="Calendário, criação multi-canal, AI Composer, Messaging."
+      title="Marketing"
+      subtitle="Criar e agendar posts, emails e mensagens — tudo num lugar."
       icon={MegaphoneIcon}
-      wave="Wave 6 / 6.3 / 6.5 — Composer + Messaging + WhatsApp"
       links={[
         {
-          label: 'Calendar',
+          label: 'Calendário',
           to: '/marketing/calendar',
-          description: 'Visão consolidada de tudo agendado em todos canais.',
+          description: 'Tudo que está agendado, em todos os canais.',
           icon: PenSquareIcon,
         },
         {
-          label: 'Composer',
+          label: 'Criar post',
           to: '/marketing/composer',
-          description: 'Criar 1× e publicar em N canais com variações.',
+          description: 'Escreve uma vez e publica em vários canais.',
           icon: PenSquareIcon,
         },
         {
-          label: 'AI Composer',
+          label: 'Criar post com IA',
           to: '/marketing/ai-composer',
-          description: 'Gemini gera variações respeitando brand voice + regras de canal.',
+          description: 'A IA escreve as variações pra cada canal por você.',
           icon: SparklesIcon,
         },
         {
-          label: 'Posts',
+          label: 'Posts publicados',
           to: '/marketing/posts',
-          description: 'Histórico de publicações com performance.',
+          description: 'Histórico do que foi publicado e como foi.',
           icon: ScrollTextIcon,
         },
         {
-          label: 'Channels (organic)',
+          label: 'Redes sociais',
           to: '/marketing/channels',
-          description: 'Canais orgânicos: IG, FB, TikTok, YouTube, X, LinkedIn.',
+          description: 'Instagram, Facebook, TikTok, YouTube, X, LinkedIn.',
           icon: MegaphoneIcon,
         },
         {
-          label: 'SEO & Site',
+          label: 'Site & Google',
           to: '/marketing/seo',
-          description: 'Search console + site analytics.',
+          description: 'Como o site aparece no Google e quem visita.',
           icon: ActivityIcon,
         },
         {
-          label: 'ASO (App Store)',
+          label: 'Lojas de app (ASO)',
           to: '/marketing/aso',
-          description: 'App Store + Play Store metadata, screenshots, ranking.',
+          description: 'Como o app aparece na App Store e Play Store.',
           icon: PackageIcon,
         },
         {
           label: 'Email',
           to: '/messaging/email',
-          description: 'Campanhas Resend + inbox de respostas.',
+          description: 'Mandar emails pros usuários e ver respostas.',
           icon: MailIcon,
         },
         {
@@ -229,45 +228,44 @@ export function MarketingHubPage() {
 export function FinanceHubPage() {
   return (
     <HubPlaceholder
-      title="Finance"
-      subtitle="MRR, ARR, custos, P&L, runway, reconciliation."
+      title="Dinheiro"
+      subtitle="Quanto entra, quanto sai e quanto sobra."
       icon={DollarSignIcon}
-      wave="Wave 5 — Finance Hub"
       links={[
         {
-          label: 'Revenue',
+          label: 'Quanto entra',
           to: '/revenue',
-          description: 'MRR, subscriptions, trials, plan mix, cohorts & LTV.',
+          description: 'Assinaturas, planos e cancelamentos — a receita do app.',
           icon: DollarSignIcon,
         },
         {
-          label: 'Costs',
+          label: 'Quanto sai',
           to: '/finance/costs',
-          description: 'Ad spend + infra + tools + affiliate payouts + WhatsApp + AI.',
+          description: 'Anúncios, servidores, ferramentas, comissões de afiliados.',
           icon: ArrowDownRightIcon,
         },
         {
-          label: 'P&L',
+          label: 'Quanto sobra (lucro)',
           to: '/finance/pnl',
-          description: 'Profit & Loss mensal e YTD.',
+          description: 'Entradas menos saídas, mês a mês.',
           icon: TrendingUpIcon,
         },
         {
-          label: 'Forecast & Runway',
+          label: 'Previsão',
           to: '/finance/forecast',
-          description: 'Projeção com sliders de cenário (e se eu dobrar ad spend?).',
+          description: 'Como fica o caixa nos próximos meses se nada mudar (e cenários).',
           icon: SparklesIcon,
         },
         {
-          label: 'Reconciliation',
+          label: 'Conferência',
           to: '/finance/reconciliation',
-          description: 'Diff RevenueCat × App Store × Play Store + affiliate commissions.',
+          description: 'Confere se App Store, Play Store e RevenueCat batem.',
           icon: ShieldCheckIcon,
         },
         {
-          label: 'Tax & Reports',
+          label: 'Impostos & relatórios',
           to: '/finance/tax',
-          description: 'GST AU, Apple Small Business, CSV export pro contador.',
+          description: 'GST e arquivos prontos pra mandar pro contador.',
           icon: ScrollTextIcon,
         },
       ]}
@@ -279,38 +277,38 @@ export function FinanceHubPage() {
 export function ProductHubPage() {
   return (
     <HubPlaceholder
-      title="Product"
-      subtitle="Activation, retention, engagement, feedback."
+      title="Produto"
+      subtitle="Como as pessoas usam o app: quem começa, quem volta, o que usam."
       icon={PackageIcon}
       links={[
         {
-          label: 'Activation Funnel',
+          label: 'Primeiros passos',
           to: '/product/activation',
-          description: 'Signup → onboard → trial picked → first session → first job.',
+          description: 'Quem cadastrou conseguiu começar a usar? Onde travam?',
           icon: FunnelIcon,
         },
         {
-          label: 'Retention Cohorts',
+          label: 'Quem volta',
           to: '/product/retention',
-          description: 'Heatmap de retenção por cohort de signup.',
+          description: 'Quantas pessoas continuam usando semanas depois de entrar.',
           icon: ActivityIcon,
         },
         {
-          label: 'Engagement (DAU/WAU/MAU)',
+          label: 'Uso diário',
           to: '/product/engagement',
-          description: 'Daily/Weekly/Monthly active users.',
+          description: 'Quanta gente usa o app por dia, semana e mês.',
           icon: TrendingUpIcon,
         },
         {
-          label: 'Feature Adoption',
+          label: 'Funcionalidades',
           to: '/product/features',
-          description: 'Quais features são usadas, por quem, com que frequência.',
+          description: 'Quais partes do app são mais usadas (e quais ninguém usa).',
           icon: PackageIcon,
         },
         {
-          label: 'Feedback (NPS, reviews)',
+          label: 'Opinião dos usuários',
           to: '/product/feedback',
-          description: 'NPS agregado + App Store reviews (parte 2).',
+          description: 'Notas, avaliações nas lojas e o que estão falando.',
           icon: SparklesIcon,
         },
       ]}

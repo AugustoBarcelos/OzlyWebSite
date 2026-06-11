@@ -573,50 +573,53 @@ export function ErrorsPage() {
       <section aria-label="Error KPI snapshot">
         <Grid numItemsSm={1} numItemsMd={3} className="gap-4">
           <KpiCard
-            title="Errors (24h)"
+            title="Erros nas últimas 24h"
             value={kpi24h.data?.count ?? null}
             {...(computeDelta(kpi24h.data) !== undefined
               ? { delta: computeDelta(kpi24h.data) as number }
               : {})}
             isIncreasePositive={false}
             loading={kpi24h.loading}
+            href="#top-issues"
             subtitle={
               configured
                 ? kpi24h.data
-                  ? "Total error events vs previous 24h"
-                  : "No data yet"
+                  ? "comparado com o dia anterior — clique pra ver quais"
+                  : "Sem dados ainda"
                 : subtitleNotConfigured
             }
           />
           <KpiCard
-            title="Errors (14d)"
+            title="Erros nos últimos 14 dias"
             value={kpi7d.data?.count ?? null}
             {...(computeDelta(kpi7d.data) !== undefined
               ? { delta: computeDelta(kpi7d.data) as number }
               : {})}
             isIncreasePositive={false}
             loading={kpi7d.loading}
+            href="#top-issues"
             subtitle={
               configured
                 ? kpi7d.data
-                  ? "Total error events vs previous 14d"
-                  : "No data yet"
+                  ? "comparado com os 14 dias anteriores — clique pra ver quais"
+                  : "Sem dados ainda"
                 : subtitleNotConfigured
             }
           />
           <KpiCard
-            title="Errors (30d)"
+            title="Erros nos últimos 30 dias"
             value={kpi30d.data?.count ?? null}
             {...(computeDelta(kpi30d.data) !== undefined
               ? { delta: computeDelta(kpi30d.data) as number }
               : {})}
             isIncreasePositive={false}
             loading={kpi30d.loading}
+            href="#top-issues"
             subtitle={
               configured
                 ? kpi30d.data
-                  ? "Total error events vs previous 30d"
-                  : "No data yet"
+                  ? "comparado com os 30 dias anteriores — clique pra ver quais"
+                  : "Sem dados ainda"
                 : subtitleNotConfigured
             }
           />
@@ -624,7 +627,7 @@ export function ErrorsPage() {
       </section>
 
       {/* Top Issues */}
-      <section aria-label="Top issues">
+      <section aria-label="Top issues" id="top-issues">
         <Card>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>

@@ -87,7 +87,7 @@ export function HubPlaceholder({
       {links.length > 0 && (
         <div>
           <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-navy-300">
-            Sub-pages
+            O que tem aqui — clique pra abrir
           </h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {links.map((link) => {
@@ -138,7 +138,7 @@ export function HubPlaceholder({
             <SparklesIcon className="h-5 w-5" />
           </div>
           <div className="space-y-1">
-            <h3 className="text-base font-semibold text-navy-700">Coming soon</h3>
+            <h3 className="text-base font-semibold text-navy-700">Em breve</h3>
             <p className="max-w-md text-sm text-navy-400">
               {wave
                 ? `Esta seção será habilitada em ${wave}.`

@@ -79,23 +79,29 @@ export function AdsOverviewPage() {
         <>
           <Grid numItemsSm={2} numItemsLg={3} className="gap-4">
             <KpiCard
-              title="Spend total · 30d"
+              title="Gasto com anúncios · 30d"
               value={data.totals.total_spend_cents}
               formatter={(v) => (v === null ? '—' : formatCents(v))}
+              href="#channel-breakdown"
+              subtitle="clique pra ver por canal"
             />
             <KpiCard
               title="Conversões · 30d"
               value={data.totals.total_conversions}
+              to="/growth/funnel"
+              subtitle="pessoas que viraram cadastro — clique pra ver o funil"
             />
             <KpiCard
-              title="CPA médio"
+              title="Custo por conversão (CPA)"
               value={data.totals.avg_cpa_cents}
               formatter={(v) => (v === null ? '—' : formatCents(v))}
               isIncreasePositive={false}
+              href="#channel-breakdown"
+              subtitle="quanto custa trazer 1 pessoa — clique pra ver por canal"
             />
           </Grid>
 
-          <Card>
+          <Card id="channel-breakdown">
             <Title>Breakdown por canal · 30d</Title>
             <Text className="mt-1 text-xs text-navy-300">
               Click numa linha pra abrir o detalhe da plataforma.
