@@ -48,6 +48,27 @@ export interface RevenueSummaryResponse {
   conversion_trial_to_paid_period: number | null;
 }
 
+/** admin_pending_cancellations — active subs with auto-renew off (cancel scheduled). */
+export interface PendingCancellationRow {
+  user_id: string;
+  email: string | null;
+  full_name: string | null;
+  plan: string | null;
+  store: string | null;
+  period_type: string | null;
+  monthly_price_aud: number | null;
+  current_period_end: string;
+  days_until_end: number;
+  last_seen_at: string | null;
+}
+
+export interface PendingCancellationsResponse {
+  window_days: number;
+  count: number;
+  potential_mrr_loss_aud: number;
+  rows: PendingCancellationRow[];
+}
+
 export interface TimeseriesPoint {
   date: string;
   count: number;
@@ -118,6 +139,27 @@ export interface TopErrorRow {
 export interface TopErrorsResponse {
   period_days: number;
   rows: TopErrorRow[];
+}
+
+/** admin_error_occurrences — drill-down of a single error message. */
+export interface ErrorOccurrenceRow {
+  user_id: string;
+  email: string | null;
+  full_name: string | null;
+  created_at: string;
+  screen: string | null;
+  app_version: string | null;
+  build_number: string | null;
+  platform: string | null;
+  os_version: string | null;
+  locale: string | null;
+}
+
+export interface ErrorOccurrencesResponse {
+  period_days: number;
+  message: string;
+  total: number;
+  rows: ErrorOccurrenceRow[];
 }
 
 export interface FeatureUsageRow {

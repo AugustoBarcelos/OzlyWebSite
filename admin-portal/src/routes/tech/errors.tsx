@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, Title } from '@tremor/react';
 import { AlertTriangleIcon, ServerIcon } from '@/components/Icons';
@@ -8,13 +8,19 @@ import { RawDataPanel } from '@/components/RawDataPanel';
 import { callRpc, RpcError } from '@/lib/rpc';
 import { useGlobalFilters } from '@/lib/useGlobalFilters';
 import { formatNumber, formatRelativeTime } from '@/lib/format';
-import type { ErrorRateResponse, TopErrorsResponse } from '@/routes/dashboard/types';
+import type {
+  ErrorOccurrencesResponse,
+  ErrorRateResponse,
+  TopErrorsResponse,
+} from '@/routes/dashboard/types';
 
 /**
  * /tech/errors — top app errors + error rate trend.
  *
  * Shows: error rate (current vs previous period), top 20 most frequent
- * error messages with users impacted + last seen.
+ * error messages with users impacted + last seen. Clicking a row expands
+ * the individual occurrences (who hit it, device, app version) with a
+ * link to the user 360 page.
  */
 export function TechErrorsPage() {
   const { periodDays } = useGlobalFilters();
@@ -24,10 +30,31 @@ export function TechErrorsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Drill-down: which message is expanded + per-message occurrence cache.
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [occurrences, setOccurrences] = useState<
+    Record<string, ErrorOccurrencesResponse | 'loading' | 'error'>
+  >({});
+
+  const toggleRow = (message: string) => {
+    setExpanded((prev) => (prev === message ? null : message));
+    if (occurrences[message]) return; // cached (or in flight)
+    setOccurrences((prev) => ({ ...prev, [message]: 'loading' }));
+    callRpc<ErrorOccurrencesResponse>('admin_error_occurrences', {
+      p_message: message,
+      p_period_days: period,
+      p_limit: 50,
+    })
+      .then((resp) => setOccurrences((prev) => ({ ...prev, [message]: resp })))
+      .catch(() => setOccurrences((prev) => ({ ...prev, [message]: 'error' })));
+  };
+
   useEffect(() => {
     let alive = true;
     setLoading(true);
     setError(null);
+    setExpanded(null);
+    setOccurrences({}); // occurrences are period-scoped — drop the cache
     void Promise.allSettled([
       callRpc<TopErrorsResponse>('admin_top_errors', { p_period_days: period, p_limit: 20 }),
       callRpc<ErrorRateResponse>('admin_app_error_rate', { p_period_days: period }),
@@ -148,32 +175,129 @@ export function TechErrorsPage() {
                 </tr>
               </thead>
               <tbody className="text-navy-700">
-                {topErrors.rows.map((err, i) => (
-                  <tr key={`${err.message}-${i}`} className="border-b border-navy-50/60 last:border-0">
-                    <td className="py-2 font-mono text-[11px]" title={err.message}>
-                      <span className="line-clamp-2 max-w-md">{err.message}</span>
-                    </td>
-                    <td className="py-2 text-right tabular-nums font-semibold">
-                      {formatNumber(err.count)}
-                    </td>
-                    <td className="py-2 text-right tabular-nums text-navy-500">
-                      {formatNumber(err.users)}
-                    </td>
-                    <td className="py-2 text-[11px] text-navy-400">
-                      {err.screens && err.screens.length > 0 ? (
-                        <span className="line-clamp-1 max-w-[160px]">
-                          {err.screens.slice(0, 3).join(', ')}
-                          {err.screens.length > 3 && ` +${err.screens.length - 3}`}
-                        </span>
-                      ) : (
-                        '—'
+                {topErrors.rows.map((err, i) => {
+                  const isOpen = expanded === err.message;
+                  const detail = occurrences[err.message];
+                  return (
+                    <Fragment key={`${err.message}-${i}`}>
+                      <tr
+                        className={`cursor-pointer border-b border-navy-50/60 transition-colors last:border-0 hover:bg-navy-50/40 ${isOpen ? 'bg-navy-50/40' : ''}`}
+                        onClick={() => toggleRow(err.message)}
+                        title="Clique para ver quem foi impactado"
+                      >
+                        <td className="py-2 font-mono text-[11px]" title={err.message}>
+                          <span className="flex items-start gap-1.5">
+                            <span className="mt-0.5 select-none text-navy-300">
+                              {isOpen ? '▾' : '▸'}
+                            </span>
+                            <span className="line-clamp-2 max-w-md">{err.message}</span>
+                          </span>
+                        </td>
+                        <td className="py-2 text-right tabular-nums font-semibold">
+                          {formatNumber(err.count)}
+                        </td>
+                        <td className="py-2 text-right tabular-nums text-navy-500">
+                          {formatNumber(err.users)}
+                        </td>
+                        <td className="py-2 text-[11px] text-navy-400">
+                          {err.screens && err.screens.length > 0 ? (
+                            <span className="line-clamp-1 max-w-[160px]">
+                              {err.screens.slice(0, 3).join(', ')}
+                              {err.screens.length > 3 && ` +${err.screens.length - 3}`}
+                            </span>
+                          ) : (
+                            '—'
+                          )}
+                        </td>
+                        <td className="py-2 text-[11px] text-navy-500">
+                          {formatRelativeTime(err.last_seen)}
+                        </td>
+                      </tr>
+                      {isOpen && (
+                        <tr className="border-b border-navy-50/60 bg-navy-50/20 last:border-0">
+                          <td colSpan={5} className="px-2 py-3">
+                            {detail === 'loading' || detail === undefined ? (
+                              <div className="flex items-center gap-2 text-xs text-navy-400">
+                                <Spinner size="sm" /> Carregando ocorrências…
+                              </div>
+                            ) : detail === 'error' ? (
+                              <div className="rounded-md border border-rose-200 bg-rose-50 p-2 text-xs text-rose-800">
+                                Falha ao buscar ocorrências — RPC{' '}
+                                <code>admin_error_occurrences</code> indisponível? Rode a
+                                migration mais recente.
+                              </div>
+                            ) : detail.rows.length === 0 ? (
+                              <div className="text-xs text-navy-400">
+                                Sem ocorrências no período.
+                              </div>
+                            ) : (
+                              <div className="space-y-2">
+                                <div className="text-[11px] text-navy-400">
+                                  {formatNumber(detail.total)} ocorrência
+                                  {detail.total === 1 ? '' : 's'} no período
+                                  {detail.total > detail.rows.length &&
+                                    ` — mostrando as ${detail.rows.length} mais recentes`}
+                                </div>
+                                <table className="w-full text-xs">
+                                  <thead className="text-[10px] font-semibold uppercase tracking-wider text-navy-300">
+                                    <tr className="border-b border-navy-50">
+                                      <th className="py-1.5 text-left">User</th>
+                                      <th className="py-1.5 text-left">Tela</th>
+                                      <th className="py-1.5 text-left">Aparelho</th>
+                                      <th className="py-1.5 text-left">App</th>
+                                      <th className="py-1.5 text-left">Quando</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {detail.rows.map((o, j) => (
+                                      <tr
+                                        key={`${o.user_id}-${o.created_at}-${j}`}
+                                        className="border-b border-navy-50/40 last:border-0"
+                                      >
+                                        <td className="py-1.5">
+                                          <Link
+                                            to={`/users/${o.user_id}`}
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="font-medium text-brand-700 hover:underline"
+                                          >
+                                            {o.full_name ?? o.email ?? o.user_id.slice(0, 8)}
+                                          </Link>
+                                          {o.email && o.full_name && (
+                                            <span className="ml-1.5 text-navy-400">
+                                              {o.email}
+                                            </span>
+                                          )}
+                                        </td>
+                                        <td className="py-1.5 text-navy-500">
+                                          {o.screen ?? '—'}
+                                        </td>
+                                        <td className="py-1.5 text-navy-500">
+                                          {o.platform ?? '—'}
+                                          {o.os_version && (
+                                            <span className="text-navy-400"> · {o.os_version}</span>
+                                          )}
+                                        </td>
+                                        <td className="py-1.5 tabular-nums text-navy-500">
+                                          {o.app_version ?? '—'}
+                                          {o.build_number && (
+                                            <span className="text-navy-400"> ({o.build_number})</span>
+                                          )}
+                                        </td>
+                                        <td className="py-1.5 text-navy-500">
+                                          {formatRelativeTime(o.created_at)}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
                       )}
-                    </td>
-                    <td className="py-2 text-[11px] text-navy-500">
-                      {formatRelativeTime(err.last_seen)}
-                    </td>
-                  </tr>
-                ))}
+                    </Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>

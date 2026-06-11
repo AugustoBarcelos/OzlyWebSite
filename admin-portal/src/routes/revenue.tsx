@@ -20,6 +20,7 @@ import {
 } from '@/lib/format';
 import type {
   KpiDashboardResponse,
+  PendingCancellationsResponse,
   RevenueSummaryResponse,
 } from './dashboard/types';
 import { PERIODS, type Period } from './dashboard/types';
@@ -42,6 +43,7 @@ const PLAN_LABEL: Record<'tfn' | 'abn' | 'pro', string> = {
 interface RevenueData {
   revenue: RevenueSummaryResponse;
   kpi: KpiDashboardResponse;
+  pendingCancellations: PendingCancellationsResponse | null;
 }
 
 export function RevenuePage() {
@@ -56,16 +58,21 @@ export function RevenuePage() {
     setError(null);
     (async () => {
       try {
-        const [revenue, kpi] = await Promise.all([
+        const [revenue, kpi, pendingCancellations] = await Promise.all([
           callRpc<RevenueSummaryResponse>('admin_revenue_summary', {
             p_period_days: period,
           }),
           callRpc<KpiDashboardResponse>('admin_kpi_dashboard', {
             p_period_days: period,
           }),
+          // Cancel-intent is forward-looking (auto-renew off, still active) —
+          // window fixed at 30d regardless of the period selector.
+          callRpc<PendingCancellationsResponse>('admin_pending_cancellations', {
+            p_window_days: 30,
+          }).catch(() => null),
         ]);
         if (!alive) return;
-        setData({ revenue, kpi });
+        setData({ revenue, kpi, pendingCancellations });
       } catch (err) {
         if (!alive) return;
         setError(
@@ -153,7 +160,7 @@ export function RevenuePage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <KpiHero
           label="MRR"
           value={mrr}
@@ -172,7 +179,19 @@ export function RevenuePage() {
         <KpiHero
           label={`Churn · ${period}d`}
           value={churn}
-          hint={churn === null ? 'Pending RC sync' : 'Cancellations in period'}
+          hint={churn === null ? 'Pending RC sync' : 'Paid subs expired in period'}
+          loading={loading && !data}
+          tone="warning"
+          isIncreasePositive={false}
+        />
+        <KpiHero
+          label="Cancel scheduled"
+          value={data?.pendingCancellations?.count ?? null}
+          hint={
+            data?.pendingCancellations
+              ? `Auto-renew off — ${formatCurrencyAUD(data.pendingCancellations.potential_mrr_loss_aud)} MRR at risk (30d)`
+              : 'Pending RC sync'
+          }
           loading={loading && !data}
           tone="warning"
           isIncreasePositive={false}
