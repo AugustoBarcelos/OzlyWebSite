@@ -1,11 +1,15 @@
 // Dashboard — the new default landing route. Designed to answer "is my org
 // OK today?" in under 5 seconds of glance.
 //
-// Layout (top → bottom):
-//   1. Hero greet with time-of-day, contextual subtitle, quick-action chips
-//   2. 4 KPI cards with sparklines (Outstanding · Overdue · Paid · Subs)
-//   3. 2 charts side-by-side: Revenue 30d line + Invoice status mix donut
-//   4. 2 lists side-by-side: Top subs this period + Coming up next 7 days
+// Layout (top → bottom) follows the Stripe/Linear ordering — numbers first,
+// action second, detail last — so the answer is always above the fold:
+//   1. Slim hero: greet + date·org on the left, period scope at top-right,
+//      one action row (primary verb + shortcuts + live calendar status)
+//   2. 4 KPI cards (Outstanding · Overdue · Paid · Subs) — never below fold
+//   3. "Needs attention" — who hasn't invoiced (collapses to a one-line
+//      "All caught up ✓" when there's nothing to act on)
+//   4. Trends: Revenue line + Invoice status mix donut
+//   5. Top subs + Coming up next 7 days (collapsed by default)
 //
 // All data is mocked from lib/dashboard-mock.ts until real KPI fetches land.
 // A "Preview data" banner makes the mock explicit when org has zero real
@@ -292,8 +296,11 @@ export function DashboardPage() {
 
   return (
     <div>
-      {/* Hero strip — greeting + quick actions */}
-      <div className="page-hero mb-5">
+      {/* Hero — greeting on the left, the period scope at top-right (the
+          Stripe pattern: data-scope controls live in the page chrome, not in
+          the body). One action row below: a single primary verb + shortcuts,
+          with the live calendar-sync status pushed to the far end. */}
+      <div className="page-hero mb-4">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="page-hero-kicker">Dashboard</div>
@@ -305,16 +312,48 @@ export function DashboardPage() {
               {' · '}
               <span className="font-semibold text-navy-700">{currentOrg?.name ?? 'Your organisation'}</span>
             </p>
-            {/* Sync pill — surfaces the calendar-feed status (or invites to
-                connect one). Real data from org_list_calendar_connections. */}
-            {currentOrg && <CalendarSyncPill orgId={currentOrg.id} />}
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <QuickAction to="/members" label="+ Invite member" primary />
-            <QuickAction to="/work"     label="Offer work" />
-            <QuickAction to="/invoices?status=sent,overdue" label="Mark paid" />
-            <QuickAction to="/inbox"    label="Open inbox" />
+          <div className="flex flex-wrap items-center gap-1.5">
+            <select
+              value={period}
+              onChange={(e) => setPeriod(e.target.value as PeriodKey)}
+              aria-label="Reporting period"
+              className="rounded-lg border border-navy-100 bg-white px-3 py-1.5 text-[13px] font-medium text-navy-700 focus:border-brand-500 focus:outline-none"
+            >
+              {PERIOD_OPTIONS.map((p) => (
+                <option key={p.key} value={p.key}>{p.label}</option>
+              ))}
+            </select>
+            {period === 'custom' && (
+              <div className="flex items-center gap-1">
+                <input
+                  type="date"
+                  value={customRange.from}
+                  onChange={(e) => setCustomRange((r) => ({ ...r, from: e.target.value }))}
+                  className="rounded-md border border-navy-100 bg-white px-2 py-1 text-[13px] text-navy-700 focus:border-brand-500 focus:outline-none"
+                />
+                <span className="text-xs text-navy-400">→</span>
+                <input
+                  type="date"
+                  value={customRange.to}
+                  onChange={(e) => setCustomRange((r) => ({ ...r, to: e.target.value }))}
+                  className="rounded-md border border-navy-100 bg-white px-2 py-1 text-[13px] text-navy-700 focus:border-brand-500 focus:outline-none"
+                />
+              </div>
+            )}
           </div>
+        </div>
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <QuickAction to="/members" label="+ Invite member" primary />
+          <QuickAction to="/work"     label="Offer work" />
+          <QuickAction to="/invoices?status=sent,overdue" label="Mark paid" />
+          <QuickAction to="/inbox"    label="Open inbox" />
+          {/* Sync pill — real status from org_list_calendar_connections. */}
+          {currentOrg && (
+            <span className="ml-auto">
+              <CalendarSyncPill orgId={currentOrg.id} />
+            </span>
+          )}
         </div>
       </div>
 
@@ -322,73 +361,22 @@ export function DashboardPage() {
       {currentOrg && <GettingStartedDashboard orgId={currentOrg.id} />}
 
       {isPreview && (
-        <div
-          className="mb-4 flex items-start gap-3 rounded-xl border border-navy-100 bg-navy-50/50 px-4 py-3 text-[12.5px] text-navy-500"
+        <p
+          className="mb-4 rounded-lg bg-navy-50/60 px-3.5 py-2 text-[12px] leading-relaxed text-navy-500"
           role="note"
         >
-          <span aria-hidden="true" className="text-base leading-none">📊</span>
-          <div>
-            <span className="font-semibold text-navy-700">Preview data.</span>{' '}
-            These are illustrative numbers. Once your subs start sending invoices and you mark
-            payments, every chart and KPI here updates with your real numbers — no setup needed.
-          </div>
-        </div>
+          <span className="font-semibold text-navy-700">Preview data</span>
+          {' — '}illustrative numbers until your first invoices arrive; everything below switches
+          to your real figures automatically.
+        </p>
       )}
 
-      {/* Period filter — scopes the KPI strip + charts + top subs. */}
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <span className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-navy-300">
-          Period
-        </span>
-        <select
-          value={period}
-          onChange={(e) => setPeriod(e.target.value as PeriodKey)}
-          className="rounded-lg border border-navy-100 bg-white px-3 py-1.5 text-[13px] font-medium text-navy-700 focus:border-brand-500 focus:outline-none"
-        >
-          {PERIOD_OPTIONS.map((p) => (
-            <option key={p.key} value={p.key}>{p.label}</option>
-          ))}
-        </select>
-        {period === 'custom' && (
-          <div className="flex items-center gap-1">
-            <input
-              type="date"
-              value={customRange.from}
-              onChange={(e) => setCustomRange((r) => ({ ...r, from: e.target.value }))}
-              className="rounded-md border border-navy-100 bg-white px-2 py-1 text-[13px] text-navy-700 focus:border-brand-500 focus:outline-none"
-            />
-            <span className="text-xs text-navy-400">→</span>
-            <input
-              type="date"
-              value={customRange.to}
-              onChange={(e) => setCustomRange((r) => ({ ...r, to: e.target.value }))}
-              className="rounded-md border border-navy-100 bg-white px-2 py-1 text-[13px] text-navy-700 focus:border-brand-500 focus:outline-none"
-            />
-          </div>
-        )}
-        <span className="text-[11.5px] text-navy-400">
-          Totals + charts reflect <span className="font-semibold text-navy-500">{periodLabel.toLowerCase()}</span>
-          {period !== 'custom' && (
-            <> · {days} {days === 1 ? 'day' : 'days'}</>
-          )}
-        </span>
-      </div>
-
-      {/* Invoice stragglers — REAL data from org_invoice_stragglers RPC.
-          Highest-signal panel on the dashboard: who sent, who didn't.
-          Sits above KPI strip because action follows the eye top→bottom. */}
-      {currentOrg && (
-        <StragglersPanel
-          orgId={currentOrg.id}
-          orgName={currentOrg.name ?? 'Your organisation'}
-          days={days}
-          periodLabel={periodLabel}
-        />
-      )}
-
-      {/* KPI strip — each card is a drill-down link into the relevant route
-          with a status query param. invoices.tsx reads ?status= on mount and
-          seeds its filter automatically. */}
+      {/* 1 · KPI strip — first thing on the page, always above the fold.
+          Each card is a drill-down link into the relevant route with a
+          status query param (invoices.tsx reads ?status= on mount). */}
+      <h2 className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-navy-300">
+        Overview · {periodLabel.toLowerCase()}
+      </h2>
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <KpiCard
           tone="navy" label="Outstanding"
@@ -403,7 +391,7 @@ export function DashboardPage() {
           to="/invoices?status=overdue"
         />
         <KpiCard
-          tone="brand" label="Paid (period)"
+          tone="brand" label="Paid"
           value={formatMoney(kpis.paidPeriod)}
           delta={{ direction: deltas.paid.direction, value: `${deltas.paid.pct.toFixed(1)}%` }}
           to="/invoices?status=paid"
@@ -416,7 +404,19 @@ export function DashboardPage() {
         />
       </div>
 
-      {/* Charts row — Revenue trend + Status mix */}
+      {/* 2 · Needs attention — the only actionable list on the page. Sits
+          right under the numbers so triage follows the glance. Collapses to
+          a one-line "All caught up" when there's nothing to act on. */}
+      {currentOrg && (
+        <StragglersPanel
+          orgId={currentOrg.id}
+          orgName={currentOrg.name ?? 'Your organisation'}
+          days={days}
+          periodLabel={periodLabel}
+        />
+      )}
+
+      {/* 3 · Trends — Revenue line + Status mix donut */}
       <CollapsibleSection id="dash-charts" title="Trends" defaultOpen={true}>
       <div className="grid gap-3 lg:grid-cols-2">
         <section className="rounded-xl border border-navy-100 p-4">
@@ -465,7 +465,7 @@ export function DashboardPage() {
       </div>
       </CollapsibleSection>
 
-      {/* Bottom row — Top subs + Coming up */}
+      {/* 4 · Bottom row — Top subs + Coming up (collapsed by default) */}
       <CollapsibleSection id="dash-more" title="Top subs & coming up" defaultOpen={false}>
       <div className="grid gap-3 lg:grid-cols-2">
         <section className="rounded-xl border border-navy-100 p-4">
@@ -612,7 +612,7 @@ function CalendarSyncPill({ orgId }: { orgId: string }) {
   return (
     <Link
       to="/settings"
-      className="mt-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold transition-colors hover:bg-brand-100"
+      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors hover:bg-brand-100"
       style={{
         background: state.error
           ? 'rgba(244, 63, 94, 0.12)'
@@ -847,6 +847,12 @@ function StragglersPanel(props: {
     : stragglers.slice(0, STRAGGLERS_COLLAPSED_LIMIT);
   const stragglersOverflow = stragglers.length - visibleStragglers.length;
 
+  // Nothing pending → the panel earns no vertical space. Collapse to a
+  // one-line "all caught up" receipt (Linear's inbox-zero pattern) with the
+  // member detail folded behind the existing quiet toggle.
+  const allCaughtUp = allPendingStragglers.length === 0;
+  const nobodyWorked = allCaughtUp && allDone.length === 0;
+
   // Shared row renderer — used for the always-visible pending rows and for
   // the done/inactive rows folded behind the toggle at the bottom.
   function renderMemberRow(r: StragglerRow) {
@@ -949,15 +955,60 @@ function StragglersPanel(props: {
     );
   }
 
+  if (allCaughtUp) {
+    return (
+      <section className="ozly-card mb-5 px-4 py-3">
+        <button
+          type="button"
+          onClick={() => setQuietRowsOpen((v) => !v)}
+          aria-expanded={quietRowsOpen}
+          className="flex w-full items-center gap-3 text-left"
+        >
+          <span
+            aria-hidden="true"
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[13px] font-bold ${
+              nobodyWorked ? 'bg-navy-50 text-navy-400' : 'bg-brand-50 text-brand-600'
+            }`}
+          >
+            {nobodyWorked ? '·' : '✓'}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[13px] font-semibold text-navy-800">
+              {nobodyWorked ? 'No completed work this period yet' : 'All caught up'}
+            </span>
+            <span className="block text-[11.5px] text-navy-400">
+              {nobodyWorked
+                ? 'Members appear here once they finish jobs.'
+                : <>
+                    {allDone.length} member{allDone.length === 1 ? '' : 's'} invoiced everything
+                    {inactive.length > 0 && <> · {inactive.length} no completed work</>}
+                    {' · '}{periodLabel.toLowerCase()}
+                  </>}
+            </span>
+          </span>
+          <span aria-hidden="true" className="shrink-0 text-navy-400">{quietRowsOpen ? '▴' : '▾'}</span>
+        </button>
+        {quietRowsOpen && (
+          <ul className="mt-3 space-y-1">
+            {[...allDone, ...inactive].map((r) => renderMemberRow(r))}
+          </ul>
+        )}
+      </section>
+    );
+  }
+
   return (
     <section className="ozly-card mb-5 p-5">
       <div className="mb-3 flex items-baseline justify-between gap-2">
         <div>
-          <h2 className="font-display text-sm font-bold text-navy-800">
-            Who's billed · {periodLabel.toLowerCase()}
+          <h2 className="flex items-center gap-2 font-display text-sm font-bold text-navy-800">
+            Needs attention
+            <span className="inline-flex shrink-0 items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
+              {allPendingStragglers.length}
+            </span>
           </h2>
           <p className="mt-0.5 text-[11.5px] text-navy-400">
-            Members waiting to invoice show first. <strong>Send reminder</strong> pushes a notification + email asking for the invoice.
+            Finished jobs, no invoice yet · {periodLabel.toLowerCase()}. <strong>Send reminder</strong> nudges them by push + email.
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2 text-[10.5px] font-semibold">
@@ -972,16 +1023,6 @@ function StragglersPanel(props: {
               <option value="24h">Hide reminded &lt; 24h</option>
               <option value="72h">Hide reminded &lt; 72h</option>
             </select>
-          )}
-          {allPendingStragglers.length > 0 && (
-            <span className="rounded-full bg-amber-50 px-2 py-0.5 text-amber-700">
-              {allPendingStragglers.length} pending
-            </span>
-          )}
-          {allDone.length > 0 && (
-            <span className="rounded-full bg-brand-50 px-2 py-0.5 text-brand-700">
-              {allDone.length} all-clear
-            </span>
           )}
         </div>
       </div>
@@ -1057,12 +1098,6 @@ function StragglersPanel(props: {
           </div>
         );
       })()}
-
-      {stragglers.length === 0 && allDone.length === 0 && inactive.length > 0 && (
-        <div className="rounded-lg border border-dashed border-navy-100 bg-navy-50/40 p-3 text-[12.5px] text-navy-500">
-          No completed work this period yet. Members will show here once they finish jobs.
-        </div>
-      )}
 
       <ul className="space-y-1">
         {visibleStragglers.map((r) => renderMemberRow(r))}
