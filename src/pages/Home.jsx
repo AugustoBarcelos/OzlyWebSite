@@ -119,16 +119,44 @@ function Hero() {
             style={{ animationDelay: "0.3s" }}
           >
             <PhoneMockup>
-              <div className="space-y-3">
-                <div className="h-9 rounded-xl bg-brand-50 w-3/4 mx-auto" />
-                <div className="h-28 rounded-2xl bg-gradient-to-br from-brand-100 to-lime-50" />
-                <div className="h-5 rounded-lg bg-slate-100 w-2/3 mx-auto" />
-                <div className="h-5 rounded-lg bg-slate-100 w-1/2 mx-auto" />
-                <div className="grid grid-cols-2 gap-2 pt-1">
-                  <div className="h-20 rounded-xl bg-brand-50" />
-                  <div className="h-20 rounded-xl bg-lime-50" />
-                  <div className="h-20 rounded-xl bg-lime-50" />
-                  <div className="h-20 rounded-xl bg-brand-50" />
+              {/* Dashboard screen — realistic content, not skeleton bars */}
+              <div className="space-y-3 text-left">
+                <div>
+                  <div className="text-[9px] text-slate-400">Good morning</div>
+                  <div className="text-[13px] font-semibold text-navy-700">Maria 👋</div>
+                </div>
+                {/* This-week card with mini bar chart */}
+                <div className="rounded-2xl bg-navy-700 p-3.5">
+                  <div className="text-[8px] font-medium uppercase tracking-wider text-navy-100/60">This week</div>
+                  <div className="mt-0.5 text-[20px] font-semibold tracking-tight text-white">$1,240.50</div>
+                  <div className="mt-2 flex items-end gap-1 h-8">
+                    {[35, 55, 40, 75, 60, 90, 50].map((h, i) => (
+                      <div
+                        key={i}
+                        style={{ height: `${h}%` }}
+                        className={`flex-1 rounded-sm ${i === 5 ? "bg-brand-400" : "bg-white/20"}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+                {/* Quick stats */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-xl bg-[#f5f5f7] p-2.5">
+                    <div className="text-[8px] text-slate-400">Invoices</div>
+                    <div className="text-[12px] font-semibold text-navy-700">3 unpaid</div>
+                  </div>
+                  <div className="rounded-xl bg-[#f5f5f7] p-2.5">
+                    <div className="text-[8px] text-slate-400">Tax set aside</div>
+                    <div className="text-[12px] font-semibold text-navy-700">$310</div>
+                  </div>
+                  <div className="rounded-xl bg-[#f5f5f7] p-2.5">
+                    <div className="text-[8px] text-slate-400">Hours</div>
+                    <div className="text-[12px] font-semibold text-navy-700">38.5h</div>
+                  </div>
+                  <div className="rounded-xl bg-[#f5f5f7] p-2.5">
+                    <div className="text-[8px] text-slate-400">Expenses</div>
+                    <div className="text-[12px] font-semibold text-navy-700">$86.40</div>
+                  </div>
                 </div>
               </div>
             </PhoneMockup>
@@ -298,41 +326,26 @@ const featureSections = [
     color: "brand",
     mockupVariant: "teal",
     screen: (
-      <div className="space-y-3">
-        <div className="flex items-center gap-2 mb-1">
-          <div className="w-8 h-8 rounded-lg bg-brand-100 flex items-center justify-center">
-            <FileText size={16} className="text-brand-600" />
+      <div className="space-y-2.5 text-left">
+        <div className="text-[13px] font-semibold text-navy-700">Invoices</div>
+        {[
+          { id: "INV-0042", client: "Sparkle Cleaning Co.", amount: "$480.00", status: "SENT", chip: "bg-brand-50 text-brand-600" },
+          { id: "INV-0041", client: "Harbour Strata", amount: "$320.00", status: "PAID", chip: "bg-lime-50 text-lime-600" },
+          { id: "INV-0040", client: "J. Nguyen", amount: "$185.50", status: "DUE", chip: "bg-amber-50 text-amber-600" },
+        ].map(({ id, client, amount, status, chip }) => (
+          <div key={id} className="rounded-xl bg-[#f5f5f7] p-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[8px] font-medium text-slate-400">{id}</span>
+              <span className={`rounded-full px-1.5 py-px text-[7px] font-semibold tracking-wide ${chip}`}>{status}</span>
+            </div>
+            <div className="mt-1 flex items-center justify-between">
+              <span className="text-[10px] font-medium text-navy-700">{client}</span>
+              <span className="text-[11px] font-semibold tabular-nums text-navy-700">{amount}</span>
+            </div>
           </div>
-          <div className="h-4 rounded bg-slate-100 w-20" />
-        </div>
-        <div className="bg-white rounded-xl border border-slate-100 p-3 space-y-2">
-          <div className="flex justify-between items-center">
-            <div className="h-3 rounded bg-slate-200 w-20" />
-            <div className="h-3 rounded bg-brand-100 w-14" />
-          </div>
-          <div className="h-px bg-slate-100" />
-          <div className="space-y-1.5">
-            <div className="h-2.5 rounded bg-slate-100 w-full" />
-            <div className="h-2.5 rounded bg-slate-100 w-3/4" />
-            <div className="h-2.5 rounded bg-slate-100 w-1/2" />
-          </div>
-          <div className="flex justify-end pt-1">
-            <div className="h-4 rounded bg-brand-500 w-16" />
-          </div>
-        </div>
-        <div className="bg-white rounded-xl border border-slate-100 p-3 space-y-2">
-          <div className="flex justify-between items-center">
-            <div className="h-3 rounded bg-slate-200 w-24" />
-            <div className="h-3 rounded bg-lime-100 w-14" />
-          </div>
-          <div className="h-px bg-slate-100" />
-          <div className="space-y-1.5">
-            <div className="h-2.5 rounded bg-slate-100 w-full" />
-            <div className="h-2.5 rounded bg-slate-100 w-2/3" />
-          </div>
-        </div>
-        <div className="h-10 rounded-xl bg-brand-500 flex items-center justify-center">
-          <span className="text-[11px] font-bold text-white tracking-wide">SEND PDF</span>
+        ))}
+        <div className="h-9 rounded-full bg-brand-600 flex items-center justify-center">
+          <span className="text-[10px] font-semibold text-white">Send as PDF</span>
         </div>
       </div>
     ),
@@ -344,33 +357,32 @@ const featureSections = [
     color: "brand",
     mockupVariant: "teal",
     screen: (
-      <div className="space-y-3">
-        <div className="flex items-center gap-2 mb-1">
-          <div className="w-8 h-8 rounded-lg bg-brand-100 flex items-center justify-center">
-            <Camera size={16} className="text-brand-600" />
-          </div>
-          <div className="h-4 rounded bg-slate-100 w-28" />
-        </div>
-        <div className="h-36 rounded-2xl bg-gradient-to-br from-brand-50 to-lime-50 flex items-center justify-center relative overflow-hidden">
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-20 h-28 rounded-lg bg-white shadow-lg border border-slate-200 flex flex-col items-center justify-center gap-1 p-2">
-              <div className="h-2 rounded bg-slate-200 w-full" />
-              <div className="h-2 rounded bg-slate-200 w-3/4" />
-              <div className="h-2 rounded bg-slate-200 w-1/2" />
-              <div className="mt-1 h-3 rounded bg-brand-200 w-full" />
+      <div className="space-y-2.5 text-left">
+        <div className="text-[13px] font-semibold text-navy-700">Scan receipt</div>
+        {/* Camera viewfinder with a readable receipt */}
+        <div className="h-36 rounded-2xl bg-[#17181c] relative overflow-hidden flex items-center justify-center">
+          <div className="w-24 rounded-md bg-white p-2 shadow-lg">
+            <div className="text-center text-[7px] font-bold tracking-wider text-navy-700">BUNNINGS</div>
+            <div className="mt-1.5 space-y-1 text-[6.5px] text-slate-500">
+              <div className="flex justify-between"><span>Gloves ×2</span><span>12.90</span></div>
+              <div className="flex justify-between"><span>Spray bottle</span><span>8.45</span></div>
+              <div className="flex justify-between"><span>Microfibre kit</span><span>21.15</span></div>
+            </div>
+            <div className="mt-1.5 border-t border-dashed border-slate-200 pt-1 flex justify-between text-[7px] font-semibold text-navy-700">
+              <span>TOTAL</span><span>$42.50</span>
             </div>
           </div>
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-white shadow-md border-2 border-brand-300 flex items-center justify-center">
-            <div className="w-4 h-4 rounded-full bg-brand-400" />
-          </div>
+          {/* scan corners */}
+          <div className="absolute inset-5 rounded-lg border border-white/25" />
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full border-2 border-white/80" />
         </div>
-        <div className="flex gap-2">
-          <div className="flex-1 rounded-lg bg-lime-50 p-2 text-center">
-            <div className="text-[10px] font-bold text-lime-600">$42.50</div>
+        {/* OCR result */}
+        <div className="rounded-xl bg-[#f5f5f7] p-2.5 flex items-center justify-between">
+          <div>
+            <div className="text-[8px] text-slate-400">Detected</div>
+            <div className="text-[11px] font-semibold text-navy-700">$42.50 · 04 Mar</div>
           </div>
-          <div className="flex-1 rounded-lg bg-slate-50 p-2 text-center">
-            <div className="text-[10px] font-bold text-slate-500">04 Mar</div>
-          </div>
+          <span className="rounded-full bg-lime-50 px-2 py-0.5 text-[7px] font-semibold text-lime-600">DEDUCTIBLE</span>
         </div>
       </div>
     ),
@@ -382,44 +394,27 @@ const featureSections = [
     color: "lime",
     mockupVariant: "lime",
     screen: (
-      <div className="space-y-3">
-        <div className="flex items-center gap-2 mb-1">
-          <div className="w-8 h-8 rounded-lg bg-lime-100 flex items-center justify-center">
-            <ClipboardCheck size={16} className="text-lime-600" />
-          </div>
-          <div className="h-4 rounded bg-slate-100 w-24" />
-        </div>
-        {/* Invoice status rows */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2.5 rounded-xl bg-lime-50 p-3 border border-lime-100">
-            <div className="w-2.5 h-2.5 rounded-full bg-lime-500" />
-            <div className="flex-1">
-              <div className="h-2.5 rounded bg-lime-200 w-3/4" />
+      <div className="space-y-2.5 text-left">
+        <div className="text-[13px] font-semibold text-navy-700">Payments</div>
+        {[
+          { job: "Office clean — CBD", when: "Tue · 4h", amount: "$320", status: "PAID", dot: "bg-lime-500", chip: "bg-lime-50 text-lime-600" },
+          { job: "End of lease — Bondi", when: "Thu · 3h", amount: "$180", status: "PENDING", dot: "bg-amber-400", chip: "bg-amber-50 text-amber-600" },
+          { job: "Weekly — Harbour Strata", when: "Fri · 5h", amount: "$250", status: "OVERDUE", dot: "bg-red-400", chip: "bg-red-50 text-red-500" },
+        ].map(({ job, when, amount, status, dot, chip }) => (
+          <div key={job} className="flex items-center gap-2 rounded-xl bg-[#f5f5f7] p-2.5">
+            <div className={`w-2 h-2 rounded-full shrink-0 ${dot}`} />
+            <div className="flex-1 min-w-0">
+              <div className="truncate text-[10px] font-medium text-navy-700">{job}</div>
+              <div className="text-[8px] text-slate-400">{when}</div>
             </div>
-            <span className="text-[9px] font-bold text-lime-600 bg-lime-100 rounded-full px-2 py-0.5">PAID</span>
-            <span className="text-[10px] font-bold text-lime-700">$320</span>
+            <span className={`rounded-full px-1.5 py-px text-[7px] font-semibold ${chip}`}>{status}</span>
+            <span className="text-[11px] font-semibold tabular-nums text-navy-700">{amount}</span>
           </div>
-          <div className="flex items-center gap-2.5 rounded-xl bg-amber-50 p-3 border border-amber-100">
-            <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-            <div className="flex-1">
-              <div className="h-2.5 rounded bg-amber-200 w-2/3" />
-            </div>
-            <span className="text-[9px] font-bold text-amber-600 bg-amber-100 rounded-full px-2 py-0.5">PENDING</span>
-            <span className="text-[10px] font-bold text-amber-700">$180</span>
-          </div>
-          <div className="flex items-center gap-2.5 rounded-xl bg-red-50 p-3 border border-red-100">
-            <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
-            <div className="flex-1">
-              <div className="h-2.5 rounded bg-red-200 w-1/2" />
-            </div>
-            <span className="text-[9px] font-bold text-red-500 bg-red-100 rounded-full px-2 py-0.5">OVERDUE</span>
-            <span className="text-[10px] font-bold text-red-600">$250</span>
-          </div>
-        </div>
+        ))}
         {/* Summary bar */}
-        <div className="rounded-xl bg-slate-50 p-3 flex justify-between items-center">
-          <span className="text-[10px] font-semibold text-slate-500">Total</span>
-          <span className="text-[13px] font-extrabold text-slate-700">$750</span>
+        <div className="rounded-xl bg-navy-700 p-2.5 flex justify-between items-center">
+          <span className="text-[9px] font-medium text-navy-100/70">Outstanding</span>
+          <span className="text-[12px] font-semibold tabular-nums text-white">$430.00</span>
         </div>
       </div>
     ),
@@ -431,50 +426,29 @@ const featureSections = [
     color: "brand",
     mockupVariant: "teal",
     screen: (
-      <div className="space-y-3">
-        <div className="flex items-center gap-2 mb-1">
-          <div className="w-8 h-8 rounded-lg bg-brand-100 flex items-center justify-center">
-            <TrendingUp size={16} className="text-brand-600" />
+      <div className="space-y-2.5 text-left">
+        <div className="text-[13px] font-semibold text-navy-700">June forecast</div>
+        {[
+          { label: "Revenue", value: "$4,200", width: "100%", bar: "bg-brand-500", text: "text-navy-700" },
+          { label: "Expenses", value: "−$680", width: "16%", bar: "bg-slate-400", text: "text-slate-500" },
+          { label: "Tax (ATO)", value: "−$820", width: "20%", bar: "bg-amber-400", text: "text-slate-500" },
+        ].map(({ label, value, width, bar, text }) => (
+          <div key={label} className="rounded-xl bg-[#f5f5f7] p-2.5 space-y-1.5">
+            <div className="flex justify-between items-center">
+              <span className="text-[9px] font-medium text-slate-400">{label}</span>
+              <span className={`text-[11px] font-semibold tabular-nums ${text}`}>{value}</span>
+            </div>
+            <div className="h-1.5 rounded-full bg-slate-200/70 overflow-hidden">
+              <div style={{ width }} className={`h-full rounded-full ${bar}`} />
+            </div>
           </div>
-          <div className="h-4 rounded bg-slate-100 w-28" />
-        </div>
-        {/* Revenue row */}
-        <div className="rounded-xl bg-brand-50 p-3 space-y-1.5">
-          <div className="flex justify-between items-center">
-            <span className="text-[10px] font-semibold text-brand-400">Revenue</span>
-            <span className="text-[13px] font-extrabold text-brand-600">$4,200</span>
-          </div>
-          <div className="h-2 rounded-full bg-brand-100 overflow-hidden">
-            <div className="h-full w-full rounded-full bg-brand-400" />
-          </div>
-        </div>
-        {/* Expenses row */}
-        <div className="rounded-xl bg-slate-50 p-3 space-y-1.5">
-          <div className="flex justify-between items-center">
-            <span className="text-[10px] font-semibold text-slate-400">Expenses</span>
-            <span className="text-[13px] font-extrabold text-slate-600">-$680</span>
-          </div>
-          <div className="h-2 rounded-full bg-slate-200 overflow-hidden">
-            <div className="h-full w-[16%] rounded-full bg-slate-400" />
-          </div>
-        </div>
-        {/* Tax row */}
-        <div className="rounded-xl bg-red-50 p-3 space-y-1.5">
-          <div className="flex justify-between items-center">
-            <span className="text-[10px] font-semibold text-red-400">Tax (ATO)</span>
-            <span className="text-[13px] font-extrabold text-red-500">-$820</span>
-          </div>
-          <div className="h-2 rounded-full bg-red-100 overflow-hidden">
-            <div className="h-full w-[20%] rounded-full bg-red-400" />
-          </div>
-        </div>
+        ))}
         {/* Net profit highlight */}
-        <div className="rounded-2xl bg-gradient-to-r from-lime-400 to-lime-500 p-4 text-center">
-          <div className="text-[10px] font-semibold text-lime-50 mb-0.5">
-            <DollarSign size={10} className="inline -mt-0.5" /> Net Profit
-          </div>
-          <div className="text-2xl font-extrabold text-white">$2,700</div>
+        <div className="rounded-xl bg-navy-700 p-3 flex items-center justify-between">
+          <span className="text-[9px] font-medium text-navy-100/70">Net profit</span>
+          <span className="text-[16px] font-semibold tracking-tight tabular-nums text-lime-300">$2,700</span>
         </div>
+        <div className="text-[8px] text-slate-400 text-center">Set aside $820 for tax · BAS due 28 Jul</div>
       </div>
     ),
   },
