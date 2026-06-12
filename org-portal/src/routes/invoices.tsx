@@ -10,6 +10,7 @@ import { FileTextIcon } from '@/components/Icons';
 import { InvoiceStatusBadge } from '@/components/StatusBadge';
 import { Avatar } from '@/components/Avatar';
 import { KpiCard, type KpiTone } from '@/components/KpiCard';
+import { CollapsibleSection } from '@/components/CollapsibleSection';
 import { formatMoney, formatDate, formatPeriod } from '@/lib/format';
 import { logOrgEvent } from '@/lib/telemetry';
 import { fetchPayState, isUnpaid } from '@/lib/payments';
@@ -874,6 +875,19 @@ export function InvoicesPage() {
 
   const filtersActive = columnFiltersActive || periodKey !== 'all';
 
+  // Human label for the active period — shown in the KPI heading and the
+  // list section's summary line so scope stays visible even collapsed.
+  const periodLabel =
+    periodKey === 'all'        ? 'all time'
+    : periodKey === 'fy-current' ? 'this fiscal year'
+    : periodKey === 'fy-last'    ? 'last fiscal year'
+    : periodKey === 'custom'     ? 'custom range'
+    : (() => {
+        const i = periodOptions.findIndex((p) => p.key === periodKey);
+        const p = periodOptions[i];
+        return p ? relativeLabel(p, periodCfg, i).toLowerCase() : '';
+      })();
+
   return (
     <div>
       <PageHeader
@@ -902,6 +916,44 @@ export function InvoicesPage() {
 
       {orgId && <GettingStarted orgId={orgId} />}
 
+      {/* Numbers first — the page answers "how much?" before showing any
+          controls (same value-first ordering as the dashboard). The KPI
+          chips double as status filters for the list below. */}
+      <h2 className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-navy-300">
+        Overview · {periodLabel}
+      </h2>
+      <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {([
+          ['outstanding', 'Outstanding',           formatMoney(kpis.outstanding), 'navy'  as KpiTone],
+          ['overdue',     'Overdue',               formatMoney(kpis.overdue),     'rose'  as KpiTone],
+          ['paid',        'Paid',                  formatMoney(kpis.paid),        'brand' as KpiTone],
+          ['awaiting',    'Awaiting confirmation', String(kpis.awaiting),         'lime'  as KpiTone],
+        ] as [KpiKey, string, string, KpiTone][]).map(([key, label, value, tone]) => {
+          const valueColor = key === 'overdue' && kpis.overdue > 0 ? '#e11d48' : undefined;
+          return (
+            <KpiCard
+              key={key}
+              tone={tone}
+              label={label}
+              value={value}
+              {...(valueColor ? { valueColor } : {})}
+              onClick={() => toggleKpi(key)}
+              active={kpiActive(key)}
+            />
+          );
+        })}
+      </div>
+
+      {/* The list itself folds behind a summary header (collapsed-first
+          pattern) — count + period stay visible either way. Toolbar and
+          pagination live inside so a collapsed page is just numbers. */}
+      <CollapsibleSection
+        id="invoices-list"
+        title="All invoices"
+        badge={total > 0 ? total : undefined}
+        subtitle={`Click a row to see the work · ${periodLabel}`}
+        defaultOpen={true}
+      >
       {/* Reporting period — scopes the totals + list. */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <span className="text-xs font-medium uppercase tracking-wide text-navy-300">Period</span>
@@ -1047,28 +1099,6 @@ export function InvoicesPage() {
         </div>
       )}
 
-      <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {([
-          ['outstanding', 'Outstanding',           formatMoney(kpis.outstanding), 'navy'  as KpiTone],
-          ['overdue',     'Overdue',               formatMoney(kpis.overdue),     'rose'  as KpiTone],
-          ['paid',        'Paid',                  formatMoney(kpis.paid),        'brand' as KpiTone],
-          ['awaiting',    'Awaiting confirmation', String(kpis.awaiting),         'lime'  as KpiTone],
-        ] as [KpiKey, string, string, KpiTone][]).map(([key, label, value, tone]) => {
-          const valueColor = key === 'overdue' && kpis.overdue > 0 ? '#e11d48' : undefined;
-          return (
-            <KpiCard
-              key={key}
-              tone={tone}
-              label={label}
-              value={value}
-              {...(valueColor ? { valueColor } : {})}
-              onClick={() => toggleKpi(key)}
-              active={kpiActive(key)}
-            />
-          );
-        })}
-      </div>
-
       {loading ? (
         <div className="flex justify-center py-16">
           <Spinner size="lg" />
@@ -1103,7 +1133,9 @@ export function InvoicesPage() {
         )
       ) : (
         <>
-          <div className="ozly-card overflow-x-auto">
+          {/* Plain bordered container (not ozly-card) — the table now lives
+              inside the CollapsibleSection card; card-in-card reads as noise. */}
+          <div className="overflow-x-auto rounded-lg border border-navy-100">
             <table className="w-full min-w-[680px] text-sm">
               <thead>
                 <tr className="border-b border-navy-50 text-left text-xs">
@@ -1291,6 +1323,7 @@ export function InvoicesPage() {
           </div>
         </>
       )}
+      </CollapsibleSection>
 
       {detail && (
         <InvoiceDetailModal

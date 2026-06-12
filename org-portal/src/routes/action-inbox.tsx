@@ -505,10 +505,31 @@ function InboxSection({
   action?: React.ReactNode;
   children: React.ReactNode;
 }) {
+  // Collapsed-first: each queue renders as a one-line summary (title +
+  // count + what's inside) and expands for the item list — same pattern
+  // as the dashboard. Open state persists per queue.
+  const storageKey = `ozly:section:inbox-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+  const [open, setOpen] = useState<boolean>(() => {
+    try {
+      const v = localStorage.getItem(storageKey);
+      return v === null ? false : v === '1';
+    } catch {
+      return false;
+    }
+  });
+
   return (
-    <section className="ozly-card p-5">
-      <div className="mb-2 flex items-start justify-between gap-2">
-        <div className="min-w-0">
+    <details
+      className="ozly-card group"
+      open={open}
+      onToggle={(e) => {
+        const next = e.currentTarget.open;
+        setOpen(next);
+        try { localStorage.setItem(storageKey, next ? '1' : '0'); } catch { /* session-only */ }
+      }}
+    >
+      <summary className="flex cursor-pointer select-none list-none items-start gap-3 rounded-[14px] px-5 py-4 hover:bg-navy-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 [&::-webkit-details-marker]:hidden">
+        <div className="min-w-0 flex-1">
           <h2 className="flex items-center gap-2 font-display text-sm font-bold text-navy-800">
             {title}
             <span className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${SECTION_TONES[tone].badge}`}>
@@ -517,10 +538,25 @@ function InboxSection({
           </h2>
           <p className="mt-0.5 text-[11.5px] text-navy-400">{sub}</p>
         </div>
-        {action && <div className="shrink-0">{action}</div>}
-      </div>
-      {children}
-    </section>
+        {action && (
+          <span
+            className="shrink-0"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+          >
+            {action}
+          </span>
+        )}
+        <svg
+          width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          aria-hidden="true"
+          className="mt-1 shrink-0 text-navy-400 transition-transform duration-200 group-open:rotate-180"
+        >
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </summary>
+      <div className="border-t border-navy-50 px-5 pb-5 pt-3">{children}</div>
+    </details>
   );
 }
 
