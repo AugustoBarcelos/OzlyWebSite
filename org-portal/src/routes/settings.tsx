@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { CollapsibleSection } from '@/components/CollapsibleSection';
 import { NotificationPreferences } from '@/components/NotificationPreferences';
 import { CalendarFeedsSection } from '@/components/CalendarFeedsSection';
+import { SavingsAssumptionsSection } from '@/components/SavingsAssumptionsSection';
 import { SEAT_LIMIT } from '@/lib/types';
 import { friendlyError } from '@/lib/errors';
 import { useSeqGuard } from '@/lib/use-seq-guard';
@@ -44,6 +45,14 @@ export function SettingsPage() {
     setBillingEmail(currentOrg?.billing_email ?? '');
     setDefaultRate(currentOrg?.default_hourly_rate ? String(currentOrg.default_hourly_rate) : '');
   }, [currentOrg?.id, currentOrg?.name, currentOrg?.abn, currentOrg?.billing_email, currentOrg?.period_frequency, currentOrg?.period_anchor, currentOrg?.default_hourly_rate]);
+
+  // Scroll to the savings panel when arriving via the dashboard popup's
+  // "#savings-assumptions" link — SPA route changes don't honour hashes.
+  useEffect(() => {
+    if (window.location.hash === '#savings-assumptions') {
+      document.getElementById('savings-assumptions')?.scrollIntoView();
+    }
+  }, []);
 
   async function saveDefaultRate() {
     if (!orgId) return;
@@ -159,6 +168,9 @@ export function SettingsPage() {
   // Auto-open the calendar panel when returning from the Google OAuth redirect
   // (?calendar=ok|error) — CalendarFeedsSection's effect reads + clears the param.
   const calendarReturn = new URLSearchParams(window.location.search).has('calendar');
+  // Auto-open + scroll to the savings panel when arriving via the dashboard
+  // popup's "Adjust the assumptions" link (#savings-assumptions).
+  const savingsReturn = window.location.hash === '#savings-assumptions';
 
   return (
     <>
@@ -385,6 +397,22 @@ export function SettingsPage() {
         >
           <NotificationPreferences userKey={user.id} />
         </CollapsibleSection>
+      )}
+
+      {/* Savings assumptions — the editable inputs behind the dashboard's
+          "Saved with Ozly" figure. div keeps the #savings-assumptions anchor
+          the dashboard popup links to. */}
+      {orgId && (
+        <div id="savings-assumptions">
+          <CollapsibleSection
+            id="settings-savings"
+            title="Savings assumptions"
+            subtitle="Powers the “Saved with Ozly” figure on your dashboard"
+            defaultOpen={savingsReturn}
+          >
+            <SavingsAssumptionsSection orgId={orgId} />
+          </CollapsibleSection>
+        </div>
       )}
 
       {/* Audit log entry-point — Activity left the sidebar in the flat-nav
