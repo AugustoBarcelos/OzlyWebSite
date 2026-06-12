@@ -15,6 +15,7 @@ import { NotFoundPage } from '@/routes/not-found';
 
 const DashboardPage = lazy(() => import('@/routes/dashboard').then((m) => ({ default: m.DashboardPage })));
 const InvoicesPage = lazy(() => import('@/routes/invoices').then((m) => ({ default: m.InvoicesPage })));
+const IssueInvoicePage = lazy(() => import('@/routes/issue-invoice').then((m) => ({ default: m.IssueInvoicePage })));
 const IntegrationsPage = lazy(() => import('@/routes/integrations').then((m) => ({ default: m.IntegrationsPage })));
 const OnboardingGuidePage = lazy(() => import('@/routes/onboarding-guide').then((m) => ({ default: m.OnboardingGuidePage })));
 const ActionInboxPage = lazy(() => import('@/routes/action-inbox').then((m) => ({ default: m.ActionInboxPage })));
@@ -57,6 +58,7 @@ export function App() {
                   <Route path="/" element={<Navigate to="/dashboard" replace />} />
                   <Route path="/dashboard" element={lazyRoute(DashboardPage)} />
                   <Route path="/invoices" element={lazyRoute(InvoicesPage)} />
+                  <Route path="/invoices/new" element={lazyRoute(IssueInvoicePage)} />
                   {/* /inbox is the Action Inbox (triage queue). The old
                       email-delivery tracking page lives one level deeper. */}
                   <Route path="/inbox" element={lazyRoute(ActionInboxPage)} />

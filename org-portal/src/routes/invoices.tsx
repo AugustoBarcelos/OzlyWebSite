@@ -910,6 +910,11 @@ export function InvoicesPage() {
             >
               Import
             </Link>
+            {/* The org billing ITS OWN clients — module at /invoices/new
+                (print-ready PDF, GST handled). */}
+            <Link to="/invoices/new" className="btn-primary text-xs">
+              + Issue invoice
+            </Link>
           </div>
         }
       />

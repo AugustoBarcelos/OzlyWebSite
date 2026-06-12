@@ -12,6 +12,7 @@ import { UsersIcon } from '@/components/Icons';
 import { MemberStatusBadge } from '@/components/StatusBadge';
 import { Avatar } from '@/components/Avatar';
 import { formatDate } from '@/lib/format';
+import { toCsv, downloadCsv, timestampSuffix } from '@/lib/csv';
 import { logOrgEvent } from '@/lib/telemetry';
 import { fetchPayState } from '@/lib/payments';
 import { fetchMixedBillingByMember, type BillingSource } from '@/lib/orgMembers';
@@ -447,6 +448,52 @@ function MemberDetailModal(props: {
     onChanged();
   }
 
+  // Per-member statement — every invoice this member sent the org, as CSV
+  // with a totals row. The "extract one profile" path: works directly off
+  // the invoices table, no RPC dependency.
+  const [exportingStatement, setExportingStatement] = useState(false);
+  async function exportStatement() {
+    setExportingStatement(true);
+    const { data, error } = await supabase
+      .from('invoices')
+      .select('invoice_number, issue_date, due_date, status, subtotal, tax_amount, total, paid_at')
+      .eq('org_visible_id', orgId)
+      .eq('user_id', userId)
+      .order('issue_date', { ascending: true })
+      .limit(5000);
+    setExportingStatement(false);
+    if (error) return notify(friendlyError(error), 'error');
+    const rows = (data ?? []) as Array<{
+      invoice_number: string | null; issue_date: string; due_date: string | null;
+      status: string; subtotal: number | null; tax_amount: number | null;
+      total: number | null; paid_at: string | null;
+    }>;
+    if (rows.length === 0) return notify('No invoices from this member yet.', 'info');
+    const sum = rows.reduce(
+      (acc, r) => {
+        acc.subtotal += Number(r.subtotal) || 0;
+        acc.gst += Number(r.tax_amount) || 0;
+        acc.total += Number(r.total) || 0;
+        return acc;
+      },
+      { subtotal: 0, gst: 0, total: 0 },
+    );
+    const csv = toCsv(
+      ['Invoice #', 'Issue date', 'Due date', 'Status', 'Subtotal', 'GST', 'Total', 'Paid at'],
+      [
+        ...rows.map((r) => [
+          r.invoice_number ?? '', r.issue_date, r.due_date ?? '', r.status,
+          (Number(r.subtotal) || 0).toFixed(2), (Number(r.tax_amount) || 0).toFixed(2),
+          (Number(r.total) || 0).toFixed(2), r.paid_at ?? '',
+        ]),
+        ['TOTAL', '', '', `${rows.length} invoices`, sum.subtotal.toFixed(2), sum.gst.toFixed(2), sum.total.toFixed(2), ''],
+      ],
+    );
+    const slug = member.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'member';
+    downloadCsv(`ozly-statement-${slug}-${timestampSuffix()}.csv`, csv);
+    notify(`Statement exported — ${rows.length} invoice${rows.length === 1 ? '' : 's'}.`, 'success');
+  }
+
   async function saveCycle(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
@@ -489,6 +536,21 @@ function MemberDetailModal(props: {
           </div>
           <button onClick={onClose} className="text-navy-300 hover:text-navy-500" aria-label="Close">
             ✕
+          </button>
+        </div>
+
+        {/* Statement export — "extract this profile" in one click. */}
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-navy-50/60 px-3 py-2">
+          <div className="min-w-0">
+            <div className="text-[12px] font-semibold text-navy-700">Statement — every invoice to you</div>
+            <div className="text-[11px] text-navy-400">CSV with a totals row · ready for Excel or your accountant</div>
+          </div>
+          <button
+            onClick={() => void exportStatement()}
+            disabled={exportingStatement}
+            className="shrink-0 rounded-md bg-white px-3 py-1.5 text-[11.5px] font-semibold text-brand-700 ring-1 ring-brand-200 hover:bg-brand-50 disabled:opacity-50"
+          >
+            {exportingStatement ? 'Exporting…' : 'Export CSV'}
           </button>
         </div>
 

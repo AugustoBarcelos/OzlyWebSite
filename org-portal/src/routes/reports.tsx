@@ -49,6 +49,35 @@ const QUARTERS = [
   { value: 4, label: 'Q4 · Apr–Jun' },
 ];
 
+// AU FY quarter → [from, to) date range. FY label year = calendar year that
+// contains the END of the FY (Jun), so FY2026 Q1 = Jul–Sep 2025.
+function quarterRange(fyYear: number, quarter: number): { from: string; to: string } {
+  const y = fyYear - 1;
+  switch (quarter) {
+    case 1:  return { from: `${y}-07-01`,     to: `${y}-10-01` };
+    case 2:  return { from: `${y}-10-01`,     to: `${y + 1}-01-01` };
+    case 3:  return { from: `${y + 1}-01-01`, to: `${y + 1}-04-01` };
+    default: return { from: `${y + 1}-04-01`, to: `${y + 1}-07-01` };
+  }
+}
+
+// Shared row shape of the direct-table fallback queries below.
+interface FallbackInvoiceRow {
+  id: string;
+  invoice_number: string | null;
+  issue_date: string;
+  subtotal: number | null;
+  tax_amount: number | null;
+  total: number | null;
+  paid_at: string | null;
+  status: string;
+  user_id: string;
+  issuer: { email: string } | null;
+}
+
+const FALLBACK_SELECT =
+  'id, invoice_number, issue_date, subtotal, tax_amount, total, paid_at, status, user_id, issuer:profiles!invoices_user_id_fkey(email)';
+
 function defaultFyYear(): number {
   const now = new Date();
   // FY 2025-26 = year 2026 (the calendar year that contains the END of the FY).
@@ -78,6 +107,10 @@ export function ReportsPage() {
   const [pnl, setPnl] = useState<PnlSummary | null>(null);
   const [loadingPnl, setLoadingPnl] = useState(false);
   const [reportsMissing, setReportsMissing] = useState(false);
+  // True when the dedicated RPCs aren't deployed and we computed the report
+  // directly from the invoices table instead. Always-works guarantee: the
+  // export must never depend on a pending migration.
+  const [fallbackMode, setFallbackMode] = useState(false);
   const basSeq = useSeqGuard();
   const pnlSeq = useSeqGuard();
 
@@ -95,11 +128,39 @@ export function ReportsPage() {
       const isMissingRpc = code === 'PGRST202' || code === '42883'
         || (error.message ?? '').includes('Could not find the function');
       if (isMissingRpc) {
-        console.warn(
-          'Reports RPC missing — apply Supabase migration 20260605200000_org_bas_pnl.sql to enable BAS export + P&L summaries.',
-        );
-        setReportsMissing(true);
-        setBasRows([]); // clear stale data from previous successful load
+        // RPC not deployed yet → compute the same rows directly from the
+        // invoices table (RLS already scopes it to this org). ABN per member
+        // isn't readable client-side, so that column stays blank in fallback.
+        const range = quarterRange(fyYear, quarter);
+        const fb = await supabase
+          .from('invoices')
+          .select(FALLBACK_SELECT)
+          .eq('org_visible_id', orgId)
+          .gte('issue_date', range.from)
+          .lt('issue_date', range.to)
+          .order('issue_date', { ascending: true })
+          .limit(5000);
+        if (!basSeq.isCurrent(token)) return;
+        if (fb.error) {
+          setReportsMissing(true);
+          setBasRows([]);
+          return;
+        }
+        const rows = (fb.data ?? []) as unknown as FallbackInvoiceRow[];
+        setFallbackMode(true);
+        setReportsMissing(false);
+        setBasRows(rows.map((r) => ({
+          invoice_id: r.id,
+          invoice_number: r.invoice_number ?? '—',
+          issue_date: r.issue_date,
+          member_email: r.issuer?.email ?? '—',
+          member_abn: null,
+          subtotal: Number(r.subtotal) || 0,
+          gst_amount: Number(r.tax_amount) || 0,
+          total: Number(r.total) || 0,
+          paid_at: r.paid_at,
+          status: r.status,
+        })));
         return;
       }
       notify(friendlyError(error), 'error');
@@ -134,11 +195,49 @@ export function ReportsPage() {
       const isMissingRpc = code === 'PGRST202' || code === '42883'
         || (error.message ?? '').includes('Could not find the function');
       if (isMissingRpc) {
-        console.warn(
-          'Reports RPC missing — apply Supabase migration 20260605200000_org_bas_pnl.sql to enable BAS export + P&L summaries.',
-        );
-        setReportsMissing(true);
-        setPnl(null);
+        // Same always-works fallback as BAS: aggregate straight from the
+        // invoices table client-side.
+        const fb = await supabase
+          .from('invoices')
+          .select(FALLBACK_SELECT)
+          .eq('org_visible_id', orgId)
+          .gte('issue_date', pnlRange.from)
+          .lt('issue_date', pnlRange.to)
+          .limit(5000);
+        if (!pnlSeq.isCurrent(token)) return;
+        if (fb.error) {
+          setReportsMissing(true);
+          setPnl(null);
+          return;
+        }
+        const rows = (fb.data ?? []) as unknown as FallbackInvoiceRow[];
+        setFallbackMode(true);
+        setReportsMissing(false);
+        if (rows.length === 0) { setPnl(null); return; }
+        const byMember = new Map<string, { email: string; total: number }>();
+        let revenue = 0, gst = 0, paid = 0, paidCount = 0;
+        for (const r of rows) {
+          const total = Number(r.total) || 0;
+          revenue += total;
+          gst += Number(r.tax_amount) || 0;
+          const isPaid = r.status === 'paid' || r.paid_at !== null;
+          if (isPaid) { paid += total; paidCount += 1; }
+          const m = byMember.get(r.user_id) ?? { email: r.issuer?.email ?? '—', total: 0 };
+          m.total += total;
+          byMember.set(r.user_id, m);
+        }
+        const largest = [...byMember.values()].sort((a, b) => b.total - a.total)[0] ?? null;
+        setPnl({
+          total_revenue: revenue,
+          total_gst: gst,
+          total_paid: paid,
+          total_outstanding: revenue - paid,
+          invoice_count: rows.length,
+          paid_invoice_count: paidCount,
+          members_invoiced: byMember.size,
+          largest_member_email: largest?.email ?? null,
+          largest_member_total: largest?.total ?? null,
+        });
         return;
       }
       notify(friendlyError(error), 'error');
@@ -186,6 +285,11 @@ export function ReportsPage() {
         <div className="mb-5 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-xs leading-relaxed text-blue-900">
           Reports aren't available yet — contact support.
         </div>
+      )}
+      {fallbackMode && !reportsMissing && (
+        <p className="mb-4 text-[11px] text-navy-400">
+          Computed directly from your invoices — member ABN column unavailable in this mode.
+        </p>
       )}
 
       {/* BAS */}
