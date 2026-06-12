@@ -9,7 +9,8 @@ export default function PhoneMockup({ children, variant = "teal", className = ""
   return (
     <div className={`relative mx-auto w-[230px] sm:w-[270px] md:w-[290px] ${className}`}>
       <div className="rounded-[3rem] bg-[#17181c] p-[9px] shadow-2xl shadow-navy-900/30 ring-1 ring-black/20">
-        <div className="rounded-[2.45rem] bg-white dark:bg-slate-900 overflow-hidden">
+        {/* Screen — the app ships dark by default: midnightNavy #162431 */}
+        <div className="rounded-[2.45rem] bg-[#162431] overflow-hidden">
           {/* Notch */}
           <div className="flex justify-center pt-2.5 pb-1">
             <div className="w-20 h-[18px] rounded-full bg-[#17181c]" />
@@ -20,7 +21,7 @@ export default function PhoneMockup({ children, variant = "teal", className = ""
           </div>
           {/* Home indicator */}
           <div className="flex justify-center pb-2.5">
-            <div className="w-24 h-[4px] rounded-full bg-slate-300 dark:bg-slate-600" />
+            <div className="w-24 h-[4px] rounded-full bg-white/25" />
           </div>
         </div>
       </div>
