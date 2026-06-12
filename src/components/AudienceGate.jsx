@@ -4,7 +4,8 @@
 // visitor only ever sees the gate once; returning visitors go straight to
 // the content. Deliberately opened in an effect (never during render) so the
 // build-time prerender ships clean HTML and people who already chose see no
-// flash.
+// flash. Visual language: Apple-style sheet — bottom sheet on mobile,
+// centered card on desktop, stacked borderless option rows.
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -52,68 +53,65 @@ export default function AudienceGate() {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-navy-900/60 px-4 backdrop-blur-md"
+      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/40 backdrop-blur-xl sm:items-center sm:px-4"
       role="dialog"
       aria-modal="true"
       aria-label={t.audienceGate.title}
     >
-      <div className="w-full max-w-lg rounded-3xl bg-white dark:bg-slate-900 p-7 shadow-2xl sm:p-9 anim-fade-in-scale">
-        <div className="flex items-center justify-center gap-2">
-          <img src={`${import.meta.env.BASE_URL}OSLY.svg`} alt="Ozly" width="40" height="41" className="h-10" />
-          <span className="text-2xl font-bold text-brand-500" style={{ fontFamily: "'Montserrat', sans-serif" }}>
-            OZLY
-          </span>
-        </div>
+      <div className="w-full max-w-md rounded-t-[28px] bg-white px-6 pb-8 pt-9 shadow-2xl dark:bg-slate-900 sm:rounded-[28px] sm:px-10 sm:pb-10 anim-fade-in-scale">
+        <img
+          src={`${import.meta.env.BASE_URL}OSLY.svg`}
+          alt="Ozly"
+          width="36"
+          height="37"
+          className="mx-auto h-9"
+        />
 
-        <h2 className="mt-5 text-center text-xl font-extrabold text-navy-700 dark:text-white sm:text-2xl">
+        <h2 className="mt-6 text-center text-[26px] font-semibold leading-tight tracking-tight text-navy-700 dark:text-white sm:text-[28px]">
           {t.audienceGate.title}
         </h2>
-        <p className="mt-2 text-center text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-2 text-center text-[15px] leading-relaxed text-slate-500 dark:text-slate-400">
           {t.audienceGate.subtitle}
         </p>
 
-        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <button
-            type="button"
+        <div className="mt-8 space-y-3">
+          <GateOption
+            icon={User}
+            title={t.audienceSplit.contractorTitle}
+            body={t.audienceSplit.contractorBody}
             onClick={() => choose('contractor')}
-            className="group rounded-2xl border-2 border-slate-200 dark:border-slate-700 p-5 text-left transition-colors hover:border-brand-400 hover:bg-brand-50/50 dark:hover:bg-brand-900/20 cursor-pointer"
-          >
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-900/40">
-              <User size={20} className="text-brand-500" />
-            </div>
-            <p className="mt-3 text-sm font-bold text-navy-700 dark:text-white">
-              {t.audienceSplit.contractorTitle}
-            </p>
-            <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-              {t.audienceSplit.contractorBody}
-            </p>
-            <ChevronRight
-              size={15}
-              className="mt-3 text-brand-500 transition-transform group-hover:translate-x-0.5"
-            />
-          </button>
-
-          <button
-            type="button"
+          />
+          <GateOption
+            icon={Building2}
+            title={t.audienceSplit.businessTitle}
+            body={t.audienceSplit.businessBody}
             onClick={() => choose('business')}
-            className="group rounded-2xl border-2 border-brand-200 dark:border-brand-800 bg-brand-50/60 dark:bg-brand-900/20 p-5 text-left transition-colors hover:border-brand-500 cursor-pointer"
-          >
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white dark:bg-brand-900/40">
-              <Building2 size={20} className="text-brand-600" />
-            </div>
-            <p className="mt-3 text-sm font-bold text-navy-700 dark:text-white">
-              {t.audienceSplit.businessTitle}
-            </p>
-            <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-              {t.audienceSplit.businessBody}
-            </p>
-            <ChevronRight
-              size={15}
-              className="mt-3 text-brand-600 dark:text-brand-400 transition-transform group-hover:translate-x-0.5"
-            />
-          </button>
+          />
         </div>
       </div>
     </div>
+  );
+}
+
+function GateOption({ icon: Icon, title, body, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full cursor-pointer items-center gap-4 rounded-2xl bg-[#f5f5f7] p-4 text-left transition-colors hover:bg-[#ececee] dark:bg-slate-800 dark:hover:bg-slate-700/80 sm:p-5"
+    >
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white shadow-sm dark:bg-slate-700">
+        <Icon size={19} className="text-brand-600 dark:text-brand-400" strokeWidth={1.8} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[15px] font-semibold tracking-tight text-navy-700 dark:text-white">
+          {title}
+        </span>
+        <span className="mt-0.5 block text-[13px] leading-snug text-slate-500 dark:text-slate-400">
+          {body}
+        </span>
+      </span>
+      <ChevronRight size={18} className="shrink-0 text-slate-300 dark:text-slate-500" />
+    </button>
   );
 }
