@@ -209,6 +209,28 @@ export function CockpitPage() {
 
   const activeChart = activeSeries.map((p) => ({ date: p.date, Ativos: p.count }));
 
+  // Banner geral → leva direto pro primeiro bloco com problema (ordem do DOM).
+  const sectionLights: Array<{ id: string; light: Light }> = [
+    { id: 'sec-money', light: moneyLight },
+    { id: 'sec-people', light: peopleLight },
+    { id: 'sec-doing', light: doingLight },
+    { id: 'sec-tech', light: techLight },
+  ];
+  const scrollToWorst = () => {
+    const target =
+      sectionLights.find((s) => s.light === 'red') ??
+      sectionLights.find((s) => s.light === 'yellow');
+    if (target) {
+      document
+        .getElementById(target.id)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+  const overallClickable = !loading && (overall === 'yellow' || overall === 'red');
+
+  // "em 1 dias" não existe — período de 24h vira "no último dia".
+  const periodLabel = period === 1 ? 'no último dia' : `nos últimos ${period} dias`;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -252,20 +274,23 @@ export function CockpitPage() {
         </div>
       )}
 
-      {/* Semáforo geral */}
-      <div
-        className={`ozly-card flex items-center gap-4 p-5 ${
+      {/* Semáforo geral — amarelo/vermelho é clicável e rola até o bloco com problema */}
+      <button
+        type="button"
+        onClick={overallClickable ? scrollToWorst : undefined}
+        disabled={!overallClickable}
+        className={`ozly-card flex w-full items-center gap-4 p-5 text-left ${
           overall === 'red'
             ? 'border-rose-200 bg-rose-50/70'
             : overall === 'yellow'
               ? 'border-amber-200 bg-amber-50/70'
               : 'border-emerald-200 bg-emerald-50/70'
-        }`}
+        } ${overallClickable ? 'cursor-pointer transition-shadow hover:shadow-md' : 'cursor-default'}`}
       >
         <span
           className={`h-4 w-4 shrink-0 rounded-full ${LIGHT_DOT[loading ? 'grey' : overall]}`}
         />
-        <div>
+        <div className="flex-1">
           <div className="text-base font-semibold text-navy-700">
             {overallCopy[loading ? 'grey' : overall].title}
           </div>
@@ -273,67 +298,110 @@ export function CockpitPage() {
             {overallCopy[loading ? 'grey' : overall].sub}
           </div>
         </div>
-      </div>
+        {overallClickable && (
+          <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-navy-500">
+            Me leva lá <ArrowUpRightIcon className="h-3.5 w-3.5 rotate-90" />
+          </span>
+        )}
+      </button>
 
-      {/* 1 · Como está o dinheiro? */}
+      {/* 1 · Como está o dinheiro? — uma história em dois lados: o que entra
+          (MRR + assinantes, um número só) e o que está saindo ou em risco
+          (lista com contexto, em vez de 5 cards iguais competindo). */}
       <SectionCard
+        id="sec-money"
         light={loading ? 'grey' : moneyLight}
         title="Como está o dinheiro?"
         subtitle="Assinaturas e receita"
         linkTo="/revenue"
         linkLabel="Ver receita"
       >
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-          <PlainStat
-            value={formatNumber(paidActiveTotal)}
-            label="pessoas pagando assinatura hoje"
-            loading={loading}
+        <div className="grid gap-4 lg:grid-cols-5">
+          {/* Entrando */}
+          <Link
             to="/revenue"
-          />
-          <PlainStat
-            value={mrr === null ? '—' : formatCurrencyAUD(mrr)}
-            label="entram por mês se nada mudar"
-            loading={loading}
-            to="/revenue"
-          />
-          <PlainStat
-            value={formatNumber(cancelPaying)}
-            label={
-              cancelPaying
-                ? `pagante${cancelPaying > 1 ? 's' : ''} pediu cancelamento${mrrAtRisk ? ` — ${formatCurrencyAUD(mrrAtRisk)}/mês em risco` : ''}`
-                : 'pagantes pediram cancelamento (ninguém 🎉)'
-            }
-            loading={loading}
-            tone={cancelPaying ? 'warn' : 'ok'}
-            to="/inbox"
-          />
-          <PlainStat
-            value={formatNumber(cancelTrial)}
-            label={
-              cancelTrial
-                ? 'no teste grátis e não vão continuar'
-                : 'no teste grátis desistiram (ninguém)'
-            }
-            loading={loading}
-            to="/inbox"
-          />
-          <PlainStat
-            value={formatNumber(churn)}
-            label={`assinaturas acabaram de vez em ${period} dias`}
-            loading={loading}
-            tone={(churn ?? 0) > 5 ? 'warn' : undefined}
-            to="/revenue"
-          />
+            className="group relative flex flex-col justify-center rounded-md border border-emerald-100 bg-emerald-50/50 p-4 transition-all hover:border-emerald-300 hover:shadow-sm lg:col-span-2"
+          >
+            <ArrowUpRightIcon className="absolute right-2 top-2 h-3.5 w-3.5 text-emerald-200 transition-colors group-hover:text-emerald-600" />
+            <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700">
+              Entrando todo mês
+            </div>
+            {loading ? (
+              <div className="mt-2 h-9 w-28 animate-pulse rounded bg-emerald-100/60" />
+            ) : (
+              <div className="mt-1 flex items-baseline gap-1.5">
+                <span className="text-4xl font-semibold tabular-nums text-navy-700">
+                  {mrr === null ? '—' : formatCurrencyAUD(mrr)}
+                </span>
+                <span className="text-sm font-medium text-navy-400">/mês</span>
+              </div>
+            )}
+            <div className="mt-1.5 text-sm text-navy-500">
+              {paidActiveTotal === null
+                ? 'receita recorrente das assinaturas'
+                : paidActiveTotal === 1
+                  ? 'vindo de 1 assinante pagando hoje'
+                  : `vindo de ${formatNumber(paidActiveTotal)} assinantes pagando hoje`}
+            </div>
+          </Link>
+
+          {/* Saindo ou em risco */}
+          <div className="rounded-md border border-navy-50 bg-white p-4 lg:col-span-3">
+            <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-navy-300">
+              Saindo ou em risco
+            </div>
+            <div className="divide-y divide-navy-50">
+              <FlowRow
+                loading={loading}
+                tone={cancelPaying ? 'warn' : 'ok'}
+                text={
+                  cancelPaying
+                    ? `${cancelPaying} pagante${cancelPaying > 1 ? 's' : ''} pediu cancelamento${mrrAtRisk ? ` — ${formatCurrencyAUD(mrrAtRisk)}/mês em risco` : ''}`
+                    : 'Ninguém pediu cancelamento 🎉'
+                }
+                sub={
+                  cancelPaying
+                    ? 'ainda tem acesso — dá pra tentar recuperar'
+                    : undefined
+                }
+                to="/inbox"
+                linkLabel={cancelPaying ? 'Recuperar' : 'Inbox'}
+              />
+              <FlowRow
+                loading={loading}
+                tone={undefined}
+                text={
+                  cancelTrial
+                    ? `${cancelTrial} no teste grátis não ${cancelTrial > 1 ? 'vão' : 'vai'} continuar`
+                    : 'Ninguém desistiu no teste grátis'
+                }
+                sub={
+                  cancelTrial
+                    ? 'nunca pagou — não é dinheiro saindo'
+                    : undefined
+                }
+                to="/inbox"
+                linkLabel="Ver quem"
+              />
+              <FlowRow
+                loading={loading}
+                tone={(churn ?? 0) > 5 ? 'warn' : (churn ?? 0) === 0 ? 'ok' : undefined}
+                text={
+                  churn
+                    ? `${churn} assinatura${churn > 1 ? 's' : ''} terminou de vez ${periodLabel}`
+                    : `Nenhuma assinatura terminou ${periodLabel}`
+                }
+                to="/revenue"
+                linkLabel="Ver receita"
+              />
+            </div>
+          </div>
         </div>
-        <p className="mt-3 text-xs text-navy-400">
-          "Pediu cancelamento" = pagante que desligou a renovação mas ainda tem
-          acesso — dá pra tentar recuperar. Quem está no teste grátis e não
-          continua nunca chegou a pagar, então não conta como dinheiro perdido.
-        </p>
       </SectionCard>
 
       {/* 2 · Quem está usando? */}
       <SectionCard
+        id="sec-people"
         light={loading ? 'grey' : peopleLight}
         title="Quem está usando?"
         subtitle="Pessoas que abriram o app"
@@ -376,6 +444,7 @@ export function CockpitPage() {
 
       {/* 3 · O que estão fazendo? */}
       <SectionCard
+        id="sec-doing"
         light={loading ? 'grey' : doingLight}
         title="O que estão fazendo?"
         subtitle="Atividade dentro do app"
@@ -415,6 +484,7 @@ export function CockpitPage() {
 
       {/* 4 · O app está funcionando? */}
       <SectionCard
+        id="sec-tech"
         light={loading ? 'grey' : techLight}
         title="O app está funcionando?"
         subtitle="Erros que os usuários encontraram"
@@ -548,6 +618,7 @@ function trendNote(t: number | null): { note?: string; tone?: 'ok' | 'warn' } {
 }
 
 function SectionCard({
+  id,
   light,
   title,
   subtitle,
@@ -555,6 +626,8 @@ function SectionCard({
   linkLabel,
   children,
 }: {
+  /** Âncora pro scroll do banner geral ("Me leva lá"). */
+  id?: string | undefined;
   light: Light;
   title: string;
   subtitle: string;
@@ -563,7 +636,7 @@ function SectionCard({
   children: ReactNode;
 }) {
   return (
-    <Card className="ozly-card">
+    <Card id={id} className="ozly-card scroll-mt-6">
       <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2.5">
           <span className={`h-3 w-3 shrink-0 rounded-full ${LIGHT_DOT[light]}`} />
@@ -583,6 +656,57 @@ function SectionCard({
       </div>
       {children}
     </Card>
+  );
+}
+
+/**
+ * Linha do bloco "Saindo ou em risco" — um fato por linha, com a explicação
+ * embutida (sub) em vez de uma nota de rodapé longa, e a ação à direita.
+ */
+function FlowRow({
+  loading,
+  tone,
+  text,
+  sub,
+  to,
+  linkLabel,
+}: {
+  loading: boolean;
+  tone?: 'ok' | 'warn' | undefined;
+  text: string;
+  sub?: string | undefined;
+  to: string;
+  linkLabel: string;
+}) {
+  if (loading) {
+    return (
+      <div className="py-2.5 first:pt-0 last:pb-0">
+        <div className="h-5 w-2/3 animate-pulse rounded bg-navy-50" />
+      </div>
+    );
+  }
+  const dot =
+    tone === 'warn' ? 'bg-amber-400' : tone === 'ok' ? 'bg-emerald-500' : 'bg-navy-200';
+  return (
+    <Link
+      to={to}
+      className="group flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
+    >
+      <div className="flex items-start gap-2.5">
+        <span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${dot}`} />
+        <div>
+          <div
+            className={`text-sm font-medium ${tone === 'warn' ? 'text-rose-700' : 'text-navy-600'}`}
+          >
+            {text}
+          </div>
+          {sub && <div className="text-xs text-navy-400">{sub}</div>}
+        </div>
+      </div>
+      <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-brand-600 opacity-0 transition-opacity group-hover:opacity-100">
+        {linkLabel} <ArrowUpRightIcon className="h-3 w-3" />
+      </span>
+    </Link>
   );
 }
 
