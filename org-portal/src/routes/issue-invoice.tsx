@@ -7,7 +7,7 @@
 // localStorage and list below for reprint / duplicate / delete + CSV export.
 // When a server table lands, only lib/issued-invoices.ts changes.
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useOrg } from '@/lib/org';
 import { useToast } from '@/components/Toast';
@@ -18,9 +18,9 @@ import { toCsv, downloadCsv, timestampSuffix } from '@/lib/csv';
 import {
   computeTotals,
   suggestInvoiceNumber,
-  loadIssuedInvoices,
-  saveIssuedInvoice,
-  deleteIssuedInvoice,
+  fetchIssuedInvoices,
+  persistIssuedInvoice,
+  removeIssuedInvoice,
   openIssuedInvoicePrint,
   type IssuedInvoice,
   type IssuedLineItem,
@@ -36,10 +36,27 @@ export function IssueInvoicePage() {
   const { notify } = useToast();
   const orgId = currentOrg?.id ?? '';
 
-  const [history, setHistory] = useState<IssuedInvoice[]>(() => (orgId ? loadIssuedInvoices(orgId) : []));
+  const [history, setHistory] = useState<IssuedInvoice[]>([]);
+  // true once the org_issued_invoices table answered — history syncs to the
+  // account; false = this-browser localStorage fallback.
+  const [cloud, setCloud] = useState(false);
 
   // Form state — one draft at a time.
-  const [invoiceNumber, setInvoiceNumber] = useState(() => suggestInvoiceNumber(orgId ? loadIssuedInvoices(orgId) : []));
+  const [invoiceNumber, setInvoiceNumber] = useState('INV-0001');
+  const numberTouchedRef = useRef(false);
+
+  useEffect(() => {
+    if (!orgId) return;
+    let active = true;
+    void fetchIssuedInvoices(orgId).then((store) => {
+      if (!active) return;
+      setHistory(store.rows);
+      setCloud(store.cloud);
+      // Don't clobber a number the admin already typed.
+      if (!numberTouchedRef.current) setInvoiceNumber(suggestInvoiceNumber(store.rows));
+    });
+    return () => { active = false; };
+  }, [orgId]);
   const [issueDate, setIssueDate] = useState(today());
   const [dueDate, setDueDate] = useState(plusDays(14));
   const [clientName, setClientName] = useState('');
@@ -87,7 +104,7 @@ export function IssueInvoicePage() {
     setDueDate(plusDays(14));
   }
 
-  function issueAndPrint() {
+  async function issueAndPrint() {
     if (!currentOrg || !canIssue) return;
     const inv = buildInvoice();
     const ok = openIssuedInvoicePrint(inv, {
@@ -99,10 +116,12 @@ export function IssueInvoicePage() {
       notify('Popup blocked — allow popups for this site to print the invoice.', 'error');
       return;
     }
-    const next = saveIssuedInvoice(orgId, inv);
-    setHistory(next);
+    const store = await persistIssuedInvoice(orgId, inv, cloud);
+    setHistory(store.rows);
+    setCloud(store.cloud);
     notify(`Invoice ${inv.invoiceNumber} ready — use the print dialog's "Save as PDF".`, 'success');
-    resetForm(next);
+    numberTouchedRef.current = false;
+    resetForm(store.rows);
   }
 
   function loadIntoForm(inv: IssuedInvoice, { duplicate }: { duplicate: boolean }) {
@@ -154,7 +173,11 @@ export function IssueInvoicePage() {
           <div className="grid gap-3 sm:grid-cols-3">
             <label className="block text-xs font-medium text-navy-600">
               Invoice #
-              <input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} className={inputCls} />
+              <input
+                value={invoiceNumber}
+                onChange={(e) => { numberTouchedRef.current = true; setInvoiceNumber(e.target.value); }}
+                className={inputCls}
+              />
             </label>
             <label className="block text-xs font-medium text-navy-600">
               Issue date
@@ -285,7 +308,7 @@ export function IssueInvoicePage() {
 
           <button
             type="button"
-            onClick={issueAndPrint}
+            onClick={() => void issueAndPrint()}
             disabled={!canIssue}
             title={canIssue ? undefined : 'Add a client name and at least one line with a value'}
             className="btn-primary mt-4 w-full justify-center disabled:cursor-not-allowed disabled:opacity-50"
@@ -294,8 +317,9 @@ export function IssueInvoicePage() {
           </button>
           <p className="mt-2 text-[10.5px] leading-relaxed text-navy-300">
             Opens the A4 document — pick “Save as PDF” in the print dialog to
-            email it to your client. Issued invoices are kept below (this
-            browser) and export to CSV for your accountant.
+            email it to your client. {cloud
+              ? 'Issued invoices sync to your Ozly account.'
+              : 'Issued invoices are kept in this browser and export to CSV.'}
           </p>
         </div>
       </div>
@@ -306,7 +330,7 @@ export function IssueInvoicePage() {
           id="issued-history"
           title="Issued by you"
           badge={history.length > 0 ? history.length : undefined}
-          subtitle="Reprint, duplicate for the next period, or export the list as CSV"
+          subtitle={`Reprint, duplicate for the next period, or export as CSV · ${cloud ? 'synced to your account' : 'stored in this browser'}`}
           defaultOpen={history.length > 0}
           action={
             history.length > 0 ? (
@@ -370,7 +394,12 @@ export function IssueInvoicePage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => setHistory(deleteIssuedInvoice(orgId, inv.id))}
+                        onClick={() => {
+                          void removeIssuedInvoice(orgId, inv.id, cloud).then((store) => {
+                            setHistory(store.rows);
+                            setCloud(store.cloud);
+                          });
+                        }}
                         className="rounded-md px-2 py-1 text-rose-600 hover:bg-rose-50"
                       >
                         Delete
