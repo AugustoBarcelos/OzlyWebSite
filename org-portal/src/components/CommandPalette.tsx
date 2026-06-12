@@ -59,6 +59,7 @@ const NAV_ACTIONS: NavHit[] = [
   { kind: 'nav', id: 'nav-reports',      title: 'Reports',         subtitle: 'BAS + P&L + exports',   meta: 'Page',   to: '/reports' },
   { kind: 'nav', id: 'nav-settings',     title: 'Settings',        subtitle: 'Org + notifications',   meta: 'Page',   to: '/settings' },
   { kind: 'nav', id: 'nav-deliveries',   title: 'Email deliveries', subtitle: 'Direct-sent invoices', meta: 'Page',   to: '/inbox/deliveries' },
+  { kind: 'nav', id: 'nav-issue',        title: 'Issue an invoice', subtitle: 'Bill one of your clients — print-ready PDF', meta: 'Action', to: '/invoices/new' },
   { kind: 'nav', id: 'nav-import',       title: 'Import invoices', subtitle: 'Bulk CSV import',       meta: 'Page',   to: '/import' },
   { kind: 'nav', id: 'nav-activity',     title: 'Activity log',    subtitle: 'Timeline of events',    meta: 'Page',   to: '/activity' },
   { kind: 'nav', id: 'nav-billing',      title: 'Plan & billing',  subtitle: 'Plan + seats',          meta: 'Page',   to: '/billing' },
