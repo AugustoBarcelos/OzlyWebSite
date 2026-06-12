@@ -81,6 +81,34 @@ function Hero() {
                 <img src={`${import.meta.env.BASE_URL}google-play.svg`} alt="Get Ozly on Google Play" width="189" height="56" className="h-14" />
               </a>
             </div>
+
+            {/* Audience split — B2C stays king above; businesses get their own door */}
+            <div
+              className="mt-9 grid max-w-xl grid-cols-1 gap-3 mx-auto lg:mx-0 sm:grid-cols-2 anim-fade-in-up"
+              style={{ animationDelay: "0.65s" }}
+            >
+              <button
+                type="button"
+                onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })}
+                className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-800/60 p-4 text-left transition-colors hover:border-brand-300 cursor-pointer"
+              >
+                <p className="text-sm font-bold text-navy-700 dark:text-white">{t.audienceSplit.contractorTitle}</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">{t.audienceSplit.contractorBody}</p>
+                <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-brand-500">
+                  {t.audienceSplit.contractorCta} <ChevronDown size={13} />
+                </span>
+              </button>
+              <Link
+                to="/business"
+                className="rounded-2xl border border-brand-200 dark:border-brand-800 bg-brand-50/80 dark:bg-brand-900/20 p-4 text-left transition-colors hover:border-brand-400"
+              >
+                <p className="text-sm font-bold text-navy-700 dark:text-white">{t.audienceSplit.businessTitle}</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">{t.audienceSplit.businessBody}</p>
+                <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 dark:text-brand-400">
+                  {t.audienceSplit.businessCta} <ChevronRight size={13} />
+                </span>
+              </Link>
+            </div>
           </div>
 
           {/* Phone */}

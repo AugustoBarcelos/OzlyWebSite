@@ -20,6 +20,7 @@ export default function Footer() {
           </a>
         </div>
         <div className="flex gap-6">
+          <Link to="/business" className="hover:text-white transition-colors">{t.footer.business}</Link>
           <Link to="/privacy-policy" className="hover:text-white transition-colors">{t.footer.privacy}</Link>
           <Link to="/terms-of-use" className="hover:text-white transition-colors">{t.footer.terms}</Link>
         </div>

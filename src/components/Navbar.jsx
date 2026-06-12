@@ -67,6 +67,13 @@ export default function Navbar() {
           {navLink("#comparison", t.nav.comparison)}
           {navLink("#pricing", t.nav.pricing)}
           {navLink("#faq", t.nav.support)}
+          <Link
+            to="/business"
+            className="hover:text-brand-500 transition-colors"
+            onClick={() => setOpen(false)}
+          >
+            {t.nav.business}
+          </Link>
 
           {/* Lang switcher */}
           <div className="relative">
@@ -127,6 +134,7 @@ export default function Navbar() {
           ) : (
             <Link to="/#faq" className="block py-2.5" onClick={() => setOpen(false)}>{t.nav.support}</Link>
           )}
+          <Link to="/business" className="block py-2.5" onClick={() => setOpen(false)}>{t.nav.business}</Link>
 
           <div className="flex gap-2 py-2">
             {supportedLangs.map(({ code, label }) => (
