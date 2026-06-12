@@ -147,9 +147,9 @@ export function InboxPage() {
   return (
     <>
       <PageHeader
-        kicker="Operations"
-        title="Inbox"
-        subtitle="Invoices sent directly to this organisation by members"
+        kicker={<Link to="/inbox" className="hover:text-brand-600">← Inbox</Link>}
+        title="Email deliveries"
+        subtitle="Invoices members emailed directly to this organisation — and whether they arrived"
         action={rows.length > 0 ? (
           <button
             onClick={exportCsv}

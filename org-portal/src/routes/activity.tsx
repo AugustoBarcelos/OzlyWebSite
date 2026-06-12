@@ -213,8 +213,8 @@ export function ActivityPage() {
   return (
     <div>
       <PageHeader
-        kicker="Insights"
-        title="Activity"
+        kicker="Settings"
+        title="Audit log"
         subtitle="What happened in your organisation"
         action={rows.length > 0 ? (
           <button

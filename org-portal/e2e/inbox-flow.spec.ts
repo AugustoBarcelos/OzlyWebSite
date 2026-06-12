@@ -1,5 +1,5 @@
-// E2E: Inbox page — empty state, populated state, missing-migration banner,
-// search debounce, status filter.
+// E2E: Email deliveries page (was /inbox; the Action Inbox owns that URL
+// now) — empty state, populated state, missing-migration banner, filters.
 
 import { test, expect } from '@playwright/test';
 import { asSignedInOwner } from './fixtures/supabase-mock';
@@ -24,17 +24,17 @@ const sampleRows = [
   },
 ];
 
-test('Inbox — empty state', async ({ page }) => {
+test('Email deliveries — empty state', async ({ page }) => {
   await asSignedInOwner(page);
   await page.route(/supabase\.co\/rest\/v1\/rpc\/org_inbox_list/i, (route) =>
     route.fulfill({ status: 200, body: '[]', headers: { 'content-type': 'application/json' } }),
   );
-  await page.goto('/inbox');
-  await expect(page.locator('h1', { hasText: 'Inbox' })).toBeVisible();
+  await page.goto('/inbox/deliveries');
+  await expect(page.locator('h1', { hasText: 'Email deliveries' })).toBeVisible();
   await expect(page.locator('text=/No invoices delivered yet/i')).toBeVisible();
 });
 
-test('Inbox — populated state renders rows', async ({ page }) => {
+test('Email deliveries — populated state renders rows', async ({ page }) => {
   await asSignedInOwner(page);
   await page.route(/supabase\.co\/rest\/v1\/rpc\/org_inbox_list/i, (route) =>
     route.fulfill({
@@ -43,13 +43,13 @@ test('Inbox — populated state renders rows', async ({ page }) => {
       headers: { 'content-type': 'application/json' },
     }),
   );
-  await page.goto('/inbox');
+  await page.goto('/inbox/deliveries');
   await expect(page.locator('text=INV-2001')).toBeVisible();
   await expect(page.locator('text=Maria Cleaner')).toBeVisible();
   await expect(page.locator('text=Delivered')).toBeVisible();
 });
 
-test('Inbox — shows migration-missing banner if RPC absent (PGRST202)', async ({ page }) => {
+test('Email deliveries — shows migration-missing banner if RPC absent (PGRST202)', async ({ page }) => {
   await asSignedInOwner(page);
   await page.route(/supabase\.co\/rest\/v1\/rpc\/org_inbox_list/i, (route) =>
     route.fulfill({
@@ -58,11 +58,11 @@ test('Inbox — shows migration-missing banner if RPC absent (PGRST202)', async 
       headers: { 'content-type': 'application/json' },
     }),
   );
-  await page.goto('/inbox');
+  await page.goto('/inbox/deliveries');
   await expect(page.locator('text=/Inbox not enabled yet/i')).toBeVisible();
 });
 
-test('Inbox — shows billing_email warning when org has no inbox set', async ({ page }) => {
+test('Email deliveries — shows billing_email warning when org has no inbox set', async ({ page }) => {
   await asSignedInOwner(page);
   await page.route(/supabase\.co\/rest\/v1\/organizations/i, (route) =>
     route.fulfill({
@@ -81,6 +81,6 @@ test('Inbox — shows billing_email warning when org has no inbox set', async ({
   await page.route(/supabase\.co\/rest\/v1\/rpc\/org_inbox_list/i, (route) =>
     route.fulfill({ status: 200, body: '[]', headers: { 'content-type': 'application/json' } }),
   );
-  await page.goto('/inbox');
+  await page.goto('/inbox/deliveries');
   await expect(page.locator('text=/No billing email configured yet/i')).toBeVisible();
 });

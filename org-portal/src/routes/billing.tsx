@@ -275,7 +275,7 @@ export function BillingPage() {
 
   return (
     <>
-      <PageHeader kicker="Account" title="Billing" subtitle="Plan, seats and invoices from Ozly" />
+      <PageHeader kicker="Settings" title="Plan & billing" subtitle="Plan, seats and invoices from Ozly" />
 
       <div className="max-w-2xl space-y-4">
         {tierRpcMissing && (

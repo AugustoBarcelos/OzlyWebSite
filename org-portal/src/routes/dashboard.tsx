@@ -303,7 +303,7 @@ export function DashboardPage() {
       <div className="page-hero mb-4">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
-            <div className="page-hero-kicker">Dashboard</div>
+            <div className="page-hero-kicker">Home</div>
             <h1 className="page-hero-title">
               {greeting()}{cap ? `, ${cap}` : ''}
             </h1>
@@ -347,7 +347,7 @@ export function DashboardPage() {
           <QuickAction to="/members" label="+ Invite member" primary />
           <QuickAction to="/work"     label="Offer work" />
           <QuickAction to="/invoices?status=sent,overdue" label="Mark paid" />
-          <QuickAction to="/inbox"    label="Open inbox" />
+          <QuickAction to="/inbox"    label="Review inbox" />
           {/* Sync pill — real status from org_list_calendar_connections. */}
           {currentOrg && (
             <span className="ml-auto">

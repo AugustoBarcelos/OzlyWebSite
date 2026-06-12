@@ -391,7 +391,7 @@ export function ImportPage() {
   return (
     <div>
       <PageHeader
-        kicker="Operations"
+        kicker="Invoices"
         title="Import work"
         subtitle="Upload a roster exported from another platform — we map the columns into job offers for you to review."
         action={

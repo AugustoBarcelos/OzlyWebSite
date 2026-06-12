@@ -51,21 +51,30 @@ interface NavHit {
 type Hit = InvoiceHit | MemberHit | JobHit | NavHit;
 
 const NAV_ACTIONS: NavHit[] = [
-  { kind: 'nav', id: 'nav-dashboard',    title: 'Dashboard',       subtitle: 'KPIs + revenue chart', meta: 'Page',   to: '/dashboard' },
-  { kind: 'nav', id: 'nav-invoices',     title: 'Invoices',        subtitle: 'All invoices',         meta: 'Page',   to: '/invoices' },
-  { kind: 'nav', id: 'nav-inbox',        title: 'Inbox',           subtitle: 'Direct-sent invoices', meta: 'Page',   to: '/inbox' },
-  { kind: 'nav', id: 'nav-work',         title: 'Work',            subtitle: 'Jobs offered',         meta: 'Page',   to: '/work' },
-  { kind: 'nav', id: 'nav-members',      title: 'Members',         subtitle: 'Sub-contractors',     meta: 'Page',   to: '/members' },
-  { kind: 'nav', id: 'nav-activity',     title: 'Activity',        subtitle: 'Timeline of events',   meta: 'Page',   to: '/activity' },
-  { kind: 'nav', id: 'nav-reports',      title: 'Reports',         subtitle: 'BAS + P&L exports',    meta: 'Page',   to: '/reports' },
-  { kind: 'nav', id: 'nav-billing',      title: 'Billing',         subtitle: 'Plan + seats',         meta: 'Page',   to: '/billing' },
-  { kind: 'nav', id: 'nav-integrations', title: 'Integrations',    subtitle: 'Connect ServiceM8...', meta: 'Page',   to: '/settings/integrations' },
-  { kind: 'nav', id: 'nav-settings',     title: 'Settings',        subtitle: 'Org + notifications', meta: 'Page',   to: '/settings' },
-  { kind: 'nav', id: 'nav-onboarding',   title: 'Onboarding guide', subtitle: 'Printable PDF',       meta: 'Action', to: '/print/onboarding' },
+  { kind: 'nav', id: 'nav-dashboard',    title: 'Home',            subtitle: 'KPIs + revenue chart',  meta: 'Page',   to: '/dashboard' },
+  { kind: 'nav', id: 'nav-inbox',        title: 'Inbox',           subtitle: 'Needs your action',     meta: 'Page',   to: '/inbox' },
+  { kind: 'nav', id: 'nav-invoices',     title: 'Invoices',        subtitle: 'All invoices',          meta: 'Page',   to: '/invoices' },
+  { kind: 'nav', id: 'nav-work',         title: 'Work',            subtitle: 'Jobs offered',          meta: 'Page',   to: '/work' },
+  { kind: 'nav', id: 'nav-members',      title: 'Team',            subtitle: 'Sub-contractors',       meta: 'Page',   to: '/members' },
+  { kind: 'nav', id: 'nav-reports',      title: 'Reports',         subtitle: 'BAS + P&L + exports',   meta: 'Page',   to: '/reports' },
+  { kind: 'nav', id: 'nav-settings',     title: 'Settings',        subtitle: 'Org + notifications',   meta: 'Page',   to: '/settings' },
+  { kind: 'nav', id: 'nav-deliveries',   title: 'Email deliveries', subtitle: 'Direct-sent invoices', meta: 'Page',   to: '/inbox/deliveries' },
+  { kind: 'nav', id: 'nav-import',       title: 'Import invoices', subtitle: 'Bulk CSV import',       meta: 'Page',   to: '/import' },
+  { kind: 'nav', id: 'nav-activity',     title: 'Activity log',    subtitle: 'Timeline of events',    meta: 'Page',   to: '/activity' },
+  { kind: 'nav', id: 'nav-billing',      title: 'Plan & billing',  subtitle: 'Plan + seats',          meta: 'Page',   to: '/billing' },
+  { kind: 'nav', id: 'nav-integrations', title: 'Integrations',    subtitle: 'Connect ServiceM8...',  meta: 'Page',   to: '/settings/integrations' },
+  { kind: 'nav', id: 'nav-onboarding',   title: 'Onboarding guide', subtitle: 'Printable PDF',        meta: 'Action', to: '/print/onboarding' },
   // Action shortcuts
   { kind: 'nav', id: 'act-overdue',      title: 'Show overdue invoices', subtitle: 'Filter applied',  meta: 'Action', to: '/invoices?status=overdue' },
   { kind: 'nav', id: 'act-unpaid',       title: 'Show outstanding invoices', subtitle: 'Filter applied', meta: 'Action', to: '/invoices?status=sent,overdue' },
 ];
+
+// Programmatic open — lets the sidebar "Search… ⌘K" button (and anything
+// else) open the palette without faking a keyboard event.
+const OPEN_EVENT = 'ozly:open-palette';
+export function openCommandPalette(): void {
+  window.dispatchEvent(new CustomEvent(OPEN_EVENT));
+}
 
 function tonalIcon(kind: Hit['kind']): { icon: string; tone: string } {
   switch (kind) {
@@ -103,8 +112,13 @@ export function CommandPalette() {
         setOpen(false);
       }
     }
+    const onOpenEvent = () => setOpen(true);
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener(OPEN_EVENT, onOpenEvent);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener(OPEN_EVENT, onOpenEvent);
+    };
   }, []);
 
   // Focus input + reset on open

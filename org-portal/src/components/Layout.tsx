@@ -2,64 +2,43 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { useOrg } from '@/lib/org';
+import { useInboxCount } from '@/lib/use-inbox-count';
 import { FullScreenSpinner } from '@/components/Spinner';
 import { TrialBanner } from '@/components/TrialBanner';
 import { Avatar } from '@/components/Avatar';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { CommandPalette } from '@/components/CommandPalette';
+import { CommandPalette, openCommandPalette } from '@/components/CommandPalette';
 import {
   FileTextIcon,
   InboxIcon,
   BriefcaseIcon,
   UsersIcon,
-  ActivityIcon,
-  CreditCardIcon,
   ChartIcon,
   SettingsIcon,
   GridIcon,
-  UploadIcon,
 } from '@/components/Icons';
 
-// Nav is grouped — "Operations" (the daily flow), "Money" (billing/financial),
-// "Admin" (housekeeping). Each group gets a labelled header in the sidebar so
-// the menu doesn't read as one flat AI-generated list.
+// Nav is FLAT and short — six destinations, ordered by how often the admin
+// needs them (the Linear rule: every extra item dilutes all the others).
+// Everything that used to be a top-level page still exists but is reached
+// from where it belongs: Import → button inside Invoices, email-delivery
+// tracking → /inbox/deliveries, exports → Reports, Billing + Activity →
+// Settings. Settings itself lives at the bottom, by the user chip.
 interface NavItem {
   to: string;
   label: string;
   icon: ReactNode;
+  /** Show the Action-Inbox count badge on this item. */
+  showInboxBadge?: boolean;
 }
 
-const NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
-  {
-    label: 'Overview',
-    items: [
-      { to: '/dashboard', label: 'Dashboard', icon: <GridIcon /> },
-    ],
-  },
-  {
-    label: 'Operations',
-    items: [
-      { to: '/invoices', label: 'Invoices', icon: <FileTextIcon /> },
-      { to: '/inbox',    label: 'Inbox',    icon: <InboxIcon /> },
-      { to: '/work',     label: 'Work',     icon: <BriefcaseIcon /> },
-      { to: '/import',   label: 'Import',   icon: <UploadIcon /> },
-      { to: '/members',  label: 'Members',  icon: <UsersIcon /> },
-    ],
-  },
-  {
-    label: 'Insights',
-    items: [
-      { to: '/activity', label: 'Activity', icon: <ActivityIcon /> },
-      { to: '/reports',  label: 'Reports',  icon: <ChartIcon /> },
-    ],
-  },
-  {
-    label: 'Account',
-    items: [
-      { to: '/billing',  label: 'Billing',  icon: <CreditCardIcon /> },
-      { to: '/settings', label: 'Settings', icon: <SettingsIcon /> },
-    ],
-  },
+const NAV_ITEMS: NavItem[] = [
+  { to: '/dashboard', label: 'Home',     icon: <GridIcon /> },
+  { to: '/inbox',     label: 'Inbox',    icon: <InboxIcon />, showInboxBadge: true },
+  { to: '/invoices',  label: 'Invoices', icon: <FileTextIcon /> },
+  { to: '/work',      label: 'Work',     icon: <BriefcaseIcon /> },
+  { to: '/members',   label: 'Team',     icon: <UsersIcon /> },
+  { to: '/reports',   label: 'Reports',  icon: <ChartIcon /> },
 ];
 
 function Wordmark({ compact = false }: { compact?: boolean }) {
@@ -88,38 +67,11 @@ function Wordmark({ compact = false }: { compact?: boolean }) {
   );
 }
 
-// Secondary groups can be folded away to keep the daily-flow nav short.
-// "Overview"/"Operations" stay always visible — they ARE the daily flow.
-const COLLAPSIBLE_GROUPS = ['Insights', 'Account'];
-const NAV_KEY_PREFIX = 'ozly:nav:';
-
-function readGroupOpen(label: string): boolean {
-  try {
-    return localStorage.getItem(NAV_KEY_PREFIX + label) !== '0';
-  } catch {
-    return true; // localStorage unavailable — default open
-  }
-}
-
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { signOut, user } = useAuth();
   const { orgs, currentOrg, setCurrentOrgId } = useOrg();
-  const [groupOpen, setGroupOpen] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(COLLAPSIBLE_GROUPS.map((g) => [g, readGroupOpen(g)])),
-  );
+  const inboxCount = useInboxCount(currentOrg?.id ?? null);
   if (!currentOrg) return null;
-
-  function toggleGroup(label: string) {
-    setGroupOpen((prev) => {
-      const next = { ...prev, [label]: !prev[label] };
-      try {
-        localStorage.setItem(NAV_KEY_PREFIX + label, next[label] ? '1' : '0');
-      } catch {
-        // localStorage unavailable — session-only state is fine.
-      }
-      return next;
-    });
-  }
 
   return (
     <>
@@ -167,61 +119,58 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         </div>
       )}
 
-      <nav className="mt-4 flex flex-1 flex-col">
-        {NAV_SECTIONS.map((section) => {
-          const collapsible = COLLAPSIBLE_GROUPS.includes(section.label);
-          const open = !collapsible || groupOpen[section.label] !== false;
-          return (
-            <div key={section.label}>
-              {collapsible ? (
-                <button
-                  type="button"
-                  onClick={() => toggleGroup(section.label)}
-                  aria-expanded={open}
-                  className="sidebar-section-label flex w-full cursor-pointer items-center justify-between rounded-md hover:text-navy-600"
-                >
-                  {section.label}
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                    className={`shrink-0 transition-transform duration-200 ${open ? '' : '-rotate-90'}`}
-                  >
-                    <path d="m6 9 6 6 6-6" />
-                  </svg>
-                </button>
-              ) : (
-                <div className="sidebar-section-label">{section.label}</div>
-              )}
-              {open && (
-                <div className="flex flex-col gap-0.5">
-                  {section.items.map((item) => (
-                    <NavLink
-                      key={item.to}
-                      to={item.to}
-                      onClick={onNavigate}
-                      className={({ isActive }) => `nav-item ${isActive ? 'nav-active' : ''}`}
-                    >
-                      <span className="flex h-4 w-4 items-center justify-center text-current opacity-80">
-                        {item.icon}
-                      </span>
-                      {item.label}
-                    </NavLink>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
+      {/* Search hint — the ⌘K palette exists but nobody discovers a shortcut
+          they can't see. The button IS the discoverability (Linear pattern). */}
+      <button
+        type="button"
+        onClick={() => { openCommandPalette(); onNavigate?.(); }}
+        className="mt-4 flex w-full items-center gap-2 rounded-lg border border-navy-100 bg-white px-2.5 py-2 text-[12.5px] text-navy-400 transition-colors hover:border-brand-300 hover:text-navy-600"
+      >
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.3-4.3" />
+        </svg>
+        Search…
+        <kbd className="ml-auto rounded border border-navy-100 bg-navy-50/60 px-1.5 py-0.5 font-sans text-[10px] font-semibold text-navy-400">
+          ⌘K
+        </kbd>
+      </button>
+
+      <nav className="mt-3 flex flex-1 flex-col gap-0.5">
+        {NAV_ITEMS.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            onClick={onNavigate}
+            className={({ isActive }) => `nav-item ${isActive ? 'nav-active' : ''}`}
+          >
+            <span className="flex h-4 w-4 items-center justify-center text-current opacity-80">
+              {item.icon}
+            </span>
+            {item.label}
+            {item.showInboxBadge && inboxCount > 0 && (
+              <span className="ml-auto inline-flex min-w-[20px] items-center justify-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[10.5px] font-bold text-amber-700">
+                {inboxCount > 99 ? '99+' : inboxCount}
+              </span>
+            )}
+          </NavLink>
+        ))}
       </nav>
 
-      <div className="mt-3 flex items-center gap-2.5 border-t border-navy-100 pt-3">
+      {/* Settings sits with the housekeeping cluster at the bottom — visited
+          ~monthly, it shouldn't compete with the daily-flow items above. */}
+      <NavLink
+        to="/settings"
+        onClick={onNavigate}
+        className={({ isActive }) => `nav-item mb-1 ${isActive ? 'nav-active' : ''}`}
+      >
+        <span className="flex h-4 w-4 items-center justify-center text-current opacity-80">
+          <SettingsIcon />
+        </span>
+        Settings
+      </NavLink>
+
+      <div className="flex items-center gap-2.5 border-t border-navy-100 pt-3">
         <Avatar email={user?.email ?? null} size="sm" />
         <div className="min-w-0 flex-1">
           <div className="truncate text-[11.5px] font-medium text-navy-500">{user?.email}</div>

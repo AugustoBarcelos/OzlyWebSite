@@ -361,7 +361,7 @@ export function WorkPage() {
   return (
     <div>
       <PageHeader
-        kicker="Operations"
+        kicker="Work"
         title="Work"
         subtitle={`Work confirmed for ${currentOrg?.name ?? ''} — offers are accepted in the Ozly app`}
         action={
