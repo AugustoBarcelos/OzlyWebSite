@@ -484,7 +484,7 @@ const featureSections = [
           </div>
           <span className="rounded-full bg-[#9DD760]/15 px-2 py-0.5 text-[6.5px] font-bold text-[#9DD760]">2,000+ DEDUCTIONS</span>
         </div>
-        <div className="text-[7.5px] text-slate-500 text-center">Estimates only — consult your accountant.</div>
+        <div className="text-[7.5px] text-slate-500 text-center">Estimates only — not tax advice. Confirm with a registered tax agent.</div>
       </div>
     ),
   },
@@ -608,18 +608,17 @@ function Comparison() {
 }
 
 /* ═══════════════════════ PRICING ═══════════════════════ */
-// ABN feature list (PRO includes all of these plus the Pro-exclusive extras below)
+// ABN feature list (PRO includes all of these plus the Pro-exclusive extras
+// below). Mirrors the app's real plan gating: Expenses/OCR and the whole tax
+// module (Fiscal analytics, thermometer) sit behind the PRO gate, so they are
+// sold on PRO — not here.
 const allFeatures = [
   { key: "invoices",         abn: true },
   { key: "contractors",      abn: true },
-  { key: "expensesOcr",      abn: true },
-  { key: "taxAnalytics",     abn: true },
   { key: "shifts",           abn: true },
   { key: "calendarSync",     abn: true },
-  { key: "quickExpense",     abn: true },
   { key: "messageTemplates", abn: true },
   { key: "bulkEdit",         abn: true },
-  { key: "multiBusinesses",  abn: true },
   { key: "levelUp",          abn: true },
 ];
 
@@ -632,8 +631,11 @@ const extraFeatures = allFeatures.slice(9);
 // Pro-exclusive value (shown instead of the full ABN list)
 const proExclusiveFeatures = [
   { key: "proAllAbn" },
+  { key: "expensesOcr" },
+  { key: "quickExpense" },
+  { key: "taxAnalytics" },
+  { key: "taxThermometer" },
   { key: "rateComparison" },
-  { key: "hoursComparison" },
   { key: "visaShield" },
 ];
 
@@ -725,7 +727,7 @@ function Pricing() {
                     ))
                   )}
                 </ul>
-                {!expanded && plan.id !== "pro" && (
+                {!expanded && plan.id !== "pro" && extraFeatures.length > 0 && (
                   <button
                     onClick={() => setExpanded(true)}
                     className="text-brand-600 dark:text-brand-400 text-[13px] font-medium hover:underline underline-offset-4 transition mb-4 flex items-center gap-1 cursor-pointer"

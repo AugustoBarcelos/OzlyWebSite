@@ -51,14 +51,14 @@
     "shiftsModule": "ABN",
     "shiftsDesc": "Import Jobs from Google Calendar or create Jobs with flexible duration, frequency, and hourly rate. Issue invoices and send to contractors in seconds, track and chase overdue invoices.",
     "ocr": "Smart Camera & Quick Expense",
-    "ocrModule": "ABN",
+    "ocrModule": "PRO",
     "ocrDesc": "Snap a photo of receipts to claim tax-deductible expenses — the app stores and organises the photos, reads each item and estimates your deduction. Use Quick Mode to log with a single tap.",
     "tracker": "Invoice & Payment Tracking",
     "trackerModule": "ABN",
     "trackerDesc": "Track every invoice at a glance — paid, pending and overdue. Send one-tap reminders for late payments and always know exactly what you're owed.",
     "forecast": "Revenue & Tax Forecast",
-    "forecastModule": "ABN",
-    "forecastDesc": "See your forecasted revenue for the period and know exactly how much to set aside for your Tax Return — so there are no surprises at tax time."
+    "forecastModule": "PRO",
+    "forecastDesc": "See your forecasted revenue for the period and get an estimate of how much to set aside for your Tax Return — so there are no surprises at tax time. Estimates only — not tax advice."
   },
   "comparison": {
     "title": "Ozly",
@@ -69,7 +69,7 @@
     "headerOthers": "Competition",
     "unlimitedInvoices": "Unlimited invoices",
     "noPercentFee": "No % fee on earnings",
-    "taxCalc": "Tax calculation (ATO)",
+    "taxCalc": "Tax estimates (ATO rules)",
     "ocrReceipts": "Smart camera for receipt scanning",
     "paymentTracking": "Payment tracking",
     "profitForecast": "Net profit forecast",
@@ -109,8 +109,6 @@
       "taxAnalytics": "Advanced Tax Analytics",
       "contractors": "Contractors Management",
       "invoices": "Professional PDF Invoices",
-      "hoursComparison": "Hours Comparison (ABN peers)",
-      "multiBusinesses": "Multiple Businesses",
       "taxThermometer": "Tax Return Thermometer",
       "bulkEdit": "Bulk Edit & Delete Jobs",
       "levelUp": "Hustle Level Up Celebrations",
@@ -243,6 +241,7 @@
   },
   "footer": {
     "copyright": "© 2026 Ozly. All rights reserved.",
+    "disclaimer": "Ozly is a record-keeping and educational tool, not a registered tax agent under the Tax Agent Services Act 2009 (Cth). All tax figures are estimates and general information only \u2014 not tax, financial or legal advice. Always confirm with a registered tax agent (tpb.gov.au).",
     "privacy": "Privacy Policy",
     "terms": "Terms of Service",
     "business": "For businesses"
@@ -352,7 +351,7 @@
     "q3": "How does the smart camera for expenses work?",
     "a3": "With Ozly's smart camera, just take a photo of your receipt and in seconds the app reads each item and all the data from the note, letting you select the ones that are work-related expenses, therefore deductible on your income tax (Tax return). The app stores the receipts and totals everything, estimating how much tax you'll owe at the end of the financial year.",
     "q4": "Does the app calculate my tax?",
-    "a4": "Yes. Ozly estimates how much tax you'll owe following ATO (Australian Taxation Office) rules. No surprises at tax return time.",
+    "a4": "Yes. Ozly estimates how much tax you'll owe following ATO (Australian Taxation Office) rules. No surprises at tax return time. Estimates only — under Australian law only a registered tax agent can give tax advice, so always confirm with one before lodging.",
     "q5": "Does Ozly integrate with Google Calendar?",
     "a5": "Yes, Ozly syncs with your Google Calendar, importing Jobs registered there. Handy when your employer schedules your shifts in Google Calendar. Just tap the calendar icon in the top corner of the main screen.",
     "q6": "How does Ozly help with invoice management?",

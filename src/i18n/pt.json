@@ -51,14 +51,14 @@
     "shiftsModule": "ABN",
     "shiftsDesc": "Importe Jobs do seu Google Agenda ou Crie Jobs com: duração, frequência, e taxa por hora flexível. Emita invoices e encaminhe aos contratantes em segundos, acompanhe e cobre invoices em atraso.",
     "ocr": "Câmera Inteligente & Despesa Rápida",
-    "ocrModule": "ABN",
+    "ocrModule": "PRO",
     "ocrDesc": "Tire foto de cupons fiscais para deduzir despesas do seu tax return – O app armazena e organiza as fotos, lê cada item da nota e prevê a dedução pra você. Use o modo Rápido para lançar com um toque.",
     "tracker": "Acompanhamento de Invoices e Pagamentos",
     "trackerModule": "ABN",
     "trackerDesc": "Veja cada invoice num relance — pagas, pendentes e em atraso. Envie lembretes com um toque para pagamentos atrasados e saiba sempre quanto têm a te pagar.",
     "forecast": "Previsão de Receita e Impostos",
-    "forecastModule": "ABN",
-    "forecastDesc": "Veja sua receita projetada do período e saiba exatamente quanto guardar para o seu Tax Return — sem surpresas na hora de pagar impostos."
+    "forecastModule": "PRO",
+    "forecastDesc": "Veja sua receita projetada do período e uma estimativa de quanto guardar para o seu Tax Return — sem surpresas na hora de pagar impostos. Apenas estimativas — não é aconselhamento fiscal."
   },
   "comparison": {
     "title": "Ozly",
@@ -69,7 +69,7 @@
     "headerOthers": "Outros",
     "unlimitedInvoices": "Invoices ilimitados",
     "noPercentFee": "Sem cobrança por % do lucro",
-    "taxCalc": "Calcula imposto (ATO)",
+    "taxCalc": "Estimativa de imposto (regras da ATO)",
     "ocrReceipts": "Câmera inteligente para leitura de recibos",
     "paymentTracking": "Controle de pagamentos",
     "profitForecast": "Previsão de lucro líquido",
@@ -109,8 +109,6 @@
       "taxAnalytics": "Análise Avançada de Impostos",
       "contractors": "Gestão de Contractors",
       "invoices": "Invoices PDF Profissionais",
-      "hoursComparison": "Comparação de Horas (ABN peers)",
-      "multiBusinesses": "Múltiplos Negócios",
       "taxThermometer": "Termômetro de Tax Return",
       "bulkEdit": "Edição em Lote de Jobs",
       "levelUp": "Celebração de Level Up",
@@ -243,6 +241,7 @@
   },
   "footer": {
     "copyright": "© 2026 Ozly. Todos os direitos reservados.",
+    "disclaimer": "O Ozly é uma ferramenta de organização e educação — não é um registered tax agent nos termos do Tax Agent Services Act 2009 (Cth). Todos os valores de imposto são estimativas e informação geral — não são aconselhamento fiscal, financeiro ou jurídico. Confirme sempre com um registered tax agent (tpb.gov.au).",
     "privacy": "Política de Privacidade",
     "terms": "Termos de Uso",
     "business": "Para empresas"
@@ -352,7 +351,7 @@
     "q3": "Como funciona a câmera inteligente para lançar despesas?",
     "a3": "Com a câmera inteligente do Ozly, basta você tirar uma foto do seu cupom fiscal, e em segundos o app consegue ler item a item, todos os dados da nota, permitindo que você selecione aqueles que são despesas relacionadas ao seu trabalho, sendo portanto dedutíveis no seu imposto de renda (Tax return). O app armazena as notinhas e soma tudo, estimando o quanto você terá que pagar de imposto ao final do ano fiscal.",
     "q4": "O app calcula meu imposto?",
-    "a4": "Sim. O Ozly estima quanto você vai pagar de imposto seguindo as regras da ATO (Australian Taxation Office). Assim você não tem surpresas na hora do tax return.",
+    "a4": "Sim. O Ozly estima quanto você vai pagar de imposto seguindo as regras da ATO (Australian Taxation Office). Assim você não tem surpresas na hora do tax return. São apenas estimativas — pela lei australiana, só um registered tax agent pode dar orientação fiscal, então confirme sempre com um antes de declarar.",
     "q5": "O Ozly integra com o Google Agenda?",
     "a5": "Sim, o Ozly sincroniza com o seu Google Agenda, importando os Jobs cadastrados lá. Prático para quando o seu empregador lança seus Jobs no GA. Basta clicar no ícone de calendário no canto superior da tela principal.",
     "q6": "Como o Ozly me ajuda com a gestão das invoices?",
