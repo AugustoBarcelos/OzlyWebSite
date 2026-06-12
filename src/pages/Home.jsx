@@ -24,6 +24,7 @@ import {
   Shield,
   Minus,
   ArrowDown,
+  Zap,
 } from "lucide-react";
 import { useI18n } from "../i18n";
 import ScrollReveal from "../components/ScrollReveal";
@@ -119,44 +120,44 @@ function Hero() {
             style={{ animationDelay: "0.3s" }}
           >
             <PhoneMockup>
-              {/* Dashboard screen — realistic content, not skeleton bars */}
-              <div className="space-y-3 text-left">
-                <div>
-                  <div className="text-[9px] text-slate-400">Good morning</div>
-                  <div className="text-[13px] font-semibold text-navy-700">Maria 👋</div>
+              {/* Dashboard — mirrors the real app (dark, invoice-first hero,
+                  2×2 financial grid). Colors from lib/theme/ozly_colors.dart:
+                  navy #162431, card #1E293B, lime #9DD760, teal #2BBB97. */}
+              <div className="space-y-2.5 text-left">
+                {/* Greeting + period pill */}
+                <div className="flex items-center justify-between">
+                  <div className="text-[12px] font-semibold text-white">Hello, Maria</div>
+                  <div className="rounded-full bg-[#2BBB97]/15 px-2 py-0.5 text-[8px] font-semibold text-[#2BBB97]">Monthly ⌄</div>
                 </div>
-                {/* This-week card with mini bar chart */}
-                <div className="rounded-2xl bg-navy-700 p-3.5">
-                  <div className="text-[8px] font-medium uppercase tracking-wider text-navy-100/60">This week</div>
-                  <div className="mt-0.5 text-[20px] font-semibold tracking-tight text-white">$1,240.50</div>
-                  <div className="mt-2 flex items-end gap-1 h-8">
-                    {[35, 55, 40, 75, 60, 90, 50].map((h, i) => (
-                      <div
-                        key={i}
-                        style={{ height: `${h}%` }}
-                        className={`flex-1 rounded-sm ${i === 5 ? "bg-brand-400" : "bg-white/20"}`}
-                      />
-                    ))}
+                {/* Invoice-first hero card */}
+                <div className="rounded-[16px] bg-[#1E293B] border-[1.5px] border-[#9DD760] p-3">
+                  <div className="flex items-center gap-1 text-[8px] font-bold text-[#9DD760]">
+                    <Zap size={9} className="fill-[#9DD760]" /> READY TO INVOICE
                   </div>
+                  <div className="mt-1 text-[21px] font-bold tracking-tight text-[#9DD760]">$1,240.50</div>
+                  <div className="mt-2 h-7 rounded-[10px] bg-[#9DD760] flex items-center justify-center">
+                    <span className="text-[9px] font-bold text-[#162431]">Emit invoice</span>
+                  </div>
+                  <div className="mt-1.5 text-center text-[7.5px] text-white/70">All invoices ›</div>
                 </div>
-                {/* Quick stats */}
+                {/* 2×2 financial grid */}
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-xl bg-[#f5f5f7] p-2.5">
-                    <div className="text-[8px] text-slate-400">Invoices</div>
-                    <div className="text-[12px] font-semibold text-navy-700">3 unpaid</div>
-                  </div>
-                  <div className="rounded-xl bg-[#f5f5f7] p-2.5">
-                    <div className="text-[8px] text-slate-400">Tax set aside</div>
-                    <div className="text-[12px] font-semibold text-navy-700">$310</div>
-                  </div>
-                  <div className="rounded-xl bg-[#f5f5f7] p-2.5">
-                    <div className="text-[8px] text-slate-400">Hours</div>
-                    <div className="text-[12px] font-semibold text-navy-700">38.5h</div>
-                  </div>
-                  <div className="rounded-xl bg-[#f5f5f7] p-2.5">
-                    <div className="text-[8px] text-slate-400">Expenses</div>
-                    <div className="text-[12px] font-semibold text-navy-700">$86.40</div>
-                  </div>
+                  {[
+                    { label: "Received", value: "$3,180.00", color: "text-emerald-400" },
+                    { label: "To invoice", value: "$1,240.50", color: "text-sky-400" },
+                    { label: "To receive", value: "$640.00", color: "text-amber-400" },
+                    { label: "Overdue", value: "$185.50", color: "text-[#FF8C00]" },
+                  ].map(({ label, value, color }) => (
+                    <div key={label} className="rounded-[14px] bg-[#1E293B] border border-[#334155] p-2.5">
+                      <div className="text-[7.5px] text-slate-400">{label}</div>
+                      <div className={`mt-0.5 text-[11px] font-bold tabular-nums ${color}`}>{value}</div>
+                    </div>
+                  ))}
+                </div>
+                {/* Tax savings strip */}
+                <div className="rounded-[14px] bg-[#1E293B] border border-[#334155] p-2.5 flex items-center justify-between">
+                  <span className="text-[8px] text-slate-400">Saved on taxes</span>
+                  <span className="text-[11px] font-bold tabular-nums text-emerald-400">$2,456.89</span>
                 </div>
               </div>
             </PhoneMockup>
@@ -326,26 +327,29 @@ const featureSections = [
     color: "brand",
     mockupVariant: "teal",
     screen: (
-      <div className="space-y-2.5 text-left">
-        <div className="text-[13px] font-semibold text-navy-700">Invoices</div>
+      // Mirrors the app's Financial screen: status avatar + invoice number,
+      // "Client • date" subtitle, amount in status color, pill chip.
+      <div className="space-y-2 text-left">
+        <div className="text-[13px] font-bold text-white" style={{ fontFamily: "'Montserrat', sans-serif" }}>Invoices</div>
         {[
-          { id: "INV-0042", client: "Sparkle Cleaning Co.", amount: "$480.00", status: "SENT", chip: "bg-brand-50 text-brand-600" },
-          { id: "INV-0041", client: "Harbour Strata", amount: "$320.00", status: "PAID", chip: "bg-lime-50 text-lime-600" },
-          { id: "INV-0040", client: "J. Nguyen", amount: "$185.50", status: "DUE", chip: "bg-amber-50 text-amber-600" },
-        ].map(({ id, client, amount, status, chip }) => (
-          <div key={id} className="rounded-xl bg-[#f5f5f7] p-2.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[8px] font-medium text-slate-400">{id}</span>
-              <span className={`rounded-full px-1.5 py-px text-[7px] font-semibold tracking-wide ${chip}`}>{status}</span>
+          { id: "INV-0042", client: "Sparkle Cleaning Co.", date: "04/06/2026", amount: "$480.00", status: "PENDING", color: "text-amber-400", dot: "bg-amber-400/20 text-amber-400" },
+          { id: "INV-0041", client: "Harbour Strata", date: "01/06/2026", amount: "$320.00", status: "PAID", color: "text-emerald-400", dot: "bg-emerald-400/20 text-emerald-400" },
+          { id: "INV-0040", client: "J. Nguyen", date: "27/05/2026", amount: "$185.50", status: "OVERDUE", color: "text-[#FF8C00]", dot: "bg-[#FF8C00]/20 text-[#FF8C00]" },
+        ].map(({ id, client, date, amount, status, color, dot }) => (
+          <div key={id} className="rounded-[14px] bg-[#1E293B] border border-[#334155] p-2.5 flex items-center gap-2">
+            <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[8px] font-bold ${dot}`}>$</span>
+            <div className="flex-1 min-w-0">
+              <div className="text-[10px] font-bold text-white">{id}</div>
+              <div className="truncate text-[8px] text-slate-400">{client} • {date}</div>
             </div>
-            <div className="mt-1 flex items-center justify-between">
-              <span className="text-[10px] font-medium text-navy-700">{client}</span>
-              <span className="text-[11px] font-semibold tabular-nums text-navy-700">{amount}</span>
+            <div className="text-right">
+              <div className={`text-[10.5px] font-bold tabular-nums ${color}`}>{amount}</div>
+              <div className={`mt-0.5 inline-block rounded-full px-1.5 py-px text-[6.5px] font-bold ${dot}`}>{status}</div>
             </div>
           </div>
         ))}
-        <div className="h-9 rounded-full bg-brand-600 flex items-center justify-center">
-          <span className="text-[10px] font-semibold text-white">Send as PDF</span>
+        <div className="h-8 rounded-[10px] bg-[#9DD760] flex items-center justify-center">
+          <span className="text-[9px] font-bold text-[#162431]">New invoice</span>
         </div>
       </div>
     ),
@@ -357,32 +361,39 @@ const featureSections = [
     color: "brand",
     mockupVariant: "teal",
     screen: (
-      <div className="space-y-2.5 text-left">
-        <div className="text-[13px] font-semibold text-navy-700">Scan receipt</div>
+      // Mirrors the app's Add Expense flow: viewfinder, OCR progress line,
+      // pre-filled result with claimable amount.
+      <div className="space-y-2 text-left">
+        <div className="text-[13px] font-bold text-white" style={{ fontFamily: "'Montserrat', sans-serif" }}>Add expense</div>
         {/* Camera viewfinder with a readable receipt */}
-        <div className="h-36 rounded-2xl bg-[#17181c] relative overflow-hidden flex items-center justify-center">
+        <div className="h-32 rounded-[14px] bg-black/60 border border-[#334155] relative overflow-hidden flex items-center justify-center">
           <div className="w-24 rounded-md bg-white p-2 shadow-lg">
-            <div className="text-center text-[7px] font-bold tracking-wider text-navy-700">BUNNINGS</div>
+            <div className="text-center text-[7px] font-bold tracking-wider text-[#162431]">BUNNINGS</div>
             <div className="mt-1.5 space-y-1 text-[6.5px] text-slate-500">
               <div className="flex justify-between"><span>Gloves ×2</span><span>12.90</span></div>
               <div className="flex justify-between"><span>Spray bottle</span><span>8.45</span></div>
               <div className="flex justify-between"><span>Microfibre kit</span><span>21.15</span></div>
             </div>
-            <div className="mt-1.5 border-t border-dashed border-slate-200 pt-1 flex justify-between text-[7px] font-semibold text-navy-700">
+            <div className="mt-1.5 border-t border-dashed border-slate-200 pt-1 flex justify-between text-[7px] font-semibold text-[#162431]">
               <span>TOTAL</span><span>$42.50</span>
             </div>
           </div>
-          {/* scan corners */}
-          <div className="absolute inset-5 rounded-lg border border-white/25" />
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full border-2 border-white/80" />
+          <div className="absolute inset-4 rounded-lg border border-[#2BBB97]/50" />
         </div>
-        {/* OCR result */}
-        <div className="rounded-xl bg-[#f5f5f7] p-2.5 flex items-center justify-between">
-          <div>
-            <div className="text-[8px] text-slate-400">Detected</div>
-            <div className="text-[11px] font-semibold text-navy-700">$42.50 · 04 Mar</div>
+        <div className="text-[8px] text-[#2BBB97]">Reading receipt… identifying categories</div>
+        {/* OCR result — pre-filled form summary */}
+        <div className="rounded-[14px] bg-[#1E293B] border border-[#334155] p-2.5 space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[9.5px] font-bold text-white">Bunnings</span>
+            <span className="rounded-full bg-[#9DD760]/15 px-1.5 py-px text-[6.5px] font-bold text-[#9DD760]">TOOLS</span>
           </div>
-          <span className="rounded-full bg-lime-50 px-2 py-0.5 text-[7px] font-semibold text-lime-600">DEDUCTIBLE</span>
+          <div className="flex items-center justify-between text-[8px] text-slate-400">
+            <span>04/06/2026 · 3 items detected</span>
+          </div>
+          <div className="flex items-center justify-between border-t border-[#334155] pt-1.5">
+            <span className="text-[8px] text-slate-400">Claimable</span>
+            <span className="text-[10.5px] font-bold tabular-nums text-emerald-400">$42.50 ✓</span>
+          </div>
         </div>
       </div>
     ),
@@ -394,28 +405,40 @@ const featureSections = [
     color: "lime",
     mockupVariant: "lime",
     screen: (
-      <div className="space-y-2.5 text-left">
-        <div className="text-[13px] font-semibold text-navy-700">Payments</div>
-        {[
-          { job: "Office clean — CBD", when: "Tue · 4h", amount: "$320", status: "PAID", dot: "bg-lime-500", chip: "bg-lime-50 text-lime-600" },
-          { job: "End of lease — Bondi", when: "Thu · 3h", amount: "$180", status: "PENDING", dot: "bg-amber-400", chip: "bg-amber-50 text-amber-600" },
-          { job: "Weekly — Harbour Strata", when: "Fri · 5h", amount: "$250", status: "OVERDUE", dot: "bg-red-400", chip: "bg-red-50 text-red-500" },
-        ].map(({ job, when, amount, status, dot, chip }) => (
-          <div key={job} className="flex items-center gap-2 rounded-xl bg-[#f5f5f7] p-2.5">
-            <div className={`w-2 h-2 rounded-full shrink-0 ${dot}`} />
-            <div className="flex-1 min-w-0">
-              <div className="truncate text-[10px] font-medium text-navy-700">{job}</div>
-              <div className="text-[8px] text-slate-400">{when}</div>
+      // Mirrors the app's Jobs screen: week calendar strip (table_calendar)
+      // + job cards with time range, contractor, amount and status chip.
+      <div className="space-y-2 text-left">
+        <div className="text-[13px] font-bold text-white" style={{ fontFamily: "'Montserrat', sans-serif" }}>Jobs</div>
+        {/* Week strip */}
+        <div className="flex justify-between rounded-[14px] bg-[#1E293B] border border-[#334155] px-2 py-1.5">
+          {[
+            { d: "M", n: 8 }, { d: "T", n: 9 }, { d: "W", n: 10 }, { d: "T", n: 11, today: true },
+            { d: "F", n: 12 }, { d: "S", n: 13 }, { d: "S", n: 14 },
+          ].map(({ d, n, today }) => (
+            <div key={`${d}${n}`} className="flex flex-col items-center gap-0.5">
+              <span className="text-[6.5px] text-slate-500">{d}</span>
+              <span className={`flex h-4.5 w-4.5 items-center justify-center rounded-full text-[8px] font-bold ${
+                today ? "bg-[#2BBB97] text-[#162431]" : "text-slate-300"
+              }`}>{n}</span>
             </div>
-            <span className={`rounded-full px-1.5 py-px text-[7px] font-semibold ${chip}`}>{status}</span>
-            <span className="text-[11px] font-semibold tabular-nums text-navy-700">{amount}</span>
+          ))}
+        </div>
+        {[
+          { time: "08:00 – 12:00", job: "Office clean — CBD", who: "Harbour Strata", amount: "$320.00", status: "COMPLETED", chip: "bg-emerald-400/15 text-emerald-400" },
+          { time: "13:30 – 16:30", job: "End of lease — Bondi", who: "Sparkle Cleaning Co.", amount: "$180.00", status: "PENDING", chip: "bg-amber-400/15 text-amber-400" },
+        ].map(({ time, job, who, amount, status, chip }) => (
+          <div key={job} className="rounded-[14px] bg-[#1E293B] border border-[#334155] p-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[8px] font-semibold text-[#2BBB97]">{time}</span>
+              <span className={`rounded-full px-1.5 py-px text-[6.5px] font-bold ${chip}`}>{status}</span>
+            </div>
+            <div className="mt-1 text-[10px] font-bold text-white">{job}</div>
+            <div className="mt-0.5 flex items-center justify-between">
+              <span className="text-[8px] text-slate-400">{who}</span>
+              <span className="text-[10px] font-bold tabular-nums text-white">{amount}</span>
+            </div>
           </div>
         ))}
-        {/* Summary bar */}
-        <div className="rounded-xl bg-navy-700 p-2.5 flex justify-between items-center">
-          <span className="text-[9px] font-medium text-navy-100/70">Outstanding</span>
-          <span className="text-[12px] font-semibold tabular-nums text-white">$430.00</span>
-        </div>
       </div>
     ),
   },
@@ -426,29 +449,42 @@ const featureSections = [
     color: "brand",
     mockupVariant: "teal",
     screen: (
-      <div className="space-y-2.5 text-left">
-        <div className="text-[13px] font-semibold text-navy-700">June forecast</div>
-        {[
-          { label: "Revenue", value: "$4,200", width: "100%", bar: "bg-brand-500", text: "text-navy-700" },
-          { label: "Expenses", value: "−$680", width: "16%", bar: "bg-slate-400", text: "text-slate-500" },
-          { label: "Tax (ATO)", value: "−$820", width: "20%", bar: "bg-amber-400", text: "text-slate-500" },
-        ].map(({ label, value, width, bar, text }) => (
-          <div key={label} className="rounded-xl bg-[#f5f5f7] p-2.5 space-y-1.5">
-            <div className="flex justify-between items-center">
-              <span className="text-[9px] font-medium text-slate-400">{label}</span>
-              <span className={`text-[11px] font-semibold tabular-nums ${text}`}>{value}</span>
+      // Mirrors the app's Tax & Compliance (Fiscal) screen: tax estimate
+      // card with income/expenses/profit rows and the estimate divider.
+      <div className="space-y-2 text-left">
+        <div className="text-[13px] font-bold text-white" style={{ fontFamily: "'Montserrat', sans-serif" }}>Tax & Compliance</div>
+        {/* Tax estimate card */}
+        <div className="rounded-[14px] bg-[#1E293B] border border-[#334155] p-2.5 space-y-1.5">
+          <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400">Tax estimate · FY 25-26</div>
+          {[
+            { label: "Total income", value: "$4,200.00", cls: "text-white font-bold" },
+            { label: "Deductible expenses", value: "−$680.00", cls: "text-amber-400 font-semibold" },
+            { label: "Taxable profit", value: "$3,520.00", cls: "text-white font-bold" },
+          ].map(({ label, value, cls }) => (
+            <div key={label} className="flex items-center justify-between">
+              <span className="text-[8.5px] text-slate-400">{label}</span>
+              <span className={`text-[10px] tabular-nums ${cls}`}>{value}</span>
             </div>
-            <div className="h-1.5 rounded-full bg-slate-200/70 overflow-hidden">
-              <div style={{ width }} className={`h-full rounded-full ${bar}`} />
-            </div>
+          ))}
+          <div className="border-t border-[#334155] pt-1.5 flex items-center justify-between">
+            <span className="text-[8.5px] font-semibold text-slate-300">Estimated tax</span>
+            <span className="text-[12px] font-bold tabular-nums text-[#2BBB97]">$820.00</span>
           </div>
-        ))}
-        {/* Net profit highlight */}
-        <div className="rounded-xl bg-navy-700 p-3 flex items-center justify-between">
-          <span className="text-[9px] font-medium text-navy-100/70">Net profit</span>
-          <span className="text-[16px] font-semibold tracking-tight tabular-nums text-lime-300">$2,700</span>
+          {/* On-track thermometer */}
+          <div className="h-1.5 rounded-full bg-[#334155] overflow-hidden">
+            <div className="h-full w-[62%] rounded-full bg-gradient-to-r from-[#2BBB97] to-[#9DD760]" />
+          </div>
+          <div className="text-right text-[7px] font-semibold text-[#9DD760]">On track</div>
         </div>
-        <div className="text-[8px] text-slate-400 text-center">Set aside $820 for tax · BAS due 28 Jul</div>
+        {/* Savings milestone */}
+        <div className="rounded-[14px] bg-[#1E293B] border border-[#334155] p-2.5 flex items-center justify-between">
+          <div>
+            <div className="text-[8px] text-slate-400">Saved on taxes</div>
+            <div className="text-[12px] font-bold tabular-nums text-emerald-400">$2,456.89</div>
+          </div>
+          <span className="rounded-full bg-[#9DD760]/15 px-2 py-0.5 text-[6.5px] font-bold text-[#9DD760]">2,000+ DEDUCTIONS</span>
+        </div>
+        <div className="text-[7.5px] text-slate-500 text-center">Estimates only — consult your accountant.</div>
       </div>
     ),
   },
