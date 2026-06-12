@@ -97,8 +97,8 @@ function QuickAction({
       to={to}
       className={
         primary
-          ? 'btn-primary text-[12.5px]'
-          : 'inline-flex items-center gap-1.5 rounded-lg bg-white/70 px-3.5 py-2 text-[12.5px] font-semibold text-navy-700 ring-1 ring-navy-100 backdrop-blur transition-colors hover:bg-white hover:text-brand-700'
+          ? 'btn-primary text-[12px]'
+          : 'inline-flex items-center gap-1.5 rounded-lg bg-white/70 px-3 py-1.5 text-[12px] font-semibold text-navy-700 ring-1 ring-navy-100 backdrop-blur transition-colors hover:bg-white hover:text-brand-700'
       }
     >
       {label}
@@ -286,7 +286,9 @@ export function DashboardPage() {
   // Preview banner only shows while initial real data hasn't landed yet.
   const isPreview = kpisReal === null;
 
-  const firstName = (user?.email?.split('@')[0] ?? '').split('+')[0]!;
+  // Greeting name from the email prefix — trailing digits stripped so
+  // "augusto0102@…" greets "Augusto", not "Augusto0102".
+  const firstName = (user?.email?.split('@')[0] ?? '').split('+')[0]!.replace(/\d+$/, '');
   const cap = firstName ? firstName.charAt(0).toUpperCase() + firstName.slice(1) : '';
 
   // Which drill-down popup is open. Cards on the grid stay compact; all
@@ -306,14 +308,13 @@ export function DashboardPage() {
           Stripe pattern: data-scope controls live in the page chrome, not in
           the body). One action row below: a single primary verb + shortcuts,
           with the live calendar-sync status pushed to the far end. */}
-      <div className="page-hero mb-3">
-        <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="page-hero mb-3" style={{ padding: '14px 20px' }}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
-            <div className="page-hero-kicker">Home</div>
-            <h1 className="page-hero-title">
+            <h1 className="truncate font-display text-xl font-bold leading-tight tracking-tight text-navy-800">
               {greeting()}{cap ? `, ${cap}` : ''}
             </h1>
-            <p className="page-hero-sub">
+            <p className="text-[12px] text-navy-400">
               {new Date().toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long' })}
               {' · '}
               <span className="font-semibold text-navy-700">{currentOrg?.name ?? 'Your organisation'}</span>
@@ -349,7 +350,7 @@ export function DashboardPage() {
             )}
           </div>
         </div>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
+        <div className="mt-2.5 flex flex-wrap items-center gap-2">
           <QuickAction to="/members" label="+ Invite member" primary />
           <QuickAction to="/work"     label="Offer work" />
           <QuickAction to="/invoices?status=sent,overdue" label="Mark paid" />
@@ -463,9 +464,11 @@ export function DashboardPage() {
           </div>
         </DashCard>
 
-        {/* Coming up — next confirmed job, full 7-day list in the popup. */}
+        {/* Coming up — next confirmed job, full 7-day list in the popup.
+            Full-width slim strip: it closes the grid without adding a half-
+            empty row. */}
         <DashCard
-          className="col-span-2"
+          className="col-span-2 lg:col-span-4"
           label="Coming up · 7 days"
           value={upcoming.length > 0 ? upcoming[0]!.title : 'Nothing scheduled'}
           sub={
@@ -1287,7 +1290,7 @@ function DashCard({
       </div>
       <div className="mt-1 truncate font-display text-lg font-bold text-navy-800">{value}</div>
       {sub && <div className="truncate text-[11px] text-navy-400">{sub}</div>}
-      {children && <div className="mt-auto pt-2">{children}</div>}
+      {children && <div className="mt-auto pt-1.5">{children}</div>}
     </button>
   );
 }
@@ -1295,13 +1298,27 @@ function DashCard({
 // Tiny inline trend line for the Revenue tile — no axes, no labels, just the
 // shape. The full LineChart lives in the popup.
 function Sparkline({ values }: { values: number[] }) {
-  if (values.length < 2) return <div className="h-10" aria-hidden="true" />;
-  const max = Math.max(1, ...values);
+  const max = Math.max(...values, 0);
+  // Zero data → a quiet dashed baseline instead of a solid line hugging the
+  // bottom edge (which reads as a stray underline).
+  if (values.length < 2 || max <= 0) {
+    return (
+      <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="h-8 w-full" aria-hidden="true">
+        <line
+          x1="0" y1="27" x2="100" y2="27"
+          stroke="var(--color-navy-100, #dfe5ea)"
+          strokeWidth="1.5"
+          strokeDasharray="3 4"
+          vectorEffect="non-scaling-stroke"
+        />
+      </svg>
+    );
+  }
   const pts = values
-    .map((v, i) => `${(i / (values.length - 1)) * 100},${34 - (v / max) * 30}`)
+    .map((v, i) => `${(i / (values.length - 1)) * 100},${28 - (v / max) * 24}`)
     .join(' ');
   return (
-    <svg viewBox="0 0 100 36" preserveAspectRatio="none" className="h-10 w-full" aria-hidden="true">
+    <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="h-8 w-full" aria-hidden="true">
       <polyline
         points={pts}
         fill="none"
