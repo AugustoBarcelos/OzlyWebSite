@@ -23,9 +23,9 @@ import type { PendingCancellationRow, Period } from '@/routes/dashboard/types';
  * Cockpit — "como está o app?" em 30 segundos, em linguagem de gente.
  *
  * O trabalho desta tela: responder a saúde do app SEM jargão. Quatro perguntas:
- *   1. Quem está usando?        (ativos por dia, novos cadastros)
- *   2. O que estão fazendo?     (trabalhos registrados, telas mais usadas)
- *   3. Como está o dinheiro?    (pagantes, receita/mês, cancelamentos)
+ *   1. Como está o dinheiro?    (pagantes, receita/mês, cancelamentos)
+ *   2. Quem está usando?        (ativos por dia, novos cadastros)
+ *   3. O que estão fazendo?     (trabalhos registrados, telas mais usadas)
  *   4. O app está funcionando?  (erros vs período anterior)
  *
  * Cada bloco tem um semáforo 🟢🟡🔴 e uma frase explicando o número.
@@ -275,88 +275,7 @@ export function CockpitPage() {
         </div>
       </div>
 
-      {/* 1 · Quem está usando? */}
-      <SectionCard
-        light={loading ? 'grey' : peopleLight}
-        title="Quem está usando?"
-        subtitle="Pessoas que abriram o app"
-        linkTo="/users"
-        linkLabel="Ver usuários"
-      >
-        <div className="grid gap-3 sm:grid-cols-3">
-          <PlainStat
-            value={formatNumber(activeToday)}
-            label="abriram o app no último dia"
-            loading={loading}
-            to="/users"
-          />
-          <PlainStat
-            value={formatNumber(activeAvg)}
-            label={`usam por dia, em média (${period}d)`}
-            loading={loading}
-            {...trendNote(activeTrend)}
-            to="/product/engagement"
-          />
-          <PlainStat
-            value={formatNumber(data.kpi?.signups_period ?? null)}
-            label={`novos cadastros em ${period} dias`}
-            loading={loading}
-            to="/users"
-          />
-        </div>
-        {activeChart.length > 1 && (
-          <AreaChart
-            data={activeChart}
-            categories={['Ativos']}
-            index="date"
-            colors={['emerald']}
-            showLegend={false}
-            valueFormatter={formatNumber}
-            className="mt-4 h-40"
-          />
-        )}
-      </SectionCard>
-
-      {/* 2 · O que estão fazendo? */}
-      <SectionCard
-        light={loading ? 'grey' : doingLight}
-        title="O que estão fazendo?"
-        subtitle="Atividade dentro do app"
-        linkTo="/dashboard"
-        linkLabel="Ver detalhe"
-      >
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div className="grid content-start gap-3 sm:grid-cols-2">
-            <PlainStat
-              value={formatNumber(jobsTotal)}
-              label={`trabalhos registrados em ${period} dias`}
-              loading={loading}
-              {...trendNote(jobsTrend)}
-              to="/product/engagement"
-            />
-            <PlainStat
-              value={formatNumber(data.kpi?.activations_period ?? null)}
-              label="novatos que já registraram trabalho nas primeiras 48h"
-              loading={loading}
-              to="/product/activation"
-            />
-          </div>
-          <div>
-            <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-navy-300">
-              Telas mais usadas
-            </div>
-            {usageRows.length > 0 ? (
-              <BarList data={usageRows} color="emerald" valueFormatter={formatNumber} />
-            ) : (
-              <div className="text-xs text-navy-300">
-                {loading ? 'Carregando…' : 'Sem dados de uso no período.'}
-              </div>
-            )}
-          </div>
-        </div>
-      </SectionCard>
-
-      {/* 3 · Como está o dinheiro? */}
+      {/* 1 · Como está o dinheiro? */}
       <SectionCard
         light={loading ? 'grey' : moneyLight}
         title="Como está o dinheiro?"
@@ -411,6 +330,87 @@ export function CockpitPage() {
           acesso — dá pra tentar recuperar. Quem está no teste grátis e não
           continua nunca chegou a pagar, então não conta como dinheiro perdido.
         </p>
+      </SectionCard>
+
+      {/* 2 · Quem está usando? */}
+      <SectionCard
+        light={loading ? 'grey' : peopleLight}
+        title="Quem está usando?"
+        subtitle="Pessoas que abriram o app"
+        linkTo="/users"
+        linkLabel="Ver usuários"
+      >
+        <div className="grid gap-3 sm:grid-cols-3">
+          <PlainStat
+            value={formatNumber(activeToday)}
+            label="abriram o app no último dia"
+            loading={loading}
+            to="/users"
+          />
+          <PlainStat
+            value={formatNumber(activeAvg)}
+            label={`usam por dia, em média (${period}d)`}
+            loading={loading}
+            {...trendNote(activeTrend)}
+            to="/product/engagement"
+          />
+          <PlainStat
+            value={formatNumber(data.kpi?.signups_period ?? null)}
+            label={`novos cadastros em ${period} dias`}
+            loading={loading}
+            to="/users"
+          />
+        </div>
+        {activeChart.length > 1 && (
+          <AreaChart
+            data={activeChart}
+            categories={['Ativos']}
+            index="date"
+            colors={['emerald']}
+            showLegend={false}
+            valueFormatter={formatNumber}
+            className="mt-4 h-40"
+          />
+        )}
+      </SectionCard>
+
+      {/* 3 · O que estão fazendo? */}
+      <SectionCard
+        light={loading ? 'grey' : doingLight}
+        title="O que estão fazendo?"
+        subtitle="Atividade dentro do app"
+        linkTo="/dashboard"
+        linkLabel="Ver detalhe"
+      >
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid content-start gap-3 sm:grid-cols-2">
+            <PlainStat
+              value={formatNumber(jobsTotal)}
+              label={`trabalhos registrados em ${period} dias`}
+              loading={loading}
+              {...trendNote(jobsTrend)}
+              to="/product/engagement"
+            />
+            <PlainStat
+              value={formatNumber(data.kpi?.activations_period ?? null)}
+              label="novatos que já registraram trabalho nas primeiras 48h"
+              loading={loading}
+              to="/product/activation"
+            />
+          </div>
+          <div>
+            <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-navy-300">
+              Telas mais usadas
+            </div>
+            {usageRows.length > 0 ? (
+              <BarList data={usageRows} color="emerald" valueFormatter={formatNumber} />
+            ) : (
+              <div className="text-xs text-navy-300">
+                {loading ? 'Carregando…' : 'Sem dados de uso no período.'}
+              </div>
+            )}
+          </div>
+        </div>
       </SectionCard>
 
       {/* 4 · O app está funcionando? */}
