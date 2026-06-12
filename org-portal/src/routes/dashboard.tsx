@@ -25,6 +25,7 @@ import { Spinner } from '@/components/Spinner';
 import { friendlyError } from '@/lib/errors';
 import { KpiCard } from '@/components/KpiCard';
 import { CollapsibleSection } from '@/components/CollapsibleSection';
+import { SavingsCard } from '@/components/SavingsCard';
 import { GettingStartedDashboard } from '@/components/GettingStartedDashboard';
 import { LineChart } from '@/components/charts/LineChart';
 import { DonutChart } from '@/components/charts/DonutChart';
@@ -416,8 +417,15 @@ export function DashboardPage() {
         />
       )}
 
-      {/* 3 · Trends — Revenue line + Status mix donut */}
-      <CollapsibleSection id="dash-charts" title="Trends" defaultOpen={true}>
+      {/* 2.5 · Savings strip — "what is Ozly worth to me" in one quiet line.
+          Has its own analysis period (savings read better over a longer
+          window than the page's triage period). Click → breakdown popup. */}
+      {currentOrg && <SavingsCard orgId={currentOrg.id} />}
+
+      {/* 3 · Trends — Revenue line + Status mix donut. Collapsed by default
+          so the whole dashboard fits above the fold; the section header keeps
+          it one click away. */}
+      <CollapsibleSection id="dash-charts" title="Trends" defaultOpen={false}>
       <div className="grid gap-3 lg:grid-cols-2">
         <section className="rounded-xl border border-navy-100 p-4">
           <div className="mb-1 flex items-baseline justify-between">
@@ -997,35 +1005,40 @@ function StragglersPanel(props: {
     );
   }
 
+  // Pending dollar value shown while collapsed — the summary line has to
+  // carry the "how big is this" signal on its own, since the user pattern
+  // is everything-collapsed-above-the-fold.
+  const pendingValue = allPendingStragglers.reduce((s, r) => s + (r.completed_job_value ?? 0), 0);
+
   return (
-    <section className="ozly-card mb-5 p-5">
-      <div className="mb-3 flex items-baseline justify-between gap-2">
-        <div>
-          <h2 className="flex items-center gap-2 font-display text-sm font-bold text-navy-800">
-            Needs attention
-            <span className="inline-flex shrink-0 items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
-              {allPendingStragglers.length}
-            </span>
-          </h2>
-          <p className="mt-0.5 text-[11.5px] text-navy-400">
-            Finished jobs, no invoice yet · {periodLabel.toLowerCase()}. <strong>Send reminder</strong> nudges them by push + email.
-          </p>
-        </div>
-        <div className="flex shrink-0 flex-wrap items-center gap-2 text-[10.5px] font-semibold">
-          {allPendingStragglers.length > 1 && (
-            <select
-              aria-label="Hide recently reminded members"
-              value={hideReminded}
-              onChange={(e) => setHideRemindedPersist(e.target.value as 'off' | '24h' | '72h')}
-              className="rounded-md border border-navy-200 bg-white px-2 py-0.5 text-[10.5px] font-medium text-navy-700"
-            >
-              <option value="off">Show all reminders</option>
-              <option value="24h">Hide reminded &lt; 24h</option>
-              <option value="72h">Hide reminded &lt; 72h</option>
-            </select>
-          )}
-        </div>
-      </div>
+    <CollapsibleSection
+      id="dash-attention"
+      title="Needs attention"
+      badge={
+        <span className="inline-flex shrink-0 items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
+          {allPendingStragglers.length}
+        </span>
+      }
+      subtitle={`Finished jobs, no invoice yet${pendingValue > 0 ? ` · ~${formatMoney(Math.round(pendingValue))} uninvoiced` : ''} · ${periodLabel.toLowerCase()}`}
+      defaultOpen={false}
+      action={
+        allPendingStragglers.length > 1 ? (
+          <select
+            aria-label="Hide recently reminded members"
+            value={hideReminded}
+            onChange={(e) => setHideRemindedPersist(e.target.value as 'off' | '24h' | '72h')}
+            className="rounded-md border border-navy-200 bg-white px-2 py-0.5 text-[10.5px] font-medium text-navy-700"
+          >
+            <option value="off">Show all reminders</option>
+            <option value="24h">Hide reminded &lt; 24h</option>
+            <option value="72h">Hide reminded &lt; 72h</option>
+          </select>
+        ) : undefined
+      }
+    >
+      <p className="mb-2 text-[11.5px] text-navy-400">
+        <strong>Send reminder</strong> nudges them by push + email.
+      </p>
 
       {hiddenCount > 0 && (
         <div className="mb-2 flex items-center justify-between gap-2 rounded-md bg-navy-50/60 px-3 py-1.5 text-[11.5px] text-navy-500">
@@ -1139,6 +1152,6 @@ function StragglersPanel(props: {
           )}
         </div>
       )}
-    </section>
+    </CollapsibleSection>
   );
 }
