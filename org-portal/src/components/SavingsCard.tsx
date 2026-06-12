@@ -165,7 +165,7 @@ export function SavingsCard({ orgId }: { orgId: string }) {
 
   return (
     <>
-      <section className="ozly-card mb-5 flex flex-wrap items-center gap-3 px-4 py-3">
+      <section className="ozly-card flex h-full min-h-[96px] flex-wrap items-center gap-3 px-4 py-3">
         <button
           type="button"
           onClick={() => { setShowHow(false); setPopupOpen(true); }}

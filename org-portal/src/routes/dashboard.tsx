@@ -1,19 +1,19 @@
-// Dashboard — the new default landing route. Designed to answer "is my org
-// OK today?" in under 5 seconds of glance.
+// Dashboard — the default landing route. Designed to answer "is my org OK
+// today?" in under 5 seconds of glance.
 //
-// Layout (top → bottom) follows the Stripe/Linear ordering — numbers first,
-// action second, detail last — so the answer is always above the fold:
-//   1. Slim hero: greet + date·org on the left, period scope at top-right,
-//      one action row (primary verb + shortcuts + live calendar status)
-//   2. 4 KPI cards (Outstanding · Overdue · Paid · Subs) — never below fold
-//   3. "Needs attention" — who hasn't invoiced (collapses to a one-line
-//      "All caught up ✓" when there's nothing to act on)
-//   4. Trends: Revenue line + Invoice status mix donut
-//   5. Top subs + Coming up next 7 days (collapsed by default)
+// Layout: slim hero (greet + period + quick actions), then ONE responsive
+// card grid (the Stripe home pattern) that fits a 13" laptop without
+// scrolling. Every tile is compact and clickable:
+//   - 4 KPI cards (Outstanding · Overdue · Paid · Subs) → deep-link to routes
+//   - Needs attention → popup with the triage list + remind actions
+//   - Saved with Ozly → popup with the savings breakdown
+//   - Revenue (sparkline) / Invoice status (stacked bar) → chart popups
+//   - Top subs / Coming up → list popups
+// Tiles carry the headline number; ALL detail + actions live in DetailModal
+// popups — see card, click, act.
 //
-// All data is mocked from lib/dashboard-mock.ts until real KPI fetches land.
-// A "Preview data" banner makes the mock explicit when org has zero real
-// activity (mirrors the activity.tsx preview pattern).
+// Data falls back to lib/dashboard-mock.ts until real KPI fetches land; a
+// "Preview data" note makes the mock explicit for zero-activity orgs.
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -24,7 +24,7 @@ import { useToast } from '@/components/Toast';
 import { Spinner } from '@/components/Spinner';
 import { friendlyError } from '@/lib/errors';
 import { KpiCard } from '@/components/KpiCard';
-import { CollapsibleSection } from '@/components/CollapsibleSection';
+import { DetailModal } from '@/components/DetailModal';
 import { SavingsCard } from '@/components/SavingsCard';
 import { GettingStartedDashboard } from '@/components/GettingStartedDashboard';
 import { LineChart } from '@/components/charts/LineChart';
@@ -289,6 +289,11 @@ export function DashboardPage() {
   const firstName = (user?.email?.split('@')[0] ?? '').split('+')[0]!;
   const cap = firstName ? firstName.charAt(0).toUpperCase() + firstName.slice(1) : '';
 
+  // Which drill-down popup is open. Cards on the grid stay compact; all
+  // detail + actions live in DetailModal popups (the Stripe drill-down
+  // pattern — see card → click → act).
+  const [openCard, setOpenCard] = useState<'revenue' | 'mix' | 'subs' | 'upcoming' | null>(null);
+
   const totalStatusMix =
     statusMix.paid + statusMix.sent + statusMix.overdue + statusMix.draft;
   const paidPct = totalStatusMix > 0
@@ -301,7 +306,7 @@ export function DashboardPage() {
           Stripe pattern: data-scope controls live in the page chrome, not in
           the body). One action row below: a single primary verb + shortcuts,
           with the live calendar-sync status pushed to the far end. */}
-      <div className="page-hero mb-4">
+      <div className="page-hero mb-3">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="page-hero-kicker">Home</div>
@@ -344,7 +349,7 @@ export function DashboardPage() {
             )}
           </div>
         </div>
-        <div className="mt-4 flex flex-wrap items-center gap-2">
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           <QuickAction to="/members" label="+ Invite member" primary />
           <QuickAction to="/work"     label="Offer work" />
           <QuickAction to="/invoices?status=sent,overdue" label="Mark paid" />
@@ -363,7 +368,7 @@ export function DashboardPage() {
 
       {isPreview && (
         <p
-          className="mb-4 rounded-lg bg-navy-50/60 px-3.5 py-2 text-[12px] leading-relaxed text-navy-500"
+          className="mb-3 rounded-lg bg-navy-50/60 px-3.5 py-2 text-[12px] leading-relaxed text-navy-500"
           role="note"
         >
           <span className="font-semibold text-navy-700">Preview data</span>
@@ -372,13 +377,14 @@ export function DashboardPage() {
         </p>
       )}
 
-      {/* 1 · KPI strip — first thing on the page, always above the fold.
-          Each card is a drill-down link into the relevant route with a
-          status query param (invoices.tsx reads ?status= on mount). */}
+      {/* The whole Home is ONE responsive card grid (the Stripe home
+          pattern): every tile is compact and clickable — KPI cards deep-link
+          into their route, the rest open a DetailModal with the full detail
+          and actions. Designed to fit a 13" laptop without scrolling. */}
       <h2 className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-navy-300">
         Overview · {periodLabel.toLowerCase()}
       </h2>
-      <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <KpiCard
           tone="navy" label="Outstanding"
           value={formatMoney(kpis.outstanding)}
@@ -403,60 +409,102 @@ export function DashboardPage() {
           delta={{ direction: deltas.active.direction, value: `+${deltas.active.abs}` }}
           to="/members"
         />
+
+        {/* Needs attention — compact tile; the full triage list + remind
+            actions live in its popup. */}
+        {currentOrg && (
+          <StragglersPanel
+            orgId={currentOrg.id}
+            orgName={currentOrg.name ?? 'Your organisation'}
+            days={days}
+            periodLabel={periodLabel}
+          />
+        )}
+
+        {/* Savings — "what is Ozly worth to me". Click → breakdown popup. */}
+        {currentOrg && (
+          <div className="col-span-2">
+            <SavingsCard orgId={currentOrg.id} />
+          </div>
+        )}
+
+        {/* Revenue trend — sparkline tile, full chart in the popup. */}
+        <DashCard
+          className="col-span-2"
+          label="Revenue paid"
+          value={formatMoney(kpis.paidPeriod)}
+          sub={`Daily totals · ${periodLabel.toLowerCase()}`}
+          onClick={() => setOpenCard('revenue')}
+        >
+          <Sparkline values={revenue.map((p) => p.paid)} />
+        </DashCard>
+
+        {/* Status mix — stacked bar tile, donut + drill-down in the popup. */}
+        <DashCard
+          label="Invoice status"
+          value={`${paidPct}% paid`}
+          sub={`${formatMoney(totalStatusMix)} in invoices`}
+          onClick={() => setOpenCard('mix')}
+        >
+          <MixBar mix={statusMix} />
+        </DashCard>
+
+        {/* Top subs — leader at a glance, ranked list in the popup. */}
+        <DashCard
+          label="Top subs"
+          value={topSubs[0] ? topSubs[0].name : '—'}
+          sub={topSubs[0] ? `${formatMoney(topSubs[0].totalPaid)} paid` : 'No paid invoices yet'}
+          onClick={() => setOpenCard('subs')}
+        >
+          <div className="flex -space-x-1.5">
+            {topSubs.slice(0, 5).map((s) => (
+              <Avatar key={s.id} name={s.name} email={s.email} size="sm" />
+            ))}
+          </div>
+        </DashCard>
+
+        {/* Coming up — next confirmed job, full 7-day list in the popup. */}
+        <DashCard
+          className="col-span-2"
+          label="Coming up · 7 days"
+          value={upcoming.length > 0 ? upcoming[0]!.title : 'Nothing scheduled'}
+          sub={
+            upcoming.length > 0
+              ? `${upcoming[0]!.subName} · ${timeUntil(upcoming[0]!.startsAt)}${upcoming.length > 1 ? ` · +${upcoming.length - 1} more` : ''}`
+              : 'Offer work or connect a calendar to fill this'
+          }
+          onClick={() => setOpenCard('upcoming')}
+        />
       </div>
 
-      {/* 2 · Needs attention — the only actionable list on the page. Sits
-          right under the numbers so triage follows the glance. Collapses to
-          a one-line "All caught up" when there's nothing to act on. */}
-      {currentOrg && (
-        <StragglersPanel
-          orgId={currentOrg.id}
-          orgName={currentOrg.name ?? 'Your organisation'}
-          days={days}
-          periodLabel={periodLabel}
-        />
-      )}
-
-      {/* 2.5 · Savings strip — "what is Ozly worth to me" in one quiet line.
-          Has its own analysis period (savings read better over a longer
-          window than the page's triage period). Click → breakdown popup. */}
-      {currentOrg && <SavingsCard orgId={currentOrg.id} />}
-
-      {/* 3 · Trends — Revenue line + Status mix donut. Collapsed by default
-          so the whole dashboard fits above the fold; the section header keeps
-          it one click away. */}
-      <CollapsibleSection id="dash-charts" title="Trends" defaultOpen={false}>
-      <div className="grid gap-3 lg:grid-cols-2">
-        <section className="rounded-xl border border-navy-100 p-4">
-          <div className="mb-1 flex items-baseline justify-between">
-            <h2 className="font-display text-sm font-bold text-navy-800">
-              Revenue paid · {periodLabel.toLowerCase()}
-            </h2>
-            <Link to="/reports" className="text-[11px] font-semibold text-brand-700 hover:text-brand-600">
-              See reports →
-            </Link>
-          </div>
-          <p className="mb-3 text-[11.5px] text-navy-400">
-            Daily total of invoices marked as paid. Hover the line to see any day.
-          </p>
+      {/* ── Drill-down popups ─────────────────────────────────────────── */}
+      {openCard === 'revenue' && (
+        <DetailModal
+          wide
+          title="Revenue paid"
+          subtitle={`Daily total of invoices marked as paid · ${periodLabel.toLowerCase()}`}
+          onClose={() => setOpenCard(null)}
+        >
           <LineChart
             data={revenue.map((p) => ({ label: p.date, value: p.paid }))}
-            height={200}
+            height={240}
             ariaLabel={`Revenue paid · ${periodLabel}`}
             onClick={() => navigate('/invoices?status=paid')}
           />
-        </section>
-
-        <section className="rounded-xl border border-navy-100 p-4">
-          <div className="mb-1 flex items-baseline justify-between">
-            <h2 className="font-display text-sm font-bold text-navy-800">Invoice status</h2>
-            <Link to="/invoices" className="text-[11px] font-semibold text-brand-700 hover:text-brand-600">
-              See invoices →
+          <div className="mt-3 flex justify-end">
+            <Link to="/reports" className="text-[12px] font-semibold text-brand-700 hover:text-brand-600">
+              See full reports →
             </Link>
           </div>
-          <p className="mb-3 text-[11.5px] text-navy-400">
-            How {formatMoney(totalStatusMix)} in invoices split across status for {periodLabel.toLowerCase()}.
-          </p>
+        </DetailModal>
+      )}
+
+      {openCard === 'mix' && (
+        <DetailModal
+          title="Invoice status"
+          subtitle={`How ${formatMoney(totalStatusMix)} in invoices splits · ${periodLabel.toLowerCase()}`}
+          onClose={() => setOpenCard(null)}
+        >
           <DonutChart
             data={[
               { key: 'paid',    label: 'Paid',    value: statusMix.paid,    colour: '#2bbb97' },
@@ -469,67 +517,79 @@ export function DashboardPage() {
             formatValue={(n) => formatMoney(n)}
             onSliceClick={(key) => navigate(`/invoices?status=${key}`)}
           />
-        </section>
-      </div>
-      </CollapsibleSection>
+          <p className="mt-2 text-center text-[11px] text-navy-400">
+            Click a slice to open those invoices.
+          </p>
+        </DetailModal>
+      )}
 
-      {/* 4 · Bottom row — Top subs + Coming up (collapsed by default) */}
-      <CollapsibleSection id="dash-more" title="Top subs & coming up" defaultOpen={false}>
-      <div className="grid gap-3 lg:grid-cols-2">
-        <section className="rounded-xl border border-navy-100 p-4">
-          <div className="mb-3 flex items-baseline justify-between">
-            <div>
-              <h2 className="font-display text-sm font-bold text-navy-800">Top sub-contractors</h2>
-              <div className="text-[11px] text-navy-400">By paid amount · {periodLabel.toLowerCase()}</div>
-            </div>
-            <Link to="/members" className="text-[11px] font-semibold text-brand-700 hover:text-brand-600">
+      {openCard === 'subs' && (
+        <DetailModal
+          title="Top sub-contractors"
+          subtitle={`By paid amount · ${periodLabel.toLowerCase()}`}
+          onClose={() => setOpenCard(null)}
+        >
+          {topSubs.length === 0 ? (
+            <p className="py-6 text-center text-[12.5px] text-navy-400">
+              No paid invoices in this period yet.
+            </p>
+          ) : (
+            <ul className="space-y-1">
+              {topSubs.map((s, i) => (
+                <li key={s.id}>
+                  <Link
+                    to={`/members?email=${encodeURIComponent(s.email)}`}
+                    onClick={() => setOpenCard(null)}
+                    className="-mx-2 flex items-center gap-3 rounded-lg px-2 py-1.5 transition-colors hover:bg-navy-50/60"
+                  >
+                    <span
+                      className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
+                      style={{
+                        background: i === 0
+                          ? 'linear-gradient(135deg, #c9a43c, #8a6f1d)'
+                          : 'var(--surface-soft)',
+                        color: i === 0 ? '#ffffff' : 'var(--ink-tertiary)',
+                      }}
+                      aria-label={`Rank ${i + 1}`}
+                    >
+                      {i + 1}
+                    </span>
+                    <Avatar name={s.name} email={s.email} size="sm" />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-[13px] font-semibold text-navy-800">{s.name}</div>
+                      <div className="text-[11px] text-navy-400">{s.jobsDone} jobs done</div>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <div className="font-display text-sm font-bold text-navy-800">{formatMoney(s.totalPaid)}</div>
+                      <div className="text-[10px] uppercase tracking-wider text-navy-400">paid</div>
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="mt-3 flex justify-end">
+            <Link
+              to="/members"
+              onClick={() => setOpenCard(null)}
+              className="text-[12px] font-semibold text-brand-700 hover:text-brand-600"
+            >
               All members →
             </Link>
           </div>
-          <ul className="space-y-1">
-            {topSubs.map((s, i) => (
-              <li key={s.id}>
-                <Link
-                  to={`/members?email=${encodeURIComponent(s.email)}`}
-                  className="-mx-2 flex items-center gap-3 rounded-lg px-2 py-1.5 transition-colors hover:bg-navy-50/60"
-                >
-                  <span
-                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
-                    style={{
-                      background: i === 0
-                        ? 'linear-gradient(135deg, #c9a43c, #8a6f1d)'
-                        : 'var(--surface-soft)',
-                      color: i === 0 ? '#ffffff' : 'var(--ink-tertiary)',
-                    }}
-                    aria-label={`Rank ${i + 1}`}
-                  >
-                    {i + 1}
-                  </span>
-                  <Avatar name={s.name} email={s.email} size="sm" />
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-[13px] font-semibold text-navy-800">{s.name}</div>
-                    <div className="text-[11px] text-navy-400">{s.jobsDone} jobs done</div>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <div className="font-display text-sm font-bold text-navy-800">{formatMoney(s.totalPaid)}</div>
-                    <div className="text-[10px] uppercase tracking-wider text-navy-400">paid</div>
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
+        </DetailModal>
+      )}
 
-        <section className="rounded-xl border border-navy-100 p-4">
-          <div className="mb-3 flex items-baseline justify-between">
-            <h2 className="font-display text-sm font-bold text-navy-800">Coming up · next 7 days</h2>
-            <Link to="/work" className="text-[11px] font-semibold text-brand-700 hover:text-brand-600">
-              All work →
-            </Link>
-          </div>
+      {openCard === 'upcoming' && (
+        <DetailModal
+          title="Coming up · next 7 days"
+          subtitle="Confirmed jobs across your team"
+          onClose={() => setOpenCard(null)}
+        >
           {upcoming.length === 0 ? (
             <Link
               to="/work"
+              onClick={() => setOpenCard(null)}
               className="flex h-24 items-center justify-center rounded-lg border border-dashed border-navy-100 bg-navy-50/30 text-[12px] text-navy-400 hover:text-brand-700"
             >
               No scheduled jobs in the next 7 days — open Work →
@@ -540,6 +600,7 @@ export function DashboardPage() {
                 <li key={j.id}>
                   <Link
                     to="/work"
+                    onClick={() => setOpenCard(null)}
                     className="-mx-2 flex items-center gap-3 rounded-lg px-2 py-1.5 transition-colors hover:bg-navy-50/60"
                   >
                     <Avatar name={j.subName} email={j.subEmail} size="sm" />
@@ -560,9 +621,18 @@ export function DashboardPage() {
               ))}
             </ul>
           )}
-        </section>
-      </div>
-      </CollapsibleSection>
+          <div className="mt-3 flex justify-end">
+            <Link
+              to="/work"
+              onClick={() => setOpenCard(null)}
+              className="text-[12px] font-semibold text-brand-700 hover:text-brand-600"
+            >
+              All work →
+            </Link>
+          </div>
+        </DetailModal>
+      )}
+
     </div>
   );
 }
@@ -709,6 +779,8 @@ function StragglersPanel(props: {
   // Done + inactive rows fold behind a single toggle row (default closed) —
   // they're confirmation, not action, so they shouldn't cost vertical space.
   const [quietRowsOpen, setQuietRowsOpen] = useState(false);
+  // Drill-down popup — the card tile stays compact, all actions live here.
+  const [popupOpen, setPopupOpen] = useState(false);
   // Hide-recently-reminded filter — persists across this session so the
   // admin doesn't have to re-pick after every navigation. localStorage
   // because state is per-user, not per-org (their preference).
@@ -817,7 +889,7 @@ function StragglersPanel(props: {
 
   if (rows === null) {
     return (
-      <section className="ozly-card mb-5 p-5">
+      <section className="ozly-card col-span-2 flex h-full min-h-[96px] items-center p-4">
         <div className="flex items-center gap-2 text-xs text-navy-400">
           <Spinner size="sm" label="Loading invoice status" /> Loading invoice status…
         </div>
@@ -963,195 +1035,297 @@ function StragglersPanel(props: {
     );
   }
 
-  if (allCaughtUp) {
-    return (
-      <section className="ozly-card mb-5 px-4 py-3">
-        <button
-          type="button"
-          onClick={() => setQuietRowsOpen((v) => !v)}
-          aria-expanded={quietRowsOpen}
-          className="flex w-full items-center gap-3 text-left"
-        >
-          <span
-            aria-hidden="true"
-            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[13px] font-bold ${
-              nobodyWorked ? 'bg-navy-50 text-navy-400' : 'bg-brand-50 text-brand-600'
-            }`}
-          >
-            {nobodyWorked ? '·' : '✓'}
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-[13px] font-semibold text-navy-800">
-              {nobodyWorked ? 'No completed work this period yet' : 'All caught up'}
-            </span>
-            <span className="block text-[11.5px] text-navy-400">
-              {nobodyWorked
-                ? 'Members appear here once they finish jobs.'
-                : <>
-                    {allDone.length} member{allDone.length === 1 ? '' : 's'} invoiced everything
-                    {inactive.length > 0 && <> · {inactive.length} no completed work</>}
-                    {' · '}{periodLabel.toLowerCase()}
-                  </>}
-            </span>
-          </span>
-          <span aria-hidden="true" className="shrink-0 text-navy-400">{quietRowsOpen ? '▴' : '▾'}</span>
-        </button>
-        {quietRowsOpen && (
-          <ul className="mt-3 space-y-1">
-            {[...allDone, ...inactive].map((r) => renderMemberRow(r))}
-          </ul>
-        )}
-      </section>
-    );
-  }
-
-  // Pending dollar value shown while collapsed — the summary line has to
-  // carry the "how big is this" signal on its own, since the user pattern
-  // is everything-collapsed-above-the-fold.
+  // Pending dollar value — the tile has to carry the "how big is this"
+  // signal on its own; the full triage list + actions live in the popup.
   const pendingValue = allPendingStragglers.reduce((s, r) => s + (r.completed_job_value ?? 0), 0);
 
-  return (
-    <CollapsibleSection
-      id="dash-attention"
+  const popup = popupOpen && (
+    <DetailModal
       title="Needs attention"
-      badge={
-        <span className="inline-flex shrink-0 items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
-          {allPendingStragglers.length}
-        </span>
-      }
-      subtitle={`Finished jobs, no invoice yet${pendingValue > 0 ? ` · ~${formatMoney(Math.round(pendingValue))} uninvoiced` : ''} · ${periodLabel.toLowerCase()}`}
-      defaultOpen={false}
-      action={
-        allPendingStragglers.length > 1 ? (
-          <select
-            aria-label="Hide recently reminded members"
-            value={hideReminded}
-            onChange={(e) => setHideRemindedPersist(e.target.value as 'off' | '24h' | '72h')}
-            className="rounded-md border border-navy-200 bg-white px-2 py-0.5 text-[10.5px] font-medium text-navy-700"
-          >
-            <option value="off">Show all reminders</option>
-            <option value="24h">Hide reminded &lt; 24h</option>
-            <option value="72h">Hide reminded &lt; 72h</option>
-          </select>
-        ) : undefined
-      }
+      subtitle={`Finished jobs, no invoice yet · ${periodLabel.toLowerCase()}`}
+      onClose={() => setPopupOpen(false)}
     >
-      <p className="mb-2 text-[11.5px] text-navy-400">
-        <strong>Send reminder</strong> nudges them by push + email.
-      </p>
-
-      {hiddenCount > 0 && (
-        <div className="mb-2 flex items-center justify-between gap-2 rounded-md bg-navy-50/60 px-3 py-1.5 text-[11.5px] text-navy-500">
-          <span>
-            <strong className="font-semibold text-navy-700">{hiddenCount}</strong>
-            {' '}member{hiddenCount === 1 ? '' : 's'} waiting to invoice hidden — reminded recently.
-          </span>
-          <button
-            type="button"
-            onClick={() => setHideRemindedPersist('off')}
-            className="text-[11px] font-semibold text-brand-600 hover:text-brand-700"
-          >
-            Show all
-          </button>
-        </div>
-      )}
-
-      {stragglers.length > 1 && (() => {
-        // Selection toolbar. Only renders with ≥2 pending — single straggler
-        // is faster via the per-row button. Selected = explicit pick;
-        // "All pending" = shortcut for select-all-then-send.
-        const allPendingIds = stragglers.map((s) => s.member_user_id);
-        const selectedCount = allPendingIds.filter((id) => selectedIds.has(id)).length;
-        const allSelected = selectedCount === stragglers.length;
-
-        return (
-          <div className="mb-2 flex flex-wrap items-center gap-2 rounded-lg border border-amber-200 bg-amber-50/40 px-3 py-2 text-[12px] text-amber-900">
-            <label className="flex cursor-pointer items-center gap-1.5 font-medium">
-              <input
-                type="checkbox"
-                checked={allSelected}
-                onChange={() => {
-                  setSelectedIds((prev) => {
-                    if (allSelected) return new Set();
-                    const next = new Set(prev);
-                    for (const id of allPendingIds) next.add(id);
-                    return next;
-                  });
-                }}
-                className="h-3.5 w-3.5 rounded border-amber-400 text-amber-600 focus:ring-amber-500"
-              />
-              <span>
-                {selectedCount > 0
-                  ? `${selectedCount} of ${stragglers.length} selected`
-                  : `Select all (${stragglers.length})`}
-              </span>
-            </label>
-            <span className="ml-auto flex gap-2">
-              {selectedCount > 0 && (
-                <button
-                  type="button"
-                  onClick={() => void sendBulkReminder(stragglers.filter((s) => selectedIds.has(s.member_user_id)))}
-                  disabled={bulkSending}
-                  className="rounded-md bg-amber-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-amber-500 disabled:opacity-50"
-                >
-                  {bulkSending ? 'Sending…' : `Send reminder to ${selectedCount}`}
-                </button>
-              )}
-              {selectedCount === 0 && (
-                <button
-                  type="button"
-                  onClick={() => void sendBulkReminder(stragglers)}
-                  disabled={bulkSending}
-                  className="rounded-md bg-amber-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-amber-500 disabled:opacity-50"
-                >
-                  {bulkSending ? 'Sending…' : `Remind all ${stragglers.length}`}
-                </button>
-              )}
-            </span>
-          </div>
-        );
-      })()}
-
-      <ul className="space-y-1">
-        {visibleStragglers.map((r) => renderMemberRow(r))}
-      </ul>
-
-      {stragglersTooMany && (
-        <div className="mt-2 flex justify-center">
-          <button
-            type="button"
-            onClick={() => setStragglersExpanded((v) => !v)}
-            className="rounded-md px-3 py-1 text-[11.5px] font-semibold text-brand-700 hover:bg-brand-50 hover:text-brand-800"
-          >
-            {stragglersExpanded
-              ? 'Show less ↑'
-              : `Show ${stragglersOverflow} more →`}
-          </button>
-        </div>
-      )}
-
-      {/* Done + inactive rows folded behind one quiet toggle — they confirm
-          things are fine, so they stay out of the way by default. */}
-      {(allDone.length > 0 || inactive.length > 0) && (
-        <div className="mt-2">
-          <button
-            type="button"
-            onClick={() => setQuietRowsOpen((v) => !v)}
-            aria-expanded={quietRowsOpen}
-            className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-navy-50/50 px-3 py-1.5 text-[11.5px] font-medium text-navy-500 transition-colors hover:bg-navy-50 hover:text-navy-700"
-          >
-            <span>
-              ✓ {allDone.length} all invoiced · {inactive.length} no work this period
-            </span>
-            <span aria-hidden="true">{quietRowsOpen ? '▴' : '▾'}</span>
-          </button>
-          {quietRowsOpen && (
-            <ul className="mt-1 space-y-1">
+      {allCaughtUp ? (
+        <>
+          <p className="text-[12.5px] leading-relaxed text-navy-500">
+            {nobodyWorked
+              ? 'No completed work this period yet — members appear here once they finish jobs.'
+              : `All ${allDone.length} active member${allDone.length === 1 ? '' : 's'} invoiced everything they finished. Nothing to chase.`}
+          </p>
+          {(allDone.length > 0 || inactive.length > 0) && (
+            <ul className="mt-3 space-y-1">
               {[...allDone, ...inactive].map((r) => renderMemberRow(r))}
             </ul>
           )}
-        </div>
+        </>
+      ) : (
+        <>
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[11.5px] text-navy-400">
+              <strong>Send reminder</strong> nudges them by push + email.
+            </p>
+            {allPendingStragglers.length > 1 && (
+              <select
+                aria-label="Hide recently reminded members"
+                value={hideReminded}
+                onChange={(e) => setHideRemindedPersist(e.target.value as 'off' | '24h' | '72h')}
+                className="rounded-md border border-navy-200 bg-white px-2 py-0.5 text-[10.5px] font-medium text-navy-700"
+              >
+                <option value="off">Show all reminders</option>
+                <option value="24h">Hide reminded &lt; 24h</option>
+                <option value="72h">Hide reminded &lt; 72h</option>
+              </select>
+            )}
+          </div>
+
+          {hiddenCount > 0 && (
+            <div className="mb-2 flex items-center justify-between gap-2 rounded-md bg-navy-50/60 px-3 py-1.5 text-[11.5px] text-navy-500">
+              <span>
+                <strong className="font-semibold text-navy-700">{hiddenCount}</strong>
+                {' '}member{hiddenCount === 1 ? '' : 's'} waiting to invoice hidden — reminded recently.
+              </span>
+              <button
+                type="button"
+                onClick={() => setHideRemindedPersist('off')}
+                className="text-[11px] font-semibold text-brand-600 hover:text-brand-700"
+              >
+                Show all
+              </button>
+            </div>
+          )}
+
+          {stragglers.length > 1 && (() => {
+            // Selection toolbar. Only renders with ≥2 pending — single
+            // straggler is faster via the per-row button.
+            const allPendingIds = stragglers.map((s) => s.member_user_id);
+            const selectedCount = allPendingIds.filter((id) => selectedIds.has(id)).length;
+            const allSelected = selectedCount === stragglers.length;
+
+            return (
+              <div className="mb-2 flex flex-wrap items-center gap-2 rounded-lg border border-amber-200 bg-amber-50/40 px-3 py-2 text-[12px] text-amber-900">
+                <label className="flex cursor-pointer items-center gap-1.5 font-medium">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={() => {
+                      setSelectedIds((prev) => {
+                        if (allSelected) return new Set();
+                        const next = new Set(prev);
+                        for (const id of allPendingIds) next.add(id);
+                        return next;
+                      });
+                    }}
+                    className="h-3.5 w-3.5 rounded border-amber-400 text-amber-600 focus:ring-amber-500"
+                  />
+                  <span>
+                    {selectedCount > 0
+                      ? `${selectedCount} of ${stragglers.length} selected`
+                      : `Select all (${stragglers.length})`}
+                  </span>
+                </label>
+                <span className="ml-auto flex gap-2">
+                  {selectedCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => void sendBulkReminder(stragglers.filter((s) => selectedIds.has(s.member_user_id)))}
+                      disabled={bulkSending}
+                      className="rounded-md bg-amber-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-amber-500 disabled:opacity-50"
+                    >
+                      {bulkSending ? 'Sending…' : `Send reminder to ${selectedCount}`}
+                    </button>
+                  )}
+                  {selectedCount === 0 && (
+                    <button
+                      type="button"
+                      onClick={() => void sendBulkReminder(stragglers)}
+                      disabled={bulkSending}
+                      className="rounded-md bg-amber-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-amber-500 disabled:opacity-50"
+                    >
+                      {bulkSending ? 'Sending…' : `Remind all ${stragglers.length}`}
+                    </button>
+                  )}
+                </span>
+              </div>
+            );
+          })()}
+
+          <ul className="space-y-1">
+            {visibleStragglers.map((r) => renderMemberRow(r))}
+          </ul>
+
+          {stragglersTooMany && (
+            <div className="mt-2 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setStragglersExpanded((v) => !v)}
+                className="rounded-md px-3 py-1 text-[11.5px] font-semibold text-brand-700 hover:bg-brand-50 hover:text-brand-800"
+              >
+                {stragglersExpanded
+                  ? 'Show less ↑'
+                  : `Show ${stragglersOverflow} more →`}
+              </button>
+            </div>
+          )}
+
+          {(allDone.length > 0 || inactive.length > 0) && (
+            <div className="mt-2">
+              <button
+                type="button"
+                onClick={() => setQuietRowsOpen((v) => !v)}
+                aria-expanded={quietRowsOpen}
+                className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-navy-50/50 px-3 py-1.5 text-[11.5px] font-medium text-navy-500 transition-colors hover:bg-navy-50 hover:text-navy-700"
+              >
+                <span>
+                  ✓ {allDone.length} all invoiced · {inactive.length} no work this period
+                </span>
+                <span aria-hidden="true">{quietRowsOpen ? '▴' : '▾'}</span>
+              </button>
+              {quietRowsOpen && (
+                <ul className="mt-1 space-y-1">
+                  {[...allDone, ...inactive].map((r) => renderMemberRow(r))}
+                </ul>
+              )}
+            </div>
+          )}
+        </>
       )}
-    </CollapsibleSection>
+    </DetailModal>
+  );
+
+  // ── Card face — compact tile on the Home grid ─────────────────────────────
+  if (allCaughtUp) {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => setPopupOpen(true)}
+          className="ozly-card col-span-2 flex h-full min-h-[96px] flex-col p-4 text-left transition-shadow hover:shadow-md"
+        >
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-navy-300">
+              Needs attention
+            </span>
+            <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-bold ${
+              nobodyWorked ? 'bg-navy-50 text-navy-400' : 'bg-brand-50 text-brand-600'
+            }`} aria-hidden="true">
+              {nobodyWorked ? '·' : '✓'}
+            </span>
+          </div>
+          <div className="mt-1 truncate font-display text-lg font-bold text-navy-800">
+            {nobodyWorked ? 'No completed work yet' : 'All caught up'}
+          </div>
+          <div className="truncate text-[11px] text-navy-400">
+            {nobodyWorked
+              ? 'Members appear here once they finish jobs'
+              : `${allDone.length} member${allDone.length === 1 ? '' : 's'} invoiced everything · ${periodLabel.toLowerCase()}`}
+          </div>
+        </button>
+        {popup}
+      </>
+    );
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setPopupOpen(true)}
+        className="ozly-card col-span-2 flex h-full min-h-[96px] flex-col p-4 text-left ring-1 ring-amber-200/70 transition-shadow hover:shadow-md"
+      >
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-navy-300">
+            Needs attention
+          </span>
+          <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
+            {allPendingStragglers.length}
+          </span>
+        </div>
+        <div className="mt-1 truncate font-display text-lg font-bold text-navy-800">
+          {pendingValue > 0
+            ? `~${formatMoney(Math.round(pendingValue))} uninvoiced`
+            : `${allPendingStragglers.length} member${allPendingStragglers.length === 1 ? '' : 's'} to nudge`}
+        </div>
+        <div className="truncate text-[11px] text-navy-400">
+          Finished jobs, no invoice yet · {periodLabel.toLowerCase()} · click to review & remind
+        </div>
+      </button>
+      {popup}
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DashCard — the generic compact tile of the Home grid. Headline value +
+// one-line context + optional mini visual; the whole tile is a button that
+// opens the matching DetailModal (or navigates, for KPI cards).
+function DashCard({
+  label,
+  value,
+  sub,
+  onClick,
+  className = '',
+  children,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  onClick: () => void;
+  className?: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`ozly-card flex h-full min-h-[96px] flex-col p-4 text-left transition-shadow hover:shadow-md ${className}`}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="truncate text-[10.5px] font-semibold uppercase tracking-[0.12em] text-navy-300">
+          {label}
+        </span>
+        <span aria-hidden="true" className="text-navy-200">›</span>
+      </div>
+      <div className="mt-1 truncate font-display text-lg font-bold text-navy-800">{value}</div>
+      {sub && <div className="truncate text-[11px] text-navy-400">{sub}</div>}
+      {children && <div className="mt-auto pt-2">{children}</div>}
+    </button>
+  );
+}
+
+// Tiny inline trend line for the Revenue tile — no axes, no labels, just the
+// shape. The full LineChart lives in the popup.
+function Sparkline({ values }: { values: number[] }) {
+  if (values.length < 2) return <div className="h-10" aria-hidden="true" />;
+  const max = Math.max(1, ...values);
+  const pts = values
+    .map((v, i) => `${(i / (values.length - 1)) * 100},${34 - (v / max) * 30}`)
+    .join(' ');
+  return (
+    <svg viewBox="0 0 100 36" preserveAspectRatio="none" className="h-10 w-full" aria-hidden="true">
+      <polyline
+        points={pts}
+        fill="none"
+        stroke="var(--color-brand-500, #2bbb97)"
+        strokeWidth="1.5"
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
+  );
+}
+
+// Slim stacked status bar for the Invoice-status tile — the donut + legend
+// live in the popup.
+function MixBar({ mix }: { mix: StatusMix }) {
+  const total = mix.paid + mix.sent + mix.overdue + mix.draft;
+  if (total <= 0) return <div className="h-2 w-full rounded-full bg-navy-50" aria-hidden="true" />;
+  const seg = (v: number, colour: string, key: string) =>
+    v > 0 ? <span key={key} style={{ width: `${(v / total) * 100}%`, background: colour }} /> : null;
+  return (
+    <div className="flex h-2 w-full overflow-hidden rounded-full bg-navy-50" aria-hidden="true">
+      {seg(mix.paid, '#2bbb97', 'paid')}
+      {seg(mix.sent, '#9dd760', 'sent')}
+      {seg(mix.overdue, '#e11d48', 'overdue')}
+      {seg(mix.draft, '#607387', 'draft')}
+    </div>
   );
 }
