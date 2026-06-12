@@ -5,7 +5,8 @@
     "comparison": "Resumen",
     "pricing": "Planes",
     "support": "Soporte",
-    "download": "Descargar"
+    "download": "Descargar",
+    "business": "Para empresas"
   },
   "hero": {
     "badge": "Todos tus trabajos, una app",
@@ -138,30 +139,102 @@
     "backToTop": "Volver arriba",
     "tipLabel": "Consejo:",
     "tocSections": [
-      { "id": "primeiros-passos", "label": "1. Primeros Pasos" },
-      { "id": "setup", "label": "2. Configuración Inicial" },
-      { "id": "welcome-trial", "label": "3. Primera Factura y Plan" },
-      { "id": "dashboard", "label": "4. Dashboard" },
-      { "id": "menu-lateral", "label": "5. Menú Lateral" },
-      { "id": "jobs", "label": "6. Jobs" },
-      { "id": "contractors", "label": "7. Contractors" },
-      { "id": "invoices", "label": "8. Invoices" },
-      { "id": "organisations", "label": "9. Organizaciones" },
-      { "id": "expenses", "label": "10. Expenses" },
-      { "id": "financial", "label": "11. Financial" },
-      { "id": "fiscal", "label": "12. Fiscal" },
-      { "id": "visa-shield", "label": "13. Visa Shield" },
-      { "id": "hustle-score", "label": "14. Hustle Score" },
-      { "id": "google-calendar", "label": "15. Google Calendar" },
-      { "id": "perfil", "label": "16. Perfil" },
-      { "id": "settings", "label": "17. Configuraciones" },
-      { "id": "assinatura-pro", "label": "18. Suscripción Pro" },
-      { "id": "modo-offline", "label": "19. Modo Offline" },
-      { "id": "indicacao", "label": "20. Referidos" },
-      { "id": "notificacoes", "label": "21. Notificaciones" },
-      { "id": "seguranca", "label": "22. Seguridad" },
-      { "id": "caminhos-alternativos", "label": "23. Caminos Alternativos" },
-      { "id": "faq", "label": "24. FAQ" }
+      {
+        "id": "primeiros-passos",
+        "label": "1. Primeros Pasos"
+      },
+      {
+        "id": "setup",
+        "label": "2. Configuración Inicial"
+      },
+      {
+        "id": "welcome-trial",
+        "label": "3. Primera Factura y Plan"
+      },
+      {
+        "id": "dashboard",
+        "label": "4. Dashboard"
+      },
+      {
+        "id": "menu-lateral",
+        "label": "5. Menú Lateral"
+      },
+      {
+        "id": "jobs",
+        "label": "6. Jobs"
+      },
+      {
+        "id": "contractors",
+        "label": "7. Contractors"
+      },
+      {
+        "id": "invoices",
+        "label": "8. Invoices"
+      },
+      {
+        "id": "organisations",
+        "label": "9. Organizaciones"
+      },
+      {
+        "id": "expenses",
+        "label": "10. Expenses"
+      },
+      {
+        "id": "financial",
+        "label": "11. Financial"
+      },
+      {
+        "id": "fiscal",
+        "label": "12. Fiscal"
+      },
+      {
+        "id": "visa-shield",
+        "label": "13. Visa Shield"
+      },
+      {
+        "id": "hustle-score",
+        "label": "14. Hustle Score"
+      },
+      {
+        "id": "google-calendar",
+        "label": "15. Google Calendar"
+      },
+      {
+        "id": "perfil",
+        "label": "16. Perfil"
+      },
+      {
+        "id": "settings",
+        "label": "17. Configuraciones"
+      },
+      {
+        "id": "assinatura-pro",
+        "label": "18. Suscripción Pro"
+      },
+      {
+        "id": "modo-offline",
+        "label": "19. Modo Offline"
+      },
+      {
+        "id": "indicacao",
+        "label": "20. Referidos"
+      },
+      {
+        "id": "notificacoes",
+        "label": "21. Notificaciones"
+      },
+      {
+        "id": "seguranca",
+        "label": "22. Seguridad"
+      },
+      {
+        "id": "caminhos-alternativos",
+        "label": "23. Caminos Alternativos"
+      },
+      {
+        "id": "faq",
+        "label": "24. FAQ"
+      }
     ]
   },
   "bottomCta": {
@@ -171,7 +244,8 @@
   "footer": {
     "copyright": "© 2026 Ozly. Todos los derechos reservados.",
     "privacy": "Política de Privacidad",
-    "terms": "Términos de Uso"
+    "terms": "Términos de Uso",
+    "business": "Para empresas"
   },
   "privacy": {
     "title": "Política de Privacidad",
@@ -618,5 +692,76 @@
     "clearFilters": "Limpiar filtros",
     "loading": "Cargando…",
     "signupsInRange": "Registros · {range}"
+  },
+  "audienceSplit": {
+    "contractorTitle": "Trabajo por mi cuenta",
+    "contractorBody": "Turnos, facturas e impuestos en la app — descárgala arriba y listo.",
+    "contractorCta": "Ver qué hace la app",
+    "businessTitle": "Tengo una empresa",
+    "businessBody": "Invita a tus subcontratistas, recibe sus facturas y págales — en un solo portal.",
+    "businessCta": "Conocer Ozly for Organisations"
+  },
+  "business": {
+    "eyebrow": "Ozly for Organisations",
+    "heroTitle": "Gestiona tus subcontratistas sin planillas",
+    "heroSubtitle": "Un portal para invitar subcontratistas, recibir sus facturas, pagarles y mantener cada registro en orden — con la relación de subcontratación bien documentada. Tus obligaciones de Fair Work, super e impuestos siguen siendo tuyas; Ozly se encarga del papeleo.",
+    "ctaTrial": "Empezar prueba gratis de 14 días",
+    "ctaPricing": "Ver precios",
+    "noCard": "Sin tarjeta para empezar.",
+    "howTitle": "Cómo funciona",
+    "how1Title": "1 · Invita a tus subs",
+    "how1Body": "Envía una invitación por email desde el portal. Tu subcontratista la acepta en la app Ozly que ya usa (o la descarga gratis) — cero configuración de tu lado.",
+    "how2Title": "2 · Las facturas llegan solas",
+    "how2Body": "Ellos emiten facturas con su propio ABN y las envían directo a tu organización. Todo cae en el Inbox del portal — se acabó perseguir PDFs por WhatsApp.",
+    "how3Title": "3 · Paga y exporta",
+    "how3Body": "Marca facturas como pagadas, genera un archivo ABA para pago en lote y exporta registros listos para tu contador. Documentos guardados los 7 años que exige el ATO.",
+    "featTitle": "Lo que tienes en el portal",
+    "feat1Title": "Inbox de facturas",
+    "feat1Body": "Cada factura que te envían tus subs, en una sola cola — nueva, vista, pagada, vencida.",
+    "feat2Title": "Dashboard y KPIs",
+    "feat2Body": "Facturas que entran y salen, pagadas vs vencidas, totales por período — la salud de tu operación de un vistazo.",
+    "feat3Title": "Miembros y compliance",
+    "feat3Body": "Tu lista de subs con sellos de compliance: ABN registrado, seguro al día. Detecta los huecos antes de que sean problemas.",
+    "feat4Title": "Cobertura de ABN (opcional)",
+    "feat4Body": "Patrocina el acceso de tus subs a Ozly desde $7.99/asiento/mes. Mientras estén cubiertos, su facturación en Ozly se dirige a tu org — y siguen libres de trabajar con quien quieran.",
+    "feat5Title": "Historial de trabajos",
+    "feat5Body": "Los trabajos que tus subs registran en la app, visibles en modo lectura — horas y fechas para cotejar contra las facturas.",
+    "feat6Title": "Exports para banco y contador",
+    "feat6Body": "Archivo ABA para pago en lote, CSV para tu contador — integraciones Xero/MYOB en el roadmap.",
+    "pricingTitle": "Precio por asiento",
+    "pricingSubtitle": "Por asiento, con compromiso, AUD con GST. El anual ahorra 17%.",
+    "thTier": "Plan",
+    "thSeats": "Asientos",
+    "thMonthly": "Mensual",
+    "thAnnual": "Anual",
+    "popular": "Popular",
+    "contact": "consultar",
+    "perSeat": "/asiento",
+    "perSeatYr": "/asiento/año",
+    "addons": "Add-ons (Visa Shield, export Xero/MYOB, SLA, white-label) llegan en la Fase 3.",
+    "legalTitle": "Hecho para mantenerte en regla — no para atajar",
+    "legal1Title": "No es employer-of-record",
+    "legal1Body": "Ozly es una herramienta de registro construida sobre el marco australiano de subcontratación. Tus obligaciones de Fair Work, superannuation, payroll tax y workers' comp siguen siendo tuyas — te ayudamos a documentarlas, no a evitarlas.",
+    "legal2Title": "Privacidad by design",
+    "legal2Body": "Tu organización ve lo que le concierne: facturas dirigidas a ti, horas registradas para ti, estado de compliance de los miembros. Nunca ves el TFN, la visa, los gastos personales ni lo que el miembro gana con otros clientes.",
+    "legal3Title": "Registros listos para el ATO",
+    "legal3Body": "Facturas y registros de trabajo se guardan 7 años, según exige el ATO. Organizaciones con 15+ asientos pueden solicitar un Data Processing Agreement.",
+    "legalLinks": "La letra chica:",
+    "legalTos": "Terms of Service",
+    "legalPrivacy": "Privacidad — Business",
+    "faqTitle": "Lo que las empresas nos preguntan",
+    "faq1Q": "¿Ozly es una plataforma de empleo o un marketplace?",
+    "faq1A": "Ninguno de los dos. Ozly no recluta, no procesa nómina ni actúa como employer-of-record. Es el sistema de registro de organizaciones que ya contratan subcontratistas con ABN — invitaciones, facturas, pagos y documentación de compliance en un solo lugar.",
+    "faq2Q": "¿Qué significa “cubrir un asiento”?",
+    "faq2A": "Patrocinas la suscripción Ozly de un subcontratista (desde $7.99/asiento/mes según el plan). Mientras esté cubierto, su facturación en Ozly se dirige a tu organización. Sigue siendo independiente y libre de trabajar con cualquiera — un top-up personal de $5/mes reabre su facturación Ozly a otros clientes.",
+    "faq3Q": "¿Qué veo de mis subcontratistas?",
+    "faq3A": "Solo lo que concierne a tu organización: nombre, facturas dirigidas a ti, horas de tus trabajos, recibos de pago y sellos de compliance (ABN, seguro). Nunca TFN, visa, gastos personales ni ingresos de otros clientes.",
+    "faq4Q": "¿Mis subs tienen que pagar por Ozly?",
+    "faq4A": "No. Si cubres su asiento, el acceso corre por tu cuenta. Si no, pueden usar Ozly con su propio plan — las facturas llegan a tu inbox igual una vez que son miembros.",
+    "faq5Q": "¿Cómo funciona la prueba de 14 días?",
+    "faq5A": "Regístrate en app.ozly.au, sin tarjeta. Invita miembros, recibe facturas, prueba todo. Elige un plan cuando estés listo — si no, la cuenta simplemente se pausa.",
+    "finalTitle": "Pruébalo gratis 14 días",
+    "finalSub": "Sin tarjeta. Invita a tu primer subcontratista en 2 minutos.",
+    "finalCta": "Abrir el portal"
   }
 }
