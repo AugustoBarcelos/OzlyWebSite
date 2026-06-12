@@ -1,9 +1,15 @@
 // Issued invoices — the org issuing ITS OWN invoices to ITS clients (the
-// mirror of what the Ozly app does for sole traders). v1 is fully client-side:
-// the document is generated as print-ready HTML (browser "Save as PDF", same
-// proven pattern as invoice-receipt.ts) and the history persists per-org in
-// localStorage. When a server-side org_issued_invoices table lands, swap the
-// storage functions here — the page and template stay unchanged.
+// mirror of what the Ozly app does for sole traders). The document is
+// print-ready HTML (browser "Save as PDF", same proven pattern as
+// invoice-receipt.ts).
+//
+// Storage is auto-detecting: when the org_issued_invoices table exists
+// (RLS: is_org_admin), history syncs to Supabase — and any localStorage
+// history from before the migration is uploaded once, transparently. When
+// the table isn't deployed yet, everything falls back to per-org
+// localStorage so the module still works end-to-end.
+
+import { supabase } from '@/lib/supabase';
 
 export interface IssuedLineItem {
   description: string;
@@ -93,6 +99,125 @@ export function deleteIssuedInvoice(orgId: string, id: string): IssuedInvoice[] 
     localStorage.setItem(KEY_PREFIX + orgId, JSON.stringify(list));
   } catch { /* no-op */ }
   return list;
+}
+
+// ── Cloud sync (auto-detected) ───────────────────────────────────────────────
+
+interface IssuedRowDb {
+  id: string;
+  invoice_number: string;
+  issue_date: string;
+  due_date: string;
+  client_name: string;
+  client_email: string;
+  client_abn: string;
+  client_address: string;
+  items: IssuedLineItem[];
+  gst_enabled: boolean;
+  notes: string;
+  pay_to: string;
+  created_at: string;
+}
+
+const fromDb = (r: IssuedRowDb): IssuedInvoice => ({
+  id: r.id,
+  invoiceNumber: r.invoice_number,
+  issueDate: r.issue_date,
+  dueDate: r.due_date,
+  clientName: r.client_name,
+  clientEmail: r.client_email ?? '',
+  clientAbn: r.client_abn ?? '',
+  clientAddress: r.client_address ?? '',
+  items: Array.isArray(r.items) ? r.items : [],
+  gstEnabled: Boolean(r.gst_enabled),
+  notes: r.notes ?? '',
+  payTo: r.pay_to ?? '',
+  createdAt: r.created_at,
+});
+
+const toDb = (orgId: string, inv: IssuedInvoice) => ({
+  id: inv.id,
+  org_id: orgId,
+  invoice_number: inv.invoiceNumber,
+  issue_date: inv.issueDate,
+  due_date: inv.dueDate,
+  client_name: inv.clientName,
+  client_email: inv.clientEmail,
+  client_abn: inv.clientAbn,
+  client_address: inv.clientAddress,
+  items: inv.items,
+  gst_enabled: inv.gstEnabled,
+  notes: inv.notes,
+  pay_to: inv.payTo,
+});
+
+/** PostgREST "relation does not exist" → table not deployed yet. */
+function isMissingTable(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  return error.code === '42P01' || error.code === 'PGRST205'
+    || (error.message ?? '').includes('does not exist')
+    || (error.message ?? '').includes('schema cache');
+}
+
+export interface IssuedStore {
+  rows: IssuedInvoice[];
+  /** true = synced with Supabase; false = this-browser localStorage only. */
+  cloud: boolean;
+}
+
+/**
+ * Load history. Cloud-first; on first successful cloud read, any local-only
+ * rows (pre-migration history) are uploaded once and the local cache cleared.
+ */
+export async function fetchIssuedInvoices(orgId: string): Promise<IssuedStore> {
+  const { data, error } = await supabase
+    .from('org_issued_invoices')
+    .select('id, invoice_number, issue_date, due_date, client_name, client_email, client_abn, client_address, items, gst_enabled, notes, pay_to, created_at')
+    .eq('org_id', orgId)
+    .order('created_at', { ascending: false })
+    .limit(1000);
+  if (error) {
+    // Table missing (or any read failure) → local fallback keeps working.
+    if (!isMissingTable(error)) console.warn('issued-invoices cloud read failed', error.code);
+    return { rows: loadIssuedInvoices(orgId), cloud: false };
+  }
+  let rows = ((data ?? []) as unknown as IssuedRowDb[]).map(fromDb);
+
+  // One-time migration: push pre-cloud local history up, then clear it.
+  const local = loadIssuedInvoices(orgId);
+  const cloudIds = new Set(rows.map((r) => r.id));
+  const toUpload = local.filter((l) => !cloudIds.has(l.id));
+  if (toUpload.length > 0) {
+    const { error: upErr } = await supabase
+      .from('org_issued_invoices')
+      .upsert(toUpload.map((inv) => toDb(orgId, inv)));
+    if (!upErr) {
+      rows = [...toUpload, ...rows].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      try { localStorage.removeItem(KEY_PREFIX + orgId); } catch { /* no-op */ }
+    }
+  } else if (local.length > 0) {
+    try { localStorage.removeItem(KEY_PREFIX + orgId); } catch { /* no-op */ }
+  }
+  return { rows, cloud: true };
+}
+
+/** Persist (insert or update). Falls back to localStorage when offline/no table. */
+export async function persistIssuedInvoice(orgId: string, inv: IssuedInvoice, cloud: boolean): Promise<IssuedStore> {
+  if (cloud) {
+    const { error } = await supabase.from('org_issued_invoices').upsert(toDb(orgId, inv));
+    if (!error) return fetchIssuedInvoices(orgId);
+    console.warn('issued-invoices cloud write failed', error.code);
+  }
+  return { rows: saveIssuedInvoice(orgId, inv), cloud: false };
+}
+
+export async function removeIssuedInvoice(orgId: string, id: string, cloud: boolean): Promise<IssuedStore> {
+  if (cloud) {
+    const { error } = await supabase.from('org_issued_invoices').delete().eq('org_id', orgId).eq('id', id);
+    if (!error) return fetchIssuedInvoices(orgId);
+    console.warn('issued-invoices cloud delete failed', error.code);
+  }
+  return { rows: deleteIssuedInvoice(orgId, id), cloud: false };
 }
 
 // ── Print document ───────────────────────────────────────────────────────────
