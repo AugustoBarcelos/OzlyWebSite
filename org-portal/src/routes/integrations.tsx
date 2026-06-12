@@ -227,7 +227,7 @@ export function IntegrationsPage() {
   return (
     <div>
       <PageHeader
-        kicker="Account"
+        kicker="Settings"
         title="Integrations"
         subtitle="Connect your calendar and import jobs from CSV. Accounting integrations are coming."
         action={

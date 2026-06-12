@@ -5,6 +5,7 @@
 //   2. P&L: pick date range (default: current FY) → totals dashboard
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useOrg } from '@/lib/org';
 import { useToast } from '@/components/Toast';
@@ -179,7 +180,7 @@ export function ReportsPage() {
 
   return (
     <>
-      <PageHeader kicker="Insights" title="Reports" subtitle="BAS quarterly export + P&L summaries" />
+      <PageHeader kicker="Reports" title="Reports" subtitle="BAS quarterly export, P&L summaries and accounting exports" />
 
       {reportsMissing && (
         <div className="mb-5 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-xs leading-relaxed text-blue-900">
@@ -330,7 +331,54 @@ export function ReportsPage() {
           </div>
         )}
       </CollapsibleSection>
+
+      {/* Exports & integrations — an export is a report with a destination,
+          so it lives here (Integrations left the sidebar in the flat-nav
+          redesign). Each row deep-links to where the export actually runs. */}
+      <CollapsibleSection
+        id="reports-exports"
+        title="Exports & integrations"
+        subtitle="Xero · CSV · ABA bank file"
+        defaultOpen={false}
+      >
+        <ul className="divide-y divide-navy-50">
+          <ExportRow
+            to="/invoices"
+            title="Xero (Bills import)"
+            sub="On Invoices, use Export ▾ → For Xero — respects your active filters."
+          />
+          <ExportRow
+            to="/invoices"
+            title="CSV (spreadsheet)"
+            sub="On Invoices, use Export ▾ → As CSV. The BAS table above also exports CSV."
+          />
+          <ExportRow
+            to="/invoices?status=sent,overdue"
+            title="ABA bank file (pay your subs in one batch)"
+            sub="On Invoices, Select rows → pick unpaid invoices → Generate ABA file, then upload it to your bank."
+          />
+          <ExportRow
+            to="/settings/integrations"
+            title="Connected apps"
+            sub="ServiceM8, Google Calendar and other connections."
+          />
+        </ul>
+      </CollapsibleSection>
     </>
+  );
+}
+
+function ExportRow({ to, title, sub }: { to: string; title: string; sub: string }) {
+  return (
+    <li>
+      <Link to={to} className="-mx-2 flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors hover:bg-navy-50/60">
+        <div className="min-w-0 flex-1">
+          <div className="text-[13px] font-semibold text-navy-800">{title}</div>
+          <div className="mt-0.5 text-[11.5px] text-navy-400">{sub}</div>
+        </div>
+        <span className="shrink-0 text-[11.5px] font-semibold text-brand-700">Open →</span>
+      </Link>
+    </li>
   );
 }
 

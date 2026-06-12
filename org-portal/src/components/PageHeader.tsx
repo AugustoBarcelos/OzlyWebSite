@@ -16,7 +16,7 @@ export function PageHeader({
   action,
   sticky = false,
 }: {
-  kicker?: string;
+  kicker?: ReactNode;
   title: string;
   subtitle?: string;
   action?: ReactNode;

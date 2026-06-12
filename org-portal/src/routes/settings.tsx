@@ -235,7 +235,7 @@ export function SettingsPage() {
       >
         <p className="text-xs text-navy-400">
           Where invoices sent directly by members will arrive (and where you'll see them surface in the{' '}
-          <Link to="/inbox" className="text-brand-600 hover:underline">Inbox</Link>). Leave blank to disable direct delivery.
+          <Link to="/inbox/deliveries" className="text-brand-600 hover:underline">Email deliveries</Link>). Leave blank to disable direct delivery.
         </p>
         <label className="mt-4 block text-xs font-medium text-navy-600">
           Email
@@ -386,6 +386,33 @@ export function SettingsPage() {
           <NotificationPreferences userKey={user.id} />
         </CollapsibleSection>
       )}
+
+      {/* Audit log entry-point — Activity left the sidebar in the flat-nav
+          redesign; the 7-year ATO trail is reachable from here (and ⌘K). */}
+      <Link
+        to="/activity"
+        className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-navy-100 bg-white p-4 transition-colors hover:border-brand-200 hover:bg-brand-50/20"
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-lg"
+            style={{
+              background: 'linear-gradient(135deg, var(--color-navy-600) 0%, var(--color-navy-400) 100%)',
+              color: '#ffffff',
+            }}
+            aria-hidden="true"
+          >
+            🗂
+          </div>
+          <div>
+            <div className="text-sm font-semibold text-navy-800">Audit log</div>
+            <div className="text-[12px] text-navy-500">
+              Every org action, timestamped — your ATO-ready trail.
+            </div>
+          </div>
+        </div>
+        <span className="text-[11px] font-semibold text-brand-700">Open →</span>
+      </Link>
 
       <CollapsibleSection id="settings-danger" title="Danger zone" defaultOpen={false}>
         <DangerZone />

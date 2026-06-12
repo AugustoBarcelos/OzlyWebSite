@@ -877,9 +877,27 @@ export function InvoicesPage() {
   return (
     <div>
       <PageHeader
-        kicker="Operations"
+        kicker="Invoices"
         title="Invoices"
         subtitle={`What your sub-contractors have billed ${currentOrg?.name ?? ''} — click a row to see the work`}
+        action={
+          // Import + email-delivery tracking left the sidebar in the flat-nav
+          // redesign; they're invoice verbs, so they live here now.
+          <div className="flex items-center gap-2">
+            <Link
+              to="/inbox/deliveries"
+              className="rounded-md px-3 py-1.5 text-xs font-medium text-navy-600 ring-1 ring-navy-100 hover:bg-navy-50"
+            >
+              Email deliveries
+            </Link>
+            <Link
+              to="/import"
+              className="rounded-md px-3 py-1.5 text-xs font-medium text-navy-600 ring-1 ring-navy-100 hover:bg-navy-50"
+            >
+              Import
+            </Link>
+          </div>
+        }
       />
 
       {orgId && <GettingStarted orgId={orgId} />}

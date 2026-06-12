@@ -17,7 +17,8 @@ const DashboardPage = lazy(() => import('@/routes/dashboard').then((m) => ({ def
 const InvoicesPage = lazy(() => import('@/routes/invoices').then((m) => ({ default: m.InvoicesPage })));
 const IntegrationsPage = lazy(() => import('@/routes/integrations').then((m) => ({ default: m.IntegrationsPage })));
 const OnboardingGuidePage = lazy(() => import('@/routes/onboarding-guide').then((m) => ({ default: m.OnboardingGuidePage })));
-const InboxPage = lazy(() => import('@/routes/inbox').then((m) => ({ default: m.InboxPage })));
+const ActionInboxPage = lazy(() => import('@/routes/action-inbox').then((m) => ({ default: m.ActionInboxPage })));
+const InboxDeliveriesPage = lazy(() => import('@/routes/inbox').then((m) => ({ default: m.InboxPage })));
 const WorkPage = lazy(() => import('@/routes/work').then((m) => ({ default: m.WorkPage })));
 const ImportPage = lazy(() => import('@/routes/import').then((m) => ({ default: m.ImportPage })));
 const MembersPage = lazy(() => import('@/routes/members').then((m) => ({ default: m.MembersPage })));
@@ -56,7 +57,10 @@ export function App() {
                   <Route path="/" element={<Navigate to="/dashboard" replace />} />
                   <Route path="/dashboard" element={lazyRoute(DashboardPage)} />
                   <Route path="/invoices" element={lazyRoute(InvoicesPage)} />
-                  <Route path="/inbox" element={lazyRoute(InboxPage)} />
+                  {/* /inbox is the Action Inbox (triage queue). The old
+                      email-delivery tracking page lives one level deeper. */}
+                  <Route path="/inbox" element={lazyRoute(ActionInboxPage)} />
+                  <Route path="/inbox/deliveries" element={lazyRoute(InboxDeliveriesPage)} />
                   <Route path="/work" element={lazyRoute(WorkPage)} />
                   <Route path="/import" element={lazyRoute(ImportPage)} />
                   <Route path="/members" element={lazyRoute(MembersPage)} />

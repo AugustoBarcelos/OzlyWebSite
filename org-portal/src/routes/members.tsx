@@ -159,8 +159,8 @@ export function MembersPage() {
   return (
     <div>
       <PageHeader
-        kicker="Operations"
-        title="Members"
+        kicker="Team"
+        title="Team"
         subtitle={`Sub-contractors engaged by ${currentOrg?.name ?? ''}`}
         action={
           <button
