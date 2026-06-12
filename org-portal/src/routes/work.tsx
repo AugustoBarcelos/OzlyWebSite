@@ -6,6 +6,7 @@ import { useToast } from '@/components/Toast';
 import { Spinner } from '@/components/Spinner';
 import { PageHeader } from '@/components/PageHeader';
 import { KpiCard } from '@/components/KpiCard';
+import { CollapsibleSection } from '@/components/CollapsibleSection';
 import { EmptyState } from '@/components/EmptyState';
 import { BriefcaseIcon } from '@/components/Icons';
 import { formatDate, formatMoney } from '@/lib/format';
@@ -358,6 +359,17 @@ export function WorkPage() {
   const from = total === 0 ? 0 : page * pageSize + 1;
   const to = Math.min((page + 1) * pageSize, total);
 
+  // Human label for the active period — keeps scope visible in the KPI
+  // heading and the collapsed list summary (value-first pattern).
+  const periodLabel =
+    effectiveKey === 'all'      ? 'all time'
+    : effectiveKey === 'custom' ? 'custom range'
+    : (() => {
+        const i = periodOptions.findIndex((p) => p.key === effectiveKey);
+        const p = periodOptions[i];
+        return p ? relativeLabel(p, periodCfg, i).toLowerCase() : '';
+      })();
+
   return (
     <div>
       <PageHeader
@@ -385,6 +397,28 @@ export function WorkPage() {
         }
       />
 
+      {/* Numbers first — same value-first ordering as the dashboard. */}
+      <h2 className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-navy-300">
+        Overview · {periodLabel}
+      </h2>
+      <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <KpiCard tone="brand" label="Total value" value={formatMoney(kpis.value)} />
+        <KpiCard tone="lime"  label="Hours"       value={`${Math.round(kpis.hours).toLocaleString('en-AU')}h`} />
+        <KpiCard tone="navy"  label="Jobs"        value={kpis.jobs.toLocaleString('en-AU')} />
+        <KpiCard tone="brand" label="Completed"   value={kpis.completed.toLocaleString('en-AU')} />
+      </div>
+
+      {orgId && <PendingOffersBanner orgId={orgId} reloadKey={total} />}
+
+      {/* The list folds behind a summary header (collapsed-first) — count +
+          period stay visible either way; toolbar + pagination live inside. */}
+      <CollapsibleSection
+        id="work-list"
+        title="All work"
+        badge={total > 0 ? total : undefined}
+        subtitle={`Confirmed jobs · ${periodLabel}`}
+        defaultOpen={true}
+      >
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <span className="text-xs font-medium uppercase tracking-wide text-navy-300">Period</span>
         <select
@@ -487,15 +521,6 @@ export function WorkPage() {
         </div>
       )}
 
-      <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <KpiCard tone="brand" label="Total value" value={formatMoney(kpis.value)} />
-        <KpiCard tone="lime"  label="Hours"       value={`${Math.round(kpis.hours).toLocaleString('en-AU')}h`} />
-        <KpiCard tone="navy"  label="Jobs"        value={kpis.jobs.toLocaleString('en-AU')} />
-        <KpiCard tone="brand" label="Completed"   value={kpis.completed.toLocaleString('en-AU')} />
-      </div>
-
-      {orgId && <PendingOffersBanner orgId={orgId} reloadKey={total} />}
-
       {loading ? (
         <div className="flex justify-center py-16">
           <Spinner size="lg" />
@@ -522,7 +547,9 @@ export function WorkPage() {
         />
       ) : (
         <>
-          <div className="ozly-card overflow-x-auto">
+          {/* Plain bordered container — the table lives inside the
+              CollapsibleSection card now; card-in-card reads as noise. */}
+          <div className="overflow-x-auto rounded-lg border border-navy-100">
             <table className="w-full min-w-[640px] text-sm">
               <thead>
                 <tr className="border-b border-navy-50 text-left text-xs">
@@ -658,6 +685,7 @@ export function WorkPage() {
           </div>
         </>
       )}
+      </CollapsibleSection>
 
       {modalOpen && orgId && (
         <OfferWorkModal

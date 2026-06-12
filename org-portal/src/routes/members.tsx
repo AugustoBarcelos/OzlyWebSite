@@ -5,6 +5,8 @@ import { useOrg } from '@/lib/org';
 import { useToast } from '@/components/Toast';
 import { Spinner } from '@/components/Spinner';
 import { PageHeader } from '@/components/PageHeader';
+import { KpiCard } from '@/components/KpiCard';
+import { CollapsibleSection } from '@/components/CollapsibleSection';
 import { EmptyState } from '@/components/EmptyState';
 import { UsersIcon } from '@/components/Icons';
 import { MemberStatusBadge } from '@/components/StatusBadge';
@@ -222,6 +224,30 @@ export function MembersPage() {
           }
         />
       ) : (
+        <>
+        {/* Numbers first — the team's shape at a glance before the roster. */}
+        <h2 className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-navy-300">
+          Overview
+        </h2>
+        <div className="mb-5 grid grid-cols-3 gap-3">
+          <KpiCard tone="brand" label="Active members" value={String(acceptedCount)} />
+          <KpiCard tone="lime"  label="Pending invites" value={String(cards.length - acceptedCount)} />
+          <KpiCard
+            tone="navy"
+            label="Seats"
+            value={seatLimit === null ? `${acceptedCount} · ∞` : `${acceptedCount} of ${seatLimit}`}
+            to="/billing"
+          />
+        </div>
+
+        {/* Roster folds behind a summary header (collapsed-first pattern). */}
+        <CollapsibleSection
+          id="members-roster"
+          title="Roster"
+          badge={cards.length}
+          subtitle="Click an active member to see pay status and remove options"
+          defaultOpen={true}
+        >
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {cards.map((c) => {
             const accepted = c.status === 'accepted' && !!c.userId;
@@ -287,6 +313,8 @@ export function MembersPage() {
             );
           })}
         </div>
+        </CollapsibleSection>
+        </>
       )}
 
       {modalOpen && orgId && (
