@@ -1,11 +1,12 @@
 // Full-screen audience gate on the home page — the "are you over 18?" of
 // Ozly, but asking *who you are*: contractor (B2C, stays on the home) or
-// business (B2B, → /business). The choice is stored in localStorage so a
-// visitor only ever sees the gate once; returning visitors go straight to
-// the content. Deliberately opened in an effect (never during render) so the
-// build-time prerender ships clean HTML and people who already chose see no
-// flash. Visual language: Apple-style sheet — bottom sheet on mobile,
-// centered card on desktop, stacked borderless option rows.
+// business (B2B, → /business). The choice lives in sessionStorage: it holds
+// for the current visit (no re-asking while navigating around) but every
+// fresh visit asks again — founder's call, paired with the permanent
+// Personal/Business switch in the navbar. Deliberately opened in an effect
+// (never during render) so the build-time prerender ships clean HTML.
+// Visual language: Apple-style sheet — bottom sheet on mobile, centered
+// card on desktop, stacked borderless option rows.
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -22,7 +23,7 @@ export default function AudienceGate() {
   useEffect(() => {
     let stored = null;
     try {
-      stored = window.localStorage.getItem(STORAGE_KEY);
+      stored = window.sessionStorage.getItem(STORAGE_KEY);
     } catch {
       /* private mode etc. — just show the gate */
     }
@@ -43,7 +44,7 @@ export default function AudienceGate() {
 
   const choose = (audience) => {
     try {
-      window.localStorage.setItem(STORAGE_KEY, audience);
+      window.sessionStorage.setItem(STORAGE_KEY, audience);
     } catch {
       /* best-effort persistence only */
     }

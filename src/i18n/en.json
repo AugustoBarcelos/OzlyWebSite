@@ -767,5 +767,9 @@
   "audienceGate": {
     "title": "Welcome to Ozly.",
     "subtitle": "Two sides, one platform. Which one is yours?"
+  },
+  "audienceSwitch": {
+    "personal": "Personal",
+    "business": "Business"
   }
 }

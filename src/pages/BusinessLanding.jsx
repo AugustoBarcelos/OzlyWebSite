@@ -10,6 +10,7 @@
 // the legal docs: /terms-of-service and /privacy-policy/business. If pricing
 // changes, update BOTH this table and the org-portal billing page.
 
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Inbox,
@@ -30,6 +31,16 @@ const ORG_PORTAL = 'https://app.ozly.au';
 export default function BusinessLanding() {
   const { t } = useI18n();
   const b = t.business;
+
+  // Landing here counts as choosing "business" for this visit — going back
+  // to the home in the same session shouldn't re-open the audience gate.
+  useEffect(() => {
+    try {
+      window.sessionStorage.setItem('ozly_audience', 'business');
+    } catch {
+      /* best-effort only */
+    }
+  }, []);
 
   const features = [
     { icon: Inbox, title: b.feat1Title, body: b.feat1Body, wide: true },
