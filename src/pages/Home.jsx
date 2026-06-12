@@ -30,6 +30,7 @@ import {
 import { useI18n } from "../i18n";
 import ScrollReveal from "../components/ScrollReveal";
 import PhoneMockup from "../components/PhoneMockup";
+import AudienceGate from "../components/AudienceGate";
 
 /* ═══════════════════════════ HERO ═══════════════════════════ */
 function Hero() {
@@ -863,6 +864,7 @@ function HomeFaq() {
 export default function Home() {
   return (
     <div className="ozly-gradient">
+      <AudienceGate />
       <Hero />
       <AudienceBanner />
       <FeaturesShowcase />

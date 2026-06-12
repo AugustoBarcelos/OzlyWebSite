@@ -763,5 +763,9 @@
     "finalTitle": "Try it free for 14 days",
     "finalSub": "No card required. Invite your first sub-contractor in 2 minutes.",
     "finalCta": "Open the portal"
+  },
+  "audienceGate": {
+    "title": "Welcome to Ozly 👋",
+    "subtitle": "Tell us who you are and we'll show you the right side of Ozly:"
   }
 }
