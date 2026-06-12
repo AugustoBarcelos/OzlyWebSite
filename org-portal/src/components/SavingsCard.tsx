@@ -165,47 +165,45 @@ export function SavingsCard({ orgId }: { orgId: string }) {
 
   return (
     <>
-      <section className="ozly-card flex h-full min-h-[96px] flex-wrap items-center gap-3 px-4 py-3">
+      {/* Vertical tile — same shape as the other Home grid cards: label row
+          (with ⓘ + the subtle period select), headline value, one context
+          line, mini chart pinned to the bottom. */}
+      <section className="ozly-card flex h-full min-h-[96px] flex-col p-4">
+        <div className="flex items-center justify-between gap-2">
+          <span className="flex min-w-0 items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-navy-300">
+            <span className="truncate">Saved with Ozly</span>
+            <InfoDot onClick={(e) => { e.stopPropagation(); setShowHow(true); setPopupOpen(true); }} />
+          </span>
+          <select
+            value={period}
+            onChange={(e) => setPeriodPersist(e.target.value as SavingsPeriod)}
+            aria-label="Savings analysis period"
+            className="shrink-0 cursor-pointer rounded-md border-0 bg-transparent py-0.5 pl-1 pr-4 text-[10.5px] font-medium text-navy-400 hover:text-navy-600 focus:outline-none"
+          >
+            {PERIODS.map((p) => (
+              <option key={p.key} value={p.key}>{p.label}</option>
+            ))}
+          </select>
+        </div>
         <button
           type="button"
           onClick={() => { setShowHow(false); setPopupOpen(true); }}
-          className="flex min-w-0 flex-1 items-center gap-3 rounded-lg text-left transition-colors hover:bg-navy-50/40"
+          className="mt-1 flex min-h-0 flex-1 flex-col text-left"
           aria-label={`Saved with Ozly: ${formatMoney(Math.round(breakdown.total))} estimated, ${periodLabel}. Open activity breakdown.`}
         >
-          <span
-            aria-hidden="true"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-50 text-[15px]"
-          >
-            💰
+          <span className="truncate font-display text-lg font-bold text-brand-700">
+            {hasActivity ? `~${formatMoney(Math.round(breakdown.total))}` : '$0'}
           </span>
-          <span className="min-w-0">
-            <span className="flex items-center gap-1.5 text-[13px] font-semibold text-navy-800">
-              Saved with Ozly
-              <span className="font-display text-[15px] font-bold text-brand-700">
-                {hasActivity ? `~${formatMoney(Math.round(breakdown.total))}` : '$0'}
-              </span>
-              <InfoDot onClick={(e) => { e.stopPropagation(); setShowHow(true); setPopupOpen(true); }} />
-            </span>
-            <span className="block truncate text-[11px] text-navy-400">
-              {hasActivity
-                ? <>est. {hours >= 1 ? `${hours.toFixed(1)}h` : `${Math.round(breakdown.minutes)} min`} of admin time
-                    {breakdown.lines.some((l) => l.key === 'discrepancies') && ' + discrepancies caught'}
-                    {' · '}{periodLabel.toLowerCase()}</>
-                : <>Savings appear as invoices flow through Ozly · {periodLabel.toLowerCase()}</>}
-            </span>
+          <span className="truncate text-[11px] text-navy-400">
+            {hasActivity
+              ? <>est. {hours >= 1 ? `${hours.toFixed(1)}h` : `${Math.round(breakdown.minutes)} min`} of admin time
+                  {breakdown.lines.some((l) => l.key === 'discrepancies') && ' + discrepancies caught'}</>
+              : <>Savings appear as invoices flow through Ozly</>}
+          </span>
+          <span className="mt-auto block pt-1.5">
+            <MiniBars buckets={buckets} />
           </span>
         </button>
-        <MiniBars buckets={buckets} onClick={() => { setShowHow(false); setPopupOpen(true); }} />
-        <select
-          value={period}
-          onChange={(e) => setPeriodPersist(e.target.value as SavingsPeriod)}
-          aria-label="Savings analysis period"
-          className="shrink-0 rounded-md border-0 bg-transparent py-1 pl-1 pr-5 text-[11px] font-medium text-navy-400 hover:text-navy-600 focus:outline-none"
-        >
-          {PERIODS.map((p) => (
-            <option key={p.key} value={p.key}>{p.label}</option>
-          ))}
-        </select>
       </section>
 
       {popupOpen && (
@@ -243,40 +241,40 @@ function InfoDot({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
 }
 
 // Tiny inline SVG bar chart — one bar per bucket, brand-coloured, with a
-// native title tooltip per bar. ~140px, quiet on purpose.
-function MiniBars({ buckets, onClick }: { buckets: Array<{ label: string; total: number }>; onClick: () => void }) {
-  const W = 140;
-  const H = 34;
+// native title tooltip per bar. Fluid width (fills the tile), quiet on
+// purpose; the popup carries the real numbers.
+function MiniBars({ buckets }: { buckets: Array<{ label: string; total: number }> }) {
+  const W = 140; // internal coordinate space; rendered fluid via viewBox
+  const H = 30;
   if (buckets.length === 0) return null;
   const max = Math.max(1, ...buckets.map((b) => b.total));
   const gap = 2;
   const barW = Math.max(2, (W - gap * (buckets.length - 1)) / buckets.length);
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label="Savings over time — open breakdown"
-      className="hidden shrink-0 rounded sm:block"
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      preserveAspectRatio="none"
+      className="h-8 w-full"
+      role="img"
+      aria-hidden="true"
     >
-      <svg width={W} height={H} role="img" aria-hidden="true">
-        {buckets.map((b, i) => {
-          const h = b.total > 0 ? Math.max(2, (b.total / max) * (H - 2)) : 1.5;
-          return (
-            <rect
-              key={i}
-              x={i * (barW + gap)}
-              y={H - h}
-              width={barW}
-              height={h}
-              rx={1.5}
-              fill={b.total > 0 ? 'var(--color-brand-400, #4eccab)' : 'var(--color-navy-100, #dfe5ea)'}
-            >
-              <title>{`${b.label} · ~${formatMoney(Math.round(b.total))}`}</title>
-            </rect>
-          );
-        })}
-      </svg>
-    </button>
+      {buckets.map((b, i) => {
+        const h = b.total > 0 ? Math.max(2, (b.total / max) * (H - 2)) : 1.5;
+        return (
+          <rect
+            key={i}
+            x={i * (barW + gap)}
+            y={H - h}
+            width={barW}
+            height={h}
+            rx={1.5}
+            fill={b.total > 0 ? 'var(--color-brand-400, #4eccab)' : 'var(--color-navy-100, #dfe5ea)'}
+          >
+            <title>{`${b.label} · ~${formatMoney(Math.round(b.total))}`}</title>
+          </rect>
+        );
+      })}
+    </svg>
   );
 }
 
