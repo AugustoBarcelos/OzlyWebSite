@@ -278,7 +278,7 @@ export function ActionInboxPage() {
               count={data.divergent.length}
               sub="A member changed these after you could already see them — accept or reject the change."
             >
-              <ul className="space-y-1">
+              <PreviewList>
                 {data.divergent.map((inv) => (
                   <li key={inv.id}>
                     <Link
@@ -298,7 +298,7 @@ export function ActionInboxPage() {
                     </Link>
                   </li>
                 ))}
-              </ul>
+              </PreviewList>
             </InboxSection>
           )}
 
@@ -307,7 +307,7 @@ export function ActionInboxPage() {
               tone="amber"
               title="Chase missing invoices"
               count={data.stragglers.length}
-              sub={`Finished jobs, no invoice yet · last ${STRAGGLER_PERIOD_DAYS} days. A reminder nudges them by push + email.`}
+              sub={`${data.stragglers.reduce((s, r) => s + r.uninvoiced_count, 0)} finished jobs without an invoice · last ${STRAGGLER_PERIOD_DAYS} days · a reminder nudges by push + email`}
               action={
                 data.stragglers.length > 1 ? (
                   <button
@@ -321,7 +321,7 @@ export function ActionInboxPage() {
                 ) : undefined
               }
             >
-              <ul className="space-y-1">
+              <PreviewList>
                 {data.stragglers.map((r) => {
                   const ago = relativeAgo(r.last_reminder_at);
                   const recentlyReminded = r.last_reminder_at
@@ -359,7 +359,7 @@ export function ActionInboxPage() {
                     </li>
                   );
                 })}
-              </ul>
+              </PreviewList>
             </InboxSection>
           )}
 
@@ -458,7 +458,7 @@ export function ActionInboxPage() {
                 </Link>
               }
             >
-              <ul className="space-y-1">
+              <PreviewList>
                 {data.invites.map((i) => (
                   <li key={i.id} className="-mx-2 flex items-center gap-3 rounded-lg px-2 py-2">
                     <div className="min-w-0 flex-1">
@@ -473,7 +473,7 @@ export function ActionInboxPage() {
                     </div>
                   </li>
                 ))}
-              </ul>
+              </PreviewList>
             </InboxSection>
           )}
         </div>
@@ -483,6 +483,34 @@ export function ActionInboxPage() {
 }
 
 // ── Pieces ───────────────────────────────────────────────────────────────────
+
+// Progressive disclosure for queue bodies: the first PREVIEW_LIMIT rows are
+// enough to act on (most urgent first — every source is sorted); the long
+// tail folds behind "Show all N". Same pattern as the dashboard's
+// StragglersPanel top-5 slice.
+const PREVIEW_LIMIT = 5;
+
+function PreviewList({ children, total }: { children: React.ReactNode[]; total?: number }) {
+  const [showAll, setShowAll] = useState(false);
+  const overflow = children.length - PREVIEW_LIMIT;
+  const visible = showAll || overflow <= 0 ? children : children.slice(0, PREVIEW_LIMIT);
+  return (
+    <>
+      <ul className="space-y-1">{visible}</ul>
+      {overflow > 0 && (
+        <div className="mt-2 flex justify-center">
+          <button
+            type="button"
+            onClick={() => setShowAll((v) => !v)}
+            className="rounded-md px-3 py-1 text-[11.5px] font-semibold text-brand-700 hover:bg-brand-50 hover:text-brand-800"
+          >
+            {showAll ? 'Show less ↑' : `Show all ${total ?? children.length} →`}
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
 
 const SECTION_TONES = {
   rose:  { badge: 'bg-rose-100 text-rose-700' },
@@ -505,16 +533,18 @@ function InboxSection({
   action?: React.ReactNode;
   children: React.ReactNode;
 }) {
-  // Collapsed-first: each queue renders as a one-line summary (title +
-  // count + what's inside) and expands for the item list — same pattern
-  // as the dashboard. Open state persists per queue.
+  // Middle ground (progressive disclosure): queues open by default so the
+  // page shows meaningful info on landing, but each body is a capped
+  // PreviewList (top 5 + "Show all N") so an open queue never becomes a
+  // wall of rows. The chevron still folds a queue to one line; open state
+  // persists per queue.
   const storageKey = `ozly:section:inbox-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
   const [open, setOpen] = useState<boolean>(() => {
     try {
       const v = localStorage.getItem(storageKey);
-      return v === null ? false : v === '1';
+      return v === null ? true : v === '1';
     } catch {
-      return false;
+      return true;
     }
   });
 
