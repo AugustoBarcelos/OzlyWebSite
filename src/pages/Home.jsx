@@ -18,8 +18,6 @@ import {
   ChevronRight,
   ChevronDown,
   DollarSign,
-  BookOpen,
-  Mail,
   Fuel,
   Smartphone,
   Car,
@@ -53,13 +51,13 @@ function Hero() {
           {/* Copy */}
           <div className="flex-1 text-center lg:text-left">
             <span
-              className="inline-block mb-5 rounded-full bg-lime-100 dark:bg-lime-900/50 px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-lime-700 dark:text-lime-300 anim-fade-in-up-sm"
+              className="block mb-5 text-[13px] font-semibold uppercase tracking-[0.18em] text-brand-600 dark:text-brand-400 anim-fade-in-up-sm"
               style={{ animationDelay: "0.1s" }}
             >
               {t.hero.badge}
             </span>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] xl:text-6xl font-extrabold leading-[1.1] text-navy-700 dark:text-white">
+            <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] xl:text-6xl font-semibold tracking-tight leading-[1.05] text-navy-700 dark:text-white">
               {t.hero.title}
               <br />
               <span className="text-brand-500">{t.hero.titleHighlight}</span>
@@ -83,31 +81,32 @@ function Hero() {
               </a>
             </div>
 
-            {/* Audience split — B2C stays king above; businesses get their own
-                door. Borderless floating tiles, Apple-style: soft shadow,
-                hover lift, plain-text "Learn more →" link. */}
+            {/* Audience split — two terse hairline rows, Apple-style: plain
+                text + a coloured "Learn more →" affordance. No cards. */}
             <div
-              className="mt-10 grid max-w-xl grid-cols-1 gap-3 mx-auto lg:mx-0 sm:grid-cols-2 anim-fade-in-up"
+              className="mt-10 max-w-md mx-auto lg:mx-0 border-y border-slate-200/80 dark:border-slate-700/60 divide-y divide-slate-200/80 dark:divide-slate-700/60 text-left anim-fade-in-up"
               style={{ animationDelay: "0.65s" }}
             >
               <button
                 type="button"
                 onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })}
-                className="rounded-2xl bg-white/70 dark:bg-slate-800/60 backdrop-blur p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer"
+                className="flex w-full items-center justify-between gap-6 py-4 cursor-pointer group"
               >
-                <p className="text-[15px] font-semibold tracking-tight text-navy-700 dark:text-white">{t.audienceSplit.contractorTitle}</p>
-                <p className="mt-1 text-[13px] leading-snug text-slate-500 dark:text-slate-400">{t.audienceSplit.contractorBody}</p>
-                <span className="mt-3 inline-block text-[13px] font-medium text-brand-600 dark:text-brand-400">
+                <span className="text-[15px] font-medium text-navy-700 dark:text-white">
+                  {t.audienceSplit.contractorTitle}
+                </span>
+                <span className="shrink-0 max-w-[55%] text-right text-[14px] font-medium leading-snug text-brand-600 dark:text-brand-400 group-hover:underline underline-offset-4">
                   {t.audienceSplit.contractorCta} ↓
                 </span>
               </button>
               <Link
                 to="/business"
-                className="rounded-2xl bg-white/70 dark:bg-slate-800/60 backdrop-blur p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+                className="flex w-full items-center justify-between gap-6 py-4 group"
               >
-                <p className="text-[15px] font-semibold tracking-tight text-navy-700 dark:text-white">{t.audienceSplit.businessTitle}</p>
-                <p className="mt-1 text-[13px] leading-snug text-slate-500 dark:text-slate-400">{t.audienceSplit.businessBody}</p>
-                <span className="mt-3 inline-block text-[13px] font-medium text-brand-600 dark:text-brand-400">
+                <span className="text-[15px] font-medium text-navy-700 dark:text-white">
+                  {t.audienceSplit.businessTitle}
+                </span>
+                <span className="shrink-0 max-w-[55%] text-right text-[14px] font-medium leading-snug text-brand-600 dark:text-brand-400 group-hover:underline underline-offset-4">
                   {t.audienceSplit.businessCta} →
                 </span>
               </Link>
@@ -170,7 +169,7 @@ function AudienceBanner() {
     <section className="py-14 border-y border-brand-100/50 dark:border-brand-800/30">
       <div className="mx-auto max-w-4xl px-6 text-center">
         <ScrollReveal>
-          <p className="text-slate-900 dark:text-slate-100 font-semibold text-sm uppercase tracking-[0.2em] mb-7">
+          <p className="text-slate-400 dark:text-slate-500 font-semibold text-[12px] uppercase tracking-[0.2em] mb-7">
             {t.audience.title}
           </p>
         </ScrollReveal>
@@ -482,8 +481,8 @@ const featureSections = [
 ];
 
 const colorStyles = {
-  lime: { icon: "bg-lime-100 text-lime-600" },
-  brand: { icon: "bg-brand-100 text-brand-600" },
+  lime: { eyebrow: "text-lime-600 dark:text-lime-400" },
+  brand: { eyebrow: "text-brand-600 dark:text-brand-400" },
 };
 
 function FeatureShowcase({ feature, index }) {
@@ -500,35 +499,32 @@ function FeatureShowcase({ feature, index }) {
           {/* Text */}
           <div className="flex-1 text-center lg:text-left max-w-full sm:max-w-md lg:max-w-lg">
             <ScrollReveal>
-              <div className="flex items-center gap-3 mb-6 justify-center lg:justify-start">
-                <div className={`inline-flex items-center justify-center w-14 h-14 rounded-2xl ${cs.icon}`}>
-                  <Icon size={28} />
-                </div>
+              <div className="mb-5 flex items-center gap-2.5 justify-center lg:justify-start">
+                <Icon size={20} strokeWidth={1.8} className={cs.eyebrow} />
                 {t.features[moduleKey] && (
-                  <span className="text-xs font-bold text-brand-600 dark:text-brand-300 bg-brand-50 dark:bg-brand-900/30 border border-brand-200 dark:border-brand-700 rounded-full px-3 py-1 uppercase tracking-wide">
+                  <span className={`text-[13px] font-semibold uppercase tracking-[0.16em] ${cs.eyebrow}`}>
                     {t.features[moduleKey]}
                   </span>
                 )}
               </div>
             </ScrollReveal>
             <ScrollReveal delay={0.1}>
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-navy-700 dark:text-white leading-tight">
+              <h2 className="text-3xl sm:text-4xl lg:text-[44px] font-semibold tracking-tight text-navy-700 dark:text-white leading-[1.1]">
                 {t.features[titleKey]}
               </h2>
             </ScrollReveal>
             <ScrollReveal delay={0.2}>
-              <p className="mt-5 text-lg text-slate-500 dark:text-slate-400 leading-relaxed">
+              <p className="mt-5 text-[17px] text-slate-500 dark:text-slate-400 leading-relaxed">
                 {t.features[descKey]}
               </p>
             </ScrollReveal>
             <ScrollReveal delay={0.3}>
-              <div className="mt-7 flex justify-center lg:justify-start">
+              <div className="mt-6 flex justify-center lg:justify-start">
                 <a
                   href="#pricing"
-                  className="inline-flex items-center gap-2 rounded-full bg-brand-800 px-6 py-3 text-white text-sm font-semibold hover:bg-brand-900 transition shadow-lg shadow-brand-500/20"
+                  className="text-[15px] font-medium text-brand-600 dark:text-brand-400 hover:underline underline-offset-4"
                 >
-                  {t.features.ctaPlans}
-                  <ChevronRight size={16} />
+                  {t.features.ctaPlans} →
                 </a>
               </div>
             </ScrollReveal>
@@ -576,7 +572,7 @@ function Comparison() {
       <div className="mx-auto max-w-3xl px-6">
         <ScrollReveal>
           <div className="text-center mb-14">
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-navy-700 dark:text-white">
+            <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-navy-700 dark:text-white">
               {t.comparison.title}{" "}
               <span className="text-brand-500">{t.comparison.titleHighlight}</span>
             </h2>
@@ -585,12 +581,12 @@ function Comparison() {
         </ScrollReveal>
 
         <ScrollReveal delay={0.15}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-4 max-w-2xl mx-auto">
             {comparisonKeys.map((key, i) => (
-              <ScrollReveal key={key} delay={0.05 * i}>
-                <div className="flex items-center gap-3 rounded-xl bg-white dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 px-5 py-4 shadow-sm">
-                  <CheckCircle size={20} className="text-brand-500 flex-shrink-0" />
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{t.comparison[key]}</span>
+              <ScrollReveal key={key} delay={0.04 * i}>
+                <div className="flex items-center gap-3">
+                  <CheckCircle size={18} strokeWidth={1.8} className="text-brand-500 flex-shrink-0" />
+                  <span className="text-[15px] text-slate-600 dark:text-slate-300">{t.comparison[key]}</span>
                 </div>
               </ScrollReveal>
             ))}
@@ -655,14 +651,10 @@ function Pricing() {
     <section id="pricing" className="py-24 md:py-32">
       <div className="mx-auto max-w-6xl px-6">
         <ScrollReveal>
-          <div className="text-center mb-6">
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-navy-700 dark:text-white mb-4">{p.title}</h2>
-            <p className="text-slate-500 dark:text-slate-400 max-w-xl mx-auto">{p.subtitle}</p>
-          </div>
           <div className="text-center mb-14">
-            <span className="inline-block rounded-full bg-lime-100 dark:bg-lime-900/50 px-5 py-2 text-sm font-bold text-lime-700 dark:text-lime-300">
-              {p.trialBadge}
-            </span>
+            <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-navy-700 dark:text-white mb-4">{p.title}</h2>
+            <p className="text-slate-500 dark:text-slate-400 max-w-xl mx-auto">{p.subtitle}</p>
+            <p className="mt-3 text-[15px] font-medium text-lime-600 dark:text-lime-400">{p.trialBadge}</p>
           </div>
         </ScrollReveal>
 
@@ -670,36 +662,31 @@ function Pricing() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 mb-16 max-w-3xl mx-auto">
           {plans.map((plan, pi) => (
             <ScrollReveal key={plan.id} delay={0.1 * pi}>
-              <div className={`relative rounded-2xl bg-white dark:bg-slate-800 p-5 sm:p-8 h-full flex flex-col transition-all duration-300 ${
+              <div className={`relative rounded-3xl p-6 sm:p-8 h-full flex flex-col ${
                 plan.highlight
-                  ? "pricing-card-highlight shadow-xl shadow-brand-500/10 ring-1 ring-brand-200 dark:ring-brand-700"
-                  : "border border-slate-200 dark:border-slate-700 shadow-lg shadow-slate-200/50 dark:shadow-black/20 hover:shadow-xl hover:border-brand-200 dark:hover:border-brand-600"
+                  ? "bg-navy-700 text-white"
+                  : "bg-[#f5f5f7] dark:bg-slate-800/60"
               }`}>
-                {/* Badge for highlighted plan */}
-                {plan.highlight && (
-                  <div className="pricing-badge absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-emerald-900 px-5 py-1.5 text-xs font-bold text-white shadow-lg shadow-emerald-900/40 whitespace-nowrap z-10 ring-2 ring-white dark:ring-slate-800">
-                    {p.bestValue}
-                  </div>
-                )}
-
-                {/* Highlighted card header */}
+                {/* Plan header */}
                 {plan.highlight ? (
-                  <div className="pricing-header text-center">
-                    <h3 className="text-2xl font-extrabold text-white mb-1">{plan.name}</h3>
-                    <p className="text-brand-100 text-sm">{plan.desc}</p>
-                    <div className="mt-4">
-                      <span className="text-5xl font-extrabold text-white">{plan.price}</span>
-                      <span className="text-lg font-semibold text-brand-200">{p.perWeek}</span>
+                  <div className="text-center mb-6">
+                    <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-lime-300">{p.bestValue}</p>
+                    <h3 className="mt-2 text-2xl font-semibold tracking-tight text-white mb-1">{plan.name}</h3>
+                    <p className="text-navy-100/80 text-sm">{plan.desc}</p>
+                    <div className="mt-5">
+                      <span className="text-5xl font-semibold tracking-tight text-white">{plan.price}</span>
+                      <span className="text-lg text-navy-100/70">{p.perWeek}</span>
                     </div>
-                    {plan.priceNote && <p className="text-sm text-brand-100 mt-2">{plan.priceNote}</p>}
+                    {plan.priceNote && <p className="text-sm text-navy-100/70 mt-2">{plan.priceNote}</p>}
                   </div>
                 ) : (
                   <div className="text-center mb-6">
-                    <h3 className="text-2xl font-extrabold text-brand-500 mb-1">{plan.name}</h3>
+                    <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-transparent select-none" aria-hidden="true">·</p>
+                    <h3 className="mt-2 text-2xl font-semibold tracking-tight text-navy-700 dark:text-white mb-1">{plan.name}</h3>
                     <p className="text-slate-500 dark:text-slate-400 text-sm">{plan.desc}</p>
-                    <div className="mt-4">
-                      <span className="text-5xl font-extrabold text-navy-700 dark:text-white">{plan.price}</span>
-                      <span className="text-lg font-semibold text-slate-400">{p.perWeek}</span>
+                    <div className="mt-5">
+                      <span className="text-5xl font-semibold tracking-tight text-navy-700 dark:text-white">{plan.price}</span>
+                      <span className="text-lg text-slate-400">{p.perWeek}</span>
                     </div>
                     {plan.priceNote && <p className="text-sm text-slate-400 mt-2">{plan.priceNote}</p>}
                   </div>
@@ -711,8 +698,8 @@ function Pricing() {
                     // Pro: simplified list — "Everything in ABN + Pro extras"
                     proExclusiveFeatures.map(({ key }) => (
                       <li key={key} className="flex items-center gap-3 text-sm">
-                        <CheckCircle size={16} className="text-brand-500 flex-shrink-0" />
-                        <span className="text-slate-700 dark:text-slate-200 font-medium">{p.features[key]}</span>
+                        <CheckCircle size={16} strokeWidth={1.8} className="text-lime-300 flex-shrink-0" />
+                        <span className="text-navy-50">{p.features[key]}</span>
                       </li>
                     ))
                   ) : (
@@ -720,10 +707,10 @@ function Pricing() {
                     sortedForPlan(visibleFeatures, plan.id).map(({ key, [plan.id]: has }) => (
                       <li key={key} className="flex items-center gap-3 text-sm">
                         {has
-                          ? <CheckCircle size={16} className="text-brand-500 flex-shrink-0" />
+                          ? <CheckCircle size={16} strokeWidth={1.8} className="text-brand-500 flex-shrink-0" />
                           : <span className="w-4 h-4 flex-shrink-0 text-center text-slate-300 dark:text-slate-600">&mdash;</span>
                         }
-                        <span className={has ? "text-slate-700 dark:text-slate-200" : "text-slate-400 dark:text-slate-500"}>{p.features[key]}</span>
+                        <span className={has ? "text-slate-600 dark:text-slate-200" : "text-slate-400 dark:text-slate-500"}>{p.features[key]}</span>
                       </li>
                     ))
                   )}
@@ -731,23 +718,23 @@ function Pricing() {
                 {!expanded && plan.id !== "pro" && (
                   <button
                     onClick={() => setExpanded(true)}
-                    className="text-brand-500 text-xs font-semibold hover:text-brand-600 transition mb-4 flex items-center gap-1"
+                    className="text-brand-600 dark:text-brand-400 text-[13px] font-medium hover:underline underline-offset-4 transition mb-4 flex items-center gap-1 cursor-pointer"
                   >
-                    <ChevronDown size={14} />
                     {p.seeAll || "Ver todas as features"}
+                    <ChevronDown size={14} />
                   </button>
                 )}
 
-                {/* CTA button (reviews.io 3D style) */}
+                {/* CTA */}
                 <a
                   href="#download"
-                  className={`flex items-center justify-center gap-2 rounded-lg px-6 py-3.5 font-semibold text-sm transition-all duration-300 ${
+                  className={`flex items-center justify-center rounded-full px-6 py-3 font-medium text-[15px] transition-colors ${
                     plan.highlight
-                      ? "bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 hover:bg-brand-50 shadow-[inset_0_-2px_rgba(0,0,0,0.08),0_2px_8px_rgba(43,187,151,0.15)]"
-                      : "bg-brand-800 text-white hover:bg-brand-900 shadow-[inset_0_-2px_rgba(0,0,0,0.08),inset_0_2px_rgba(255,255,255,0.08),0_2px_8px_rgba(43,187,151,0.2)]"
+                      ? "bg-white text-navy-700 hover:bg-navy-50"
+                      : "bg-brand-600 text-white hover:bg-brand-500"
                   }`}
                 >
-                  {p.cta} <ChevronRight size={16} />
+                  {p.cta}
                 </a>
               </div>
             </ScrollReveal>
@@ -770,13 +757,13 @@ function BottomCta() {
   const { t } = useI18n();
 
   return (
-    <section className="bg-gradient-to-br from-navy-700 via-navy-600 to-navy-500 py-24 md:py-32">
+    <section className="bg-navy-800 py-24 md:py-32">
       <div className="mx-auto max-w-4xl px-6 text-center">
         <ScrollReveal>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight mb-6">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight text-white leading-[1.1] mb-6">
             {t.bottomCta.title}
           </h2>
-          <p className="text-brand-200 text-lg mb-10 max-w-xl mx-auto">
+          <p className="text-navy-100/70 text-lg mb-10 max-w-xl mx-auto">
             {t.bottomCta.subtitle}
           </p>
           <div className="flex flex-col sm:flex-row items-center gap-4 justify-center">
@@ -803,56 +790,52 @@ function HomeFaq() {
     <section id="faq" className="py-24 md:py-32">
       <div className="mx-auto max-w-3xl px-6">
         <ScrollReveal>
-          <div className="text-center mb-14">
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-navy-700 dark:text-white mb-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-navy-700 dark:text-white mb-4">
               {t.homeFaq.title}
             </h2>
             <p className="text-slate-500 dark:text-slate-400 max-w-xl mx-auto">{t.homeFaq.subtitle}</p>
           </div>
         </ScrollReveal>
 
-        <div className="space-y-3">
+        <div className="divide-y divide-slate-200 border-y border-slate-200 dark:divide-slate-700/70 dark:border-slate-700/70">
           {faqKeys.map((key, i) => (
-            <ScrollReveal key={key} delay={0.05 * i}>
-              <div className="border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden hover:border-brand-200 dark:hover:border-brand-700 transition">
-                <button
-                  onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                  className="w-full flex items-center justify-between gap-4 px-6 py-5 text-left bg-white dark:bg-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-700/50 transition"
-                >
-                  <span className="font-semibold text-slate-900 dark:text-slate-100">{t.faq[key]}</span>
-                  <ChevronDown
-                    size={20}
-                    className={`flex-shrink-0 text-slate-400 transition-transform duration-200 ${openIndex === i ? "rotate-180" : ""}`}
-                  />
-                </button>
-                {openIndex === i && (
-                  <div className="px-6 pb-5 text-slate-600 dark:text-slate-300 leading-relaxed bg-white dark:bg-slate-800">
-                    {t.faq[key.replace("q", "a")]}
-                  </div>
-                )}
-              </div>
-            </ScrollReveal>
+            <div key={key}>
+              <button
+                onClick={() => setOpenIndex(openIndex === i ? null : i)}
+                className="w-full flex items-center justify-between gap-4 py-5 text-left cursor-pointer"
+              >
+                <span className="text-[15px] font-medium text-navy-700 dark:text-slate-100">{t.faq[key]}</span>
+                <ChevronDown
+                  size={16}
+                  className={`flex-shrink-0 text-slate-400 transition-transform duration-200 ${openIndex === i ? "rotate-180" : ""}`}
+                />
+              </button>
+              {openIndex === i && (
+                <div className="pb-5 max-w-[62ch] text-[14px] text-slate-500 dark:text-slate-300 leading-relaxed">
+                  {t.faq[key.replace("q", "a")]}
+                </div>
+              )}
+            </div>
           ))}
         </div>
 
-        <ScrollReveal delay={0.3}>
-          <div className="mt-14 text-center rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 p-10">
-            <h3 className="text-2xl font-bold text-navy-700 dark:text-white mb-2">{t.homeFaq.stillQuestions}</h3>
-            <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-md mx-auto">{t.homeFaq.stillQuestionsDesc}</p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <ScrollReveal delay={0.2}>
+          <div className="mt-16 text-center">
+            <h3 className="text-2xl font-semibold tracking-tight text-navy-700 dark:text-white mb-2">{t.homeFaq.stillQuestions}</h3>
+            <p className="text-slate-500 dark:text-slate-400 mb-7 max-w-md mx-auto">{t.homeFaq.stillQuestionsDesc}</p>
+            <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
               <a
                 href="mailto:support@ozly.com.au"
-                className="inline-flex items-center gap-2 rounded-full bg-brand-800 px-6 py-3.5 text-white font-semibold hover:bg-brand-900 transition shadow-lg shadow-brand-500/20"
+                className="rounded-full bg-brand-600 px-6 py-3 text-[15px] font-medium text-white hover:bg-brand-500 transition-colors"
               >
-                <Mail size={18} />
                 {t.homeFaq.contact}
               </a>
               <Link
                 to="/guide"
-                className="inline-flex items-center gap-2 rounded-full border-2 border-brand-500 px-6 py-3.5 text-brand-500 font-semibold hover:bg-brand-50 transition"
+                className="text-[15px] font-medium text-brand-600 dark:text-brand-400 hover:underline underline-offset-4"
               >
-                <BookOpen size={18} />
-                {t.homeFaq.cta}
+                {t.homeFaq.cta} →
               </Link>
             </div>
           </div>
