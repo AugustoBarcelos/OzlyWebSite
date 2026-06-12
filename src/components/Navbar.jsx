@@ -10,6 +10,18 @@ export default function Navbar() {
   const { lang, setLang, t } = useI18n();
   const location = useLocation();
   const isHome = location.pathname === "/";
+  const isBusiness = location.pathname.startsWith("/business");
+
+  // Audience switch (Personal | Business) — visible everywhere so visitors
+  // can flip sides at any time; keeps the per-visit gate choice in sync.
+  const rememberAudience = (audience) => {
+    try {
+      window.sessionStorage.setItem("ozly_audience", audience);
+    } catch {
+      /* best-effort only */
+    }
+    setOpen(false);
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -67,13 +79,32 @@ export default function Navbar() {
           {navLink("#comparison", t.nav.comparison)}
           {navLink("#pricing", t.nav.pricing)}
           {navLink("#faq", t.nav.support)}
-          <Link
-            to="/business"
-            className="hover:text-brand-500 transition-colors"
-            onClick={() => setOpen(false)}
-          >
-            {t.nav.business}
-          </Link>
+
+          {/* Personal | Business switch */}
+          <div className="flex items-center rounded-full bg-slate-100 dark:bg-slate-800 p-0.5 text-xs font-semibold">
+            <Link
+              to="/"
+              onClick={() => rememberAudience("contractor")}
+              className={`rounded-full px-3 py-1.5 transition-colors ${
+                !isBusiness
+                  ? "bg-white dark:bg-slate-600 text-navy-700 dark:text-white shadow-sm"
+                  : "text-slate-500 dark:text-slate-400 hover:text-navy-700 dark:hover:text-white"
+              }`}
+            >
+              {t.audienceSwitch.personal}
+            </Link>
+            <Link
+              to="/business"
+              onClick={() => rememberAudience("business")}
+              className={`rounded-full px-3 py-1.5 transition-colors ${
+                isBusiness
+                  ? "bg-white dark:bg-slate-600 text-navy-700 dark:text-white shadow-sm"
+                  : "text-slate-500 dark:text-slate-400 hover:text-navy-700 dark:hover:text-white"
+              }`}
+            >
+              {t.audienceSwitch.business}
+            </Link>
+          </div>
 
           {/* Lang switcher */}
           <div className="relative">
@@ -116,6 +147,32 @@ export default function Navbar() {
       {/* Mobile menu */}
       {open && (
         <div className="md:hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-100 dark:border-slate-700 px-6 pb-5 space-y-3 text-sm font-medium text-slate-600 dark:text-slate-300">
+          {/* Personal | Business switch */}
+          <div className="flex items-center rounded-full bg-slate-100 dark:bg-slate-800 p-0.5 text-xs font-semibold mt-3">
+            <Link
+              to="/"
+              onClick={() => rememberAudience("contractor")}
+              className={`flex-1 rounded-full px-3 py-2 text-center transition-colors ${
+                !isBusiness
+                  ? "bg-white dark:bg-slate-600 text-navy-700 dark:text-white shadow-sm"
+                  : "text-slate-500 dark:text-slate-400"
+              }`}
+            >
+              {t.audienceSwitch.personal}
+            </Link>
+            <Link
+              to="/business"
+              onClick={() => rememberAudience("business")}
+              className={`flex-1 rounded-full px-3 py-2 text-center transition-colors ${
+                isBusiness
+                  ? "bg-white dark:bg-slate-600 text-navy-700 dark:text-white shadow-sm"
+                  : "text-slate-500 dark:text-slate-400"
+              }`}
+            >
+              {t.audienceSwitch.business}
+            </Link>
+          </div>
+
           {isHome ? (
             <>
               <a href="#features" className="block py-2.5" onClick={() => setOpen(false)}>{t.nav.features}</a>
@@ -134,7 +191,6 @@ export default function Navbar() {
           ) : (
             <Link to="/#faq" className="block py-2.5" onClick={() => setOpen(false)}>{t.nav.support}</Link>
           )}
-          <Link to="/business" className="block py-2.5" onClick={() => setOpen(false)}>{t.nav.business}</Link>
 
           <div className="flex gap-2 py-2">
             {supportedLangs.map(({ code, label }) => (
