@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, ChevronDown, ChevronUp, Mail, Menu, X } from "lucide-react";
-import { useI18n } from "../i18n";
+import { useI18n, useLangPath, useSeoMeta } from "../i18n";
 import GuideContentPt from "./GuideContentPt";
 import GuideContentEn from "./GuideContentEn";
 import GuideContentEs from "./GuideContentEs";
+import BusinessGuideContentEn from "./BusinessGuideContentEn";
 
 /* ═══════════ HELPER COMPONENTS ═══════════ */
 
@@ -100,11 +101,16 @@ function FaqItem({ q, a }) {
 }
 
 /* ═══════════ CONTENT BY LANGUAGE ═══════════ */
-const contentByLang = { pt: GuideContentPt, en: GuideContentEn, es: GuideContentEs };
+const appContentByLang = { pt: GuideContentPt, en: GuideContentEn, es: GuideContentEs };
+// Business guide: Es/Pt fall back to En content until translated.
+const businessContentByLang = { pt: BusinessGuideContentEn, en: BusinessGuideContentEn, es: BusinessGuideContentEn };
 
 /* ═══════════ MAIN GUIDE PAGE ═══════════ */
-export default function Guide() {
+export default function Guide({ variant = "app" }) {
   const { t, lang } = useI18n();
+  const lp = useLangPath();
+  useSeoMeta("guide");
+  const isBiz = variant === "business";
 
   // Wrap Tip so content components don't need to pass the label
   const TipWithLabel = ({ children }) => <Tip label={t.guide.tipLabel}>{children}</Tip>;
@@ -112,7 +118,8 @@ export default function Guide() {
   const [tocOpen, setTocOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("");
 
-  const tocSections = t.guide.tocSections;
+  const tocSections = isBiz ? t.businessGuide.tocSections : t.guide.tocSections;
+  const contentByLang = isBiz ? businessContentByLang : appContentByLang;
   const ContentComponent = contentByLang[lang] || contentByLang.en;
 
   useEffect(() => {
@@ -146,14 +153,14 @@ export default function Guide() {
     <div className="bg-[#F8FAFC] pt-28 pb-20 md:pt-36 md:pb-28 min-h-screen">
       <div className="mx-auto max-w-7xl px-5">
         {/* Back link */}
-        <Link to="/" className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-brand-500 transition mb-8">
+        <Link to={lp("/")} className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-brand-500 transition mb-8">
           <ArrowLeft size={16} /> {t.guide.backHome}
         </Link>
 
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-navy-700 mb-4">{t.guide.title}</h1>
-          <p className="text-slate-500 max-w-2xl mx-auto text-lg">{t.guide.subtitle}</p>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-navy-700 mb-4">{isBiz ? t.businessGuide.title : t.guide.title}</h1>
+          <p className="text-slate-500 max-w-2xl mx-auto text-lg">{isBiz ? t.businessGuide.subtitle : t.guide.subtitle}</p>
         </div>
 
         {/* Mobile ToC toggle */}

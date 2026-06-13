@@ -24,13 +24,30 @@ import {
   Archive,
   ChevronDown,
 } from 'lucide-react';
-import { useI18n } from '../i18n';
+import { useI18n, useSeoMeta } from '../i18n';
+import { trackEvent } from '../lib/track';
 
 const ORG_PORTAL = 'https://app.ozly.au';
 
+// Signup deep-link with attribution: which placement converted (hero,
+// pricing row, final band) survives into the portal's analytics via UTM.
+function signupHref(placement, plan) {
+  const params = new URLSearchParams({
+    utm_source: 'ozly_web',
+    utm_medium: 'website',
+    utm_campaign: `business_${placement}`,
+  });
+  if (plan) params.set('plan', plan);
+  return `${ORG_PORTAL}/signup?${params}`;
+}
+
 export default function BusinessLanding() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const b = t.business;
+  useSeoMeta('business');
+
+  const trackSignup = (placement, plan) => () =>
+    trackEvent('cta_click', { cta: 'business_signup', placement, plan, lang });
 
   // Landing here counts as choosing "business" for this visit — going back
   // to the home in the same session shouldn't re-open the audience gate.
@@ -81,7 +98,8 @@ export default function BusinessLanding() {
           </p>
           <div className="mt-9 flex flex-wrap items-center justify-center gap-5">
             <a
-              href={`${ORG_PORTAL}/signup`}
+              href={signupHref('hero')}
+              onClick={trackSignup('hero')}
               className="rounded-full bg-brand-600 px-7 py-3 text-[15px] font-medium text-white transition-colors hover:bg-brand-500"
             >
               {b.ctaTrial}
@@ -158,16 +176,28 @@ export default function BusinessLanding() {
                 <th className="pb-3 font-medium">{b.thSeats}</th>
                 <th className="pb-3 text-right font-medium">{b.thMonthly}</th>
                 <th className="hidden pb-3 text-right font-medium sm:table-cell">{b.thAnnual}</th>
+                <th className="pb-3" aria-hidden="true" />
               </tr>
             </thead>
             <tbody className="text-[15px]">
-              <PricingRow tier="Crew" seats="1–5" m="$14.99" a="$149.90" b={b} />
-              <PricingRow tier="Squad" seats="6–15" m="$12.99" a="$129.90" b={b} highlight />
-              <PricingRow tier="Fleet" seats="16–30" m="$9.99" a="$99.90" b={b} />
-              <PricingRow tier="Operation" seats="31–100" m="$7.99" a="$79.90" b={b} />
-              <PricingRow tier="Custom" seats="100+" m={b.contact} a={b.contact} b={b} isContact />
+              <PricingRow tier="Crew" seats="1–5" m="$14.99" a="$149.90" b={b} onSelect={trackSignup('pricing', 'crew')} />
+              <PricingRow tier="Squad" seats="6–15" m="$12.99" a="$129.90" b={b} highlight onSelect={trackSignup('pricing', 'squad')} />
+              <PricingRow tier="Fleet" seats="16–30" m="$9.99" a="$99.90" b={b} onSelect={trackSignup('pricing', 'fleet')} />
+              <PricingRow tier="Operation" seats="31–100" m="$7.99" a="$79.90" b={b} onSelect={trackSignup('pricing', 'operation')} />
+              <PricingRow tier="Custom" seats="100+" m={b.contact} a={b.contact} b={b} isContact onSelect={trackSignup('pricing', 'custom')} />
             </tbody>
           </table>
+
+          {/* Mobile fallback — the per-row buttons are hidden on small screens */}
+          <div className="mt-8 text-center sm:hidden">
+            <a
+              href={signupHref('pricing')}
+              onClick={trackSignup('pricing')}
+              className="inline-block rounded-full bg-brand-600 px-7 py-3 text-[15px] font-medium text-white transition-colors hover:bg-brand-500"
+            >
+              {b.ctaTrial}
+            </a>
+          </div>
 
           <p className="mt-6 text-center text-xs text-slate-400 dark:text-slate-500">{b.addons}</p>
         </div>
@@ -196,6 +226,10 @@ export default function BusinessLanding() {
             <span className="mx-2">·</span>
             <Link to="/privacy-policy/business" className="text-slate-300 underline-offset-4 hover:underline">
               {b.legalPrivacy}
+            </Link>
+            <span className="mx-2">·</span>
+            <Link to="/guide/business" className="text-slate-300 underline-offset-4 hover:underline">
+              {b.guideLink}
             </Link>
           </p>
         </div>
@@ -233,7 +267,8 @@ export default function BusinessLanding() {
         </h2>
         <p className="mt-3 text-[15px] text-slate-500 dark:text-slate-400">{b.finalSub}</p>
         <a
-          href={`${ORG_PORTAL}/signup`}
+          href={signupHref('final')}
+          onClick={trackSignup('final')}
           className="mt-8 inline-block rounded-full bg-brand-600 px-7 py-3 text-[15px] font-medium text-white transition-colors hover:bg-brand-500"
         >
           {b.finalCta}
@@ -259,7 +294,7 @@ function Step({ n, title, body }) {
   );
 }
 
-function PricingRow({ tier, seats, m, a, b, highlight = false, isContact = false }) {
+function PricingRow({ tier, seats, m, a, b, highlight = false, isContact = false, onSelect }) {
   return (
     <tr className="border-t border-slate-200/80 dark:border-slate-800">
       <td className="py-4 font-medium text-navy-800 dark:text-white">
@@ -278,6 +313,21 @@ function PricingRow({ tier, seats, m, a, b, highlight = false, isContact = false
       <td className="hidden py-4 text-right tabular-nums sm:table-cell">
         {a}
         {!isContact && <span className="ml-1 text-xs text-slate-400">{b.perSeatYr}</span>}
+      </td>
+      {/* Row-level action — nobody should have to hunt for the signup button
+          after picking a tier. Hidden on mobile (single CTA under the table). */}
+      <td className="hidden py-4 pl-4 text-right sm:table-cell">
+        <a
+          href={isContact ? 'mailto:contact@ozly.com.au' : signupHref('pricing', tier.toLowerCase())}
+          onClick={onSelect}
+          className={`inline-block whitespace-nowrap rounded-full px-4 py-1.5 text-[13px] font-medium transition-colors ${
+            highlight
+              ? 'bg-brand-600 text-white hover:bg-brand-500'
+              : 'border border-slate-300 text-navy-800 hover:border-brand-400 hover:text-brand-600 dark:border-slate-600 dark:text-slate-200'
+          }`}
+        >
+          {isContact ? b.contact : b.rowCta}
+        </a>
       </td>
     </tr>
   );
