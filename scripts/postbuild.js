@@ -265,6 +265,7 @@ const PAGE_META = {
   "/support": { priority: "0.8", changefreq: "monthly" },
   "/guide": { priority: "0.8", changefreq: "monthly" },
   "/business": { priority: "0.9", changefreq: "monthly" },
+  "/guide/business": { priority: "0.7", changefreq: "monthly" },
 };
 
 const staticPages = [
