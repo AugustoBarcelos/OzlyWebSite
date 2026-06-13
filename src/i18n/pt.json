@@ -793,6 +793,10 @@
     "business": "Empresas"
   },
   "seo": {
+    "businessGuide": {
+      "title": "Ozly para Empresas — Guia do Portal",
+      "description": "Guia passo a passo do Ozly para Empresas (app.ozly.au): convide ABN holders, cubra o plano deles, receba e pague invoices, e gerencie planos e integrações."
+    },
     "home": {
       "title": "Ozly — App de Invoice, ABN e Impostos na Austrália, em Português",
       "description": "Emita invoices ilimitadas, escaneie recibos, organize despesas dedutíveis e acompanhe GST e imposto na Austrália — tudo em português. Feito pra quem tem ABN. Grátis no iOS e Android."
