@@ -6,6 +6,8 @@ import GuideContentPt from "./GuideContentPt";
 import GuideContentEn from "./GuideContentEn";
 import GuideContentEs from "./GuideContentEs";
 import BusinessGuideContentEn from "./BusinessGuideContentEn";
+import BusinessGuideContentEs from "./BusinessGuideContentEs";
+import BusinessGuideContentPt from "./BusinessGuideContentPt";
 
 /* ═══════════ HELPER COMPONENTS ═══════════ */
 
@@ -102,8 +104,7 @@ function FaqItem({ q, a }) {
 
 /* ═══════════ CONTENT BY LANGUAGE ═══════════ */
 const appContentByLang = { pt: GuideContentPt, en: GuideContentEn, es: GuideContentEs };
-// Business guide: Es/Pt fall back to En content until translated.
-const businessContentByLang = { pt: BusinessGuideContentEn, en: BusinessGuideContentEn, es: BusinessGuideContentEn };
+const businessContentByLang = { pt: BusinessGuideContentPt, en: BusinessGuideContentEn, es: BusinessGuideContentEs };
 
 /* ═══════════ MAIN GUIDE PAGE ═══════════ */
 export default function Guide({ variant = "app" }) {
