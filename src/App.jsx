@@ -33,15 +33,25 @@ export default function App() {
       <main>
         <Suspense fallback={<RouteFallback />}>
           <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/support" element={<Support />} />
-            <Route path="/guide" element={<Guide />} />
+            {/* Marketing/content routes exist in 3 languages. EN lives at the
+                root; PT and ES under /pt/ and /es/ prefixes — each variant is
+                prerendered with native meta + hreflang by scripts/postbuild.js,
+                so crawlers index all three. Keep in sync with LOCALIZED_ROUTES
+                in src/i18n/index.jsx. */}
+            {["/", "/pt", "/es"].map((prefix) => (
+              <Route key={prefix} path={prefix}>
+                <Route index element={<Home />} />
+                <Route path="support" element={<Support />} />
+                <Route path="guide" element={<Guide />} />
+                <Route path="guide/business" element={<Guide variant="business" />} />
+                <Route path="business" element={<BusinessLanding />} />
+              </Route>
+            ))}
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/privacy-policy/business" element={<PrivacyPolicyBusiness />} />
             <Route path="/terms-of-use" element={<TermsOfUse />} />
             <Route path="/terms-of-use/business" element={<TermsBusiness />} />
             <Route path="/terms-of-service" element={<TermsOfService />} />
-            <Route path="/business" element={<BusinessLanding />} />
             {/* Landing pública do programa de afiliados — entrada do QR code.
                 `/v/` = vendedor. `/refer` (estático, em public/) fica
                 para o marketing antigo genérico e é intocado. */}

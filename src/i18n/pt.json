@@ -20,13 +20,13 @@
   "audience": {
     "title": "Feito por trabalhadores, para trabalhadores — qualquer um com ABN na Austrália",
     "cleaners": "Cleaning",
-    "tradies": "Trades & Construction",
-    "delivery": "Delivery & Transport",
-    "kitchen": "Kitchen & Chefs",
+    "tradies": "Trades & Construção",
+    "delivery": "Delivery & Transporte",
+    "kitchen": "Cozinha & Chefs",
     "waitstaff": "Garçons & Baristas",
     "hospitality": "Hospitality",
     "petsitting": "Pet Sitting",
-    "agedcare": "Aged & Child Care"
+    "agedcare": "Aged Care & Childcare"
   },
   "realEarnings": {
     "title": "Aquela entrega de $12…",
@@ -61,8 +61,8 @@
     "forecastDesc": "Veja sua receita projetada do período e uma estimativa de quanto guardar para o seu Tax Return — sem surpresas na hora de pagar impostos. Apenas estimativas — não é aconselhamento fiscal."
   },
   "comparison": {
-    "title": "Ozly",
-    "titleHighlight": "Features",
+    "title": "Tudo que o Ozly",
+    "titleHighlight": "faz por você",
     "subtitle": "Tudo que você precisa pra trabalhar por conta própria na Austrália — sem planilhas, sem burocracia, sem dor de cabeça. Registre seus trabalhos, cobre seus clientes e saiba quanto sobra no bolso — tudo num app só.",
     "headerFeature": "Recurso",
     "headerOzly": "Ozly",
@@ -125,6 +125,25 @@
     "stillQuestions": "Ainda tem dúvidas?",
     "stillQuestionsDesc": "Fale com a gente ou explore nosso guia completo com passo a passo de cada funcionalidade.",
     "contact": "Entre em Contato"
+  },
+  "businessGuide": {
+    "title": "Ozly para Empresas — Guia do Portal",
+    "subtitle": "Tudo que um dono ou admin precisa pra operar o Ozly para Empresas — convidar os ABN holders com quem você trabalha, cobrir o plano deles, receber invoices e pagar. Passo a passo.",
+    "tocSections": [
+      { "id": "overview", "label": "1. O que é" },
+      { "id": "workspace", "label": "2. Criar workspace" },
+      { "id": "dashboard", "label": "3. Dashboard" },
+      { "id": "members", "label": "4. Members" },
+      { "id": "cover", "label": "5. Cobrir um plano" },
+      { "id": "inbox", "label": "6. Inbox" },
+      { "id": "invoices", "label": "7. Invoices" },
+      { "id": "work", "label": "8. Work" },
+      { "id": "billing", "label": "9. Billing" },
+      { "id": "integrations", "label": "10. Integrações" },
+      { "id": "reports", "label": "11. Relatórios e Atividade" },
+      { "id": "settings", "label": "12. Configurações" },
+      { "id": "faq", "label": "13. FAQ" }
+    ]
   },
   "guide": {
     "title": "Guia Completo do Usuário & FAQ",
@@ -383,7 +402,7 @@
     "q26": "O que é o Rate Comparison (Comparação de Tarifa)?",
     "a26": "O Rate Comparison (exclusivo Pro) mostra como sua tarifa horária se compara a peers do mesmo setor e estado. Se houver pelo menos 10 peers no mesmo bucket, você vê dados reais do Ozly com seu percentil. Caso contrário, o app usa dados públicos de mercado vindos da Fair Work Commission, ABS e PayScale. Você acha como um chip na tela de Jobs e como um card no Financial.",
     "q27": "O Ozly dá conselho fiscal ou jurídico?",
-    "a27": "Não. O Ozly é uma ferramenta de organização e educação. Todos os cálculos — GST, super, deduções, Visa Shield, Forecast — são estimativas e não constituem aconselhamento profissional. Sempre consulte um contador ou registered tax agent antes de tomar decisões, e contate o Department of Home Affairs para regras oficiais de visto. Você verá disclaimers legais em telas críticas (Visa Shield, Rate Comparison, Financial, Paywall) e o resumo completo em Configurações → Disclaimers Legais.",
+    "a27": "Não. O Ozly é uma ferramenta de organização e educação. Todos os cálculos — GST, super, deduções, Visa Shield, Forecast — são estimativas — não substituem um contador nem valem como conselho profissional. Sempre consulte um contador ou registered tax agent antes de tomar decisões, e contate o Department of Home Affairs para regras oficiais de visto. Você verá disclaimers legais em telas críticas (Visa Shield, Rate Comparison, Financial, Paywall) e o resumo completo em Configurações → Disclaimers Legais.",
     "q28": "Tenho visto de trabalho/estudante. O Visa Shield é oficial?",
     "a28": "Não. O Visa Shield serve apenas para tracking. Ele estima suas horas quinzenais pra você ter consciência do limite, mas não é afiliado ao Department of Home Affairs e não representa conformidade oficial. Você é o único responsável por seguir as regras do seu subclass de visto. Para limites oficiais, sempre cheque o Department of Home Affairs ou seu sponsor.",
     "q29": "Como funciona a renovação automática da assinatura?",
@@ -701,7 +720,7 @@
     "businessCta": "Conhecer o Ozly for Organisations"
   },
   "business": {
-    "eyebrow": "Ozly for Organisations",
+    "eyebrow": "Ozly para Organizações",
     "heroTitle": "Gerencie seus sub-contractors sem planilha",
     "heroSubtitle": "Um portal pra convidar sub-contractors, receber as invoices deles, pagar e manter cada registro em ordem — com a relação de sub-contratação devidamente documentada. As obrigações de Fair Work, super e impostos continuam suas; o Ozly cuida da papelada.",
     "ctaTrial": "Começar teste grátis de 14 dias",
@@ -748,6 +767,7 @@
     "legalLinks": "As letras miúdas:",
     "legalTos": "Terms of Service",
     "legalPrivacy": "Privacidade — Business",
+    "guideLink": "Guia do portal",
     "faqTitle": "O que as empresas nos perguntam",
     "faq1Q": "O Ozly é plataforma de emprego ou marketplace?",
     "faq1A": "Nenhum dos dois. O Ozly não recruta, não roda folha e não atua como employer-of-record. É o sistema de registro de organizações que já contratam sub-contractors com ABN — convites, invoices, pagamentos e documentação de compliance num lugar só.",
@@ -761,14 +781,33 @@
     "faq5A": "Cadastre-se em app.ozly.au, sem cartão. Convide membros, receba invoices, teste tudo. Escolha um plano quando estiver pronto — se não escolher, a conta só pausa.",
     "finalTitle": "Teste grátis por 14 dias",
     "finalSub": "Sem cartão. Convide seu primeiro sub-contractor em 2 minutos.",
-    "finalCta": "Abrir o portal"
+    "finalCta": "Abrir o portal",
+    "rowCta": "Começar teste"
   },
   "audienceGate": {
     "title": "Bem-vindo ao Ozly.",
-    "subtitle": "Dois lados, uma plataforma. Qual é o seu?"
+    "subtitle": "Dois lados, um app só. Qual é o seu?"
   },
   "audienceSwitch": {
     "personal": "Pessoal",
     "business": "Empresas"
+  },
+  "seo": {
+    "home": {
+      "title": "Ozly — App de Invoice, ABN e Impostos na Austrália, em Português",
+      "description": "Emita invoices ilimitadas, escaneie recibos, organize despesas dedutíveis e acompanhe GST e imposto na Austrália — tudo em português. Feito pra quem tem ABN. Grátis no iOS e Android."
+    },
+    "support": {
+      "title": "Ajuda Ozly — Dúvidas de Invoice, ABN e Imposto na Austrália",
+      "description": "Respostas em português para as dúvidas mais comuns: como emitir invoice com ABN, lançar despesas dedutíveis, GST, tax return e assinatura do Ozly na Austrália."
+    },
+    "guide": {
+      "title": "Guia Ozly em Português — Invoice, Despesas e Impostos na Austrália",
+      "description": "Guia passo a passo em português: crie invoices, escaneie recibos, gerencie jobs e contractors, acompanhe GST e imposto de renda e feche o ano fiscal australiano sem stress."
+    },
+    "business": {
+      "title": "Ozly para Organizações — Invoices de Sub-contractors num Portal Só",
+      "description": "Convide seus sub-contractors, receba as invoices deles, pague e mantenha tudo documentado — um portal pra empresas australianas que trabalham com contractors de ABN. 14 dias grátis."
+    }
   }
 }
