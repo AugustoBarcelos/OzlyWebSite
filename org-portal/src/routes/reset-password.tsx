@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { friendlyError } from '@/lib/errors';
+import { rememberEmail } from '@/lib/last-email';
 
 const FormSchema = z
   .object({
@@ -32,11 +33,12 @@ export function ResetPasswordPage() {
     const timeout = setTimeout(() => {
       if (active) setLinkInvalid(true);
     }, 6000);
-    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (!active) return;
       if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
         setReady(true);
         clearTimeout(timeout);
+        if (session?.user?.email) rememberEmail(session.user.email);
       }
     });
     // If the user landed here with an already-active session (e.g. clicked
@@ -45,6 +47,7 @@ export function ResetPasswordPage() {
       if (active && data.session) {
         setReady(true);
         clearTimeout(timeout);
+        if (data.session.user?.email) rememberEmail(data.session.user.email);
       }
     });
     return () => {
