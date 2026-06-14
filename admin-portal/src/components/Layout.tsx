@@ -151,73 +151,47 @@ function useNavGroups(simple: boolean): ReadonlyArray<NavGroup> {
   const { isAdmin, grants } = useAuth();
   return useMemo(() => {
     if (isAdmin && simple) {
-      // Menu simples (padrão) — só o essencial, sem submenus. Cada área
-      // abre um hub com quadros clicáveis; cmd-K continua achando tudo.
+      // Menu enxuto — Cockpit/Inbox no topo + as 5 áreas por pergunta.
       return [
         {
           items: [
             { label: 'Cockpit', to: '/cockpit', icon: HomeIcon, end: true },
             { label: 'Inbox', to: '/inbox', icon: InboxIcon },
-            { label: 'Usuários', to: '/users', icon: UsersIcon },
           ],
         },
         {
           label: 'Áreas',
           items: [
             { label: 'Dinheiro', to: '/finance', icon: DollarSignIcon },
+            { label: 'Crescimento', to: '/growth', icon: TrendingUpIcon },
             { label: 'Produto', to: '/product', icon: PackageIcon },
-            { label: 'Marketing', to: '/marketing', icon: MegaphoneIcon },
-            { label: 'Anúncios & funil', to: '/growth', icon: TrendingUpIcon },
-            { label: 'Afiliados', to: '/affiliates', icon: HandshakeIcon },
             { label: 'Ozly for Business', to: '/business', icon: HandshakeIcon },
+            { label: 'Ops & Tech', to: '/operations', icon: ServerIcon },
           ],
         },
       ];
     }
     if (isAdmin) {
-      // IA v4 — "menu de leigo": PT-BR, ordenado por frequência de uso.
-      // Dia a dia em cima (flat), negócio e marketing no meio (branches
-      // fechadas por padrão), técnico/raro no fim em "Avançado". Nenhuma
-      // rota foi removida — só reagrupada; cmd-K continua achando tudo.
+      // IA por pergunta — 5 áreas. Cockpit/Inbox no topo (uso diário).
+      // Nenhuma rota removida — só reagrupada; cmd-K continua achando tudo.
       return [
         {
           items: [
             { label: 'Cockpit', to: '/cockpit', icon: HomeIcon, end: true },
             { label: 'Inbox', to: '/inbox', icon: InboxIcon },
-            { label: 'Usuários', to: '/users', icon: UsersIcon },
           ],
         },
         {
-          label: 'Negócio',
+          label: 'Dinheiro',
           items: [
-            {
-              label: 'Dinheiro',
-              icon: DollarSignIcon,
-              to: '/revenue',
-              children: [
-                { label: 'Receita & assinaturas', to: '/revenue' },
-                { label: 'Custos (automático)', to: '/finance/cost-monitor' },
-                { label: 'Custos (manual)', to: '/finance/costs' },
-                { label: 'Lucro (P&L)', to: '/finance/pnl' },
-                { label: 'Previsão & caixa', to: '/finance/forecast' },
-                { label: 'Conciliação', to: '/finance/reconciliation' },
-                { label: 'Impostos & relatórios', to: '/finance/tax' },
-                { label: 'Hub financeiro', to: '/finance', end: true },
-              ],
-            },
-            {
-              label: 'Produto',
-              icon: PackageIcon,
-              to: '/product',
-              children: [
-                { label: 'Hub', to: '/product', end: true },
-                { label: 'Ativação (primeiros passos)', to: '/product/activation' },
-                { label: 'Retenção (quem volta)', to: '/product/retention' },
-                { label: 'Engajamento', to: '/product/engagement' },
-                { label: 'Uso das funcionalidades', to: '/product/features' },
-                { label: 'Feedback', to: '/product/feedback' },
-              ],
-            },
+            { label: 'Receita & assinaturas', to: '/revenue', icon: DollarSignIcon },
+            { label: 'Custos (automático)', to: '/finance/cost-monitor' },
+            { label: 'Custos (manual)', to: '/finance/costs' },
+            { label: 'Lucro (P&L)', to: '/finance/pnl' },
+            { label: 'Previsão & caixa', to: '/finance/forecast' },
+            { label: 'Conciliação', to: '/finance/reconciliation' },
+            { label: 'Impostos & relatórios', to: '/finance/tax' },
+            { label: 'Hub financeiro', to: '/finance', end: true },
           ],
         },
         {
@@ -257,11 +231,28 @@ function useNavGroups(simple: boolean): ReadonlyArray<NavGroup> {
               ],
             },
             { label: 'Afiliados', to: '/affiliates', icon: HandshakeIcon },
-            { label: 'Ozly for Business', to: '/business', icon: HandshakeIcon },
           ],
         },
         {
-          label: 'Avançado',
+          label: 'Produto',
+          items: [
+            { label: 'Usuários', to: '/users', icon: UsersIcon },
+            { label: 'Ativação (primeiros passos)', to: '/product/activation' },
+            { label: 'Retenção (quem volta)', to: '/product/retention' },
+            { label: 'Engajamento', to: '/product/engagement' },
+            { label: 'Uso das funcionalidades', to: '/product/features' },
+            { label: 'Feedback', to: '/product/feedback' },
+            { label: 'Hub do produto', to: '/product', end: true },
+          ],
+        },
+        {
+          label: 'Ozly for Business',
+          items: [
+            { label: 'Monitor (orgs)', to: '/business', icon: HandshakeIcon },
+          ],
+        },
+        {
+          label: 'Ops & Tech',
           items: [
             { label: 'Data Hub', to: '/data', icon: LayoutDashboardIcon },
             {
