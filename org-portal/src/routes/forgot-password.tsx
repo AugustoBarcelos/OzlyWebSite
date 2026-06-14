@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { z } from 'zod';
 import { useAuth } from '@/lib/auth';
 import { friendlyError } from '@/lib/errors';
+import { rememberEmail, recallEmail } from '@/lib/last-email';
 
 const FormSchema = z.object({
   email: z.string().email('Please enter a valid email address.'),
@@ -10,7 +11,9 @@ const FormSchema = z.object({
 
 export function ForgotPasswordPage() {
   const { sendPasswordReset } = useAuth();
-  const [email, setEmail] = useState('');
+  // Carry over whatever was typed on the login screen so the user doesn't
+  // retype it just to recover their password.
+  const [email, setEmail] = useState(recallEmail);
   const [submitting, setSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,7 +82,10 @@ export function ForgotPasswordPage() {
                   type="email"
                   autoComplete="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    rememberEmail(e.target.value);
+                  }}
                   className="mt-1.5 w-full rounded-lg border border-navy-100 bg-white px-3.5 py-2.5 text-sm text-navy-700 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
                   placeholder="you@example.com"
                   required

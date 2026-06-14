@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { useAuth } from '@/lib/auth';
 import { Spinner } from '@/components/Spinner';
 import { safeRedirect } from '@/lib/safe-redirect';
+import { rememberEmail, recallEmail } from '@/lib/last-email';
 
 const FormSchema = z.object({
   email: z.string().trim().max(200).email('Enter a valid email address'),
@@ -13,7 +14,9 @@ const FormSchema = z.object({
 export function LoginPage() {
   const { user, loading, signInWithPassword } = useAuth();
   const [params] = useSearchParams();
-  const [email, setEmail] = useState('');
+  // Pre-fill from the last email typed on any auth screen (set on login,
+  // forgot-password, and after a password reset) so the user never retypes it.
+  const [email, setEmail] = useState(recallEmail);
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -168,7 +171,10 @@ export function LoginPage() {
               type="email"
               autoComplete="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                rememberEmail(e.target.value);
+              }}
               disabled={submitting}
               className="mt-1.5 w-full rounded-lg border border-navy-100 bg-white px-3.5 py-2.5 text-sm text-navy-700 placeholder:text-navy-300 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
               placeholder="you@company.com.au"
