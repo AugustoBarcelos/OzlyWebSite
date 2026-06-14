@@ -169,6 +169,7 @@ function useNavGroups(simple: boolean): ReadonlyArray<NavGroup> {
             { label: 'Marketing', to: '/marketing', icon: MegaphoneIcon },
             { label: 'Anúncios & funil', to: '/growth', icon: TrendingUpIcon },
             { label: 'Afiliados', to: '/affiliates', icon: HandshakeIcon },
+            { label: 'Ozly for Business', to: '/business', icon: HandshakeIcon },
           ],
         },
       ];
@@ -256,6 +257,7 @@ function useNavGroups(simple: boolean): ReadonlyArray<NavGroup> {
               ],
             },
             { label: 'Afiliados', to: '/affiliates', icon: HandshakeIcon },
+            { label: 'Ozly for Business', to: '/business', icon: HandshakeIcon },
           ],
         },
         {
