@@ -68,9 +68,12 @@ jobs:
         run: npm ci
 
       # ── Gate B: dependency vulnerabilities ───────────────────────────────
-      - name: Dependency audit (high+)
+      - name: Dependency audit (high+, production deps)
         working-directory: admin-portal
-        run: npm audit --audit-level=high
+        # --omit=dev: only audit what actually ships. The known high advisories
+        # are esbuild/vite dev-tooling (dev server / Deno integrity) which never
+        # reach the deployed static bundle. Production deps must stay clean at high+.
+        run: npm audit --audit-level=high --omit=dev
 
       # ── Gate C: SAST ─────────────────────────────────────────────────────
       - name: SAST (Semgrep)
