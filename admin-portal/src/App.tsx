@@ -64,6 +64,9 @@ const AuditPage = lazy(() =>
 const RevenuePage = lazy(() =>
   import('./routes/revenue').then((m) => ({ default: m.RevenuePage })),
 );
+const BusinessHealthPage = lazy(() =>
+  import('./routes/business/health').then((m) => ({ default: m.BusinessHealthPage })),
+);
 const InsightsPage = lazy(() =>
   import('./routes/insights').then((m) => ({ default: m.InsightsPage })),
 );
@@ -408,6 +411,7 @@ export function App() {
                 <Route path="/finance/reconciliation" element={lazyRoute(FinanceReconciliationPage)} />
                 <Route path="/finance/tax" element={lazyRoute(FinanceTaxPage)} />
                 <Route path="/revenue" element={lazyRoute(RevenuePage)} />
+                <Route path="/business" element={lazyRoute(BusinessHealthPage)} />
 
                 {/* Product Hub */}
                 <Route path="/product" element={lazyRoute(ProductHubPage)} />
