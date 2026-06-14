@@ -16,6 +16,13 @@ import type { Organization, MembershipRole } from '@/lib/types';
 // Org payload stashed at signup. If email confirmation is enabled in Supabase,
 // signUp returns no session, so the org can't be created until the user
 // confirms + lands back authenticated — at which point this bootstrap fires.
+//
+// Stored in localStorage (NOT sessionStorage) on purpose: the confirmation
+// link from the email usually opens a NEW tab, and sessionStorage is per-tab —
+// so a session-scoped value would be lost and the org never created (the user
+// would land on "No organisation linked" and have to refresh the original
+// tab). localStorage survives the cross-tab round-trip; the bootstrap clears
+// it on success.
 export const PENDING_ORG_KEY = 'ozly-org-portal-pending-org';
 export interface PendingOrg { name: string; abn: string; admin_email: string }
 
@@ -107,7 +114,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
 
     // Signup bootstrap fallback (see PENDING_ORG_KEY).
     if (list.length === 0 && !creatingRef.current) {
-      const raw = sessionStorage.getItem(PENDING_ORG_KEY);
+      const raw = localStorage.getItem(PENDING_ORG_KEY);
       if (raw) {
         creatingRef.current = true;
         try {
@@ -118,7 +125,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
             p_admin_email: p.admin_email,
           });
           if (!error) {
-            sessionStorage.removeItem(PENDING_ORG_KEY);
+            localStorage.removeItem(PENDING_ORG_KEY);
             list = await selectOrgs();
             if (!seq.isCurrent(token)) return; // user changed mid-bootstrap
           } else {
