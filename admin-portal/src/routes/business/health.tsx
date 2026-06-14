@@ -110,6 +110,20 @@ export function BusinessHealthPage() {
     };
   }, [rows]);
 
+  const alerts = useMemo(() => {
+    const r = rows ?? [];
+    const in7d = Date.now() + 7 * 24 * 3600 * 1000;
+    return {
+      pastDue: r.filter((x) => x.sub_status === 'past_due'),
+      trialsEnding: r.filter(
+        (x) =>
+          x.sub_status === 'trialing' &&
+          x.trial_ends_at &&
+          new Date(x.trial_ends_at).getTime() <= in7d,
+      ),
+    };
+  }, [rows]);
+
   return (
     <div className="space-y-6 p-6">
       <div>
@@ -126,6 +140,34 @@ export function BusinessHealthPage() {
         <KpiCard title="On trial" value={kpis.trials} formatter={formatNumber} loading={loading} />
         <KpiCard title="Past due" value={kpis.pastDue} formatter={formatNumber} loading={loading} />
       </div>
+
+      {/* Alerts — derived from the same data, nothing extra to load */}
+      {(alerts.pastDue.length > 0 || alerts.trialsEnding.length > 0) && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {alerts.pastDue.length > 0 && (
+            <Card className="bg-rose-50/50 ring-1 ring-rose-200">
+              <Text className="font-semibold text-rose-700">
+                ⚠ {alerts.pastDue.length} org(s) past due
+              </Text>
+              <Text className="mt-1 text-sm text-rose-600">
+                {alerts.pastDue.slice(0, 5).map((o) => o.org_name).join(', ')}
+                {alerts.pastDue.length > 5 ? '…' : ''}
+              </Text>
+            </Card>
+          )}
+          {alerts.trialsEnding.length > 0 && (
+            <Card className="bg-amber-50/50 ring-1 ring-amber-200">
+              <Text className="font-semibold text-amber-700">
+                ⏳ {alerts.trialsEnding.length} trial(s) ending within 7 days
+              </Text>
+              <Text className="mt-1 text-sm text-amber-600">
+                {alerts.trialsEnding.slice(0, 5).map((o) => o.org_name).join(', ')}
+                {alerts.trialsEnding.length > 5 ? '…' : ''}
+              </Text>
+            </Card>
+          )}
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
