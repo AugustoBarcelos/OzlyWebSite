@@ -14,7 +14,10 @@ interface AuthContextValue {
   user: User | null;
   loading: boolean;
   signInWithPassword: (email: string, password: string) => Promise<void>;
-  signUpWithPassword: (email: string, password: string) => Promise<{ hasSession: boolean }>;
+  signUpWithPassword: (
+    email: string,
+    password: string,
+  ) => Promise<{ hasSession: boolean; alreadyRegistered: boolean }>;
   signOut: () => Promise<void>;
   /** Sends the password-reset email. Supabase responds 200 even when the
    *  email is unknown — that's intentional, it prevents user enumeration. */
@@ -67,9 +70,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signUpWithPassword = useCallback(async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      // Point the confirmation link back at the org-portal (not the project's
+      // default Site URL, which targets the Flutter app). Mirrors the
+      // admin-portal's explicit emailRedirectTo.
+      options: { emailRedirectTo: `${window.location.origin}/login` },
+    });
     if (error) throw new Error(friendlyAuthError(error.message));
-    return { hasSession: data.session !== null };
+    // Supabase anti-enumeration: signing up an already-registered email returns
+    // a 200 with a "ghost" user whose `identities` array is empty — and sends
+    // NO confirmation email. Detect it so we don't show a confirm screen that
+    // waits on an email that will never arrive (same check the Flutter app does).
+    const alreadyRegistered =
+      data.session === null && (data.user?.identities?.length ?? 0) === 0;
+    return { hasSession: data.session !== null, alreadyRegistered };
   }, []);
 
   const signOut = useCallback(async () => {

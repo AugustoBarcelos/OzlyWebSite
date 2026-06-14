@@ -42,8 +42,17 @@ export function SignupPage() {
       };
       sessionStorage.setItem(PENDING_ORG_KEY, JSON.stringify(pending));
 
-      const { hasSession } = await signUpWithPassword(parsed.data.email, parsed.data.password);
-      if (hasSession) {
+      const { hasSession, alreadyRegistered } = await signUpWithPassword(
+        parsed.data.email,
+        parsed.data.password,
+      );
+      if (alreadyRegistered) {
+        // No email was sent — the account exists. Don't show the (false)
+        // "confirm your email" screen; send them to sign in instead.
+        sessionStorage.removeItem(PENDING_ORG_KEY);
+        setError('That email is already in use. Try signing in.');
+        setSubmitting(false);
+      } else if (hasSession) {
         navigate('/invoices', { replace: true });
       } else {
         setConfirmSent(true);
