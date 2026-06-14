@@ -1,22 +1,23 @@
 /**
  * Ozly for Business — Org Portal user guide (English).
  * Maps every process in the portal (app.ozly.au) and what to do in each.
- * Helper components are injected by Guide.jsx (same set as the app guide).
+ * Content verified against org-portal/src (routes/components) — only documents
+ * what actually ships today. Helper components are injected by Guide.jsx.
  */
 export default function BusinessGuideContentEn({ SectionCard, SubSection, StepList, BulletList, Tip, InfoBox, SimpleTable, P, B, FaqItem }) {
   return (
     <>
       {/* ─── 1. WHAT IT IS ─── */}
       <SectionCard id="overview" title="1. What Ozly for Business Is">
-        <P>Ozly for Business is the <B>web portal at app.ozly.au</B> for cleaning companies and agencies. It gives you one place to receive the invoices the ABN holders you work with send you, see who you cover, mark invoices paid, and export them to your bank or accountant.</P>
+        <P>Ozly for Business is the <B>web portal at app.ozly.au</B> for cleaning companies and agencies. It gives you one place to receive the invoices the ABN holders you work with send you, see who you cover, mark invoices paid, and export them to your bank or your accountant.</P>
         <InfoBox><B>The golden rule:</B> in Ozly, <B>you never create an invoice</B>. Each ABN holder issues their own invoice from the Ozly mobile app and sends it to your organisation. The portal is where you <B>receive, track and pay</B> — everyone stays independent under their own ABN.</InfoBox>
         <SubSection title="What you can do here">
           <BulletList>
             <li>Invite the ABN holders you work with into your workspace</li>
             <li>Cover their Ozly plan so they bill you for free (optional)</li>
             <li>Receive their invoices in your Inbox, with delivery status</li>
-            <li>Mark invoices paid and export to ABA (bank) or Xero/MYOB</li>
-            <li>See dashboards, reports and an activity log</li>
+            <li>Mark invoices paid and export to Xero, CSV or an ABA bank file</li>
+            <li>See a dashboard, BAS/P&amp;L reports and an activity log</li>
           </BulletList>
         </SubSection>
         <Tip>The portal is desktop-first (made for an owner/admin at a computer). The ABN holders never need the portal — they live in the mobile app.</Tip>
@@ -28,12 +29,12 @@ export default function BusinessGuideContentEn({ SectionCard, SubSection, StepLi
           <StepList>
             <li>Go to <B>app.ozly.au</B> → <B>Sign up</B>.</li>
             <li>Enter your work email — we send a <B>magic link</B> (no password to remember). Open it to log in.</li>
-            <li>Name your organisation (your company/trading name) and confirm your <B>ABN</B>.</li>
+            <li>Name your organisation and add your <B>ABN</B>.</li>
           </StepList>
         </SubSection>
-        <SubSection title="Onboarding">
-          <P>The first time you land, a short <B>onboarding</B> walks you through the essentials: your billing email (where invoices are sent), inviting your first ABN holder, and your billing plan. You can skip and do any of it later from the menu.</P>
-          <Tip>Set your <B>billing email</B> early (Settings) — it&rsquo;s the inbox the ABN holders&rsquo; invoices are emailed to, so it must be one you check.</Tip>
+        <SubSection title="Onboarding & your Inbox email">
+          <P>After sign-up you get a short onboarding and a printable onboarding guide (handy to share with your team). The one setting to do early is your <B>Inbox email</B> in Settings — that&rsquo;s the address the ABN holders&rsquo; invoices are emailed to, so it must be one you check.</P>
+          <Tip>Press <B>⌘K</B> (Ctrl+K) anywhere in the portal for a search/command palette — the fastest way to jump to any screen or invoice.</Tip>
         </SubSection>
       </SectionCard>
 
@@ -43,13 +44,13 @@ export default function BusinessGuideContentEn({ SectionCard, SubSection, StepLi
         <SimpleTable
           headers={["Card", "Shows"]}
           rows={[
-            ["Invoices received", "How many invoices ABN holders sent you, and the total"],
-            ["Paid / Overdue", "What you&rsquo;ve marked paid vs what&rsquo;s still owing"],
-            ["Who&rsquo;s billed", "The most-overdue ABN holders, so you know who to pay next"],
-            ["Trend & status", "A line chart over time + a paid/pending/overdue donut"],
+            ["Outstanding", "Total still owed to the ABN holders (unpaid)"],
+            ["Overdue", "Of that, what&rsquo;s past due"],
+            ["Paid (this period)", "What you&rsquo;ve marked paid in the range"],
+            ["Active members", "ABN holders currently in your workspace"],
           ]}
         />
-        <Tip>Use the <B>period filter</B> (top of the dashboard) to switch between this week, fortnight, month or a custom range.</Tip>
+        <P>Below the cards you get a <B>revenue trend</B> chart over time and a <B>status donut</B> (paid / sent / overdue / draft). Use the <B>period filter</B> at the top to change the range.</P>
       </SectionCard>
 
       {/* ─── 4. MEMBERS ─── */}
@@ -58,95 +59,85 @@ export default function BusinessGuideContentEn({ SectionCard, SubSection, StepLi
         <SubSection title="Invite someone">
           <StepList>
             <li>Side menu → <B>Members</B> → <B>Invite member</B>.</li>
-            <li>Enter their name + mobile or email. Ozly sends them an <B>invite link</B>.</li>
-            <li>They tap it in the Ozly app and accept — they appear as <B>Active</B>.</li>
+            <li>Enter their email or mobile. Ozly sends them an <B>invite</B>.</li>
+            <li>They accept <B>in the Ozly app</B> — then their invoices to you show up automatically and they count as an <B>Active member</B>.</li>
           </StepList>
+          <P>Two KPI cards at the top show <B>Active members</B> and <B>Pending invites</B>. A pending card warns you if the invite couldn&rsquo;t be delivered, so you can resend.</P>
         </SubSection>
-        <SubSection title="Member statuses & compliance">
+        <SubSection title="How each member is billed">
+          <P>Each member card carries a small <B>billing badge</B> showing how their Ozly access is paid for:</P>
           <SimpleTable
             headers={["Badge", "Meaning"]}
             rows={[
-              ["Active", "Accepted — their invoices to you appear in your Inbox"],
-              ["Pending", "Invited, not accepted yet"],
-              ["Declined", "They declined the invite"],
-              ["ABN / Insurance", "Compliance badges — shows if they&rsquo;ve provided a valid ABN and insurance on file"],
+              ["Company-covered", "You pay for their ABN access (see next section)"],
+              ["➕ ABN top-up", "You cover them and they added a $5/mo top-up to also bill others"],
+              ["Self-paid", "They pay their own Ozly plan"],
+              ["Needs ABN cover", "Not covered and not paying — they can&rsquo;t issue ABN invoices yet"],
             ]}
           />
-          <P>You can <B>suspend / reactivate</B> a member, and remove someone who no longer works with you.</P>
         </SubSection>
-        <InfoBox>Inviting a member does <B>not</B> create an employment relationship and does <B>not</B> automatically cover their plan — covering is a separate, optional step (next section).</InfoBox>
       </SectionCard>
 
       {/* ─── 5. COVER / SPONSORSHIP ─── */}
       <SectionCard id="cover" title="5. Cover an ABN Holder&rsquo;s Plan (optional)">
-        <P>This is the differentiator. If you subscribe (next section), you can <B>cover</B> an ABN holder&rsquo;s Ozly ABN access — they then bill <B>your company</B> for free, with nothing to pay themselves.</P>
+        <P>The differentiator: once you subscribe (see Billing), you can <B>cover</B> an ABN holder&rsquo;s Ozly ABN access — they then bill <B>your company</B> for free, with nothing to pay themselves.</P>
         <SubSection title="How it works">
           <StepList>
             <li>You hold a paid subscription with enough seats.</li>
-            <li>On a member&rsquo;s card, turn on <B>Cover this person</B>.</li>
-            <li>They get a push: <B>&ldquo;[Your company] now covers your ABN — you don&rsquo;t need to pay.&rdquo;</B></li>
-            <li>Their Ozly invoicing is set to your organisation while you cover them.</li>
+            <li>On a member&rsquo;s card, switch on <B>Cover this member</B>. The badge flips to <B>Company-covered</B>.</li>
+            <li>Switch it off any time with <B>Stop covering</B> — the seat frees up.</li>
           </StepList>
         </SubSection>
-        <SubSection title="Important rules">
-          <BulletList>
-            <li><B>One sponsor per person.</B> If someone is already covered by another company, you&rsquo;ll see &ldquo;Already covered by [Company]&rdquo; — only one org covers a person at a time.</li>
-            <li><B>They can still bill others.</B> A covered ABN holder can add a <B>$5/month personal top-up</B> in the app to also invoice clients outside your org.</li>
-            <li><B>7-day grace on cancel.</B> If you stop covering (or cancel your plan), they get a 7-day window + a heads-up to keep access by paying themselves.</li>
-          </BulletList>
-        </SubSection>
-        <Tip>Cover is per-seat: the number of people you cover should match your plan&rsquo;s seat count. Ozly auto-adjusts your tier as your seat count crosses a band (see Billing).</Tip>
+        <InfoBox>A covered ABN holder can add a <B>$5/month top-up</B> in the app (you&rsquo;ll see the <B>➕ ABN top-up</B> badge) so they can also invoice clients outside your organisation, while you still cover the base ABN access.</InfoBox>
+        <Tip>Your plan tier is driven by how many people you cover — Ozly moves you up/down a tier automatically as that count crosses a band (see Billing).</Tip>
       </SectionCard>
 
       {/* ─── 6. INBOX ─── */}
       <SectionCard id="inbox" title="6. Inbox — Invoices You Receive">
-        <P>Every invoice an ABN holder sends to your org lands here first.</P>
+        <P>Every invoice an ABN holder sends to your org lands here, newest first.</P>
         <SubSection title="How an invoice arrives">
-          <P>The ABN holder, in the Ozly app, creates an invoice, picks your company as the bill-to, toggles <B>&ldquo;Send to org&rdquo;</B> and sends. It hits your Inbox instantly, you get an email at your billing address, and admins get a push.</P>
+          <P>The ABN holder, in the Ozly app, creates an invoice, picks your company and sends it to your org. It appears in your Inbox and is emailed to your Inbox address.</P>
         </SubSection>
         <SubSection title="Delivery status">
-          <P>Open <B>Inbox → Deliveries</B> to see whether each send reached your billing inbox:</P>
+          <P>Each row shows whether the email reached your Inbox address. Filter by status:</P>
           <SimpleTable
             headers={["Status", "Meaning"]}
             rows={[
-              ["Delivered", "The email reached your billing inbox"],
-              ["Queued", "Sending — check back shortly"],
-              ["Bounced", "Wrong/blocked inbox — fix your billing email in Settings"],
-              ["Failed", "Send failed — the ABN holder can retry from their app"],
+              ["Delivered", "The email reached your Inbox address"],
+              ["Sending", "In progress — check back shortly"],
+              ["Not delivered", "Bounced — fix your Inbox email in Settings"],
+              ["Failed", "Send failed — the ABN holder can resend from their app"],
             ]}
           />
+          <P>You can search, filter by date, and <B>export the inbox list to CSV</B>.</P>
         </SubSection>
-        <Tip>New invoices show as <B>New</B> until you open them, then <B>Seen</B> — so nothing slips through.</Tip>
       </SectionCard>
 
       {/* ─── 7. INVOICES ─── */}
       <SectionCard id="invoices" title="7. Invoices — Track, Pay & Export">
         <P>The full list of everything received, with filters and bulk actions.</P>
-        <SubSection title="Find & filter">
-          <BulletList>
-            <li>Filter by <B>member</B>, <B>status</B> (paid / pending / overdue) and <B>period</B>.</li>
-            <li>Search by amount, number or description.</li>
-          </BulletList>
-        </SubSection>
-        <SubSection title="Mark paid">
+        <SubSection title="Find & mark paid">
           <StepList>
-            <li>Open an invoice (or bulk-select several).</li>
-            <li>Tap <B>Mark paid</B> once you&rsquo;ve actually paid it.</li>
-            <li>The ABN holder gets a push: <B>&ldquo;[Company] marked invoice #… paid.&rdquo;</B> — keeping both your records in sync.</li>
+            <li>Filter by <B>member</B>, <B>status</B> (paid / sent / overdue) and <B>period</B>; search by amount, number or text.</li>
+            <li>Open an invoice and tap <B>Mark paid</B> once you&rsquo;ve paid it — the ABN holder is notified, keeping both records in sync.</li>
           </StepList>
         </SubSection>
-        <SubSection title="Export to pay / for your accountant">
-          <BulletList>
-            <li><B>ABA file</B> — bulk-select invoices → export a bank batch (ABA) you upload to your bank to pay everyone at once.</li>
-            <li><B>Xero / MYOB CSV</B> — export for your accounting software.</li>
-          </BulletList>
-          <InfoBox>You never issue the invoice — editing is minimal and audit-logged. The ABN holder is the legal issuer; &ldquo;mark paid&rdquo; is your record of payment.</InfoBox>
+        <SubSection title="Export (the Export ▾ menu)">
+          <SimpleTable
+            headers={["Export", "What it&rsquo;s for", "How"]}
+            rows={[
+              ["For Xero", "Import as Bills in Xero", "Export ▾ → For Xero (respects your active filters)"],
+              ["As CSV", "Open in a spreadsheet", "Export ▾ → As CSV"],
+              ["ABA bank file", "Pay your members in one bank batch", "Select rows → pick unpaid invoices → Generate ABA file → upload to your bank"],
+            ]}
+          />
+          <InfoBox>You never issue the invoice — the ABN holder is the legal issuer. &ldquo;Mark paid&rdquo; and the exports are your records and your way to pay.</InfoBox>
         </SubSection>
       </SectionCard>
 
       {/* ─── 8. WORK ─── */}
-      <SectionCard id="work" title="8. Work — Job History">
-        <P>A read-only history of the jobs the ABN holders created in the app that relate to your organisation. Useful to cross-check what was done against what was invoiced. (Some plans let you offer work to members — when enabled, it also shows here.)</P>
+      <SectionCard id="work" title="8. Work — Jobs from Your Members">
+        <P>A read-mostly view of the jobs the ABN holders created in the app that relate to your organisation. Each row shows the job, who issued it, dates, location and value. KPIs at the top total the <B>value, hours, job count and completed</B> for the period — handy to cross-check work done against what was invoiced. If a job has a proposed change, its status reflects that.</P>
       </SectionCard>
 
       {/* ─── 9. BILLING ─── */}
@@ -167,46 +158,41 @@ export default function BusinessGuideContentEn({ SectionCard, SubSection, StepLi
           <StepList>
             <li><B>Add payment / start trial</B> — opens Stripe Checkout (card via Stripe).</li>
             <li><B>Manage subscription</B> — opens the Stripe Customer Portal (update card, tax IDs, see invoices).</li>
-            <li><B>Seats auto-scale</B> — as you cover more/fewer people, Ozly moves you to the matching tier automatically.</li>
-            <li><B>Downgrade / cancel</B> — uses an in-app flow (with a reason); covered ABN holders get the 7-day grace.</li>
+            <li><B>Seats auto-scale</B> — as you cover more/fewer people, Ozly moves you to the matching tier.</li>
+            <li><B>Downgrade</B> — uses an in-app flow (it asks for a reason and confirms the change).</li>
           </StepList>
         </SubSection>
-        <Tip>The seat-count banner flags any drift between seats you pay for and people you cover — keep them aligned to avoid surprises.</Tip>
       </SectionCard>
 
       {/* ─── 10. INTEGRATIONS ─── */}
       <SectionCard id="integrations" title="10. Integrations">
-        <P>Settings → <B>Integrations</B>. Connect Ozly to the tools you already use.</P>
-        <SimpleTable
-          headers={["Integration", "What it does", "Status"]}
-          rows={[
-            ["Stripe", "Card billing for your subscription", "Live"],
-            ["Xero / MYOB", "Push received invoices to accounting", "Export (CSV) today; live sync coming"],
-            ["Job sources (ServiceM8, Tradify…)", "Pull jobs from your scheduling tool", "Coming soon"],
-          ]}
-        />
-        <Tip>If an integration shows &ldquo;Coming soon&rdquo;, use the CSV/ABA export in the meantime — it covers the same need.</Tip>
+        <P>Settings → <B>Integrations</B>. Today Ozly keeps this deliberately small — only shipped, working connections appear:</P>
+        <BulletList>
+          <li><B>CSV upload</B> — bring data in via a spreadsheet.</li>
+          <li><B>Calendar sync</B> — lives in <B>Settings</B> (its own section), to sync jobs with your calendar.</li>
+        </BulletList>
+        <InfoBox>There are <B>no accounting or job-source integrations</B> (Xero/MYOB/ServiceM8) to connect here yet — they were removed rather than shown as empty &ldquo;coming soon&rdquo; cards. To get data into Xero today, use the <B>Export → For Xero</B> on the Invoices screen (section 7).</InfoBox>
       </SectionCard>
 
-      {/* ─── 11. REPORTS & ACTIVITY ─── */}
-      <SectionCard id="reports" title="11. Reports & Activity">
-        <SubSection title="Reports">
-          <P>Side menu → <B>Reports</B>. Totals and breakdowns over a period — billed vs paid, by member, for reconciliation and tax time.</P>
-        </SubSection>
-        <SubSection title="Activity log">
-          <P>Side menu → <B>Activity</B>. An audit timeline of what happened in your workspace (invites, covers, payments, edits) — useful for accountability and disputes.</P>
-        </SubSection>
+      {/* ─── 11. REPORTS ─── */}
+      <SectionCard id="reports" title="11. Reports">
+        <P>Side menu → <B>Reports</B>. Numbers for reconciliation and tax time.</P>
+        <BulletList>
+          <li><B>BAS — quarterly</B> — Australian fiscal year (Jul→Jun); the columns map directly to the ATO portal fields. Exports to CSV.</li>
+          <li><B>Money in &amp; out (P&amp;L)</B> — a profit-and-loss summary; default range is the current fiscal year, adjustable to drill down.</li>
+          <li><B>Exports &amp; integrations</B> — a quick guide to the Xero / CSV / ABA exports (which live on the Invoices screen).</li>
+        </BulletList>
       </SectionCard>
 
       {/* ─── 12. SETTINGS ─── */}
       <SectionCard id="settings" title="12. Settings">
         <BulletList>
-          <li><B>Organisation profile</B> — name, ABN, logo.</li>
-          <li><B>Billing email</B> — where ABN holders&rsquo; invoices are delivered (keep it current — bounces happen if it&rsquo;s wrong).</li>
-          <li><B>Notification preferences</B> — what you get emailed/pushed about.</li>
-          <li><B>Theme</B> — light/dark.</li>
+          <li><B>Organisation</B> — name, ABN, default hourly rate and billing period.</li>
+          <li><B>Inbox email</B> — where ABN holders&rsquo; invoices are delivered (keep it current — wrong/blocked addresses show as &ldquo;Not delivered&rdquo; in the Inbox).</li>
+          <li><B>Notifications</B> — choose what you get emailed / pushed about.</li>
+          <li><B>Calendar feeds</B> — connect a calendar to sync jobs.</li>
         </BulletList>
-        <Tip>Tip: the whole portal has a <B>⌘K command palette</B> — press it to jump to any screen or action fast.</Tip>
+        <Tip>Remember <B>⌘K</B> — the command palette searches your invoices and jumps to any screen or action instantly.</Tip>
       </SectionCard>
 
       {/* ─── 13. FAQ ─── */}
@@ -214,11 +200,11 @@ export default function BusinessGuideContentEn({ SectionCard, SubSection, StepLi
         <div className="space-y-2">
           <FaqItem q="Do I create invoices in the portal?" a="No. Each ABN holder issues their own invoice in the Ozly app and sends it to you — you receive, track and pay. They are the legal issuer; you stay a record-keeper, not an employer." />
           <FaqItem q="Does covering someone make them my employee?" a="No. Covering only pays for their Ozly ABN access. They remain independent under their own ABN. Your Fair Work, super, payroll-tax and workers&rsquo;-comp obligations are unchanged — Ozly helps you document, not avoid, them." />
-          <FaqItem q="Someone is &lsquo;already covered by another company&rsquo; — why?" a="Only one organisation can cover a person&rsquo;s Ozly access at a time (single-sponsor). They can switch sponsors from the app; the previous org keeps a 7-day grace." />
-          <FaqItem q="What happens to covered people if I cancel?" a="They get a 7-day grace window plus a notification, so they can keep access by subscribing themselves before it lapses." />
-          <FaqItem q="How do I actually pay everyone?" a="Mark invoices paid as you pay them, or bulk-select and export an ABA file to upload to your bank to pay the batch at once." />
-          <FaqItem q="An invoice shows &lsquo;Bounced&rsquo; in Deliveries." a="Your billing email is wrong or blocked. Fix it in Settings, then the ABN holder can re-send from their app." />
-          <FaqItem q="Is there a free trial?" a="Yes — 14 days for new organisations. After that your plan auto-renews unless you cancel before it ends." />
+          <FaqItem q="How do I get invoices into my accounting software?" a="On the Invoices screen, use Export ▾ → For Xero (imports as Bills in Xero) or As CSV for a spreadsheet. There is no MYOB export yet — use CSV for other software." />
+          <FaqItem q="How do I actually pay everyone?" a="Mark invoices paid as you pay them, or Select rows on the Invoices screen, pick the unpaid ones, Generate an ABA file, and upload it to your bank to pay the batch at once." />
+          <FaqItem q="An invoice shows &lsquo;Not delivered&rsquo; in the Inbox." a="The email bounced — your Inbox email is wrong or blocked. Fix it in Settings, then the ABN holder can resend from their app." />
+          <FaqItem q="Is there a free trial?" a="Yes — 14 days for new organisations. After that your plan auto-renews unless you cancel before it ends, and your tier follows how many people you cover." />
+          <FaqItem q="Can I connect ServiceM8 / Xero / MYOB?" a="Not as live integrations yet. Today the portal ships CSV upload and calendar sync; for Xero, use the Export → For Xero on Invoices. We&rsquo;d rather ship working exports than empty &lsquo;coming soon&rsquo; buttons." />
         </div>
       </SectionCard>
     </>

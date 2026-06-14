@@ -129,6 +129,7 @@
   "businessGuide": {
     "title": "Ozly for Business — Portal Guide",
     "subtitle": "Everything an owner or admin needs to run Ozly for Business — invite the ABN holders you work with, cover their plan, receive invoices and pay. Step by step.",
+    "cta": "Create your free workspace",
     "tocSections": [
       { "id": "overview", "label": "1. What it is" },
       { "id": "workspace", "label": "2. Create workspace" },
@@ -155,6 +156,7 @@
     "contactButton": "Send Email",
     "backToTop": "Back to top",
     "tipLabel": "Tip:",
+    "cta": "Download Ozly",
     "tocSections": [
       {
         "id": "primeiros-passos",

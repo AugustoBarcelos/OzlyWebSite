@@ -265,7 +265,7 @@ export const content = {
         <li><strong>Members:</strong> invite the ABN holders you work with and read compliance badges.</li>
         <li><strong>Cover a plan:</strong> sponsor an ABN holder's Ozly access so they bill you for free.</li>
         <li><strong>Inbox &amp; deliveries:</strong> receive invoices and track delivery status.</li>
-        <li><strong>Invoices:</strong> mark paid and export an ABA bank file or Xero/MYOB CSV.</li>
+        <li><strong>Invoices:</strong> mark paid and export For Xero, As CSV, or an ABA bank file.</li>
         <li><strong>Billing:</strong> Crew/Squad/Fleet/Operation tiers, seats, trial and the Stripe portal.</li>
         <li><strong>Integrations, Reports, Activity and Settings.</strong></li>
       </ul>
@@ -284,7 +284,7 @@ export const content = {
         <li><strong>Members:</strong> convidar os ABN holders e ler os selos de compliance.</li>
         <li><strong>Cobrir um plano:</strong> custear o acesso Ozly de um ABN holder pra ele te faturar de graça.</li>
         <li><strong>Inbox e entregas:</strong> receber invoices e acompanhar o status de entrega.</li>
-        <li><strong>Invoices:</strong> marcar como paga e exportar arquivo ABA ou CSV pro Xero/MYOB.</li>
+        <li><strong>Invoices:</strong> marcar como paga e exportar For Xero, As CSV ou arquivo ABA.</li>
         <li><strong>Billing:</strong> planos Crew/Squad/Fleet/Operation, seats, trial e o portal Stripe.</li>
         <li><strong>Integrações, Relatórios, Atividade e Configurações.</strong></li>
       </ul>
@@ -303,7 +303,7 @@ export const content = {
         <li><strong>Members:</strong> invitar a los ABN holders y leer los sellos de compliance.</li>
         <li><strong>Cubrir un plan:</strong> costear el acceso Ozly de un ABN holder para que te facture gratis.</li>
         <li><strong>Inbox y entregas:</strong> recibir invoices y seguir el estado de entrega.</li>
-        <li><strong>Invoices:</strong> marcar como pagada y exportar archivo ABA o CSV para Xero/MYOB.</li>
+        <li><strong>Invoices:</strong> marcar como pagada y exportar For Xero, As CSV o archivo ABA.</li>
         <li><strong>Billing:</strong> planes Crew/Squad/Fleet/Operation, seats, trial y el portal Stripe.</li>
         <li><strong>Integraciones, Reportes, Actividad y Configuración.</strong></li>
       </ul>

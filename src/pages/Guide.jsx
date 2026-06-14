@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, ChevronDown, ChevronUp, Mail, Menu, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Mail, Menu, X } from "lucide-react";
 import { useI18n, useLangPath, useSeoMeta } from "../i18n";
 import GuideContentPt from "./GuideContentPt";
 import GuideContentEn from "./GuideContentEn";
@@ -112,6 +112,9 @@ export default function Guide({ variant = "app" }) {
   const lp = useLangPath();
   useSeoMeta("guide");
   const isBiz = variant === "business";
+  const ctaLabel = isBiz ? t.businessGuide.cta : t.guide.cta;
+  const ctaHref = isBiz ? "https://app.ozly.au/signup" : `${lp("/")}#download`;
+  const ctaProps = isBiz ? { target: "_blank", rel: "noopener noreferrer" } : {};
 
   // Wrap Tip so content components don't need to pass the label
   const TipWithLabel = ({ children }) => <Tip label={t.guide.tipLabel}>{children}</Tip>;
@@ -162,6 +165,13 @@ export default function Guide({ variant = "app" }) {
         <div className="text-center mb-12">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-navy-700 mb-4">{isBiz ? t.businessGuide.title : t.guide.title}</h1>
           <p className="text-slate-500 max-w-2xl mx-auto text-lg">{isBiz ? t.businessGuide.subtitle : t.guide.subtitle}</p>
+          <a
+            href={ctaHref}
+            {...ctaProps}
+            className="mt-6 inline-flex items-center gap-2 rounded-full bg-brand-800 px-6 py-3 text-white font-semibold hover:bg-brand-900 transition shadow-lg shadow-brand-500/30"
+          >
+            {ctaLabel} <ArrowRight size={18} />
+          </a>
         </div>
 
         {/* Mobile ToC toggle */}
@@ -237,6 +247,15 @@ export default function Guide({ variant = "app" }) {
           </button>
         </div>
       </div>
+
+      {/* Always-reachable CTA — easy way to act from anywhere in the guide */}
+      <a
+        href={ctaHref}
+        {...ctaProps}
+        className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full bg-brand-600 px-5 py-3 text-white text-sm font-semibold shadow-xl shadow-brand-900/20 hover:bg-brand-700 transition"
+      >
+        {ctaLabel} <ArrowRight size={16} />
+      </a>
     </div>
   );
 }

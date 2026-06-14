@@ -129,6 +129,7 @@
   "businessGuide": {
     "title": "Ozly para Empresas — Guía del Portal",
     "subtitle": "Todo lo que un dueño o admin necesita para operar Ozly para Empresas — invitar a los ABN holders con los que trabajás, cubrir su plan, recibir invoices y pagar. Paso a paso.",
+    "cta": "Crear tu workspace gratis",
     "tocSections": [
       { "id": "overview", "label": "1. Qué es" },
       { "id": "workspace", "label": "2. Crear workspace" },
@@ -155,6 +156,7 @@
     "contactButton": "Enviar Email",
     "backToTop": "Volver arriba",
     "tipLabel": "Consejo:",
+    "cta": "Descargar Ozly",
     "tocSections": [
       {
         "id": "primeiros-passos",
