@@ -55,6 +55,9 @@ export interface OrgMembership {
   status: MembershipStatus;
   invited_at: string | null;
   accepted_at: string | null;
+  /** End of this participant's 14-day trial (set on first acceptance). After
+   *  it passes, the org must cover them or their invoices stop arriving. */
+  trial_ends_at?: string | null;
   billing_frequency: 'weekly' | 'fortnightly' | 'monthly';
   billing_anchor: string | null;
   /** Per-member override of the org default hourly rate. Null = use org default. */
