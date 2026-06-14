@@ -44,10 +44,30 @@ interface MemberCard {
   adminTags?: string[];
   adminNotes?: string;
   rateOverride?: number | null;
+  /** End of this participant's 14-day trial (accepted members only). */
+  trialEndsAt?: string | null;
   // Only set on pending-invite cards: surface a warning badge when Resend
   // failed (or we never tried, e.g. SMS channel) so the admin doesn't
   // assume an unsent invite was actually delivered.
   deliveryStatus?: 'pending' | 'sent' | 'failed' | 'skipped' | null;
+}
+
+/** Per-participant trial state derived from trial_ends_at + whether they're
+ *  already covered. `covered` participants don't show a trial badge — they're
+ *  paid, the trial is moot. */
+type TrialState =
+  | { kind: 'none' }
+  | { kind: 'active'; daysLeft: number }
+  | { kind: 'expired' };
+
+function trialStateFor(trialEndsAt: string | null | undefined, covered: boolean): TrialState {
+  if (covered || !trialEndsAt) return { kind: 'none' };
+  const ends = new Date(trialEndsAt).getTime();
+  const now = Date.now();
+  if (ends <= now) return { kind: 'expired' };
+  // Math.ceil: with 0–24h left we still want to say "1 day", not "0".
+  const daysLeft = Math.max(1, Math.ceil((ends - now) / (24 * 60 * 60 * 1000)));
+  return { kind: 'active', daysLeft };
 }
 
 export function MembersPage() {
@@ -73,7 +93,7 @@ export function MembersPage() {
     const [{ data: mem }, { data: inv }] = await Promise.all([
       supabase
         .from('org_memberships')
-        .select('id, org_id, user_id, role, status, invited_at, accepted_at, billing_frequency, billing_anchor, auto_invoice_request, admin_tags, admin_notes, rate_override')
+        .select('id, org_id, user_id, role, status, invited_at, accepted_at, trial_ends_at, billing_frequency, billing_anchor, auto_invoice_request, admin_tags, admin_notes, rate_override')
         .eq('org_id', orgId)
         // Live memberships only — drop declined/removed so the count + cards
         // match the rest of the system (dashboard active_subs, admin portal).
@@ -136,6 +156,7 @@ export function MembersPage() {
         adminTags: m.admin_tags ?? [],
         adminNotes: m.admin_notes ?? '',
         rateOverride: m.rate_override ?? null,
+        trialEndsAt: m.trial_ends_at ?? null,
       };
     });
     const pendingCards: MemberCard[] = pending.map((i) => ({
@@ -253,7 +274,10 @@ export function MembersPage() {
           {cards.map((c) => {
             const accepted = c.status === 'accepted' && !!c.userId;
             const pay: PayState = accepted ? payStatus[c.userId!] ?? 'none' : 'none';
-            const dim = accepted && pay === 'none';
+            const trial = accepted ? trialStateFor(c.trialEndsAt, pay !== 'none') : { kind: 'none' as const };
+            // Dim only when the org is neither covering them nor in trial — i.e.
+            // their invoices are actually being blocked.
+            const dim = accepted && pay === 'none' && trial.kind === 'expired';
             return (
               <div
                 key={c.key}
@@ -270,6 +294,22 @@ export function MembersPage() {
                   </div>
                   <div className="flex flex-shrink-0 flex-col items-end gap-1">
                     <MemberStatusBadge status={c.status} />
+                    {trial.kind === 'active' && (
+                      <span
+                        title={`Free trial for this participant — ends in ${trial.daysLeft} day${trial.daysLeft === 1 ? '' : 's'}. After that you'll need to pay for them to keep receiving their invoices.`}
+                        className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-700"
+                      >
+                        Trial · {trial.daysLeft}d left
+                      </span>
+                    )}
+                    {trial.kind === 'expired' && (
+                      <span
+                        title="This participant's trial ended and you're not covering them — their invoices are paused. Pay for them to resume."
+                        className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-700"
+                      >
+                        <span aria-hidden>⚠</span> trial ended
+                      </span>
+                    )}
                     {c.status === 'pending' && c.deliveryStatus === 'failed' && (
                       <span
                         title="Email delivery failed. Copy the invite link and share manually."
@@ -304,7 +344,9 @@ export function MembersPage() {
                           <MixedBillingBadge source={mixedBilling[c.userId]!} />
                         )}
                       </div>
-                      <span className="text-[11px] text-navy-300">Manage →</span>
+                      <span className={`text-[11px] font-medium ${trial.kind === 'expired' ? 'text-rose-600' : 'text-navy-300'}`}>
+                        {trial.kind === 'expired' ? 'Pay to resume →' : 'Manage →'}
+                      </span>
                     </div>
                   </>
                 ) : (
