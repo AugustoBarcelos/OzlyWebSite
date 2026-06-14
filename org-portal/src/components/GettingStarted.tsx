@@ -33,8 +33,11 @@ export function GettingStarted({ orgId }: { orgId: string }) {
     (async () => {
       const [{ count: memberCount }, { count: acceptedCount }, { count: invoiceCount }, { count: paidCount }] =
         await Promise.all([
-          supabase.from('org_memberships').select('id', { count: 'exact', head: true }).eq('org_id', orgId),
-          supabase.from('org_memberships').select('id', { count: 'exact', head: true }).eq('org_id', orgId).eq('status', 'accepted'),
+          // Exclude the owner: org_create_with_owner inserts the creator as an
+          // accepted `owner` membership, which would otherwise mark steps 1 & 2
+          // done on a brand-new org. These steps are about INVITED people.
+          supabase.from('org_memberships').select('id', { count: 'exact', head: true }).eq('org_id', orgId).neq('role', 'owner'),
+          supabase.from('org_memberships').select('id', { count: 'exact', head: true }).eq('org_id', orgId).eq('status', 'accepted').neq('role', 'owner'),
           supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('org_visible_id', orgId),
           supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('org_visible_id', orgId).eq('status', 'paid'),
         ]);

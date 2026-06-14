@@ -40,7 +40,7 @@ export function SignupPage() {
         abn: parsed.data.abn ?? '',
         admin_email: parsed.data.email,
       };
-      sessionStorage.setItem(PENDING_ORG_KEY, JSON.stringify(pending));
+      localStorage.setItem(PENDING_ORG_KEY, JSON.stringify(pending));
 
       const { hasSession, alreadyRegistered } = await signUpWithPassword(
         parsed.data.email,
@@ -49,7 +49,7 @@ export function SignupPage() {
       if (alreadyRegistered) {
         // No email was sent — the account exists. Don't show the (false)
         // "confirm your email" screen; send them to sign in instead.
-        sessionStorage.removeItem(PENDING_ORG_KEY);
+        localStorage.removeItem(PENDING_ORG_KEY);
         setError('That email is already in use. Try signing in.');
         setSubmitting(false);
       } else if (hasSession) {
@@ -59,7 +59,7 @@ export function SignupPage() {
         setSubmitting(false);
       }
     } catch (err) {
-      sessionStorage.removeItem(PENDING_ORG_KEY);
+      localStorage.removeItem(PENDING_ORG_KEY);
       setError(err instanceof Error ? err.message : 'Something went wrong');
       setSubmitting(false);
     }
