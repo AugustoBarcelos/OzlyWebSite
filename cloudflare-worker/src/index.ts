@@ -24,6 +24,7 @@ interface Env {
   // Blog AI-authoring:
   AI: { run: (model: string, inputs: unknown) => Promise<unknown> }; // Workers AI binding (free tier)
   GITHUB_TOKEN: string; // fine-grained PAT, repo Contents: Read and write (wrangler secret)
+  TAVILY_API_KEY?: string; // optional — web search for the fact-check (wrangler secret)
 }
 
 const GITHUB_REPO = "AugustoBarcelos/OzlyWebSite";
@@ -518,17 +519,50 @@ function parseReview(raw: unknown): ReviewLang {
   return { verdict, findings };
 }
 
-async function aiReviewLang(tr: GenLang, code: 'en' | 'pt' | 'es', env: Env): Promise<ReviewLang> {
+// Web search (Tavily) → authoritative current context for the fact-check.
+// Returns '' if no key is set, so review still works (ungrounded) without it.
+async function webContext(query: string, env: Env): Promise<string> {
+  if (!env.TAVILY_API_KEY) return '';
+  try {
+    const res = await fetch('https://api.tavily.com/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        api_key: env.TAVILY_API_KEY,
+        query,
+        search_depth: 'basic',
+        max_results: 5,
+        include_answer: true,
+        include_domains: ['ato.gov.au', 'immi.homeaffairs.gov.au', 'abr.gov.au', 'business.gov.au'],
+      }),
+    });
+    if (!res.ok) return '';
+    const data = (await res.json()) as { answer?: string; results?: Array<{ title?: string; url?: string; content?: string }> };
+    const parts: string[] = [];
+    if (data.answer) parts.push(`Summary: ${data.answer}`);
+    for (const r of (data.results ?? []).slice(0, 5)) {
+      parts.push(`[${r.title ?? ''}] ${r.url ?? ''}\n${(r.content ?? '').slice(0, 600)}`);
+    }
+    return parts.join('\n\n').slice(0, 4000);
+  } catch {
+    return '';
+  }
+}
+
+async function aiReviewLang(tr: GenLang, code: 'en' | 'pt' | 'es', env: Env, context: string): Promise<ReviewLang> {
   const langName = LANG_NAMES[code];
+  const grounding = context
+    ? `\n\nAUTHORITATIVE WEB CONTEXT (from ato.gov.au / Home Affairs — treat as current truth; compare the draft's numbers and rules against it and flag mismatches):\n${context}\n`
+    : '';
   const system = `You are a meticulous editor AND an Australian tax/visa fact-checker for Ozly's blog. Review the draft below (written in ${langName}) and list problems a human MUST fix before publishing.
 
 Check for:
 - GRAMMAR / spelling / clarity / awkward phrasing.
-- TAX & VISA ACCURACY: flag every rate, threshold, number or rule that must be verified against the ATO/Home Affairs. Call out anything that looks outdated or wrong for the 2025–26 year (e.g. an old marginal rate like 32.5%, a wrong tax-free threshold, a wrong student-visa hour limit). Quote the exact text.
+- TAX & VISA ACCURACY: flag every rate, threshold, number or rule. ${context ? 'Use the WEB CONTEXT below as the source of truth — if the draft disagrees with it, flag HIGH and give the correct value.' : 'Flag anything that looks outdated or wrong for 2025–26 (e.g. an old marginal rate like 32.5%, a wrong tax-free threshold, a wrong student-visa hour limit).'} Quote the exact text.
 - MISSING SOURCES: a factual claim with no official ATO/Home Affairs link.
-- BRAND/CTA: missing app download CTA or missing "not tax advice" disclaimer.
+- BRAND/CTA: missing app download CTA or missing "not an accountant / not tax advice" disclaimer.
 
-Be specific and quote the offending text. Severity HIGH = wrong/risky fact; MED = should fix; LOW = minor.
+Be specific and quote the offending text. Severity HIGH = wrong/risky fact; MED = should fix; LOW = minor.${grounding}
 
 Output EXACTLY this, copied literally:
 @@@VERDICT@@@
@@ -551,8 +585,11 @@ PASS or NEEDS_WORK
 
 async function reviewPost(body: PublishBody, env: Env): Promise<Record<string, ReviewLang>> {
   const codes = (['en', 'pt', 'es'] as const).filter((c) => body[c] && body[c]!.title);
+  // One web search (in English — ATO content is English), reused for all langs.
+  const seed = body.en?.title || body.pt?.title || body.es?.title || '';
+  const context = await webContext(`${seed} Australia ATO 2025-26 tax rules`, env);
   const entries = await Promise.all(
-    codes.map((c) => aiReviewLang(body[c] as GenLang, c, env).then((r) => [c, r] as const)),
+    codes.map((c) => aiReviewLang(body[c] as GenLang, c, env, context).then((r) => [c, r] as const)),
   );
   return Object.fromEntries(entries);
 }
