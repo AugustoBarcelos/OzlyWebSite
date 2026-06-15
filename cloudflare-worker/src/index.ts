@@ -220,7 +220,7 @@ function corsHeaders(): Record<string, string> {
   return {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, x-admin-key',
+    'Access-Control-Allow-Headers': 'Content-Type, x-admin-key, Authorization',
   };
 }
 
@@ -239,9 +239,34 @@ function safeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
-function authed(request: Request, env: Env): boolean {
+// Two ways in: the standalone /admin password (x-admin-key), OR a logged-in
+// admin-portal session (Authorization: Bearer <supabase access token>). The
+// token is validated AND checked for admin via the team_my_grants RPC — same
+// gate the portal uses — so no separate password is needed from the portal.
+async function authed(request: Request, env: Env): Promise<boolean> {
   const key = request.headers.get('x-admin-key') ?? '';
-  return Boolean(env.ADMIN_PASSWORD) && safeEqual(key, env.ADMIN_PASSWORD);
+  if (env.ADMIN_PASSWORD && key && safeEqual(key, env.ADMIN_PASSWORD)) return true;
+
+  const auth = request.headers.get('Authorization') ?? '';
+  if (!auth.startsWith('Bearer ')) return false;
+  const token = auth.slice(7).trim();
+  if (!token) return false;
+  try {
+    const res = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/team_my_grants`, {
+      method: 'POST',
+      headers: {
+        apikey: env.SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: '{}',
+    });
+    if (!res.ok) return false;
+    const g = (await res.json()) as { authenticated?: boolean; is_admin?: boolean };
+    return Boolean(g?.is_admin);
+  } catch {
+    return false;
+  }
 }
 
 async function handleAdminApi(request: Request, env: Env, url: URL): Promise<Response> {
@@ -260,8 +285,8 @@ async function handleAdminApi(request: Request, env: Env, url: URL): Promise<Res
     return json({ ok: false, error: 'Wrong password' }, 401);
   }
 
-  // Everything below requires the admin key.
-  if (!authed(request, env)) return json({ error: 'Unauthorized' }, 401);
+  // Everything below requires admin auth (password or portal session).
+  if (!(await authed(request, env))) return json({ error: 'Unauthorized' }, 401);
 
   if (path === '/admin/api/topics' && request.method === 'GET') {
     const done = await listExistingSlugs(env);
@@ -276,6 +301,18 @@ async function handleAdminApi(request: Request, env: Env, url: URL): Promise<Res
       return json(post);
     } catch (e) {
       return json({ error: `Generation failed: ${(e as Error).message}` }, 502);
+    }
+  }
+
+  // Fact-check / editorial review of a draft (grammar + ATO accuracy flags +
+  // suggestions) before publishing. Returns findings per language.
+  if (path === '/admin/api/review' && request.method === 'POST') {
+    const body = (await request.json().catch(() => ({}))) as PublishBody;
+    if (!body.en && !body.pt && !body.es) return json({ error: 'Nothing to review' }, 400);
+    try {
+      return json(await reviewPost(body, env));
+    } catch (e) {
+      return json({ error: `Review failed: ${(e as Error).message}` }, 502);
     }
   }
 
@@ -405,6 +442,72 @@ async function generatePost(topic: string, slug: string | undefined, env: Env): 
     aiGenerateLang(topic, 'es', env),
   ]);
   return { slug: slug ? slugify(slug) : slugify(en.title), en, pt, es };
+}
+
+/* ── Fact-check / editorial review (a second AI pass) ── */
+type Severity = 'HIGH' | 'MED' | 'LOW';
+interface Finding { severity: Severity; text: string }
+interface ReviewLang { verdict: 'PASS' | 'NEEDS_WORK'; findings: Finding[] }
+
+function parseReview(raw: unknown): ReviewLang {
+  const text = String(raw ?? '');
+  const verdictRaw = section(text, 'VERDICT');
+  const verdict: ReviewLang['verdict'] =
+    /pass/i.test(verdictRaw) && !/needs/i.test(verdictRaw) ? 'PASS' : 'NEEDS_WORK';
+  const block = section(text, 'FINDINGS');
+  const findings: Finding[] = block
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((l) => l && !/^none\.?$/i.test(l))
+    .map((line) => {
+      const m = line.match(/^[-*]?\s*\[?(HIGH|MED(?:IUM)?|LOW)\]?\s*[:\-]?\s*(.+)$/i);
+      if (m) {
+        const sev = m[1].toUpperCase().startsWith('MED') ? 'MED' : (m[1].toUpperCase() as Severity);
+        return { severity: sev, text: m[2].trim() };
+      }
+      return { severity: 'MED' as Severity, text: line.replace(/^[-*]\s*/, '') };
+    })
+    .filter((f) => f.text.length > 1);
+  return { verdict, findings };
+}
+
+async function aiReviewLang(tr: GenLang, code: 'en' | 'pt' | 'es', env: Env): Promise<ReviewLang> {
+  const langName = LANG_NAMES[code];
+  const system = `You are a meticulous editor AND an Australian tax/visa fact-checker for Ozly's blog. Review the draft below (written in ${langName}) and list problems a human MUST fix before publishing.
+
+Check for:
+- GRAMMAR / spelling / clarity / awkward phrasing.
+- TAX & VISA ACCURACY: flag every rate, threshold, number or rule that must be verified against the ATO/Home Affairs. Call out anything that looks outdated or wrong for the 2025–26 year (e.g. an old marginal rate like 32.5%, a wrong tax-free threshold, a wrong student-visa hour limit). Quote the exact text.
+- MISSING SOURCES: a factual claim with no official ATO/Home Affairs link.
+- BRAND/CTA: missing app download CTA or missing "not tax advice" disclaimer.
+
+Be specific and quote the offending text. Severity HIGH = wrong/risky fact; MED = should fix; LOW = minor.
+
+Output EXACTLY this, copied literally:
+@@@VERDICT@@@
+PASS or NEEDS_WORK
+@@@FINDINGS@@@
+[HIGH] one problem per line
+[MED] ...
+(write "none" if there are genuinely no problems)`;
+
+  const user = `TITLE: ${tr.title}\nDESCRIPTION: ${tr.description}\n\nBODY:\n${tr.body}`;
+  const result = (await env.AI.run(AI_MODEL, {
+    max_tokens: 1500,
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: user },
+    ],
+  })) as { response?: unknown };
+  return parseReview(result.response ?? result);
+}
+
+async function reviewPost(body: PublishBody, env: Env): Promise<Record<string, ReviewLang>> {
+  const codes = (['en', 'pt', 'es'] as const).filter((c) => body[c] && body[c]!.title);
+  const entries = await Promise.all(
+    codes.map((c) => aiReviewLang(body[c] as GenLang, c, env).then((r) => [c, r] as const)),
+  );
+  return Object.fromEntries(entries);
 }
 
 /* ── Publish: commit content/blog/<lang>/<slug>.md for each language ── */
