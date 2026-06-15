@@ -49,7 +49,7 @@ export const content = {
 
       <h2>Get started with Ozly in 2 minutes</h2>
       <p>Install Ozly on your phone, sign up with Apple, Google, or email, add your ABN, and send your first invoice before the kettle boils. No credit card required, no demo call, no trial timer.</p>
-      <p><a href="https://apps.apple.com/app/ozly/id6760398649">Download Ozly on the App Store</a> · <a href="https://play.google.com/store/apps/details?id=com.augusto.ozly">Get Ozly on Google Play</a></p>
+      <p><a href="https://apps.apple.com/au/app/ozly/id6760398649">Download Ozly on the App Store</a> · <a href="https://play.google.com/store/apps/details?id=com.augusto.ozly">Get Ozly on Google Play</a></p>
       <p>Need more detail? Read the full <a href="/guide/">Ozly user guide</a>, browse the <a href="/support/">Support &amp; FAQ</a>, or review our <a href="/privacy-policy/">Privacy Policy</a> and <a href="/terms-of-use/">Terms of Use</a>.</p>
       `,
     },

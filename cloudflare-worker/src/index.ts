@@ -220,7 +220,7 @@ function corsHeaders(): Record<string, string> {
   return {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, x-admin-key',
+    'Access-Control-Allow-Headers': 'Content-Type, x-admin-key, Authorization',
   };
 }
 
@@ -239,9 +239,34 @@ function safeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
-function authed(request: Request, env: Env): boolean {
+// Two ways in: the standalone /admin password (x-admin-key), OR a logged-in
+// admin-portal session (Authorization: Bearer <supabase access token>). The
+// token is validated AND checked for admin via the team_my_grants RPC — same
+// gate the portal uses — so no separate password is needed from the portal.
+async function authed(request: Request, env: Env): Promise<boolean> {
   const key = request.headers.get('x-admin-key') ?? '';
-  return Boolean(env.ADMIN_PASSWORD) && safeEqual(key, env.ADMIN_PASSWORD);
+  if (env.ADMIN_PASSWORD && key && safeEqual(key, env.ADMIN_PASSWORD)) return true;
+
+  const auth = request.headers.get('Authorization') ?? '';
+  if (!auth.startsWith('Bearer ')) return false;
+  const token = auth.slice(7).trim();
+  if (!token) return false;
+  try {
+    const res = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/team_my_grants`, {
+      method: 'POST',
+      headers: {
+        apikey: env.SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: '{}',
+    });
+    if (!res.ok) return false;
+    const g = (await res.json()) as { authenticated?: boolean; is_admin?: boolean };
+    return Boolean(g?.is_admin);
+  } catch {
+    return false;
+  }
 }
 
 async function handleAdminApi(request: Request, env: Env, url: URL): Promise<Response> {
@@ -260,8 +285,8 @@ async function handleAdminApi(request: Request, env: Env, url: URL): Promise<Res
     return json({ ok: false, error: 'Wrong password' }, 401);
   }
 
-  // Everything below requires the admin key.
-  if (!authed(request, env)) return json({ error: 'Unauthorized' }, 401);
+  // Everything below requires admin auth (password or portal session).
+  if (!(await authed(request, env))) return json({ error: 'Unauthorized' }, 401);
 
   if (path === '/admin/api/topics' && request.method === 'GET') {
     const done = await listExistingSlugs(env);
@@ -276,6 +301,18 @@ async function handleAdminApi(request: Request, env: Env, url: URL): Promise<Res
       return json(post);
     } catch (e) {
       return json({ error: `Generation failed: ${(e as Error).message}` }, 502);
+    }
+  }
+
+  // Fact-check / editorial review of a draft (grammar + ATO accuracy flags +
+  // suggestions) before publishing. Returns findings per language.
+  if (path === '/admin/api/review' && request.method === 'POST') {
+    const body = (await request.json().catch(() => ({}))) as PublishBody;
+    if (!body.en && !body.pt && !body.es) return json({ error: 'Nothing to review' }, 400);
+    try {
+      return json(await reviewPost(body, env));
+    } catch (e) {
+      return json({ error: `Review failed: ${(e as Error).message}` }, 502);
     }
   }
 
@@ -328,15 +365,33 @@ function slugify(s: string): string {
     .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'untitled';
 }
 
-// Workers AI may return a parsed object or a JSON string with surrounding
-// prose; pull the first {...} and parse defensively.
-function parseLoose(raw: unknown): GenLang {
+// We ask the model for a delimited format (not JSON) because markdown bodies
+// have newlines/quotes that LLMs routinely fail to escape in JSON. Markers use
+// @@@ (not ###, which models treat as markdown headings).
+function section(text: string, name: string): string {
+  const re = new RegExp(`@@@${name}@@@\\s*([\\s\\S]*?)\\s*(?=@@@[A-Z]+@@@|$)`, 'i');
+  const m = text.match(re);
+  return m ? m[1].trim() : '';
+}
+
+function parseDelimited(raw: unknown): GenLang {
   if (raw && typeof raw === 'object' && 'title' in (raw as object)) return raw as GenLang;
-  const text = String(raw ?? '');
-  const start = text.indexOf('{');
-  const end = text.lastIndexOf('}');
-  if (start === -1 || end === -1) throw new Error('AI returned no JSON');
-  return JSON.parse(text.slice(start, end + 1)) as GenLang;
+  const text = String(raw ?? '').trim();
+  let title = section(text, 'TITLE');
+  let description = section(text, 'DESC') || section(text, 'DESCRIPTION');
+  let body = section(text, 'BODY');
+
+  // Salvage: model ignored the markers. Take the first usable line as the
+  // title and the rest as the body — a human reviews/edits anyway.
+  if (!title || !body) {
+    const lines = text.split('\n').map((l) => l.replace(/^#+\s*/, '').trim());
+    const idx = lines.findIndex((l) => l.length > 0);
+    if (idx === -1) throw new Error('AI returned empty output — try again');
+    title = title || lines[idx].slice(0, 80);
+    body = body || lines.slice(idx + 1).join('\n').trim() || lines[idx];
+  }
+  if (!description) description = body.replace(/[#*>`\-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 155);
+  return { title, description, body };
 }
 
 async function aiGenerateLang(topic: string, code: 'en' | 'pt' | 'es', env: Env): Promise<GenLang> {
@@ -350,44 +405,109 @@ Rules (follow strictly):
 2. Be specific to the audience (e.g. "cleaner with an ABN"), never generic.
 3. Include ONE line of real, lived experience ("the #1 thing we see in the app is…").
 4. For any tax/visa fact, add an inline markdown link to the official source: ATO https://www.ato.gov.au/ or Home Affairs https://immi.homeaffairs.gov.au/ .
-5. End with a CTA tied to the pain, linking the app: App Store https://apps.apple.com/app/ozly/id6760398649 and Google Play https://play.google.com/store/apps/details?id=com.augusto.ozly .
+5. End with a CTA tied to the pain, linking the app: App Store https://apps.apple.com/au/app/ozly/id6760398649 and Google Play https://play.google.com/store/apps/details?id=com.augusto.ozly .
 6. Close with a one-line disclaimer: general info, not tax advice, verify with the ATO / a registered agent.
 7. Numbers must be correct for the 2025–26 year and phrased so a human can verify them. A human reviews before publishing.
 
 Body = GitHub-flavoured Markdown (## headings, tables, **bold**, lists, > quotes). Do NOT put the H1 title in the body. 600–900 words.
 
-Return ONLY a JSON object, no other text:
-{"title": "<=70 chars, include the year if relevant", "description": "<=160 chars meta/excerpt", "body": "the markdown body"}`;
+Output using these exact separator lines, copied literally character-for-character. Do NOT replace them with markdown headings:
+@@@TITLE@@@
+(title here, <=70 chars, include the year if relevant)
+@@@DESC@@@
+(meta description here, <=160 chars)
+@@@BODY@@@
+(the markdown body here)`;
 
+  // No response_format / json_schema: some Workers AI models stall on it. We
+  // ask for JSON in the prompt and parse defensively. 2048 tokens is plenty for
+  // a ~700-word post and keeps each call fast.
   const result = (await env.AI.run(AI_MODEL, {
-    max_tokens: 4096,
+    max_tokens: 2048,
     messages: [
       { role: 'system', content: system },
-      { role: 'user', content: `Topic: ${topic}\n\nWrite the post in ${langName} now. Output JSON only.` },
+      { role: 'user', content: `Topic: ${topic}\n\nWrite the post in ${langName} now. Output ONLY the ###-delimited format, nothing else.` },
     ],
-    response_format: {
-      type: 'json_schema',
-      json_schema: {
-        type: 'object',
-        properties: {
-          title: { type: 'string' },
-          description: { type: 'string' },
-          body: { type: 'string' },
-        },
-        required: ['title', 'description', 'body'],
-      },
-    },
   })) as { response?: unknown };
 
-  return parseLoose(result.response ?? result);
+  return parseDelimited(result.response ?? result);
 }
 
 async function generatePost(topic: string, slug: string | undefined, env: Env): Promise<GenResult> {
-  // Sequential (not parallel) to stay gentle on the free Workers AI quota.
-  const en = await aiGenerateLang(topic, 'en', env);
-  const pt = await aiGenerateLang(topic, 'pt', env);
-  const es = await aiGenerateLang(topic, 'es', env);
+  // Parallel — the 3 languages run at once so we stay under the Worker time
+  // limit (sequential 70B calls overran it and left the request hanging).
+  const [en, pt, es] = await Promise.all([
+    aiGenerateLang(topic, 'en', env),
+    aiGenerateLang(topic, 'pt', env),
+    aiGenerateLang(topic, 'es', env),
+  ]);
   return { slug: slug ? slugify(slug) : slugify(en.title), en, pt, es };
+}
+
+/* ── Fact-check / editorial review (a second AI pass) ── */
+type Severity = 'HIGH' | 'MED' | 'LOW';
+interface Finding { severity: Severity; text: string }
+interface ReviewLang { verdict: 'PASS' | 'NEEDS_WORK'; findings: Finding[] }
+
+function parseReview(raw: unknown): ReviewLang {
+  const text = String(raw ?? '');
+  const verdictRaw = section(text, 'VERDICT');
+  const verdict: ReviewLang['verdict'] =
+    /pass/i.test(verdictRaw) && !/needs/i.test(verdictRaw) ? 'PASS' : 'NEEDS_WORK';
+  const block = section(text, 'FINDINGS');
+  const findings: Finding[] = block
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((l) => l && !/^none\.?$/i.test(l))
+    .map((line) => {
+      const m = line.match(/^[-*]?\s*\[?(HIGH|MED(?:IUM)?|LOW)\]?\s*[:\-]?\s*(.+)$/i);
+      if (m) {
+        const sev = m[1].toUpperCase().startsWith('MED') ? 'MED' : (m[1].toUpperCase() as Severity);
+        return { severity: sev, text: m[2].trim() };
+      }
+      return { severity: 'MED' as Severity, text: line.replace(/^[-*]\s*/, '') };
+    })
+    .filter((f) => f.text.length > 1);
+  return { verdict, findings };
+}
+
+async function aiReviewLang(tr: GenLang, code: 'en' | 'pt' | 'es', env: Env): Promise<ReviewLang> {
+  const langName = LANG_NAMES[code];
+  const system = `You are a meticulous editor AND an Australian tax/visa fact-checker for Ozly's blog. Review the draft below (written in ${langName}) and list problems a human MUST fix before publishing.
+
+Check for:
+- GRAMMAR / spelling / clarity / awkward phrasing.
+- TAX & VISA ACCURACY: flag every rate, threshold, number or rule that must be verified against the ATO/Home Affairs. Call out anything that looks outdated or wrong for the 2025–26 year (e.g. an old marginal rate like 32.5%, a wrong tax-free threshold, a wrong student-visa hour limit). Quote the exact text.
+- MISSING SOURCES: a factual claim with no official ATO/Home Affairs link.
+- BRAND/CTA: missing app download CTA or missing "not tax advice" disclaimer.
+
+Be specific and quote the offending text. Severity HIGH = wrong/risky fact; MED = should fix; LOW = minor.
+
+Output EXACTLY this, copied literally:
+@@@VERDICT@@@
+PASS or NEEDS_WORK
+@@@FINDINGS@@@
+[HIGH] one problem per line
+[MED] ...
+(write "none" if there are genuinely no problems)`;
+
+  const user = `TITLE: ${tr.title}\nDESCRIPTION: ${tr.description}\n\nBODY:\n${tr.body}`;
+  const result = (await env.AI.run(AI_MODEL, {
+    max_tokens: 1500,
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: user },
+    ],
+  })) as { response?: unknown };
+  return parseReview(result.response ?? result);
+}
+
+async function reviewPost(body: PublishBody, env: Env): Promise<Record<string, ReviewLang>> {
+  const codes = (['en', 'pt', 'es'] as const).filter((c) => body[c] && body[c]!.title);
+  const entries = await Promise.all(
+    codes.map((c) => aiReviewLang(body[c] as GenLang, c, env).then((r) => [c, r] as const)),
+  );
+  return Object.fromEntries(entries);
 }
 
 /* ── Publish: commit content/blog/<lang>/<slug>.md for each language ── */

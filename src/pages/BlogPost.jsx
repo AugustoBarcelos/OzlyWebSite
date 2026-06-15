@@ -2,9 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Clock } from "lucide-react";
 import { useI18n, useLangPath } from "../i18n";
-
-const APP_STORE = "https://apps.apple.com/app/ozly/id6760398649";
-const PLAY_STORE = "https://play.google.com/store/apps/details?id=com.augusto.ozly";
+import { appStoreUrl, playStoreUrl, trackStoreClick, APP_STORE_BASE, PLAY_STORE_BASE } from "../lib/track";
 
 function formatDate(iso, lang) {
   if (!iso) return "";
@@ -81,6 +79,9 @@ function BlogPostInner({ slug, lang }) {
   const tb = t.blog || {};
   const [post, setPost] = useState(() => readInline(slug, lang));
   const [error, setError] = useState(false);
+  // Per-article campaign → shows up in App Store Connect / Play Console and GA4
+  // so you can see which post drove each install.
+  const campaign = `blog-${slug}`;
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -101,6 +102,29 @@ function BlogPostInner({ slug, lang }) {
       active = false;
     };
   }, [slug, lang]);
+
+  // Attribute store links inside the article body: stamp the campaign onto the
+  // href and fire a GA4 store_click event on tap.
+  useEffect(() => {
+    if (!post) return;
+    const root = document.querySelector(".prose-blog");
+    if (!root) return;
+    const bound = [];
+    root.querySelectorAll("a").forEach((a) => {
+      const href = a.getAttribute("href") || "";
+      let store = null;
+      if (href.startsWith(APP_STORE_BASE)) { a.href = appStoreUrl(campaign); store = "ios"; }
+      else if (href.startsWith(PLAY_STORE_BASE)) { a.href = playStoreUrl(campaign); store = "android"; }
+      if (store) {
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        const fn = () => trackStoreClick(store, campaign, lang);
+        a.addEventListener("click", fn);
+        bound.push([a, fn]);
+      }
+    });
+    return () => bound.forEach(([a, fn]) => a.removeEventListener("click", fn));
+  }, [post, campaign, lang]);
 
   if (error) {
     return (
@@ -186,17 +210,19 @@ function BlogPostInner({ slug, lang }) {
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <a
-              href={APP_STORE}
+              href={appStoreUrl(campaign)}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackStoreClick("ios", campaign, lang)}
               className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-6 py-3 font-bold text-white transition hover:bg-brand-600"
             >
               App Store <ArrowRight size={16} />
             </a>
             <a
-              href={PLAY_STORE}
+              href={playStoreUrl(campaign)}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackStoreClick("android", campaign, lang)}
               className="inline-flex items-center gap-2 rounded-full bg-white/10 px-6 py-3 font-bold text-white transition hover:bg-white/20"
             >
               Google Play <ArrowRight size={16} />

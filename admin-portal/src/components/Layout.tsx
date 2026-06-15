@@ -208,6 +208,7 @@ function useNavGroups(simple: boolean): ReadonlyArray<NavGroup> {
                 { label: 'AI Composer', to: '/marketing/ai-composer' },
                 { label: 'Canais (orgânico)', to: '/marketing/channels' },
                 { label: 'SEO & Site', to: '/marketing/seo' },
+                { label: 'Blog', to: '/marketing/blog' },
                 { label: 'ASO (App Store)', to: '/marketing/aso' },
                 { label: 'Email', to: '/messaging/email' },
                 { label: 'WhatsApp', to: '/messaging/whatsapp' },
@@ -305,6 +306,7 @@ function useNavGroups(simple: boolean): ReadonlyArray<NavGroup> {
           { label: 'Composer', to: '/marketing/composer' },
           { label: 'Posts', to: '/marketing/posts' },
           { label: 'Channels (organic)', to: '/marketing/channels' },
+          { label: 'Blog', to: '/marketing/blog' },
         ],
       });
     }
