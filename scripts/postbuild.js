@@ -23,6 +23,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { content as prerenderContent } from "./seo-content.mjs";
+import { loadPosts } from "./blog-lib.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const dist = join(__dirname, "..", "dist");
@@ -73,6 +74,10 @@ function escapeAttr(s) {
     .replace(/>/g, "&gt;");
 }
 
+function escapeHtml(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
 /* ───────────────────────────── JSON-LD ───────────────────────────── */
 
 const ORGANIZATION_LD = {
@@ -120,47 +125,60 @@ function faqLd(lang, path) {
   return { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: entries };
 }
 
-function jsonLdBlock(lang, path) {
+function jsonLdArray(lang, path) {
   const blocks = [appLd(lang), ORGANIZATION_LD];
   const faq = faqLd(lang, path);
   if (faq) blocks.push(faq);
-  return blocks
-    .map((b) => `    <script type="application/ld+json">\n    ${JSON.stringify(b)}\n    </script>`)
-    .join("\n");
+  return blocks;
 }
 
 /* ──────────────────────────── rendering ──────────────────────────── */
 
 const srcHtml = readFileSync(join(dist, "index.html"), "utf8");
 
-function render(page, lang) {
-  const meta = i18n[lang.code].seo[page.key];
-  const canonical = urlFor(lang.prefix, page.path);
-  const titleAttr = escapeAttr(meta.title);
-  const descAttr = escapeAttr(meta.description);
-  const pre = prerenderContent[page.path][lang.code];
+const NOSCRIPT = {
+  en: "Ozly requires JavaScript. Please enable JavaScript or download the app on iOS or Android.",
+  pt: "O Ozly precisa de JavaScript. Ative o JavaScript ou baixe o app no iOS ou Android.",
+  es: "Ozly necesita JavaScript. Activa JavaScript o descarga la app en iOS o Android.",
+};
 
+/**
+ * Build one index.html from the SPA template, parameterised. Both the
+ * marketing pages and the blog go through here, so the SEO treatment
+ * (hreflang cluster, OG, JSON-LD, async CSS, prerendered <main>) is identical.
+ *
+ * opts:
+ *   htmlLang        - <html lang> value
+ *   title, description
+ *   canonical       - absolute URL with trailing slash
+ *   alternates      - [{ hreflang, href }]  (include x-default yourself)
+ *   ogLocale        - og:locale
+ *   ogAlternates    - [og locale strings] for og:locale:alternate
+ *   jsonLd          - [object]  structured-data blocks
+ *   prerenderInner  - HTML inside <main class="seo-prerender"> (incl. <h1>)
+ *   noscript        - <noscript> text
+ *   inlineData      - { id, json } | null  inline JSON for instant hydration
+ */
+function renderDoc(opts) {
+  const titleAttr = escapeAttr(opts.title);
+  const descAttr = escapeAttr(opts.description);
   let html = srcHtml;
 
   // <html lang> — crawlers take the static value; the SPA only refines it.
-  html = html.replace(/<html lang="[^"]*">/, `<html lang="${lang.html}">`);
-
-  html = html.replace(/<title>[\s\S]*?<\/title>/, `<title>${escapeAttr(meta.title)}</title>`);
+  html = html.replace(/<html lang="[^"]*">/, `<html lang="${opts.htmlLang}">`);
+  html = html.replace(/<title>[\s\S]*?<\/title>/, `<title>${titleAttr}</title>`);
   html = html.replace(
     /<meta name="description"[^>]*>/,
     `<meta name="description" content="${descAttr}" />`
   );
 
-  // Canonical + full hreflang cluster (every variant lists all three +
-  // x-default → EN). Search engines need the cluster on EVERY page.
-  const alternates = LANGS.map(
-    (l) => `<link rel="alternate" hreflang="${l.hreflang}" href="${urlFor(l.prefix, page.path)}" />`
-  )
-    .concat(`<link rel="alternate" hreflang="x-default" href="${urlFor("", page.path)}" />`)
+  // Canonical + full hreflang cluster on EVERY page.
+  const alternates = opts.alternates
+    .map((a) => `<link rel="alternate" hreflang="${a.hreflang}" href="${a.href}" />`)
     .join("\n    ");
   html = html.replace(
     /<link rel="canonical"[^>]*>/,
-    `<link rel="canonical" href="${canonical}" />\n    ${alternates}`
+    `<link rel="canonical" href="${opts.canonical}" />\n    ${alternates}`
   );
 
   html = html.replace(
@@ -173,14 +191,14 @@ function render(page, lang) {
   );
   html = html.replace(
     /<meta property="og:url"[^>]*>/,
-    `<meta property="og:url" content="${canonical}" />`
+    `<meta property="og:url" content="${opts.canonical}" />`
   );
-  const ogAlternates = LANGS.filter((l) => l.code !== lang.code)
-    .map((l) => `<meta property="og:locale:alternate" content="${l.og}" />`)
+  const ogAlternates = opts.ogAlternates
+    .map((og) => `<meta property="og:locale:alternate" content="${og}" />`)
     .join("\n    ");
   html = html.replace(
     /<meta property="og:locale"[^>]*>/,
-    `<meta property="og:locale" content="${lang.og}" />\n    ${ogAlternates}`
+    `<meta property="og:locale" content="${opts.ogLocale}" />${ogAlternates ? "\n    " + ogAlternates : ""}`
   );
   html = html.replace(
     /<meta name="twitter:title"[^>]*>/,
@@ -192,24 +210,28 @@ function render(page, lang) {
   );
 
   // Route + language-specific structured data replaces the generic block.
-  html = html.replace(
-    /<script type="application\/ld\+json">[\s\S]*?<\/script>/,
-    jsonLdBlock(lang.code, page.path).trimStart()
-  );
+  const jsonLdStr = opts.jsonLd
+    .map((b) => `    <script type="application/ld+json">\n    ${JSON.stringify(b)}\n    </script>`)
+    .join("\n")
+    .trimStart();
+  html = html.replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/, jsonLdStr);
 
-  // Rewrite the prerender block with this route's H1 + body
-  const noscript = {
-    en: "Ozly requires JavaScript. Please enable JavaScript or download the app on iOS or Android.",
-    pt: "O Ozly precisa de JavaScript. Ative o JavaScript ou baixe o app no iOS ou Android.",
-    es: "Ozly necesita JavaScript. Activa JavaScript o descarga la app en iOS o Android.",
-  }[lang.code];
-  const prerender = `<main class="seo-prerender"><h1>${pre.h1}</h1>${pre.body}<noscript>${noscript}</noscript></main>`;
+  const prerender = `<main class="seo-prerender">${opts.prerenderInner}<noscript>${opts.noscript}</noscript></main>`;
   html = html.replace(/<main class="seo-prerender">[\s\S]*?<\/main>/, prerender);
 
+  // Hand the post body to React on the first paint (direct landing) so it can
+  // render without a fetch round-trip or a content flash.
+  if (opts.inlineData) {
+    html = html.replace(
+      /<script type="module"/,
+      `<script id="${opts.inlineData.id}" type="application/json">${opts.inlineData.json}</script>\n    <script type="module"`
+    );
+  }
+
   // Async-load the main stylesheet: preload (high priority, non-blocking),
-  // then promote to stylesheet on load. The prerender above the fold has
-  // all the CSS it needs inline in <style>, so React can hydrate after the
-  // real stylesheet arrives without blocking first paint.
+  // then promote to stylesheet on load. The prerender above the fold has all
+  // the CSS it needs inline in <style>, so React can hydrate after the real
+  // stylesheet arrives without blocking first paint.
   if (cssFile) {
     const cssPath = `/assets/${cssFile}`;
     html = html.replace(
@@ -219,6 +241,27 @@ function render(page, lang) {
   }
 
   return html;
+}
+
+function render(page, lang) {
+  const meta = i18n[lang.code].seo[page.key];
+  const pre = prerenderContent[page.path][lang.code];
+  return renderDoc({
+    htmlLang: lang.html,
+    title: meta.title,
+    description: meta.description,
+    canonical: urlFor(lang.prefix, page.path),
+    alternates: LANGS.map((l) => ({ hreflang: l.hreflang, href: urlFor(l.prefix, page.path) })).concat({
+      hreflang: "x-default",
+      href: urlFor("", page.path),
+    }),
+    ogLocale: lang.og,
+    ogAlternates: LANGS.filter((l) => l.code !== lang.code).map((l) => l.og),
+    jsonLd: jsonLdArray(lang.code, page.path),
+    prerenderInner: `<h1>${pre.h1}</h1>${pre.body}`,
+    noscript: NOSCRIPT[lang.code],
+    inlineData: null,
+  });
 }
 
 /* ─────────────────────────── write files ─────────────────────────── */
@@ -235,6 +278,170 @@ for (const lang of LANGS) {
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
     writeFileSync(target, render(page, lang), "utf8");
     console.log(`  ✓ ${lang.prefix}${page.path === "/" ? "" : page.path}/index.html`);
+  }
+}
+
+/* ──────────────────────────── blog ──────────────────────────── */
+// Posts live in content/blog/<lang>/<slug>.md (parsed by blog-lib). Each
+// post + the /blog index is prerendered per language with the same SEO
+// treatment as the marketing pages. The listing exists in all three langs;
+// a post only lists the languages it was actually written in.
+
+const BLOG_BASE = "/blog";
+const langByCode = Object.fromEntries(LANGS.map((l) => [l.code, l]));
+
+const BLOG_LISTING = {
+  en: { title: "Ozly Blog — Tax, ABN & visa guides for Australian sole traders", description: "Plain-English guides on ABN, tax, GST, invoicing and visa work rules for sole traders and migrants working in Australia.", intro: "Plain-English guides on tax, ABN, GST and visas — for people working for themselves in Australia." },
+  pt: { title: "Blog da Ozly — Guias de imposto, ABN e visto na Austrália", description: "Guias diretos sobre ABN, imposto, GST, invoices e regras de trabalho por visto para quem trabalha por conta própria na Austrália.", intro: "Guias diretos sobre imposto, ABN, GST e vistos — para quem trabalha por conta própria na Austrália." },
+  es: { title: "Blog de Ozly — Guías de impuestos, ABN y visa en Australia", description: "Guías claras sobre ABN, impuestos, GST, facturas y reglas de trabajo por visa para quienes trabajan por su cuenta en Australia.", intro: "Guías claras sobre impuestos, ABN, GST y visas — para quienes trabajan por su cuenta en Australia." },
+};
+
+const BLOG_LABELS = {
+  en: { read: "min read", back: "All articles", by: "By" },
+  pt: { read: "min de leitura", back: "Todos os artigos", by: "Por" },
+  es: { read: "min de lectura", back: "Todos los artículos", by: "Por" },
+};
+
+const blogUrl = (langPrefix, slug) => `${ORIGIN}${langPrefix}${BLOG_BASE}${slug ? `/${slug}` : ""}/`;
+
+const posts = loadPosts();
+
+/** hreflang cluster for a post: only the languages it exists in. */
+function postAlternates(post, slug) {
+  const alts = post.langs.map((code) => ({
+    hreflang: langByCode[code].hreflang,
+    href: blogUrl(langByCode[code].prefix, slug),
+  }));
+  const xdefault = post.langs.includes("en") ? "en" : post.langs[0];
+  alts.push({ hreflang: "x-default", href: blogUrl(langByCode[xdefault].prefix, slug) });
+  return alts;
+}
+
+function listingDoc(lang) {
+  const m = BLOG_LISTING[lang.code];
+  const items = posts
+    .map((post) => {
+      const code = post.langs.includes(lang.code) ? lang.code : post.langs[0];
+      const tr = post.translations[code];
+      const href = blogUrl(lang.prefix, post.slug);
+      return `<h2><a href="${href}">${escapeHtml(tr.title)}</a></h2>\n<p>${escapeHtml(tr.description)}</p>`;
+    })
+    .join("\n");
+  const blogLd = {
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    name: m.title,
+    description: m.description,
+    url: blogUrl(lang.prefix),
+    inLanguage: lang.html,
+    publisher: { "@type": "Organization", name: "Ozly Pty Ltd", url: `${ORIGIN}/` },
+  };
+  return renderDoc({
+    htmlLang: lang.html,
+    title: m.title,
+    description: m.description,
+    canonical: blogUrl(lang.prefix),
+    alternates: LANGS.map((l) => ({ hreflang: l.hreflang, href: blogUrl(l.prefix) })).concat({
+      hreflang: "x-default",
+      href: blogUrl(""),
+    }),
+    ogLocale: lang.og,
+    ogAlternates: LANGS.filter((l) => l.code !== lang.code).map((l) => l.og),
+    jsonLd: [blogLd, ORGANIZATION_LD],
+    prerenderInner: `<h1>${escapeHtml(m.title)}</h1><p class="sub">${escapeHtml(m.intro)}</p>${items}`,
+    noscript: NOSCRIPT[lang.code],
+    inlineData: null,
+  });
+}
+
+function postDoc(post, lang) {
+  const tr = post.translations[lang.code];
+  const labels = BLOG_LABELS[lang.code];
+  const canonical = blogUrl(lang.prefix, post.slug);
+  const metaLine = `<p class="sub">${escapeHtml(tr.description)}</p><p>${labels.by} ${escapeHtml(tr.author)} · ${tr.readingTime} ${labels.read}</p>`;
+  const postLd = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: tr.title,
+    description: tr.description,
+    datePublished: tr.date,
+    dateModified: tr.date,
+    inLanguage: lang.html,
+    author: { "@type": "Organization", name: tr.author || "Ozly", url: `${ORIGIN}/` },
+    publisher: { "@type": "Organization", name: "Ozly Pty Ltd", url: `${ORIGIN}/`, logo: `${ORIGIN}/OSLY.svg` },
+    mainEntityOfPage: { "@type": "WebPage", "@id": canonical },
+    ...(tr.cover ? { image: `${ORIGIN}${tr.cover}` } : {}),
+  };
+  // Inline payload mirrors public/blog-data/<slug>.<lang>.json so React can
+  // paint the post on first load without a fetch. Escape "<" so a stray
+  // "</script>" in the body can never break out of the JSON script tag.
+  const payload = {
+    slug: post.slug, lang: lang.code, langs: post.langs,
+    title: tr.title, description: tr.description, date: tr.date,
+    author: tr.author, cover: tr.cover, tags: tr.tags,
+    readingTime: tr.readingTime, html: tr.html,
+  };
+  const inlineJson = JSON.stringify(payload).replace(/</g, "\\u003c");
+  return renderDoc({
+    htmlLang: lang.html,
+    title: `${tr.title} — Ozly`,
+    description: tr.description,
+    canonical,
+    alternates: postAlternates(post, post.slug),
+    ogLocale: lang.og,
+    ogAlternates: post.langs.filter((c) => c !== lang.code).map((c) => langByCode[c].og),
+    jsonLd: [postLd, ORGANIZATION_LD],
+    prerenderInner: `<h1>${escapeHtml(tr.title)}</h1>${metaLine}${tr.html}`,
+    noscript: NOSCRIPT[lang.code],
+    inlineData: { id: "blog-post-data", json: inlineJson },
+  });
+}
+
+const blogSitemap = [];
+const blogToday = new Date().toISOString().slice(0, 10);
+
+for (const lang of LANGS) {
+  // Listing page (all three languages).
+  const listDir = join(dist, `${lang.prefix}${BLOG_BASE}`);
+  if (!existsSync(listDir)) mkdirSync(listDir, { recursive: true });
+  writeFileSync(join(listDir, "index.html"), listingDoc(lang), "utf8");
+  console.log(`  ✓ ${lang.prefix}${BLOG_BASE}/index.html`);
+}
+
+// Listing sitemap entries (one per lang, full cluster).
+for (const lang of LANGS) {
+  const alts = LANGS.map(
+    (l) => `    <xhtml:link rel="alternate" hreflang="${l.hreflang}" href="${blogUrl(l.prefix)}"/>`
+  )
+    .concat(`    <xhtml:link rel="alternate" hreflang="x-default" href="${blogUrl("")}"/>`)
+    .join("\n");
+  blogSitemap.push(`  <url>
+    <loc>${blogUrl(lang.prefix)}</loc>
+${alts}
+    <lastmod>${blogToday}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`);
+}
+
+// Each post, in each language it exists in.
+for (const post of posts) {
+  for (const code of post.langs) {
+    const lang = langByCode[code];
+    const dir = join(dist, `${lang.prefix}${BLOG_BASE}/${post.slug}`);
+    if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, "index.html"), postDoc(post, lang), "utf8");
+    console.log(`  ✓ ${lang.prefix}${BLOG_BASE}/${post.slug}/index.html`);
+    const alts = postAlternates(post, post.slug)
+      .map((a) => `    <xhtml:link rel="alternate" hreflang="${a.hreflang}" href="${a.href}"/>`)
+      .join("\n");
+    blogSitemap.push(`  <url>
+    <loc>${blogUrl(lang.prefix, post.slug)}</loc>
+${alts}
+    <lastmod>${post.translations[code].date || blogToday}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>`);
   }
 }
 
@@ -279,6 +486,7 @@ const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
 ${PAGES.flatMap((page) => LANGS.map((lang) => sitemapEntry(page, lang, PAGE_META[page.path]))).join("\n")}
+${blogSitemap.join("\n")}
 ${staticPages
   .map(
     (p) => `  <url>
@@ -293,6 +501,8 @@ ${staticPages
 `;
 
 writeFileSync(join(dist, "sitemap.xml"), sitemap, "utf8");
-console.log(`  ✓ sitemap.xml (${PAGES.length * LANGS.length + staticPages.length} URLs, hreflang cluster)`);
+console.log(
+  `  ✓ sitemap.xml (${PAGES.length * LANGS.length + blogSitemap.length + staticPages.length} URLs, hreflang cluster)`
+);
 
 console.log("Post-build: done.");

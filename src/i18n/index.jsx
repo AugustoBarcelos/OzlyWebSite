@@ -13,7 +13,14 @@ const STORAGE_KEY = "ozly-lang";
 // by scripts/postbuild.js — keep both lists in sync). Everything else
 // (affiliate, legal, invites) lives at the root only.
 // eslint-disable-next-line react-refresh/only-export-components
-export const LOCALIZED_ROUTES = ["/", "/support", "/guide", "/guide/business", "/business"];
+export const LOCALIZED_ROUTES = ["/", "/support", "/guide", "/guide/business", "/business", "/blog"];
+
+/** True for routes that exist under /pt and /es — including blog posts
+ *  (/blog/<slug>), which are dynamic so they can't be listed literally. */
+// eslint-disable-next-line react-refresh/only-export-components
+export function isLocalizedRoute(bare) {
+  return LOCALIZED_ROUTES.includes(bare) || bare.startsWith("/blog/");
+}
 
 /** "/pt/guide" → "pt"; "/es" → "es"; "/guide" → null */
 // eslint-disable-next-line react-refresh/only-export-components
@@ -111,7 +118,7 @@ export function I18nProvider({ children }) {
       // On a localized route, switching language moves to the equivalent
       // prefixed URL so the address bar, canonical and content agree.
       const bare = stripLangPrefix(location.pathname);
-      if (LOCALIZED_ROUTES.includes(bare)) {
+      if (isLocalizedRoute(bare)) {
         const target = langHref(l, bare);
         if (target !== location.pathname) navigate(target + location.hash, { replace: false });
       }

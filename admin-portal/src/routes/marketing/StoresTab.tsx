@@ -39,6 +39,9 @@ export function StoresTab() {
   const [reviews, setReviews] = useState<ItunesReview[] | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const appStoreUrl =
+    info?.appStoreUrl ?? `https://apps.apple.com/au/app/id${APPLE_APP_ID}`;
+
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -68,6 +71,7 @@ export function StoresTab() {
           }
           loading={loading && !info}
           tone="brand"
+          href={appStoreUrl}
         />
         <KpiHero
           label="Current version"
@@ -80,6 +84,7 @@ export function StoresTab() {
           }
           loading={loading && !info}
           tone="lime"
+          href={appStoreUrl}
         />
         <KpiHero
           label="Ratings (current ver)"
@@ -91,6 +96,7 @@ export function StoresTab() {
           }
           loading={loading && !info}
           tone="neutral"
+          href={appStoreUrl}
         />
         <KpiHero
           label="Recent reviews shown"
@@ -98,6 +104,7 @@ export function StoresTab() {
           hint="Most-recent App Store reviews · AU"
           loading={loading && !reviews}
           tone="brand"
+          href="/inbox/reviews"
         />
       </Grid>
 

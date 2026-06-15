@@ -101,14 +101,15 @@ export function FinanceHubPage() {
 
       {/* Headline KPIs */}
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiTile label="MRR" value={mrr} formatter={formatCurrencyAUD} tone="brand" hint="atual (AUD)" />
-        <KpiTile label="ARR projetado" value={arr} formatter={formatCurrencyAUD} tone="lime" hint="MRR × 12" />
+        <KpiTile label="MRR" value={mrr} formatter={formatCurrencyAUD} tone="brand" hint="atual (AUD)" to="/revenue" />
+        <KpiTile label="ARR projetado" value={arr} formatter={formatCurrencyAUD} tone="lime" hint="MRR × 12" to="/finance/forecast" />
         <KpiTile
           label="Burn rate / mês"
           value={burn}
           formatter={(v) => (v === null ? '—' : v >= 0 ? formatCurrencyAUD(v) : `+${formatCurrencyAUD(Math.abs(v))} profit`)}
           tone={burn !== null && burn > 0 ? 'warning' : 'lime'}
           hint={runwayPending ? 'aplique a migration de costs' : 'avg últimos 3 meses'}
+          to="/finance/cost-monitor"
         />
         <KpiTile
           label="Profit margin"
@@ -116,6 +117,7 @@ export function FinanceHubPage() {
           formatter={(v) => (v === null ? '—' : `${(v * 100).toFixed(1)}%`)}
           tone={margin !== null && margin > 0 ? 'lime' : 'warning'}
           hint="MRR vs custos"
+          to="/finance/pnl"
         />
       </section>
 
@@ -128,16 +130,16 @@ export function FinanceHubPage() {
           <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Detail label="Trial → Paid" value={revenue.conversion_trial_to_paid_period} formatter={(v) =>
               v === null ? '—' : `${(v * 100).toFixed(1)}%`
-            } />
-            <Detail label="Novos paying" value={revenue.new_paying_period} />
-            <Detail label="Churn" value={revenue.churn_period} />
-            <Detail label="LTV est." value={revenue.ltv_estimate_aud} formatter={formatCurrencyAUD} />
+            } to="/revenue" />
+            <Detail label="Novos paying" value={revenue.new_paying_period} to="/users?status=paying&signup=30" />
+            <Detail label="Churn" value={revenue.churn_period} to="/users?status=churned" />
+            <Detail label="LTV est." value={revenue.ltv_estimate_aud} formatter={formatCurrencyAUD} to="/revenue" />
           </div>
           {revenue.mrr_by_plan && (
             <div className="mt-4 grid grid-cols-3 gap-2">
-              <PlanRow label="TFN" amount={revenue.mrr_by_plan.tfn} />
-              <PlanRow label="ABN" amount={revenue.mrr_by_plan.abn} />
-              <PlanRow label="PRO" amount={revenue.mrr_by_plan.pro} />
+              <PlanRow label="TFN" amount={revenue.mrr_by_plan.tfn} to="/users?status=paying&plan=tfn" />
+              <PlanRow label="ABN" amount={revenue.mrr_by_plan.abn} to="/users?status=paying&plan=abn" />
+              <PlanRow label="PRO" amount={revenue.mrr_by_plan.pro} to="/users?status=paying&plan=pro" />
             </div>
           )}
         </Card>
@@ -189,6 +191,8 @@ interface KpiTileProps {
   formatter: (v: number | null) => string;
   tone: 'brand' | 'lime' | 'warning' | 'neutral';
   hint?: string;
+  /** Drill-down route — todo quadro deve ser clicável (padrão Cockpit). */
+  to?: string;
 }
 const TILE_TONE: Record<KpiTileProps['tone'], string> = {
   brand: 'text-brand-600',
@@ -196,9 +200,12 @@ const TILE_TONE: Record<KpiTileProps['tone'], string> = {
   warning: 'text-amber-600',
   neutral: 'text-navy-700',
 };
-function KpiTile({ label, value, formatter, tone, hint }: KpiTileProps) {
-  return (
-    <div className="ozly-card ozly-card-hero relative px-5 py-4">
+function KpiTile({ label, value, formatter, tone, hint, to }: KpiTileProps) {
+  const body = (
+    <>
+      {to && (
+        <ArrowUpRightIcon className="absolute right-3 top-3 h-3.5 w-3.5 text-navy-100 transition-colors group-hover:text-brand-500" />
+      )}
       <div className="text-[11px] font-semibold uppercase tracking-wider text-navy-300">
         {label}
       </div>
@@ -206,7 +213,20 @@ function KpiTile({ label, value, formatter, tone, hint }: KpiTileProps) {
         {formatter(value)}
       </div>
       {hint && <div className="mt-1 text-[11px] text-navy-400">{hint}</div>}
-    </div>
+    </>
+  );
+  if (to) {
+    return (
+      <Link
+        to={to}
+        className="ozly-card ozly-card-hero group relative block cursor-pointer px-5 py-4 transition-shadow hover:shadow-md hover:ring-1 hover:ring-brand-200"
+      >
+        {body}
+      </Link>
+    );
+  }
+  return (
+    <div className="ozly-card ozly-card-hero relative px-5 py-4">{body}</div>
   );
 }
 
@@ -214,32 +234,58 @@ function Detail({
   label,
   value,
   formatter,
+  to,
 }: {
   label: string;
   value: number | null;
   formatter?: (v: number | null) => string;
+  to?: string;
 }) {
   const fmt = formatter ?? ((v) => (v === null ? '—' : v.toLocaleString('en-AU')));
-  return (
-    <div className="rounded-md border border-navy-50 bg-white p-3">
+  const body = (
+    <>
       <div className="text-[11px] font-semibold uppercase tracking-wider text-navy-300">
         {label}
       </div>
       <div className="mt-1 text-base font-semibold text-navy-700">{fmt(value)}</div>
-    </div>
+    </>
   );
+  if (to) {
+    return (
+      <Link
+        to={to}
+        className="block rounded-md border border-navy-50 bg-white p-3 transition-colors hover:border-brand-200 hover:shadow-sm"
+      >
+        {body}
+      </Link>
+    );
+  }
+  return <div className="rounded-md border border-navy-50 bg-white p-3">{body}</div>;
 }
 
-function PlanRow({ label, amount }: { label: string; amount: number | null }) {
-  return (
-    <div className="rounded-md border border-navy-50 bg-navy-50/40 p-2 text-center">
+function PlanRow({ label, amount, to }: { label: string; amount: number | null; to?: string }) {
+  const body = (
+    <>
       <div className="text-[10px] font-semibold uppercase tracking-wider text-navy-500">
         {label}
       </div>
       <div className="mt-0.5 text-sm font-semibold text-navy-700">
         {formatCurrencyAUD(amount)}
       </div>
-    </div>
+    </>
+  );
+  if (to) {
+    return (
+      <Link
+        to={to}
+        className="block rounded-md border border-navy-50 bg-navy-50/40 p-2 text-center transition-colors hover:border-brand-200 hover:bg-white hover:shadow-sm"
+      >
+        {body}
+      </Link>
+    );
+  }
+  return (
+    <div className="rounded-md border border-navy-50 bg-navy-50/40 p-2 text-center">{body}</div>
   );
 }
 

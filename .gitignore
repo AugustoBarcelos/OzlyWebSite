@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Generated from content/blog/*.md by scripts/gen-blog.mjs
+public/blog-data
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

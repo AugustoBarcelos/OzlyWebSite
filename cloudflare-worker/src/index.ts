@@ -21,7 +21,16 @@
 interface Env {
   SUPABASE_URL: string;
   SUPABASE_ANON_KEY: string;
+  // Blog AI-authoring:
+  AI: { run: (model: string, inputs: unknown) => Promise<unknown> }; // Workers AI binding (free tier)
+  GITHUB_TOKEN: string; // fine-grained PAT, repo Contents: Read and write (wrangler secret)
+  ADMIN_PASSWORD: string; // gate for ozly.au/admin (wrangler secret)
 }
+
+const GITHUB_REPO = "AugustoBarcelos/OzlyWebSite";
+const GITHUB_BRANCH = "main";
+// Free Workers AI model. Strong instruct model on the free tier.
+const AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 
 const CRAWLER_UA_RE =
   /facebookexternalhit|facebot|whatsapp|twitterbot|telegrambot|linkedinbot|discordbot|slackbot|googlebot|bingbot|pinterest|skypeuripreview|redditbot|applebot|yahoobot|duckduckbot/i;
@@ -34,6 +43,12 @@ const STORE_LINKS = {
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+
+    // Blog AI-authoring API (the /admin wizard calls these). The static
+    // /admin page itself is served by GitHub Pages — only /admin/api/* is us.
+    if (url.pathname.startsWith('/admin/api/')) {
+      return handleAdminApi(request, env, url);
+    }
 
     // Only intercept /v/:code (affiliate landing). /me/:code is the dashboard
     // for the affiliate — needs auth, no OG sense to personalize.
@@ -171,4 +186,285 @@ function renderOgHtml(code: string, ownerName: string): string {
 </p>
 </body>
 </html>`;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   BLOG AI-AUTHORING API  (called by ozly.au/admin)
+   - POST /admin/api/login      → validate password
+   - GET  /admin/api/topics     → suggested topics + which slugs already exist
+   - POST /admin/api/generate   → draft a post (EN/PT/ES) with Claude
+   - POST /admin/api/publish    → commit the markdown to GitHub (triggers deploy)
+   All write/generate calls require the x-admin-key header == ADMIN_PASSWORD.
+   ════════════════════════════════════════════════════════════════════ */
+
+// Curated editorial backlog (from the keyword research). `slug` is the post's
+// cross-language identity; `done` is filled in from the repo at request time.
+const TOPICS = [
+  { slug: 'abn-vs-tfn', title: 'ABN vs TFN: which one do you need', angle: 'Define both, the 47% no-ABN trap, bust the $75k myth.' },
+  { slug: 'sole-trader-tax-how-much', title: 'How much tax does a sole trader pay', angle: 'Real numbers by income, the July bill shock, deductions.' },
+  { slug: 'free-abn-is-it-free', title: 'Is it free to get an ABN in Australia?', angle: 'Bust the paid-registration myth; how to apply on ABR.' },
+  { slug: 'cleaner-tax-deductions', title: 'Tax deductions cleaners forget', angle: 'Specific claimable items for cleaners with real examples.' },
+  { slug: 'student-visa-work-hours', title: 'Student visa: how many hours can you work (2026)', angle: '48h/fortnight rule, what counts, the 60h proposal is NOT law.' },
+  { slug: 'how-to-invoice-with-abn', title: 'How to invoice with an ABN (+ template)', angle: 'Required fields, the "tax invoice" wording, GST line.' },
+  { slug: 'working-holiday-tax', title: 'Working holiday tax: why 15% from $1', angle: '417/462 rates, no tax-free threshold, employer registration.' },
+  { slug: 'july-tax-shock', title: 'The July tax shock nobody warns sole traders about', angle: 'ABN has no withholding; how to set money aside.' },
+  { slug: 'tax-return-step-by-step', title: 'How to do your tax return (step by step)', angle: 'Seasonal — publish before June. Deadlines, myGov, deductions.' },
+  { slug: 'gst-register-75000', title: 'Do I need to register for GST? ($75k explained)', angle: 'Rolling 12-month turnover, 21-day rule, backdating risk.' },
+  { slug: 'work-over-visa-hours', title: 'What happens if you work over your visa hours', angle: 'Real consequences, how the limit is tracked.' },
+  { slug: 'cleaning-rates-per-hour', title: 'How much to charge per hour for cleaning', angle: 'Real 2026 ranges, employee vs ABN, what to factor in.' },
+];
+
+function corsHeaders(): Record<string, string> {
+  // Same-origin (ozly.au/admin → ozly.au/admin/api) so CORS isn't strictly
+  // needed, but these keep local testing painless.
+  return {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, x-admin-key',
+  };
+}
+
+function json(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+  });
+}
+
+// Constant-time-ish comparison to avoid trivial timing leaks on the password.
+function safeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+function authed(request: Request, env: Env): boolean {
+  const key = request.headers.get('x-admin-key') ?? '';
+  return Boolean(env.ADMIN_PASSWORD) && safeEqual(key, env.ADMIN_PASSWORD);
+}
+
+async function handleAdminApi(request: Request, env: Env, url: URL): Promise<Response> {
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: corsHeaders() });
+  }
+
+  const path = url.pathname;
+
+  // Login just validates the password so the UI can show the editor.
+  if (path === '/admin/api/login' && request.method === 'POST') {
+    const { password } = (await request.json().catch(() => ({}))) as { password?: string };
+    if (env.ADMIN_PASSWORD && password && safeEqual(password, env.ADMIN_PASSWORD)) {
+      return json({ ok: true });
+    }
+    return json({ ok: false, error: 'Wrong password' }, 401);
+  }
+
+  // Everything below requires the admin key.
+  if (!authed(request, env)) return json({ error: 'Unauthorized' }, 401);
+
+  if (path === '/admin/api/topics' && request.method === 'GET') {
+    const done = await listExistingSlugs(env);
+    return json({ topics: TOPICS.map((t) => ({ ...t, done: done.includes(t.slug) })) });
+  }
+
+  if (path === '/admin/api/generate' && request.method === 'POST') {
+    const { topic, slug } = (await request.json().catch(() => ({}))) as { topic?: string; slug?: string };
+    if (!topic) return json({ error: 'Missing topic' }, 400);
+    try {
+      const post = await generatePost(topic, slug, env);
+      return json(post);
+    } catch (e) {
+      return json({ error: `Generation failed: ${(e as Error).message}` }, 502);
+    }
+  }
+
+  if (path === '/admin/api/publish' && request.method === 'POST') {
+    const body = (await request.json().catch(() => ({}))) as PublishBody;
+    if (!body.slug || !body.en) return json({ error: 'Missing slug or content' }, 400);
+    try {
+      const result = await publishPost(body, env);
+      return json(result);
+    } catch (e) {
+      return json({ error: `Publish failed: ${(e as Error).message}` }, 502);
+    }
+  }
+
+  return json({ error: 'Not found' }, 404);
+}
+
+/* ── List which post slugs already exist (content/blog/en) ── */
+async function listExistingSlugs(env: Env): Promise<string[]> {
+  const res = await fetch(
+    `https://api.github.com/repos/${GITHUB_REPO}/contents/content/blog/en?ref=${GITHUB_BRANCH}`,
+    {
+      headers: {
+        Authorization: `Bearer ${env.GITHUB_TOKEN}`,
+        Accept: 'application/vnd.github+json',
+        'User-Agent': 'ozly-blog-admin',
+      },
+    },
+  );
+  if (!res.ok) return []; // folder may not exist yet
+  const files = (await res.json()) as Array<{ name: string }>;
+  return files.filter((f) => f.name.endsWith('.md')).map((f) => f.name.replace(/\.md$/, ''));
+}
+
+/* ── Generate a post with Cloudflare Workers AI (free tier) ──
+   One call per language (keeps each response small and reliable), then
+   assemble. A human reviews/edits before publishing, so the model just
+   needs to produce a solid first draft in native phrasing. */
+interface GenLang { title: string; description: string; body: string }
+interface GenResult { slug: string; en: GenLang; pt: GenLang; es: GenLang }
+
+const LANG_NAMES: Record<'en' | 'pt' | 'es', string> = {
+  en: 'Australian English',
+  pt: 'Brazilian Portuguese',
+  es: 'Latin-American Spanish',
+};
+
+function slugify(s: string): string {
+  return (s || 'untitled').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'untitled';
+}
+
+// Workers AI may return a parsed object or a JSON string with surrounding
+// prose; pull the first {...} and parse defensively.
+function parseLoose(raw: unknown): GenLang {
+  if (raw && typeof raw === 'object' && 'title' in (raw as object)) return raw as GenLang;
+  const text = String(raw ?? '');
+  const start = text.indexOf('{');
+  const end = text.lastIndexOf('}');
+  if (start === -1 || end === -1) throw new Error('AI returned no JSON');
+  return JSON.parse(text.slice(start, end + 1)) as GenLang;
+}
+
+async function aiGenerateLang(topic: string, code: 'en' | 'pt' | 'es', env: Env): Promise<GenLang> {
+  const langName = LANG_NAMES[code];
+  const system = `You write blog posts for Ozly — a free invoicing & tax app for Australian sole traders (cleaners, tradies, contractors) and migrants on student/working-holiday visas.
+
+Write ONE blog post in ${langName} — native, idiomatic writing (NOT a translation).
+
+Rules (follow strictly):
+1. Answer the core number/question in the FIRST line. No preamble.
+2. Be specific to the audience (e.g. "cleaner with an ABN"), never generic.
+3. Include ONE line of real, lived experience ("the #1 thing we see in the app is…").
+4. For any tax/visa fact, add an inline markdown link to the official source: ATO https://www.ato.gov.au/ or Home Affairs https://immi.homeaffairs.gov.au/ .
+5. End with a CTA tied to the pain, linking the app: App Store https://apps.apple.com/app/ozly/id6760398649 and Google Play https://play.google.com/store/apps/details?id=com.augusto.ozly .
+6. Close with a one-line disclaimer: general info, not tax advice, verify with the ATO / a registered agent.
+7. Numbers must be correct for the 2025–26 year and phrased so a human can verify them. A human reviews before publishing.
+
+Body = GitHub-flavoured Markdown (## headings, tables, **bold**, lists, > quotes). Do NOT put the H1 title in the body. 600–900 words.
+
+Return ONLY a JSON object, no other text:
+{"title": "<=70 chars, include the year if relevant", "description": "<=160 chars meta/excerpt", "body": "the markdown body"}`;
+
+  const result = (await env.AI.run(AI_MODEL, {
+    max_tokens: 4096,
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: `Topic: ${topic}\n\nWrite the post in ${langName} now. Output JSON only.` },
+    ],
+    response_format: {
+      type: 'json_schema',
+      json_schema: {
+        type: 'object',
+        properties: {
+          title: { type: 'string' },
+          description: { type: 'string' },
+          body: { type: 'string' },
+        },
+        required: ['title', 'description', 'body'],
+      },
+    },
+  })) as { response?: unknown };
+
+  return parseLoose(result.response ?? result);
+}
+
+async function generatePost(topic: string, slug: string | undefined, env: Env): Promise<GenResult> {
+  // Sequential (not parallel) to stay gentle on the free Workers AI quota.
+  const en = await aiGenerateLang(topic, 'en', env);
+  const pt = await aiGenerateLang(topic, 'pt', env);
+  const es = await aiGenerateLang(topic, 'es', env);
+  return { slug: slug ? slugify(slug) : slugify(en.title), en, pt, es };
+}
+
+/* ── Publish: commit content/blog/<lang>/<slug>.md for each language ── */
+interface PublishBody {
+  slug: string;
+  draft?: boolean;
+  date?: string;
+  en?: GenLang;
+  pt?: GenLang;
+  es?: GenLang;
+}
+
+function frontmatter(tr: GenLang, date: string, draft: boolean): string {
+  const esc = (s: string) => String(s).replace(/"/g, '\\"');
+  return `---\ntitle: "${esc(tr.title)}"\ndescription: "${esc(tr.description)}"\ndate: ${date}\nauthor: "Ozly"\ndraft: ${draft ? 'true' : 'false'}\n---\n\n${tr.body.trim()}\n`;
+}
+
+async function publishPost(body: PublishBody, env: Env): Promise<{ ok: true; committed: string[] }> {
+  const date = body.date || isoDate();
+  const draft = body.draft !== false; // default true — review gate
+  const langs: Array<['en' | 'pt' | 'es', GenLang | undefined]> = [
+    ['en', body.en],
+    ['pt', body.pt],
+    ['es', body.es],
+  ];
+  const committed: string[] = [];
+  for (const [lang, tr] of langs) {
+    if (!tr || !tr.title) continue;
+    const path = `content/blog/${lang}/${body.slug}.md`;
+    const content = frontmatter(tr, date, draft);
+    await githubPutFile(path, content, `blog: ${draft ? 'draft' : 'publish'} ${body.slug} (${lang})`, env);
+    committed.push(path);
+  }
+  return { ok: true, committed };
+}
+
+function isoDate(): string {
+  // Workers have Date; this runs per-request so it's fine here (not in a
+  // resumable workflow). Format YYYY-MM-DD.
+  return new Date().toISOString().slice(0, 10);
+}
+
+async function githubPutFile(path: string, content: string, message: string, env: Env): Promise<void> {
+  const apiUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/${path}`;
+  const ghHeaders = {
+    Authorization: `Bearer ${env.GITHUB_TOKEN}`,
+    Accept: 'application/vnd.github+json',
+    'User-Agent': 'ozly-blog-admin',
+    'Content-Type': 'application/json',
+  };
+  // Need the existing sha to update an existing file.
+  let sha: string | undefined;
+  const getRes = await fetch(`${apiUrl}?ref=${GITHUB_BRANCH}`, { headers: ghHeaders });
+  if (getRes.ok) {
+    const existing = (await getRes.json()) as { sha?: string };
+    sha = existing.sha;
+  }
+  const putRes = await fetch(apiUrl, {
+    method: 'PUT',
+    headers: ghHeaders,
+    body: JSON.stringify({
+      message,
+      content: base64Utf8(content),
+      branch: GITHUB_BRANCH,
+      ...(sha ? { sha } : {}),
+    }),
+  });
+  if (!putRes.ok) {
+    const txt = await putRes.text();
+    throw new Error(`GitHub ${putRes.status} on ${path}: ${txt.slice(0, 200)}`);
+  }
+}
+
+// btoa() only handles latin1; encode UTF-8 first so accents/emoji survive.
+function base64Utf8(str: string): string {
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin);
 }

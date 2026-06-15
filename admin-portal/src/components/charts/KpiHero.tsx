@@ -1,5 +1,6 @@
 import { BadgeDelta, SparkAreaChart } from '@tremor/react';
 import { Link } from 'react-router-dom';
+import { ArrowUpRightIcon } from '@/components/Icons';
 import { formatNumber } from '@/lib/format';
 
 /**
@@ -68,7 +69,10 @@ export function KpiHero({
     ? 'transition-shadow hover:shadow-md hover:ring-1 hover:ring-brand-200 cursor-pointer'
     : '';
   const inner = (
-    <div className={`ozly-card ozly-card-hero relative px-5 py-4 ${interactiveClass}`}>
+    <div className={`ozly-card ozly-card-hero group relative px-5 py-4 ${interactiveClass}`}>
+      {href && (
+        <ArrowUpRightIcon className="absolute right-3 top-3 h-3.5 w-3.5 text-navy-100 transition-colors group-hover:text-brand-500" />
+      )}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-navy-300">
@@ -85,7 +89,7 @@ export function KpiHero({
             <div className="mt-1 text-xs text-navy-300">{hint}</div>
           )}
         </div>
-        <div className="flex flex-col items-end gap-2">
+        <div className={`flex flex-col items-end gap-2 ${href ? 'pr-5' : ''}`}>
           {!loading && delta !== undefined && Number.isFinite(delta) && (
             <BadgeDelta
               deltaType={deltaTypeFor(delta)}
@@ -110,6 +114,19 @@ export function KpiHero({
   );
 
   if (!href) return inner;
+  if (href.startsWith('http')) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`Drill into ${label}`}
+        className="block"
+      >
+        {inner}
+      </a>
+    );
+  }
   return (
     <Link to={href} aria-label={`Drill into ${label}`} className="block">
       {inner}
