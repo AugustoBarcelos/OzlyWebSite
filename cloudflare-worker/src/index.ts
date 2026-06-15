@@ -297,6 +297,19 @@ async function handleAdminApi(request: Request, env: Env, url: URL): Promise<Res
     }
   }
 
+  // Apply a single fact-check finding to one language's draft (AI edit).
+  if (path === '/admin/api/apply-fix' && request.method === 'POST') {
+    const b = (await request.json().catch(() => ({}))) as {
+      lang?: string; title?: string; description?: string; body?: string; finding?: string;
+    };
+    if (!b.body || !b.finding) return json({ error: 'Missing body or finding' }, 400);
+    try {
+      return json(await applyFix(b, env));
+    } catch (e) {
+      return json({ error: `Apply failed: ${(e as Error).message}` }, 502);
+    }
+  }
+
   if (path === '/admin/api/publish' && request.method === 'POST') {
     const body = (await request.json().catch(() => ({}))) as PublishBody;
     if (!body.slug || !body.en) return json({ error: 'Missing slug or content' }, 400);
@@ -440,7 +453,7 @@ Rules (follow strictly):
 3. Include ONE line of real, lived experience ("the #1 thing we see in the app is…").
 4. For any tax/visa fact, add an inline markdown link to the official source: ATO https://www.ato.gov.au/ or Home Affairs https://immi.homeaffairs.gov.au/ .
 5. End with a CTA tied to the pain, linking the app: App Store https://apps.apple.com/au/app/ozly/id6760398649 and Google Play https://play.google.com/store/apps/details?id=com.augusto.ozly .
-6. Close with a one-line disclaimer: general info, not tax advice, verify with the ATO / a registered agent.
+6. MANDATORY — always end with a clear disclaimer (in ${langName}): Ozly is a record-keeping tool, NOT an accountant or registered tax agent, and this article is general information, not tax or accounting advice — consult a registered tax agent for your own situation. Every post must include this.
 7. Numbers must be correct for the 2025–26 year and phrased so a human can verify them. A human reviews before publishing.
 
 Body = GitHub-flavoured Markdown (## headings, tables, **bold**, lists, > quotes). Do NOT put the H1 title in the body. 600–900 words.
@@ -542,6 +555,37 @@ async function reviewPost(body: PublishBody, env: Env): Promise<Record<string, R
     codes.map((c) => aiReviewLang(body[c] as GenLang, c, env).then((r) => [c, r] as const)),
   );
   return Object.fromEntries(entries);
+}
+
+/* ── Apply one fact-check finding to a single-language draft ── */
+async function applyFix(
+  input: { lang?: string; title?: string; description?: string; body?: string; finding?: string },
+  env: Env,
+): Promise<GenLang> {
+  const langName = LANG_NAMES[(input.lang as 'en' | 'pt' | 'es')] ?? 'the original language';
+  const system = `You are editing a blog draft written in ${langName} for Ozly. Apply ONLY the single fix below and change nothing else — keep the same language, tone, structure, links, headings, CTA and the mandatory disclaimer (Ozly is not an accountant/registered tax agent).
+
+THE FIX TO APPLY:
+${input.finding}
+
+If the fix is about a wrong/outdated number, correct it to the accurate Australian 2025–26 value. Keep GitHub-flavoured Markdown. Do not add commentary.
+
+Output EXACTLY this, nothing else:
+@@@TITLE@@@
+(title)
+@@@DESC@@@
+(description)
+@@@BODY@@@
+(corrected markdown body)`;
+  const user = `TITLE: ${input.title ?? ''}\nDESC: ${input.description ?? ''}\n\nBODY:\n${input.body ?? ''}`;
+  const result = (await env.AI.run(AI_MODEL, {
+    max_tokens: 2048,
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: user },
+    ],
+  })) as { response?: unknown };
+  return parseDelimited(result.response ?? result);
 }
 
 /* ── Publish: commit content/blog/<lang>/<slug>.md for each language ── */

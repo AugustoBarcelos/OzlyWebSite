@@ -9,6 +9,7 @@ import {
   suggestMoreTopics,
   generatePost,
   reviewPost,
+  applyFix,
   publishPost,
   type BlogTopic,
   type BlogPost,
@@ -40,6 +41,7 @@ export function MarketingBlogPage() {
   const [post, setPost] = useState<BlogPost | null>(null);
   const [lang, setLang] = useState<LangCode>('en');
   const [reviews, setReviews] = useState<Record<LangCode, ReviewLang> | null>(null);
+  const [applyingIdx, setApplyingIdx] = useState<number | null>(null);
   const [reviewing, setReviewing] = useState(false);
   const [publishing, setPublishing] = useState(false);
 
@@ -123,6 +125,26 @@ export function MarketingBlogPage() {
       toast({ variant: 'error', title: 'Falha no fact-check', description: errMsg(e) });
     } finally {
       setReviewing(false);
+    }
+  }
+
+  async function onApplyFix(idx: number, finding: string) {
+    if (!post) return;
+    setApplyingIdx(idx);
+    try {
+      const fixed = await applyFix(lang, post[lang], finding);
+      setPost((p) => (p ? { ...p, [lang]: fixed } : p));
+      // Remove the addressed finding from the list.
+      setReviews((prev) => {
+        if (!prev?.[lang]) return prev;
+        const cur = prev[lang];
+        return { ...prev, [lang]: { ...cur, findings: cur.findings.filter((_, i) => i !== idx) } };
+      });
+      toast({ variant: 'success', title: 'Correção aplicada', description: 'Confira o texto e o número.' });
+    } catch (e) {
+      toast({ variant: 'error', title: 'Falha ao aplicar', description: errMsg(e) });
+    } finally {
+      setApplyingIdx(null);
     }
   }
 
@@ -327,13 +349,21 @@ export function MarketingBlogPage() {
                   {reviews[lang].verdict === 'PASS' ? 'sem problemas graves' : 'revisar antes de publicar'}
                 </span>
               </p>
-              <ul className="space-y-1.5">
+              <ul className="space-y-2">
                 {reviews[lang].findings.map((f, i) => (
-                  <li key={i} className="flex gap-2 text-xs">
+                  <li key={i} className="flex items-start gap-2 text-xs">
                     <span className={`shrink-0 rounded border px-1.5 py-0.5 font-bold ${sevStyle[f.severity] ?? sevStyle.LOW}`}>
                       {f.severity}
                     </span>
-                    <span className="text-navy-600">{f.text}</span>
+                    <span className="flex-1 text-navy-600">{f.text}</span>
+                    <button
+                      type="button"
+                      onClick={() => void onApplyFix(i, f.text)}
+                      disabled={applyingIdx !== null}
+                      className="shrink-0 rounded-full border border-brand-300 px-2.5 py-0.5 font-bold text-brand-700 transition hover:bg-brand-50 disabled:opacity-40"
+                    >
+                      {applyingIdx === i ? 'Aplicando…' : 'Aplicar'}
+                    </button>
                   </li>
                 ))}
                 {reviews[lang].findings.length === 0 && (
