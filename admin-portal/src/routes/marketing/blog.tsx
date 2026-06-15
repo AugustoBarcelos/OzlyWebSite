@@ -6,6 +6,7 @@ import { useToast } from '@/components/Toast';
 import { Spinner } from '@/components/Spinner';
 import {
   fetchTopics,
+  suggestMoreTopics,
   generatePost,
   reviewPost,
   publishPost,
@@ -34,6 +35,8 @@ export function MarketingBlogPage() {
   const [selected, setSelected] = useState<BlogTopic | null>(null);
   const [custom, setCustom] = useState('');
 
+  const [loadError, setLoadError] = useState(false);
+  const [suggesting, setSuggesting] = useState(false);
   const [post, setPost] = useState<BlogPost | null>(null);
   const [lang, setLang] = useState<LangCode>('en');
   const [reviews, setReviews] = useState<Record<LangCode, ReviewLang> | null>(null);
@@ -41,12 +44,33 @@ export function MarketingBlogPage() {
   const [publishing, setPublishing] = useState(false);
 
   const loadTopics = useCallback(async () => {
+    setLoadError(false);
     try {
       const { topics: list } = await fetchTopics();
       setTopics(list);
     } catch (e) {
       toast({ variant: 'error', title: 'Falha ao carregar temas', description: errMsg(e) });
       setTopics([]);
+      setLoadError(true);
+    }
+  }, [toast]);
+
+  const onSuggestMore = useCallback(async () => {
+    setSuggesting(true);
+    try {
+      const { topics: more } = await suggestMoreTopics();
+      setTopics((prev) => {
+        const seen = new Set((prev ?? []).map((t) => t.slug));
+        const fresh = more.filter((t) => !seen.has(t.slug));
+        return [...(prev ?? []), ...fresh];
+      });
+      if (more.length === 0) {
+        toast({ variant: 'info', title: 'A IA não trouxe novos temas', description: 'Tenta de novo ou use um tema próprio.' });
+      }
+    } catch (e) {
+      toast({ variant: 'error', title: 'Falha ao sugerir temas', description: errMsg(e) });
+    } finally {
+      setSuggesting(false);
     }
   }, [toast]);
 
@@ -137,7 +161,17 @@ export function MarketingBlogPage() {
           ) : (
             <>
               <div>
-                <p className="mb-2 text-sm font-semibold text-navy-700">Temas sugeridos (ainda não escritos)</p>
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-navy-700">Temas sugeridos</p>
+                  <button
+                    type="button"
+                    onClick={() => void onSuggestMore()}
+                    disabled={suggesting}
+                    className="rounded-full border border-brand-300 px-3 py-1 text-xs font-bold text-brand-700 transition hover:bg-brand-50 disabled:opacity-50"
+                  >
+                    {suggesting ? 'Gerando…' : '+ Sugerir mais (IA)'}
+                  </button>
+                </div>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {todo.map((t) => (
                     <button
@@ -157,10 +191,15 @@ export function MarketingBlogPage() {
                       <span className="block text-xs text-navy-300">{t.angle}</span>
                     </button>
                   ))}
-                  {todo.length === 0 && (
-                    <p className="text-sm text-navy-300">Todos os temas sugeridos já foram escritos — use um tema próprio abaixo.</p>
-                  )}
                 </div>
+                {loadError && (
+                  <p className="mt-2 text-sm text-red-600">Não consegui carregar os temas. Recarregue a página ou tente “Sugerir mais”.</p>
+                )}
+                {!loadError && todo.length === 0 && (
+                  <p className="mt-2 text-sm text-navy-300">
+                    Sem temas na fila — clique em “Sugerir mais (IA)” ou escreva um tema próprio abaixo.
+                  </p>
+                )}
               </div>
 
               <div>

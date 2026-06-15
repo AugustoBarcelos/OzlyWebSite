@@ -157,6 +157,7 @@ function useNavGroups(simple: boolean): ReadonlyArray<NavGroup> {
           items: [
             { label: 'Cockpit', to: '/cockpit', icon: HomeIcon, end: true },
             { label: 'Inbox', to: '/inbox', icon: InboxIcon },
+            { label: 'Blog', to: '/marketing/blog', icon: PenSquareIcon },
           ],
         },
         {
@@ -179,6 +180,7 @@ function useNavGroups(simple: boolean): ReadonlyArray<NavGroup> {
           items: [
             { label: 'Cockpit', to: '/cockpit', icon: HomeIcon, end: true },
             { label: 'Inbox', to: '/inbox', icon: InboxIcon },
+            { label: 'Blog', to: '/marketing/blog', icon: PenSquareIcon },
           ],
         },
         {
