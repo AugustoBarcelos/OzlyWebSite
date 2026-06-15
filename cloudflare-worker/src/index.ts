@@ -328,15 +328,33 @@ function slugify(s: string): string {
     .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'untitled';
 }
 
-// Workers AI may return a parsed object or a JSON string with surrounding
-// prose; pull the first {...} and parse defensively.
-function parseLoose(raw: unknown): GenLang {
+// We ask the model for a delimited format (not JSON) because markdown bodies
+// have newlines/quotes that LLMs routinely fail to escape in JSON. Markers use
+// @@@ (not ###, which models treat as markdown headings).
+function section(text: string, name: string): string {
+  const re = new RegExp(`@@@${name}@@@\\s*([\\s\\S]*?)\\s*(?=@@@[A-Z]+@@@|$)`, 'i');
+  const m = text.match(re);
+  return m ? m[1].trim() : '';
+}
+
+function parseDelimited(raw: unknown): GenLang {
   if (raw && typeof raw === 'object' && 'title' in (raw as object)) return raw as GenLang;
-  const text = String(raw ?? '');
-  const start = text.indexOf('{');
-  const end = text.lastIndexOf('}');
-  if (start === -1 || end === -1) throw new Error('AI returned no JSON');
-  return JSON.parse(text.slice(start, end + 1)) as GenLang;
+  const text = String(raw ?? '').trim();
+  let title = section(text, 'TITLE');
+  let description = section(text, 'DESC') || section(text, 'DESCRIPTION');
+  let body = section(text, 'BODY');
+
+  // Salvage: model ignored the markers. Take the first usable line as the
+  // title and the rest as the body — a human reviews/edits anyway.
+  if (!title || !body) {
+    const lines = text.split('\n').map((l) => l.replace(/^#+\s*/, '').trim());
+    const idx = lines.findIndex((l) => l.length > 0);
+    if (idx === -1) throw new Error('AI returned empty output — try again');
+    title = title || lines[idx].slice(0, 80);
+    body = body || lines.slice(idx + 1).join('\n').trim() || lines[idx];
+  }
+  if (!description) description = body.replace(/[#*>`\-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 155);
+  return { title, description, body };
 }
 
 async function aiGenerateLang(topic: string, code: 'en' | 'pt' | 'es', env: Env): Promise<GenLang> {
@@ -356,37 +374,36 @@ Rules (follow strictly):
 
 Body = GitHub-flavoured Markdown (## headings, tables, **bold**, lists, > quotes). Do NOT put the H1 title in the body. 600–900 words.
 
-Return ONLY a JSON object, no other text:
-{"title": "<=70 chars, include the year if relevant", "description": "<=160 chars meta/excerpt", "body": "the markdown body"}`;
+Output using these exact separator lines, copied literally character-for-character. Do NOT replace them with markdown headings:
+@@@TITLE@@@
+(title here, <=70 chars, include the year if relevant)
+@@@DESC@@@
+(meta description here, <=160 chars)
+@@@BODY@@@
+(the markdown body here)`;
 
+  // No response_format / json_schema: some Workers AI models stall on it. We
+  // ask for JSON in the prompt and parse defensively. 2048 tokens is plenty for
+  // a ~700-word post and keeps each call fast.
   const result = (await env.AI.run(AI_MODEL, {
-    max_tokens: 4096,
+    max_tokens: 2048,
     messages: [
       { role: 'system', content: system },
-      { role: 'user', content: `Topic: ${topic}\n\nWrite the post in ${langName} now. Output JSON only.` },
+      { role: 'user', content: `Topic: ${topic}\n\nWrite the post in ${langName} now. Output ONLY the ###-delimited format, nothing else.` },
     ],
-    response_format: {
-      type: 'json_schema',
-      json_schema: {
-        type: 'object',
-        properties: {
-          title: { type: 'string' },
-          description: { type: 'string' },
-          body: { type: 'string' },
-        },
-        required: ['title', 'description', 'body'],
-      },
-    },
   })) as { response?: unknown };
 
-  return parseLoose(result.response ?? result);
+  return parseDelimited(result.response ?? result);
 }
 
 async function generatePost(topic: string, slug: string | undefined, env: Env): Promise<GenResult> {
-  // Sequential (not parallel) to stay gentle on the free Workers AI quota.
-  const en = await aiGenerateLang(topic, 'en', env);
-  const pt = await aiGenerateLang(topic, 'pt', env);
-  const es = await aiGenerateLang(topic, 'es', env);
+  // Parallel — the 3 languages run at once so we stay under the Worker time
+  // limit (sequential 70B calls overran it and left the request hanging).
+  const [en, pt, es] = await Promise.all([
+    aiGenerateLang(topic, 'en', env),
+    aiGenerateLang(topic, 'pt', env),
+    aiGenerateLang(topic, 'es', env),
+  ]);
   return { slug: slug ? slugify(slug) : slugify(en.title), en, pt, es };
 }
 

@@ -163,13 +163,24 @@
       const show = (id) => { ["login","pick","generating","edit"].forEach((s) => $(s).classList.toggle("hide", s !== id)); };
 
       async function api(path, opts = {}) {
-        const res = await fetch(API + path, {
-          ...opts,
-          headers: { "Content-Type": "application/json", "x-admin-key": KEY, ...(opts.headers || {}) },
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-        return data;
+        const ctrl = new AbortController();
+        const timeout = opts.timeoutMs || 60000;
+        const timer = setTimeout(() => ctrl.abort(), timeout);
+        try {
+          const res = await fetch(API + path, {
+            ...opts,
+            signal: ctrl.signal,
+            headers: { "Content-Type": "application/json", "x-admin-key": KEY, ...(opts.headers || {}) },
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+          return data;
+        } catch (e) {
+          if (e.name === "AbortError") throw new Error("Timed out — tenta de novo (a IA grátis às vezes está cheia).");
+          throw e;
+        } finally {
+          clearTimeout(timer);
+        }
       }
 
       /* ---- LOGIN ---- */
@@ -244,7 +255,7 @@
         const slug = custom ? undefined : selectedTopic.slug;
         show("generating");
         try {
-          post = await api("/generate", { method: "POST", body: JSON.stringify({ topic, slug }) });
+          post = await api("/generate", { method: "POST", body: JSON.stringify({ topic, slug }), timeoutMs: 110000 });
           lang = "en";
           openEdit();
         } catch (e) {
