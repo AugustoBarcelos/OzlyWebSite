@@ -24,6 +24,7 @@ interface Env {
   // Blog AI-authoring:
   AI: { run: (model: string, inputs: unknown) => Promise<unknown> }; // Workers AI binding (free tier)
   GITHUB_TOKEN: string; // fine-grained PAT, repo Contents: Read and write (wrangler secret)
+  TAVILY_API_KEY?: string; // optional — web search for the fact-check (wrangler secret)
 }
 
 const GITHUB_REPO = "AugustoBarcelos/OzlyWebSite";
@@ -297,6 +298,19 @@ async function handleAdminApi(request: Request, env: Env, url: URL): Promise<Res
     }
   }
 
+  // Apply a single fact-check finding to one language's draft (AI edit).
+  if (path === '/admin/api/apply-fix' && request.method === 'POST') {
+    const b = (await request.json().catch(() => ({}))) as {
+      lang?: string; title?: string; description?: string; body?: string; finding?: string;
+    };
+    if (!b.body || !b.finding) return json({ error: 'Missing body or finding' }, 400);
+    try {
+      return json(await applyFix(b, env));
+    } catch (e) {
+      return json({ error: `Apply failed: ${(e as Error).message}` }, 502);
+    }
+  }
+
   if (path === '/admin/api/publish' && request.method === 'POST') {
     const body = (await request.json().catch(() => ({}))) as PublishBody;
     if (!body.slug || !body.en) return json({ error: 'Missing slug or content' }, 400);
@@ -440,7 +454,7 @@ Rules (follow strictly):
 3. Include ONE line of real, lived experience ("the #1 thing we see in the app is…").
 4. For any tax/visa fact, add an inline markdown link to the official source: ATO https://www.ato.gov.au/ or Home Affairs https://immi.homeaffairs.gov.au/ .
 5. End with a CTA tied to the pain, linking the app: App Store https://apps.apple.com/au/app/ozly/id6760398649 and Google Play https://play.google.com/store/apps/details?id=com.augusto.ozly .
-6. Close with a one-line disclaimer: general info, not tax advice, verify with the ATO / a registered agent.
+6. MANDATORY — always end with a clear disclaimer (in ${langName}): Ozly is a record-keeping tool, NOT an accountant or registered tax agent, and this article is general information, not tax or accounting advice — consult a registered tax agent for your own situation. Every post must include this.
 7. Numbers must be correct for the 2025–26 year and phrased so a human can verify them. A human reviews before publishing.
 
 Body = GitHub-flavoured Markdown (## headings, tables, **bold**, lists, > quotes). Do NOT put the H1 title in the body. 600–900 words.
@@ -505,17 +519,50 @@ function parseReview(raw: unknown): ReviewLang {
   return { verdict, findings };
 }
 
-async function aiReviewLang(tr: GenLang, code: 'en' | 'pt' | 'es', env: Env): Promise<ReviewLang> {
+// Web search (Tavily) → authoritative current context for the fact-check.
+// Returns '' if no key is set, so review still works (ungrounded) without it.
+async function webContext(query: string, env: Env): Promise<string> {
+  if (!env.TAVILY_API_KEY) return '';
+  try {
+    const res = await fetch('https://api.tavily.com/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        api_key: env.TAVILY_API_KEY,
+        query,
+        search_depth: 'basic',
+        max_results: 5,
+        include_answer: true,
+        include_domains: ['ato.gov.au', 'immi.homeaffairs.gov.au', 'abr.gov.au', 'business.gov.au'],
+      }),
+    });
+    if (!res.ok) return '';
+    const data = (await res.json()) as { answer?: string; results?: Array<{ title?: string; url?: string; content?: string }> };
+    const parts: string[] = [];
+    if (data.answer) parts.push(`Summary: ${data.answer}`);
+    for (const r of (data.results ?? []).slice(0, 5)) {
+      parts.push(`[${r.title ?? ''}] ${r.url ?? ''}\n${(r.content ?? '').slice(0, 600)}`);
+    }
+    return parts.join('\n\n').slice(0, 4000);
+  } catch {
+    return '';
+  }
+}
+
+async function aiReviewLang(tr: GenLang, code: 'en' | 'pt' | 'es', env: Env, context: string): Promise<ReviewLang> {
   const langName = LANG_NAMES[code];
+  const grounding = context
+    ? `\n\nAUTHORITATIVE WEB CONTEXT (from ato.gov.au / Home Affairs — treat as current truth; compare the draft's numbers and rules against it and flag mismatches):\n${context}\n`
+    : '';
   const system = `You are a meticulous editor AND an Australian tax/visa fact-checker for Ozly's blog. Review the draft below (written in ${langName}) and list problems a human MUST fix before publishing.
 
 Check for:
 - GRAMMAR / spelling / clarity / awkward phrasing.
-- TAX & VISA ACCURACY: flag every rate, threshold, number or rule that must be verified against the ATO/Home Affairs. Call out anything that looks outdated or wrong for the 2025–26 year (e.g. an old marginal rate like 32.5%, a wrong tax-free threshold, a wrong student-visa hour limit). Quote the exact text.
+- TAX & VISA ACCURACY: flag every rate, threshold, number or rule. ${context ? 'Use the WEB CONTEXT below as the source of truth — if the draft disagrees with it, flag HIGH and give the correct value.' : 'Flag anything that looks outdated or wrong for 2025–26 (e.g. an old marginal rate like 32.5%, a wrong tax-free threshold, a wrong student-visa hour limit).'} Quote the exact text.
 - MISSING SOURCES: a factual claim with no official ATO/Home Affairs link.
-- BRAND/CTA: missing app download CTA or missing "not tax advice" disclaimer.
+- BRAND/CTA: missing app download CTA or missing "not an accountant / not tax advice" disclaimer.
 
-Be specific and quote the offending text. Severity HIGH = wrong/risky fact; MED = should fix; LOW = minor.
+Be specific and quote the offending text. Severity HIGH = wrong/risky fact; MED = should fix; LOW = minor.${grounding}
 
 Output EXACTLY this, copied literally:
 @@@VERDICT@@@
@@ -538,10 +585,44 @@ PASS or NEEDS_WORK
 
 async function reviewPost(body: PublishBody, env: Env): Promise<Record<string, ReviewLang>> {
   const codes = (['en', 'pt', 'es'] as const).filter((c) => body[c] && body[c]!.title);
+  // One web search (in English — ATO content is English), reused for all langs.
+  const seed = body.en?.title || body.pt?.title || body.es?.title || '';
+  const context = await webContext(`${seed} Australia ATO 2025-26 tax rules`, env);
   const entries = await Promise.all(
-    codes.map((c) => aiReviewLang(body[c] as GenLang, c, env).then((r) => [c, r] as const)),
+    codes.map((c) => aiReviewLang(body[c] as GenLang, c, env, context).then((r) => [c, r] as const)),
   );
   return Object.fromEntries(entries);
+}
+
+/* ── Apply one fact-check finding to a single-language draft ── */
+async function applyFix(
+  input: { lang?: string; title?: string; description?: string; body?: string; finding?: string },
+  env: Env,
+): Promise<GenLang> {
+  const langName = LANG_NAMES[(input.lang as 'en' | 'pt' | 'es')] ?? 'the original language';
+  const system = `You are editing a blog draft written in ${langName} for Ozly. Apply ONLY the single fix below and change nothing else — keep the same language, tone, structure, links, headings, CTA and the mandatory disclaimer (Ozly is not an accountant/registered tax agent).
+
+THE FIX TO APPLY:
+${input.finding}
+
+If the fix is about a wrong/outdated number, correct it to the accurate Australian 2025–26 value. Keep GitHub-flavoured Markdown. Do not add commentary.
+
+Output EXACTLY this, nothing else:
+@@@TITLE@@@
+(title)
+@@@DESC@@@
+(description)
+@@@BODY@@@
+(corrected markdown body)`;
+  const user = `TITLE: ${input.title ?? ''}\nDESC: ${input.description ?? ''}\n\nBODY:\n${input.body ?? ''}`;
+  const result = (await env.AI.run(AI_MODEL, {
+    max_tokens: 2048,
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: user },
+    ],
+  })) as { response?: unknown };
+  return parseDelimited(result.response ?? result);
 }
 
 /* ── Publish: commit content/blog/<lang>/<slug>.md for each language ── */

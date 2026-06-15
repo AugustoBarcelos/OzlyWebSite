@@ -93,6 +93,14 @@ export function generatePost(topic: string, slug?: string) {
   });
 }
 
+export function applyFix(lang: LangCode, draft: BlogLang, finding: string) {
+  return blogApi<BlogLang>('apply-fix', {
+    method: 'POST',
+    body: { lang, title: draft.title, description: draft.description, body: draft.body, finding },
+    timeoutMs: 90000,
+  });
+}
+
 export function reviewPost(post: BlogPost) {
   return blogApi<Record<LangCode, ReviewLang>>('review', {
     method: 'POST',
