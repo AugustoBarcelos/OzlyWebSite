@@ -6,7 +6,8 @@
     "pricing": "Plans",
     "support": "Support",
     "download": "Download Now",
-    "business": "For businesses"
+    "business": "For businesses",
+    "blog": "Blog"
   },
   "hero": {
     "badge": "All your gigs, one app",
@@ -131,19 +132,58 @@
     "subtitle": "Everything an owner or admin needs to run Ozly for Business — invite the ABN holders you work with, cover their plan, receive invoices and pay. Step by step.",
     "cta": "Create your free workspace",
     "tocSections": [
-      { "id": "overview", "label": "1. What it is" },
-      { "id": "workspace", "label": "2. Create workspace" },
-      { "id": "dashboard", "label": "3. Dashboard" },
-      { "id": "members", "label": "4. Members" },
-      { "id": "cover", "label": "5. Cover a plan" },
-      { "id": "inbox", "label": "6. Inbox" },
-      { "id": "invoices", "label": "7. Invoices" },
-      { "id": "work", "label": "8. Work" },
-      { "id": "billing", "label": "9. Billing" },
-      { "id": "integrations", "label": "10. Integrations" },
-      { "id": "reports", "label": "11. Reports & Activity" },
-      { "id": "settings", "label": "12. Settings" },
-      { "id": "faq", "label": "13. FAQ" }
+      {
+        "id": "overview",
+        "label": "1. What it is"
+      },
+      {
+        "id": "workspace",
+        "label": "2. Create workspace"
+      },
+      {
+        "id": "dashboard",
+        "label": "3. Dashboard"
+      },
+      {
+        "id": "members",
+        "label": "4. Members"
+      },
+      {
+        "id": "cover",
+        "label": "5. Cover a plan"
+      },
+      {
+        "id": "inbox",
+        "label": "6. Inbox"
+      },
+      {
+        "id": "invoices",
+        "label": "7. Invoices"
+      },
+      {
+        "id": "work",
+        "label": "8. Work"
+      },
+      {
+        "id": "billing",
+        "label": "9. Billing"
+      },
+      {
+        "id": "integrations",
+        "label": "10. Integrations"
+      },
+      {
+        "id": "reports",
+        "label": "11. Reports & Activity"
+      },
+      {
+        "id": "settings",
+        "label": "12. Settings"
+      },
+      {
+        "id": "faq",
+        "label": "13. FAQ"
+      }
     ]
   },
   "guide": {
@@ -262,7 +302,7 @@
   },
   "footer": {
     "copyright": "© 2026 Ozly. All rights reserved.",
-    "disclaimer": "Ozly is a record-keeping and educational tool, not a registered tax agent under the Tax Agent Services Act 2009 (Cth). All tax figures are estimates and general information only \u2014 not tax, financial or legal advice. Always confirm with a registered tax agent (tpb.gov.au).",
+    "disclaimer": "Ozly is a record-keeping and educational tool, not a registered tax agent under the Tax Agent Services Act 2009 (Cth). All tax figures are estimates and general information only — not tax, financial or legal advice. Always confirm with a registered tax agent (tpb.gov.au).",
     "privacy": "Privacy Policy",
     "terms": "Terms of Service",
     "business": "For businesses"
@@ -814,6 +854,23 @@
     "business": {
       "title": "Ozly for Organisations — Sub-contractor Invoices & Payments in One Portal",
       "description": "Invite your sub-contractors, receive their invoices, pay them and keep every record tidy — one portal for Australian businesses that work with ABN contractors. Free 14-day trial, no card required."
+    },
+    "blog": {
+      "title": "Ozly Blog — Tax, ABN & visa guides for Australian sole traders",
+      "description": "Plain-English guides on ABN, tax, GST, invoicing and visa work rules for sole traders and migrants working in Australia."
     }
+  },
+  "blog": {
+    "title": "Ozly Blog",
+    "intro": "Plain-English guides on tax, ABN, GST and visas — for people working for themselves in Australia.",
+    "backHome": "Home",
+    "back": "All articles",
+    "read": "min read",
+    "readMore": "Read",
+    "by": "By",
+    "empty": "No articles yet — check back soon.",
+    "notFound": "This article isn’t available.",
+    "ctaTitle": "Run your ABN the easy way",
+    "ctaSubtitle": "Free invoicing and real-time tax estimates, built for Australian sole traders."
   }
 }

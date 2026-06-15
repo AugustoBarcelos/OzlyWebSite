@@ -1,5 +1,6 @@
 import { Card, Grid, Text, Title } from '@tremor/react';
 import { KpiHero } from '@/components/charts/KpiHero';
+import { CardLink } from '@/components/CardLink';
 import { FunnelChart } from '@/components/charts/FunnelChart';
 import { CohortHeatmap } from '@/components/charts/CohortHeatmap';
 import { TimeSeriesChart } from '@/components/charts/TimeSeriesChart';
@@ -124,6 +125,7 @@ export function ProductTab({ data, loading, period }: Props) {
           hint={`${activationRate} created a job in 48h`}
           loading={loading && !kpi}
           tone="brand"
+          href="/product/activation"
         />
         <KpiHero
           label="Trial → Paid"
@@ -132,6 +134,7 @@ export function ProductTab({ data, loading, period }: Props) {
           hint="Pending RevenueCat sync"
           loading={loading && !revenue}
           tone="lime"
+          href="/revenue"
         />
         <KpiHero
           label="Trials active"
@@ -143,6 +146,7 @@ export function ProductTab({ data, loading, period }: Props) {
           }
           loading={loading && !kpi && !trialStatus}
           tone="brand"
+          href="/users?status=trial"
         />
         <KpiHero
           label="Trials expiring · 7d"
@@ -155,16 +159,20 @@ export function ProductTab({ data, loading, period }: Props) {
           loading={loading && !kpi && !trialStatus}
           tone="warning"
           isIncreasePositive={false}
+          href="/users?status=trial"
         />
       </Grid>
 
       <Grid numItemsLg={2} className="gap-4">
-        <FunnelChart
-          title="Conversion funnel"
-          steps={funnelSteps}
-          loading={loading && !kpi && !funnel}
-        />
-        <Card>
+        <CardLink to="/product/activation" label="See activation funnel detail">
+          <FunnelChart
+            title="Conversion funnel"
+            steps={funnelSteps}
+            loading={loading && !kpi && !funnel}
+          />
+        </CardLink>
+        <CardLink to="/product/engagement" label="See feature usage detail">
+        <Card className="h-full">
           <Title>Top features · {techPeriod}d</Title>
           <Text className="mt-1 text-xs text-navy-300">
             {featureUsage
@@ -206,43 +214,50 @@ export function ProductTab({ data, loading, period }: Props) {
             </ul>
           )}
         </Card>
+        </CardLink>
       </Grid>
 
       <Grid numItemsLg={2} className="gap-4">
-        <TimeSeriesChart
-          title="Daily active users"
-          subtitle={`Distinct users with any event · last ${techPeriod}d`}
-          data={
-            activeUsers?.series.map((p) => ({
-              date: p.date,
-              DAU: p.count,
-            })) ?? null
-          }
-          categories={['DAU']}
-          colors={['emerald']}
-          variant="area"
-          loading={loading && !activeUsers}
-          emptyMessage="No active-user data"
-        />
-        <HistogramChart
-          title="Time-to-activation"
-          subtitle="Hours from signup to first job · last 90d cohort"
-          buckets={timeToActivation?.buckets ?? null}
-          footnote={
-            timeToActivation
-              ? `${formatNumber(timeToActivation.never_activated)} not yet activated`
-              : undefined
-          }
-          loading={loading && !timeToActivation}
-        />
+        <CardLink to="/product/engagement" label="See engagement detail">
+          <TimeSeriesChart
+            title="Daily active users"
+            subtitle={`Distinct users with any event · last ${techPeriod}d`}
+            data={
+              activeUsers?.series.map((p) => ({
+                date: p.date,
+                DAU: p.count,
+              })) ?? null
+            }
+            categories={['DAU']}
+            colors={['emerald']}
+            variant="area"
+            loading={loading && !activeUsers}
+            emptyMessage="No active-user data"
+          />
+        </CardLink>
+        <CardLink to="/product/activation" label="See time-to-activation detail">
+          <HistogramChart
+            title="Time-to-activation"
+            subtitle="Hours from signup to first job · last 90d cohort"
+            buckets={timeToActivation?.buckets ?? null}
+            footnote={
+              timeToActivation
+                ? `${formatNumber(timeToActivation.never_activated)} not yet activated`
+                : undefined
+            }
+            loading={loading && !timeToActivation}
+          />
+        </CardLink>
       </Grid>
 
-      <CohortHeatmap
-        title={retentionLabel}
-        cells={COHORT_CELLS}
-        rows={cohortRows}
-        loading={loading && !retentionSource}
-      />
+      <CardLink to="/product/retention" label="See retention detail">
+        <CohortHeatmap
+          title={retentionLabel}
+          cells={COHORT_CELLS}
+          rows={cohortRows}
+          loading={loading && !retentionSource}
+        />
+      </CardLink>
     </div>
   );
 }

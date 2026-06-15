@@ -213,3 +213,83 @@ html, body {
     background: #334155;
   }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   BLOG POST BODY (markdown → HTML rendered by scripts/blog-lib.mjs)
+   Shared by the React BlogPost page and matched to the static
+   .seo-prerender styles in index.html so the crawler view agrees.
+   ══════════════════════════════════════════════════════════════ */
+
+.prose-blog {
+  color: #334155;
+  line-height: 1.7;
+  font-size: 1.0625rem;
+}
+.prose-blog > :first-child { margin-top: 0; }
+.prose-blog h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #162431;
+  margin: 2rem 0 0.75rem;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+.prose-blog h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #162431;
+  margin: 1.5rem 0 0.5rem;
+}
+.prose-blog p { margin: 1rem 0; }
+.prose-blog a {
+  color: #24a383;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.prose-blog a:hover { color: #1d8a6e; }
+.prose-blog strong { color: #162431; font-weight: 700; }
+.prose-blog ul, .prose-blog ol { margin: 1rem 0; padding-left: 1.4rem; }
+.prose-blog li { margin: 0.4rem 0; }
+.prose-blog ul li { list-style: disc; }
+.prose-blog ol li { list-style: decimal; }
+.prose-blog blockquote {
+  margin: 1.5rem 0;
+  padding: 0.75rem 1.25rem;
+  border-left: 4px solid #2BBB97;
+  background: #e8f8f3;
+  border-radius: 0 0.5rem 0.5rem 0;
+  color: #0f5443;
+}
+.prose-blog blockquote p { margin: 0.25rem 0; }
+.prose-blog code {
+  background: #eef2f6;
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.3rem;
+  font-size: 0.9em;
+}
+.prose-blog pre {
+  background: #162431;
+  color: #e8f8f3;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+}
+.prose-blog pre code { background: none; padding: 0; }
+.prose-blog hr { border: none; border-top: 1px solid #e2e8f0; margin: 2rem 0; }
+.prose-blog table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 0.95rem;
+  display: block;
+  overflow-x: auto;
+}
+.prose-blog th, .prose-blog td {
+  border: 1px solid #e2e8f0;
+  padding: 0.6rem 0.85rem;
+  text-align: left;
+}
+.prose-blog th { background: #f8fafc; font-weight: 700; color: #162431; }
+.prose-blog img { max-width: 100%; border-radius: 0.75rem; margin: 1.5rem 0; }
+.prose-blog em { font-style: italic; color: #64748b; }

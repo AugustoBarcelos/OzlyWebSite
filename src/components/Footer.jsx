@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
 import { Mail } from "lucide-react";
-import { useI18n } from "../i18n";
+import { useI18n, useLangPath } from "../i18n";
 
 export default function Footer() {
   const { t } = useI18n();
+  const lp = useLangPath();
 
   return (
     <footer className="bg-navy-700 text-slate-400 py-10">
@@ -27,7 +28,8 @@ export default function Footer() {
           </a>
         </div>
         <div className="flex gap-6">
-          <Link to="/business" className="hover:text-white transition-colors">{t.footer.business}</Link>
+          <Link to={lp("/blog")} className="hover:text-white transition-colors">{t.nav.blog}</Link>
+          <Link to={lp("/business")} className="hover:text-white transition-colors">{t.footer.business}</Link>
           <Link to="/privacy-policy" className="hover:text-white transition-colors">{t.footer.privacy}</Link>
           <Link to="/terms-of-use" className="hover:text-white transition-colors">{t.footer.terms}</Link>
         </div>

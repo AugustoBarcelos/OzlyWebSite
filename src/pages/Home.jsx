@@ -26,14 +26,49 @@ import {
   ArrowDown,
   Zap,
 } from "lucide-react";
-import { useI18n } from "../i18n";
+import { useI18n, useLangPath, useSeoMeta } from "../i18n";
 import ScrollReveal from "../components/ScrollReveal";
 import PhoneMockup from "../components/PhoneMockup";
 import AudienceGate from "../components/AudienceGate";
+import {
+  appStoreUrl,
+  playStoreUrl,
+  trackStoreClick,
+  trackEvent,
+  deviceStoreUrl,
+} from "../lib/track";
+
+/* ═══════════════ STORE BADGES (tracked per placement) ═══════════════ */
+function StoreBadges({ campaign }) {
+  const { lang } = useI18n();
+  return (
+    <>
+      <a
+        href={appStoreUrl(campaign)}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={() => trackStoreClick("app_store", campaign, lang)}
+        className="store-badge-link hover:opacity-80 transition"
+      >
+        <img src={`${import.meta.env.BASE_URL}app-store.svg`} alt="Download Ozly on the App Store" width="189" height="56" className="h-14" />
+      </a>
+      <a
+        href={playStoreUrl(campaign)}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={() => trackStoreClick("google_play", campaign, lang)}
+        className="store-badge-link hover:opacity-80 transition"
+      >
+        <img src={`${import.meta.env.BASE_URL}google-play.svg`} alt="Get Ozly on Google Play" width="189" height="56" className="h-14" />
+      </a>
+    </>
+  );
+}
 
 /* ═══════════════════════════ HERO ═══════════════════════════ */
 function Hero() {
   const { t } = useI18n();
+  const lp = useLangPath();
 
   const subtitle = t.hero.subtitle
     .replace("{price}", `<strong class="text-brand-500">${t.hero.price}</strong>`);
@@ -74,12 +109,7 @@ function Hero() {
               className="mt-9 flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start anim-fade-in-up"
               style={{ animationDelay: "0.5s" }}
             >
-              <a href="https://apps.apple.com/au/app/ozly/id6760398649" target="_blank" rel="noopener noreferrer" className="store-badge-link hover:opacity-80 transition">
-                <img src={`${import.meta.env.BASE_URL}app-store.svg`} alt="Download Ozly on the App Store" width="189" height="56" className="h-14" />
-              </a>
-              <a href="https://play.google.com/store/apps/details?id=com.augusto.ozly" target="_blank" rel="noopener noreferrer" className="store-badge-link hover:opacity-80 transition">
-                <img src={`${import.meta.env.BASE_URL}google-play.svg`} alt="Get Ozly on Google Play" width="189" height="56" className="h-14" />
-              </a>
+              <StoreBadges campaign="home_hero" />
             </div>
 
             {/* Audience split — two terse hairline rows, Apple-style: plain
@@ -101,7 +131,7 @@ function Hero() {
                 </span>
               </button>
               <Link
-                to="/business"
+                to={lp("/business")}
                 className="flex w-full items-center justify-between gap-6 py-4 group"
               >
                 <span className="text-[15px] font-medium text-navy-700 dark:text-white">
@@ -640,9 +670,23 @@ const proExclusiveFeatures = [
 ];
 
 function Pricing() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const p = t.pricing;
   const [expanded, setExpanded] = useState(false);
+
+  // Whoever clicks "Start free trial" already decided — don't bounce them
+  // back to the hero. On a phone, go straight to the right store; on
+  // desktop, the #download badges are the only install path.
+  const startTrial = (plan) => (e) => {
+    const campaign = `pricing_${plan}`;
+    trackEvent("cta_click", { cta: "start_trial", plan, lang });
+    const direct = deviceStoreUrl(campaign);
+    if (direct) {
+      e.preventDefault();
+      trackStoreClick(direct.store, campaign, lang);
+      window.open(direct.url, "_blank", "noopener,noreferrer");
+    }
+  };
   const visibleFeatures = expanded ? [...coreFeatures, ...extraFeatures] : coreFeatures;
 
   // Sort features per plan: included (✓) first, excluded (—) last
@@ -732,7 +776,7 @@ function Pricing() {
                     onClick={() => setExpanded(true)}
                     className="text-brand-600 dark:text-brand-400 text-[13px] font-medium hover:underline underline-offset-4 transition mb-4 flex items-center gap-1 cursor-pointer"
                   >
-                    {p.seeAll || "Ver todas as features"}
+                    {p.seeAll || "See all features"}
                     <ChevronDown size={14} />
                   </button>
                 )}
@@ -740,6 +784,7 @@ function Pricing() {
                 {/* CTA */}
                 <a
                   href="#download"
+                  onClick={startTrial(plan.id)}
                   className={`flex items-center justify-center rounded-full px-6 py-3 font-medium text-[15px] transition-colors ${
                     plan.highlight
                       ? "bg-white text-navy-700 hover:bg-navy-50"
@@ -779,12 +824,7 @@ function BottomCta() {
             {t.bottomCta.subtitle}
           </p>
           <div className="flex flex-col sm:flex-row items-center gap-4 justify-center">
-            <a href="https://apps.apple.com/au/app/ozly/id6760398649" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center hover:opacity-80 transition">
-              <img src={`${import.meta.env.BASE_URL}app-store.svg`} alt="Download Ozly on the App Store" width="189" height="56" className="h-14" />
-            </a>
-            <a href="https://play.google.com/store/apps/details?id=com.augusto.ozly" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center hover:opacity-80 transition">
-              <img src={`${import.meta.env.BASE_URL}google-play.svg`} alt="Get Ozly on Google Play" width="189" height="56" className="h-14" />
-            </a>
+            <StoreBadges campaign="home_bottom" />
           </div>
         </ScrollReveal>
       </div>
@@ -795,6 +835,7 @@ function BottomCta() {
 /* ═══════════════════════ HOME FAQ ═══════════════════════ */
 function HomeFaq() {
   const { t } = useI18n();
+  const lp = useLangPath();
   const [openIndex, setOpenIndex] = useState(null);
   const faqKeys = ["q1", "q2", "q3", "q4", "q5", "q6"];
 
@@ -839,12 +880,13 @@ function HomeFaq() {
             <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
               <a
                 href="mailto:support@ozly.com.au"
+                onClick={() => trackEvent("cta_click", { cta: "contact_email", page: "home" })}
                 className="rounded-full bg-brand-600 px-6 py-3 text-[15px] font-medium text-white hover:bg-brand-500 transition-colors"
               >
                 {t.homeFaq.contact}
               </a>
               <Link
-                to="/guide"
+                to={lp("/guide")}
                 className="text-[15px] font-medium text-brand-600 dark:text-brand-400 hover:underline underline-offset-4"
               >
                 {t.homeFaq.cta} →
@@ -859,6 +901,7 @@ function HomeFaq() {
 
 /* ═══════════════════════ HOME ═══════════════════════ */
 export default function Home() {
+  useSeoMeta("home");
   return (
     <div className="ozly-gradient">
       <AudienceGate />

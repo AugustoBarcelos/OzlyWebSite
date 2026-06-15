@@ -12,6 +12,8 @@ const TermsOfUse = lazy(() => import("./pages/TermsOfUse"));
 const TermsBusiness = lazy(() => import("./pages/TermsBusiness"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const BusinessLanding = lazy(() => import("./pages/BusinessLanding"));
+const Blog = lazy(() => import("./pages/Blog"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
 const ReferralLanding = lazy(() => import("./pages/ReferralLanding"));
 const AffiliateDashboard = lazy(() => import("./pages/AffiliateDashboard"));
 const AffiliateAuth = lazy(() => import("./pages/AffiliateAuth"));
@@ -45,6 +47,8 @@ export default function App() {
                 <Route path="guide" element={<Guide />} />
                 <Route path="guide/business" element={<Guide variant="business" />} />
                 <Route path="business" element={<BusinessLanding />} />
+                <Route path="blog" element={<Blog />} />
+                <Route path="blog/:slug" element={<BlogPost />} />
               </Route>
             ))}
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />

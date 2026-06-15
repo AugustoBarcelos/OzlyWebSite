@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronDown, ArrowLeft, Mail, BookOpen, Search } from "lucide-react";
-import { useI18n } from "../i18n";
+import { useI18n, useLangPath, useSeoMeta } from "../i18n";
 
 // Category → list of question keys (q1..q89). Each question belongs to exactly one category.
 const CATEGORIES = [
@@ -62,6 +62,8 @@ function FaqItem({ question, answer }) {
 
 export default function Support() {
   const { t } = useI18n();
+  const lp = useLangPath();
+  useSeoMeta("support");
   const [activeCat, setActiveCat] = useState("all");
   const [query, setQuery] = useState("");
 
@@ -95,7 +97,7 @@ export default function Support() {
       <div className="mx-auto max-w-4xl px-5">
         {/* Back link */}
         <Link
-          to="/"
+          to={lp("/")}
           className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-brand-500 transition mb-8"
         >
           <ArrowLeft size={16} />
@@ -199,7 +201,7 @@ export default function Support() {
               {t.homeFaq.contact}
             </a>
             <Link
-              to="/guide"
+              to={lp("/guide")}
               className="inline-flex items-center gap-2 rounded-full border-2 border-brand-500 px-6 py-3.5 text-brand-500 font-semibold hover:bg-brand-50 transition"
             >
               <BookOpen size={18} />

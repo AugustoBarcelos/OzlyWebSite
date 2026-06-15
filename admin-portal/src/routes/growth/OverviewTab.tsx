@@ -210,15 +210,21 @@ export function OverviewTab({ period }: Props) {
             </thead>
             <tbody className="divide-y divide-navy-50 bg-white">
               {[
-                { icon: '🎯', name: 'Google Ads (incl. YouTube Ads)' },
-                { icon: '📘', name: 'Meta Ads (Facebook + Instagram)' },
-                { icon: '🍎', name: 'Apple Search Ads' },
-                { icon: '🎵', name: 'TikTok Ads' },
+                { icon: '🎯', name: 'Google Ads (incl. YouTube Ads)', to: '/ads/google' },
+                { icon: '📘', name: 'Meta Ads (Facebook + Instagram)', to: '/ads/meta' },
+                { icon: '🍎', name: 'Apple Search Ads', to: '/ads/asa' },
+                { icon: '🎵', name: 'TikTok Ads', to: '/ads/tiktok' },
               ].map((p) => (
                 <tr key={p.name} className="text-navy-500">
                   <td className="px-3 py-2 font-medium text-navy-700">
-                    <span className="mr-1.5">{p.icon}</span>
-                    {p.name}
+                    <Link
+                      to={p.to}
+                      className="group/row inline-flex items-center gap-1 hover:text-brand-700"
+                    >
+                      <span className="mr-0.5">{p.icon}</span>
+                      {p.name}
+                      <ArrowUpRightIcon className="h-3 w-3 text-navy-200 transition-colors group-hover/row:text-brand-500" />
+                    </Link>
                   </td>
                   <td className="px-3 py-2">
                     <span className="rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">

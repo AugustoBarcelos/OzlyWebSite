@@ -1,5 +1,6 @@
 import { Card, Grid, Text, Title } from '@tremor/react';
 import { KpiHero } from '@/components/charts/KpiHero';
+import { CardLink } from '@/components/CardLink';
 import { TimeSeriesChart } from '@/components/charts/TimeSeriesChart';
 import { TopErrorsList } from '@/components/charts/TopErrorsList';
 import { RecentActionsList } from '@/components/charts/RecentActionsList';
@@ -74,6 +75,7 @@ export function TechTab({ data, loading, period }: Props) {
           loading={loading && !errorRate}
           tone="warning"
           series={errorsSpark}
+          href="/tech/errors"
         />
         <KpiHero
           label={`Avg DAU · ${techPeriod}d`}
@@ -86,6 +88,7 @@ export function TechTab({ data, loading, period }: Props) {
           loading={loading && !activeUsers}
           tone="brand"
           series={dauSpark}
+          href="/product/engagement"
         />
         <KpiHero
           label="Jobs today"
@@ -93,6 +96,7 @@ export function TechTab({ data, loading, period }: Props) {
           hint="System throughput signal"
           loading={loading && !jobsTimeseries}
           tone="lime"
+          href="/product/engagement"
         />
         <KpiHero
           label="DB size"
@@ -107,11 +111,16 @@ export function TechTab({ data, loading, period }: Props) {
           }
           loading={loading && !dbHealth}
           tone="neutral"
+          href="https://supabase.com/dashboard/project/jnhwgwnphlnhjlgygjql/database/tables"
         />
       </Grid>
 
       <Grid numItemsLg={3} className="gap-4">
-        <div className="lg:col-span-2">
+        <CardLink
+          to="/product/engagement"
+          label="See engagement detail"
+          className="lg:col-span-2"
+        >
           <TimeSeriesChart
             title="Daily activity"
             subtitle={`Jobs created · DAU · last ${techPeriod}d`}
@@ -143,8 +152,12 @@ export function TechTab({ data, loading, period }: Props) {
             loading={loading && !jobsTimeseries && !activeUsers}
             emptyMessage="No daily activity data"
           />
-        </div>
-        <Card>
+        </CardLink>
+        <CardLink
+          to="https://supabase.com/dashboard/project/jnhwgwnphlnhjlgygjql/database/tables"
+          label="Open Supabase tables"
+        >
+        <Card className="h-full">
           <Title>Top tables</Title>
           <Text className="mt-1 text-xs text-navy-300">
             By total relation size · live row count
@@ -178,6 +191,7 @@ export function TechTab({ data, loading, period }: Props) {
             </ul>
           )}
         </Card>
+        </CardLink>
       </Grid>
 
       <Grid numItemsLg={2} className="gap-4">
@@ -232,6 +246,7 @@ export function TechTab({ data, loading, period }: Props) {
       {/* feature usage shown on Product tab — also surface here for tech ops
           who care about which screens drive the most app_events writes */}
       {featureUsage && featureUsage.rows.length > 0 && (
+        <CardLink to="/product/engagement" label="See screen usage detail">
         <Card>
           <Title>Most-viewed screens · {techPeriod}d</Title>
           <Text className="mt-1 text-xs text-navy-300">
@@ -270,6 +285,7 @@ export function TechTab({ data, loading, period }: Props) {
             })}
           </ul>
         </Card>
+        </CardLink>
       )}
     </div>
   );

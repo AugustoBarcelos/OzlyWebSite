@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Ozly Blog — Create a post</title>
+    <style>
+      :root {
+        --teal: #2bbb97;
+        --teal-d: #1d8a6e;
+        --navy: #162431;
+        --bg: #f8fafc;
+        --line: #e2e8f0;
+        --muted: #64748b;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: Inter, system-ui, -apple-system, sans-serif;
+        background: var(--bg);
+        color: var(--navy);
+        line-height: 1.5;
+      }
+      header {
+        background: var(--navy);
+        color: #fff;
+        padding: 16px 24px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+      }
+      header .ly { color: var(--teal); }
+      main { max-width: 880px; margin: 0 auto; padding: 28px 20px 80px; }
+      h1 { font-size: 1.6rem; margin: 0 0 6px; }
+      .sub { color: var(--muted); margin: 0 0 24px; }
+      .card { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 22px; margin-bottom: 18px; }
+      label { display: block; font-weight: 600; font-size: 0.85rem; margin: 14px 0 6px; }
+      input[type="text"], input[type="password"], textarea, select {
+        width: 100%; padding: 11px 13px; border: 1px solid var(--line);
+        border-radius: 10px; font: inherit; color: var(--navy); background: #fff;
+      }
+      textarea { min-height: 360px; resize: vertical; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.85rem; line-height: 1.6; }
+      input:focus, textarea:focus, select:focus { outline: 2px solid var(--teal); border-color: var(--teal); }
+      button {
+        font: inherit; font-weight: 700; border: none; border-radius: 999px;
+        padding: 11px 22px; cursor: pointer; transition: background 0.15s, opacity 0.15s;
+      }
+      .btn-primary { background: var(--teal); color: #fff; }
+      .btn-primary:hover { background: var(--teal-d); }
+      .btn-ghost { background: #eef2f6; color: var(--navy); }
+      .btn-ghost:hover { background: #e2e8f0; }
+      button:disabled { opacity: 0.5; cursor: not-allowed; }
+      .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+      .topics { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 6px; }
+      @media (min-width: 640px) { .topics { grid-template-columns: 1fr 1fr; } }
+      .topic {
+        text-align: left; border: 1px solid var(--line); background: #fff; border-radius: 12px;
+        padding: 12px 14px; cursor: pointer; display: flex; flex-direction: column; gap: 3px;
+      }
+      .topic:hover { border-color: var(--teal); }
+      .topic.sel { border-color: var(--teal); background: #e8f8f3; }
+      .topic .t { font-weight: 700; font-size: 0.92rem; }
+      .topic .a { font-size: 0.78rem; color: var(--muted); }
+      .badge { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; border-radius: 999px; padding: 2px 8px; align-self: flex-start; }
+      .badge.todo { background: #e8f8f3; color: var(--teal-d); }
+      .badge.done { background: #f1f5f9; color: var(--muted); }
+      .tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+      .tab { padding: 7px 16px; border-radius: 999px; background: #eef2f6; cursor: pointer; font-weight: 700; font-size: 0.85rem; border: none; }
+      .tab.active { background: var(--navy); color: #fff; }
+      .muted { color: var(--muted); font-size: 0.85rem; }
+      .note { background: #fff8e6; border: 1px solid #f3e0a0; color: #7a5b00; border-radius: 10px; padding: 10px 14px; font-size: 0.85rem; margin: 12px 0; }
+      .ok { background: #e8f8f3; border: 1px solid #8edbc5; color: var(--teal-d); border-radius: 10px; padding: 12px 14px; margin: 12px 0; }
+      .err { background: #fde8e8; border: 1px solid #f3a0a0; color: #9b1c1c; border-radius: 10px; padding: 12px 14px; margin: 12px 0; }
+      .spin { width: 22px; height: 22px; border: 3px solid var(--line); border-top-color: var(--teal); border-radius: 50%; animation: s 0.8s linear infinite; }
+      @keyframes s { to { transform: rotate(360deg); } }
+      .hide { display: none; }
+      .checkrow { display: flex; align-items: center; gap: 8px; margin: 14px 0; }
+      .checkrow input { width: auto; }
+    </style>
+  </head>
+  <body>
+    <header><span>oz<span class="ly">ly</span></span> &nbsp;·&nbsp; Blog</header>
+    <main>
+      <!-- LOGIN -->
+      <section id="login">
+        <h1>Sign in</h1>
+        <p class="sub">Enter the blog password to continue.</p>
+        <div class="card">
+          <label for="pw">Password</label>
+          <input id="pw" type="password" placeholder="••••••••" autofocus />
+          <div id="loginErr"></div>
+          <div class="row" style="margin-top: 16px;">
+            <button class="btn-primary" id="loginBtn">Sign in</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- PICK TOPIC -->
+      <section id="pick" class="hide">
+        <h1>New blog post</h1>
+        <p class="sub">Pick a suggested topic (we mark what's already written), or type your own.</p>
+        <div class="card">
+          <div id="topics" class="topics"><div class="row"><div class="spin"></div> <span class="muted">Loading topics…</span></div></div>
+          <label for="custom" style="margin-top: 20px;">…or write a custom topic</label>
+          <input id="custom" type="text" placeholder="e.g. How GST works for Uber drivers in Australia" />
+          <div class="row" style="margin-top: 18px;">
+            <button class="btn-primary" id="genBtn" disabled>Generate with AI</button>
+            <span class="muted" id="genHint">Select a topic above or type one.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- GENERATING -->
+      <section id="generating" class="hide">
+        <div class="card row"><div class="spin"></div> <span>Writing the post in English, Portuguese and Spanish… this takes ~30–60s.</span></div>
+      </section>
+
+      <!-- EDIT -->
+      <section id="edit" class="hide">
+        <h1>Review &amp; edit</h1>
+        <p class="sub">The AI wrote a draft. <strong>Check every number against the ATO before publishing.</strong></p>
+        <div class="card">
+          <label for="slug">URL slug</label>
+          <input id="slug" type="text" />
+          <p class="muted" id="slugPreview"></p>
+
+          <div class="tabs" id="tabs">
+            <button class="tab active" data-lang="en">EN</button>
+            <button class="tab" data-lang="pt">PT</button>
+            <button class="tab" data-lang="es">ES</button>
+          </div>
+
+          <label>Title</label>
+          <input id="f-title" type="text" />
+          <label>Description (meta + listing excerpt)</label>
+          <input id="f-desc" type="text" />
+          <label>Body (Markdown)</label>
+          <textarea id="f-body"></textarea>
+
+          <div class="note">⚠️ Verify tax/visa numbers against <a href="https://www.ato.gov.au/" target="_blank" rel="noopener">ATO</a> / <a href="https://immi.homeaffairs.gov.au/" target="_blank" rel="noopener">Home Affairs</a>. The app takes the blame for wrong figures.</div>
+
+          <div id="editMsg"></div>
+          <div class="row" style="margin-top: 8px;">
+            <button class="btn-ghost" id="saveDraftBtn">Save as draft</button>
+            <button class="btn-primary" id="publishBtn">Publish</button>
+            <button class="btn-ghost" id="backBtn">← Start over</button>
+          </div>
+          <p class="muted" style="margin-top:10px;">Draft = saved but hidden from the site. Publish = goes live (auto-deploys in ~2 min).</p>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const API = "/admin/api";
+      let KEY = sessionStorage.getItem("ozly-admin-key") || "";
+      let post = null; // { slug, en:{title,description,body}, pt, es }
+      let lang = "en";
+
+      const $ = (id) => document.getElementById(id);
+      const show = (id) => { ["login","pick","generating","edit"].forEach((s) => $(s).classList.toggle("hide", s !== id)); };
+
+      async function api(path, opts = {}) {
+        const res = await fetch(API + path, {
+          ...opts,
+          headers: { "Content-Type": "application/json", "x-admin-key": KEY, ...(opts.headers || {}) },
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+        return data;
+      }
+
+      /* ---- LOGIN ---- */
+      async function doLogin() {
+        const pw = $("pw").value.trim();
+        $("loginErr").innerHTML = "";
+        if (!pw) return;
+        try {
+          await fetch(API + "/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password: pw }),
+          }).then((r) => { if (!r.ok) throw new Error("Wrong password"); });
+          KEY = pw;
+          sessionStorage.setItem("ozly-admin-key", KEY);
+          openPick();
+        } catch (e) {
+          $("loginErr").innerHTML = `<div class="err">${e.message}</div>`;
+        }
+      }
+      $("loginBtn").onclick = doLogin;
+      $("pw").addEventListener("keydown", (e) => { if (e.key === "Enter") doLogin(); });
+
+      /* ---- PICK TOPIC ---- */
+      let selectedTopic = null;
+      async function openPick() {
+        show("pick");
+        selectedTopic = null;
+        $("custom").value = "";
+        updateGenBtn();
+        try {
+          const { topics } = await api("/topics");
+          $("topics").innerHTML = topics
+            .map(
+              (t, i) => `<button class="topic" data-i="${i}" data-slug="${t.slug}" data-title="${encodeURIComponent(t.title)}">
+                <span class="badge ${t.done ? "done" : "todo"}">${t.done ? "written" : "to write"}</span>
+                <span class="t">${t.title}</span>
+                <span class="a">${t.angle}</span>
+              </button>`
+            )
+            .join("");
+          document.querySelectorAll(".topic").forEach((el) => {
+            el.onclick = () => {
+              document.querySelectorAll(".topic").forEach((x) => x.classList.remove("sel"));
+              el.classList.add("sel");
+              selectedTopic = { slug: el.dataset.slug, title: decodeURIComponent(el.dataset.title) };
+              $("custom").value = "";
+              updateGenBtn();
+            };
+          });
+        } catch (e) {
+          $("topics").innerHTML = `<div class="err">${e.message}</div>`;
+        }
+      }
+      $("custom").addEventListener("input", () => {
+        if ($("custom").value.trim()) {
+          selectedTopic = null;
+          document.querySelectorAll(".topic").forEach((x) => x.classList.remove("sel"));
+        }
+        updateGenBtn();
+      });
+      function updateGenBtn() {
+        const has = selectedTopic || $("custom").value.trim();
+        $("genBtn").disabled = !has;
+        $("genHint").textContent = has ? "" : "Select a topic above or type one.";
+      }
+
+      /* ---- GENERATE ---- */
+      $("genBtn").onclick = async () => {
+        const custom = $("custom").value.trim();
+        const topic = custom || selectedTopic.title;
+        const slug = custom ? undefined : selectedTopic.slug;
+        show("generating");
+        try {
+          post = await api("/generate", { method: "POST", body: JSON.stringify({ topic, slug }) });
+          lang = "en";
+          openEdit();
+        } catch (e) {
+          show("pick");
+          alert("Generation failed: " + e.message);
+        }
+      };
+
+      /* ---- EDIT ---- */
+      function openEdit() {
+        show("edit");
+        $("slug").value = post.slug;
+        updateSlugPreview();
+        document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t.dataset.lang === lang));
+        loadLang();
+        $("editMsg").innerHTML = "";
+      }
+      function updateSlugPreview() {
+        $("slugPreview").textContent = "ozly.au/blog/" + ($("slug").value || "…");
+      }
+      $("slug").addEventListener("input", () => { post.slug = $("slug").value; updateSlugPreview(); });
+      function saveLang() {
+        if (!post[lang]) post[lang] = { title: "", description: "", body: "" };
+        post[lang].title = $("f-title").value;
+        post[lang].description = $("f-desc").value;
+        post[lang].body = $("f-body").value;
+      }
+      function loadLang() {
+        const t = post[lang] || { title: "", description: "", body: "" };
+        $("f-title").value = t.title || "";
+        $("f-desc").value = t.description || "";
+        $("f-body").value = t.body || "";
+      }
+      document.querySelectorAll(".tab").forEach((tab) => {
+        tab.onclick = () => {
+          saveLang();
+          lang = tab.dataset.lang;
+          document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t === tab));
+          loadLang();
+        };
+      });
+      $("backBtn").onclick = () => { if (confirm("Discard this draft and start over?")) openPick(); };
+
+      async function publish(draft) {
+        saveLang();
+        const btn = draft ? $("saveDraftBtn") : $("publishBtn");
+        btn.disabled = true;
+        $("editMsg").innerHTML = `<div class="row"><div class="spin"></div> <span>Committing to GitHub…</span></div>`;
+        try {
+          const res = await api("/publish", {
+            method: "POST",
+            body: JSON.stringify({ slug: post.slug, draft, en: post.en, pt: post.pt, es: post.es }),
+          });
+          $("editMsg").innerHTML = `<div class="ok">✅ ${draft ? "Saved as draft" : "Published"} — ${res.committed.length} file(s) committed.${draft ? "" : " It will be live at <strong>ozly.au/blog/" + post.slug + "</strong> in ~2 minutes."}</div>`;
+        } catch (e) {
+          $("editMsg").innerHTML = `<div class="err">${e.message}</div>`;
+        } finally {
+          btn.disabled = false;
+        }
+      }
+      $("saveDraftBtn").onclick = () => publish(true);
+      $("publishBtn").onclick = () => { if (confirm("Publish this post live? Make sure you checked the numbers.")) publish(false); };
+
+      /* ---- boot ---- */
+      if (KEY) openPick(); else show("login");
+    </script>
+  </body>
+</html>

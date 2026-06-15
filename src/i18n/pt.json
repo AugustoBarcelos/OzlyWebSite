@@ -6,7 +6,8 @@
     "pricing": "Planos",
     "support": "Suporte",
     "download": "Baixe Agora",
-    "business": "Para empresas"
+    "business": "Para empresas",
+    "blog": "Blog"
   },
   "hero": {
     "badge": "Todos os seus trampos, um app",
@@ -131,19 +132,58 @@
     "subtitle": "Tudo que um dono ou admin precisa pra operar o Ozly para Empresas — convidar os ABN holders com quem você trabalha, cobrir o plano deles, receber invoices e pagar. Passo a passo.",
     "cta": "Criar seu workspace grátis",
     "tocSections": [
-      { "id": "overview", "label": "1. O que é" },
-      { "id": "workspace", "label": "2. Criar workspace" },
-      { "id": "dashboard", "label": "3. Dashboard" },
-      { "id": "members", "label": "4. Members" },
-      { "id": "cover", "label": "5. Cobrir um plano" },
-      { "id": "inbox", "label": "6. Inbox" },
-      { "id": "invoices", "label": "7. Invoices" },
-      { "id": "work", "label": "8. Work" },
-      { "id": "billing", "label": "9. Billing" },
-      { "id": "integrations", "label": "10. Integrações" },
-      { "id": "reports", "label": "11. Relatórios e Atividade" },
-      { "id": "settings", "label": "12. Configurações" },
-      { "id": "faq", "label": "13. FAQ" }
+      {
+        "id": "overview",
+        "label": "1. O que é"
+      },
+      {
+        "id": "workspace",
+        "label": "2. Criar workspace"
+      },
+      {
+        "id": "dashboard",
+        "label": "3. Dashboard"
+      },
+      {
+        "id": "members",
+        "label": "4. Members"
+      },
+      {
+        "id": "cover",
+        "label": "5. Cobrir um plano"
+      },
+      {
+        "id": "inbox",
+        "label": "6. Inbox"
+      },
+      {
+        "id": "invoices",
+        "label": "7. Invoices"
+      },
+      {
+        "id": "work",
+        "label": "8. Work"
+      },
+      {
+        "id": "billing",
+        "label": "9. Billing"
+      },
+      {
+        "id": "integrations",
+        "label": "10. Integrações"
+      },
+      {
+        "id": "reports",
+        "label": "11. Relatórios e Atividade"
+      },
+      {
+        "id": "settings",
+        "label": "12. Configurações"
+      },
+      {
+        "id": "faq",
+        "label": "13. FAQ"
+      }
     ]
   },
   "guide": {
@@ -814,6 +854,23 @@
     "business": {
       "title": "Ozly para Organizações — Invoices de Sub-contractors num Portal Só",
       "description": "Convide seus sub-contractors, receba as invoices deles, pague e mantenha tudo documentado — um portal pra empresas australianas que trabalham com contractors de ABN. 14 dias grátis."
+    },
+    "blog": {
+      "title": "Blog da Ozly — Guias de imposto, ABN e visto na Austrália",
+      "description": "Guias diretos sobre ABN, imposto, GST, invoices e regras de trabalho por visto para quem trabalha por conta própria na Austrália."
     }
+  },
+  "blog": {
+    "title": "Blog da Ozly",
+    "intro": "Guias diretos sobre imposto, ABN, GST e vistos — para quem trabalha por conta própria na Austrália.",
+    "backHome": "Início",
+    "back": "Todos os artigos",
+    "read": "min de leitura",
+    "readMore": "Ler",
+    "by": "Por",
+    "empty": "Ainda não há artigos — volte em breve.",
+    "notFound": "Este artigo não está disponível.",
+    "ctaTitle": "Toque seu ABN do jeito fácil",
+    "ctaSubtitle": "Invoice grátis e imposto estimado em tempo real, feito para sole traders na Austrália."
   }
 }

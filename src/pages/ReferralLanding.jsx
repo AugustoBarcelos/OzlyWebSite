@@ -15,14 +15,14 @@ import { useI18n } from "../i18n";
 // digita o código na tela de setup, o RPC `apply_referral_code` cria a
 // linha em `affiliate_conversions`. Esta página é só "porta de entrada".
 
+import { appStoreUrl, playStoreUrl } from "../lib/track";
+
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const APP_STORE_URL =
-  import.meta.env.VITE_APP_STORE_URL ??
-  "https://apps.apple.com/au/app/ozly/id6760398649";
+  import.meta.env.VITE_APP_STORE_URL ?? appStoreUrl("referral_landing");
 const PLAY_STORE_URL =
-  import.meta.env.VITE_PLAY_STORE_URL ??
-  "https://play.google.com/store/apps/details?id=com.augusto.ozly";
+  import.meta.env.VITE_PLAY_STORE_URL ?? playStoreUrl("referral_landing");
 
 // Detecção simples de OS. Basta para escolher store correta — não
 // precisamos de precisão cirúrgica (iPadOS cai em "ios" o que está ok).

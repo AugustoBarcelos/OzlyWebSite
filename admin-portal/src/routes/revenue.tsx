@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Card,
   DonutChart,
@@ -10,6 +11,7 @@ import {
   Title,
 } from '@tremor/react';
 import { KpiHero } from '@/components/charts/KpiHero';
+import { CardLink } from '@/components/CardLink';
 import { ExternalLinkIcon } from '@/components/Icons';
 import { Spinner } from '@/components/Spinner';
 import { callRpc, RpcError } from '@/lib/rpc';
@@ -168,6 +170,7 @@ export function RevenuePage() {
           hint={mrr === null ? 'Pending RevenueCat sync' : 'Monthly recurring (AUD)'}
           loading={loading && !data}
           tone="brand"
+          href="/users?status=paying"
         />
         <KpiHero
           label="Active subscribers"
@@ -175,6 +178,7 @@ export function RevenuePage() {
           hint={paidActiveTotal === null ? 'Pending RC sync' : 'Across all plans'}
           loading={loading && !data}
           tone="lime"
+          href="/users?status=paying"
         />
         <KpiHero
           label={`Churn · ${period}d`}
@@ -183,6 +187,7 @@ export function RevenuePage() {
           loading={loading && !data}
           tone="warning"
           isIncreasePositive={false}
+          href="/users?status=churned"
         />
         <KpiHero
           label="Cancel scheduled"
@@ -206,6 +211,7 @@ export function RevenuePage() {
           loading={loading && !data}
           tone="warning"
           isIncreasePositive={false}
+          href="/inbox"
         />
         <KpiHero
           label="LTV estimate"
@@ -214,11 +220,17 @@ export function RevenuePage() {
           hint="Pending RevenueCat sync"
           loading={loading && !data}
           tone="neutral"
+          href="https://app.revenuecat.com/overview"
         />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+        <CardLink
+          to="/users?status=paying"
+          label="See paying users by plan"
+          className="lg:col-span-2"
+        >
+        <Card className="h-full">
           <Title>Plan mix</Title>
           <Text className="mt-1 text-xs text-navy-300">
             {paidActiveTotal === null
@@ -249,6 +261,7 @@ export function RevenuePage() {
             </div>
           )}
         </Card>
+        </CardLink>
 
         <Card>
           <Title>Trial → paid</Title>
@@ -262,25 +275,35 @@ export function RevenuePage() {
                 ? '—'
                 : `${conversion.toFixed(1)}%`}
           </div>
+          {/* Cada mini-stat dril-down pro filtro certo em /users */}
           <div className="mt-4 grid grid-cols-3 gap-3 text-xs">
-            <div className="rounded-md border border-navy-50 bg-white p-2.5">
+            <Link
+              to={`/users?status=trial&signup=${period}`}
+              className="rounded-md border border-navy-50 bg-white p-2.5 transition-colors hover:border-brand-200 hover:shadow-sm"
+            >
               <div className="text-navy-300">Started</div>
               <div className="mt-1 text-base font-medium text-navy-700">
                 {formatNumber(trialsStarted)}
               </div>
-            </div>
-            <div className="rounded-md border border-navy-50 bg-white p-2.5">
+            </Link>
+            <Link
+              to="/users?status=trial"
+              className="rounded-md border border-navy-50 bg-white p-2.5 transition-colors hover:border-brand-200 hover:shadow-sm"
+            >
               <div className="text-navy-300">Active now</div>
               <div className="mt-1 text-base font-medium text-navy-700">
                 {formatNumber(trialsActive)}
               </div>
-            </div>
-            <div className="rounded-md border border-navy-50 bg-white p-2.5">
+            </Link>
+            <Link
+              to="/users?lifecycle=trial_expired"
+              className="rounded-md border border-navy-50 bg-white p-2.5 transition-colors hover:border-brand-200 hover:shadow-sm"
+            >
               <div className="text-navy-300">Lapsed</div>
               <div className="mt-1 text-base font-medium text-rose-600">
                 {formatNumber(trialsLapsed)}
               </div>
-            </div>
+            </Link>
           </div>
         </Card>
       </div>

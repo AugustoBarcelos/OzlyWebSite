@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, Globe } from "lucide-react";
-import { useI18n, supportedLangs } from "../i18n";
+import { useI18n, supportedLangs, useLangPath, stripLangPrefix } from "../i18n";
+import { trackEvent } from "../lib/track";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -9,8 +10,11 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const { lang, setLang, t } = useI18n();
   const location = useLocation();
-  const isHome = location.pathname === "/";
-  const isBusiness = location.pathname.startsWith("/business");
+  const lp = useLangPath();
+  // Language-prefixed variants (/pt, /es/business, …) count as the same page.
+  const barePath = stripLangPrefix(location.pathname);
+  const isHome = barePath === "/";
+  const isBusiness = barePath === "/business";
 
   // Audience switch (Personal | Business) — visible everywhere so visitors
   // can flip sides at any time; keeps the per-visit gate choice in sync.
@@ -42,7 +46,7 @@ export default function Navbar() {
         {label}
       </a>
     ) : (
-      <Link to={`/${href}`} className="hover:text-brand-500 transition-colors" onClick={() => setOpen(false)}>
+      <Link to={`${lp("/")}${href}`} className="hover:text-brand-500 transition-colors" onClick={() => setOpen(false)}>
         {label}
       </Link>
     );
@@ -79,11 +83,14 @@ export default function Navbar() {
           {navLink("#comparison", t.nav.comparison)}
           {navLink("#pricing", t.nav.pricing)}
           {navLink("#faq", t.nav.support)}
+          <Link to={lp("/blog")} className="hover:text-brand-500 transition-colors" onClick={() => setOpen(false)}>
+            {t.nav.blog}
+          </Link>
 
           {/* Personal | Business switch */}
           <div className="flex items-center rounded-full bg-slate-100 dark:bg-slate-800 p-0.5 text-xs font-semibold">
             <Link
-              to="/"
+              to={lp("/")}
               onClick={() => rememberAudience("contractor")}
               className={`rounded-full px-3 py-1.5 transition-colors ${
                 !isBusiness
@@ -94,7 +101,7 @@ export default function Navbar() {
               {t.audienceSwitch.personal}
             </Link>
             <Link
-              to="/business"
+              to={lp("/business")}
               onClick={() => rememberAudience("business")}
               className={`rounded-full px-3 py-1.5 transition-colors ${
                 isBusiness
@@ -137,6 +144,7 @@ export default function Navbar() {
 
           <a
             href="#download"
+            onClick={() => trackEvent("cta_click", { cta: "nav_download", lang })}
             className="ml-2 inline-flex items-center gap-2 rounded-full bg-brand-800 px-5 py-2.5 text-white text-sm font-semibold hover:bg-brand-900 transition-colors shadow-lg shadow-brand-500/20"
           >
             {t.nav.download}
@@ -150,7 +158,7 @@ export default function Navbar() {
           {/* Personal | Business switch */}
           <div className="flex items-center rounded-full bg-slate-100 dark:bg-slate-800 p-0.5 text-xs font-semibold mt-3">
             <Link
-              to="/"
+              to={lp("/")}
               onClick={() => rememberAudience("contractor")}
               className={`flex-1 rounded-full px-3 py-2 text-center transition-colors ${
                 !isBusiness
@@ -161,7 +169,7 @@ export default function Navbar() {
               {t.audienceSwitch.personal}
             </Link>
             <Link
-              to="/business"
+              to={lp("/business")}
               onClick={() => rememberAudience("business")}
               className={`flex-1 rounded-full px-3 py-2 text-center transition-colors ${
                 isBusiness
@@ -181,16 +189,17 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <Link to="/#features" className="block py-2.5" onClick={() => setOpen(false)}>{t.nav.features}</Link>
-              <Link to="/#comparison" className="block py-2.5" onClick={() => setOpen(false)}>{t.nav.comparison}</Link>
-              <Link to="/#pricing" className="block py-2.5" onClick={() => setOpen(false)}>{t.nav.pricing}</Link>
+              <Link to={`${lp("/")}#features`} className="block py-2.5" onClick={() => setOpen(false)}>{t.nav.features}</Link>
+              <Link to={`${lp("/")}#comparison`} className="block py-2.5" onClick={() => setOpen(false)}>{t.nav.comparison}</Link>
+              <Link to={`${lp("/")}#pricing`} className="block py-2.5" onClick={() => setOpen(false)}>{t.nav.pricing}</Link>
             </>
           )}
           {isHome ? (
             <a href="#faq" className="block py-2.5" onClick={() => setOpen(false)}>{t.nav.support}</a>
           ) : (
-            <Link to="/#faq" className="block py-2.5" onClick={() => setOpen(false)}>{t.nav.support}</Link>
+            <Link to={`${lp("/")}#faq`} className="block py-2.5" onClick={() => setOpen(false)}>{t.nav.support}</Link>
           )}
+          <Link to={lp("/blog")} className="block py-2.5" onClick={() => setOpen(false)}>{t.nav.blog}</Link>
 
           <div className="flex gap-2 py-2">
             {supportedLangs.map(({ code, label }) => (
@@ -211,7 +220,7 @@ export default function Navbar() {
           <a
             href="#download"
             className="block rounded-full bg-brand-800 px-5 py-2.5 text-center text-white font-semibold"
-            onClick={() => setOpen(false)}
+            onClick={() => { setOpen(false); trackEvent("cta_click", { cta: "nav_download_mobile", lang }); }}
           >
             {t.nav.download}
           </a>

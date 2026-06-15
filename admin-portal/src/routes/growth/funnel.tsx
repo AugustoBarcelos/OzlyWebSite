@@ -60,17 +60,19 @@ interface Stage {
   key: keyof FunnelData;
   label: string;
   hint?: string;
+  /** Drill-down: clicar na etapa abre o detalhe dela (padrão Cockpit). */
+  to?: string;
 }
 
 const STAGES: ReadonlyArray<Stage> = [
-  { key: 'impressions', label: 'Impressions', hint: 'Anúncios servidos (paid + organic)' },
-  { key: 'clicks', label: 'Clicks', hint: 'Cliques nos anúncios + tráfego pra site' },
-  { key: 'installs', label: 'Installs', hint: 'App instalado (App Store + Play)' },
-  { key: 'signups', label: 'Signups', hint: 'Conta criada' },
-  { key: 'activations', label: 'Activations', hint: 'Primeira ação significativa em 48h' },
-  { key: 'trials', label: 'Trials', hint: 'Trial iniciado via RevenueCat' },
-  { key: 'paid', label: 'Paid', hint: 'Conversão pra plano pago' },
-  { key: 'retained_30d', label: 'Retained 30d', hint: 'Ainda ativo após 30 dias' },
+  { key: 'impressions', label: 'Impressions', hint: 'Anúncios servidos (paid + organic)', to: '/ads' },
+  { key: 'clicks', label: 'Clicks', hint: 'Cliques nos anúncios + tráfego pra site', to: '/ads' },
+  { key: 'installs', label: 'Installs', hint: 'App instalado (App Store + Play)', to: '/ads/attribution' },
+  { key: 'signups', label: 'Signups', hint: 'Conta criada', to: '/users' },
+  { key: 'activations', label: 'Activations', hint: 'Primeira ação significativa em 48h', to: '/product/activation' },
+  { key: 'trials', label: 'Trials', hint: 'Trial iniciado via RevenueCat', to: '/users?status=trial' },
+  { key: 'paid', label: 'Paid', hint: 'Conversão pra plano pago', to: '/users?status=paying' },
+  { key: 'retained_30d', label: 'Retained 30d', hint: 'Ainda ativo após 30 dias', to: '/product/retention' },
 ];
 
 export function SalesFunnelPage() {
@@ -194,6 +196,7 @@ export function SalesFunnelPage() {
           loading={loading}
           tone="brand"
           hint="Spend total ÷ novos paid"
+          to="/ads"
         />
         <KpiTile
           label="Spend total"
@@ -202,6 +205,7 @@ export function SalesFunnelPage() {
           loading={loading}
           tone="neutral"
           hint={`últimos ${periodDays} dias`}
+          to="/ads"
         />
         <KpiTile
           label="Novos paid"
@@ -210,6 +214,7 @@ export function SalesFunnelPage() {
           loading={loading}
           tone="lime"
           hint="Conversões pra plano pago"
+          to="/users?status=paying"
         />
       </section>
 
@@ -236,19 +241,19 @@ export function SalesFunnelPage() {
                 ? Math.max((row.value / maxValue) * 100, 2)
                 : 0;
 
-              return (
-                <li
-                  key={row.key}
-                  className="rounded-md border border-navy-50 bg-white p-3"
-                >
+              const rowBody = (
+                <>
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-2">
                       <span className="text-[11px] font-mono text-navy-300">
                         {String(i + 1).padStart(2, '0')}
                       </span>
                       <div className="min-w-0">
-                        <div className="text-sm font-medium text-navy-700">
+                        <div className="flex items-center gap-1 text-sm font-medium text-navy-700">
                           {row.label}
+                          {row.to && (
+                            <ArrowUpRightIcon className="h-3 w-3 text-navy-200 transition-colors group-hover:text-brand-500" />
+                          )}
                         </div>
                         {row.hint && (
                           <div className="text-[11px] text-navy-400">{row.hint}</div>
@@ -283,6 +288,23 @@ export function SalesFunnelPage() {
                       />
                     )}
                   </div>
+                </>
+              );
+
+              return (
+                <li key={row.key}>
+                  {row.to ? (
+                    <Link
+                      to={row.to}
+                      className="group block rounded-md border border-navy-50 bg-white p-3 transition-colors hover:border-brand-200 hover:shadow-sm"
+                    >
+                      {rowBody}
+                    </Link>
+                  ) : (
+                    <div className="rounded-md border border-navy-50 bg-white p-3">
+                      {rowBody}
+                    </div>
+                  )}
                 </li>
               );
             })}
@@ -405,6 +427,8 @@ interface KpiTileProps {
   loading: boolean;
   tone: 'brand' | 'lime' | 'neutral';
   hint?: string;
+  /** Drill-down route — todo quadro deve ser clicável (padrão Cockpit). */
+  to?: string;
 }
 
 const TONE_CLASS: Record<KpiTileProps['tone'], string> = {
@@ -413,9 +437,12 @@ const TONE_CLASS: Record<KpiTileProps['tone'], string> = {
   neutral: 'text-navy-700',
 };
 
-function KpiTile({ label, value, formatter, loading, tone, hint }: KpiTileProps) {
-  return (
-    <div className="ozly-card ozly-card-hero relative px-5 py-4">
+function KpiTile({ label, value, formatter, loading, tone, hint, to }: KpiTileProps) {
+  const body = (
+    <>
+      {to && (
+        <ArrowUpRightIcon className="absolute right-3 top-3 h-3.5 w-3.5 text-navy-100 transition-colors group-hover:text-brand-500" />
+      )}
       <div className="text-[11px] font-semibold uppercase tracking-wider text-navy-300">
         {label}
       </div>
@@ -429,6 +456,17 @@ function KpiTile({ label, value, formatter, loading, tone, hint }: KpiTileProps)
       {hint && !loading && (
         <div className="mt-1 text-[11px] text-navy-400">{hint}</div>
       )}
-    </div>
+    </>
   );
+  if (to) {
+    return (
+      <Link
+        to={to}
+        className="ozly-card ozly-card-hero group relative block cursor-pointer px-5 py-4 transition-shadow hover:shadow-md hover:ring-1 hover:ring-brand-200"
+      >
+        {body}
+      </Link>
+    );
+  }
+  return <div className="ozly-card ozly-card-hero relative px-5 py-4">{body}</div>;
 }

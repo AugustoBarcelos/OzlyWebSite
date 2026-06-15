@@ -11,12 +11,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Building2, ChevronRight } from 'lucide-react';
-import { useI18n } from '../i18n';
+import { useI18n, useLangPath } from '../i18n';
+import { trackEvent } from '../lib/track';
 
 const STORAGE_KEY = 'ozly_audience'; // 'contractor' | 'business'
 
 export default function AudienceGate() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+  const lp = useLangPath();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
@@ -48,8 +50,11 @@ export default function AudienceGate() {
     } catch {
       /* best-effort persistence only */
     }
+    // Funnel-entry signal: which side of the gate converts, and how many
+    // sessions bounce without ever choosing (session_start − gate_choice).
+    trackEvent('gate_choice', { audience, lang });
     setOpen(false);
-    if (audience === 'business') navigate('/business');
+    if (audience === 'business') navigate(lp('/business'));
   };
 
   return (
