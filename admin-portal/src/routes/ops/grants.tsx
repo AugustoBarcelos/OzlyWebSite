@@ -132,6 +132,25 @@ export function GrantsPage() {
           .order('expires_at', { ascending: true })
           .limit(200);
 
+        // Exclude test users (is_test). referral_grants / revenuecat_snapshot
+        // have no is_test column and no is_test-filtering RPC, so drop flagged
+        // users via a profiles lookup before mapping.
+        const rawIds = Array.from(new Set([
+          ...(refData ?? []).map((r) => r.referrer_user_id).filter(Boolean),
+          ...(rcData ?? []).map((r) => r.user_id).filter(Boolean),
+        ])) as string[];
+        let testIds = new Set<string>();
+        if (rawIds.length) {
+          const { data: testRows } = await supabase
+            .from('profiles')
+            .select('id')
+            .in('id', rawIds)
+            .eq('is_test', true);
+          testIds = new Set((testRows ?? []).map((r) => r.id as string));
+        }
+        const refSafe = (refData ?? []).filter((r) => !testIds.has(r.referrer_user_id as string));
+        const rcSafe = (rcData ?? []).filter((r) => !testIds.has(r.user_id as string));
+
         if (!alive) return;
 
         const adminMapped: GrantRow[] = (audit.rows ?? [])
@@ -155,7 +174,7 @@ export function GrantsPage() {
             };
           });
 
-        const referralMapped: GrantRow[] = (refData ?? []).map((r) => {
+        const referralMapped: GrantRow[] = refSafe.map((r) => {
           const grantedAt = r.referrer_reward_granted_at
             ? new Date(r.referrer_reward_granted_at)
             : null;
@@ -175,7 +194,7 @@ export function GrantsPage() {
           };
         });
 
-        const activeMapped: GrantRow[] = (rcData ?? []).map((r: RCSnapshotActive) => {
+        const activeMapped: GrantRow[] = rcSafe.map((r: RCSnapshotActive) => {
           const expiresAt = r.expires_at ? new Date(r.expires_at) : null;
           return {
             key: `active-${r.user_id}`,
