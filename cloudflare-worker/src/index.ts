@@ -350,7 +350,7 @@ Rules (follow strictly):
 2. Be specific to the audience (e.g. "cleaner with an ABN"), never generic.
 3. Include ONE line of real, lived experience ("the #1 thing we see in the app is…").
 4. For any tax/visa fact, add an inline markdown link to the official source: ATO https://www.ato.gov.au/ or Home Affairs https://immi.homeaffairs.gov.au/ .
-5. End with a CTA tied to the pain, linking the app: App Store https://apps.apple.com/app/ozly/id6760398649 and Google Play https://play.google.com/store/apps/details?id=com.augusto.ozly .
+5. End with a CTA tied to the pain, linking the app: App Store https://apps.apple.com/au/app/ozly/id6760398649 and Google Play https://play.google.com/store/apps/details?id=com.augusto.ozly .
 6. Close with a one-line disclaimer: general info, not tax advice, verify with the ATO / a registered agent.
 7. Numbers must be correct for the 2025–26 year and phrased so a human can verify them. A human reviews before publishing.
 

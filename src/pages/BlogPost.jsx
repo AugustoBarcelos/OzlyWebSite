@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Clock } from "lucide-react";
 import { useI18n, useLangPath } from "../i18n";
 
-const APP_STORE = "https://apps.apple.com/app/ozly/id6760398649";
+const APP_STORE = "https://apps.apple.com/au/app/ozly/id6760398649";
 const PLAY_STORE = "https://play.google.com/store/apps/details?id=com.augusto.ozly";
 
 function formatDate(iso, lang) {
