@@ -24,7 +24,6 @@ interface Env {
   // Blog AI-authoring:
   AI: { run: (model: string, inputs: unknown) => Promise<unknown> }; // Workers AI binding (free tier)
   GITHUB_TOKEN: string; // fine-grained PAT, repo Contents: Read and write (wrangler secret)
-  ADMIN_PASSWORD: string; // gate for ozly.au/admin (wrangler secret)
 }
 
 const GITHUB_REPO = "AugustoBarcelos/OzlyWebSite";
@@ -189,12 +188,13 @@ function renderOgHtml(code: string, ownerName: string): string {
 }
 
 /* ════════════════════════════════════════════════════════════════════
-   BLOG AI-AUTHORING API  (called by ozly.au/admin)
-   - POST /admin/api/login      → validate password
-   - GET  /admin/api/topics     → suggested topics + which slugs already exist
-   - POST /admin/api/generate   → draft a post (EN/PT/ES) with Claude
-   - POST /admin/api/publish    → commit the markdown to GitHub (triggers deploy)
-   All write/generate calls require the x-admin-key header == ADMIN_PASSWORD.
+   BLOG AI-AUTHORING API  (called by the admin-portal Blog page)
+   - GET  /admin/api/topics          → curated topics + which slugs exist
+   - POST /admin/api/suggest-topics  → fresh AI-generated topic ideas
+   - POST /admin/api/generate        → draft a post (EN/PT/ES) with Workers AI
+   - POST /admin/api/review          → AI fact-check / editorial review
+   - POST /admin/api/publish         → commit markdown to GitHub (triggers deploy)
+   Auth: a valid admin-portal Supabase session (Bearer token). No password.
    ════════════════════════════════════════════════════════════════════ */
 
 // Curated editorial backlog (from the keyword research). `slug` is the post's
@@ -221,6 +221,7 @@ function corsHeaders(): Record<string, string> {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, x-admin-key, Authorization',
+    'Cross-Origin-Resource-Policy': 'cross-origin',
   };
 }
 
@@ -231,22 +232,10 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
-// Constant-time-ish comparison to avoid trivial timing leaks on the password.
-function safeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return diff === 0;
-}
-
-// Auth = a logged-in admin-portal session (Authorization: Bearer <supabase
-// access token>). The token is validated against Supabase's /auth/v1/user —
-// a real, current session — which is robust and dependency-free. (Optional
-// emergency password via x-admin-key is kept until the portal flow is proven.)
+// Auth = a logged-in admin-portal session ONLY (Authorization: Bearer
+// <supabase access token>). Validated against Supabase /auth/v1/user. No
+// password — the only way in is the portal login.
 async function authed(request: Request, env: Env): Promise<boolean> {
-  const key = request.headers.get('x-admin-key') ?? '';
-  if (env.ADMIN_PASSWORD && key && safeEqual(key, env.ADMIN_PASSWORD)) return true;
-
   const auth = request.headers.get('Authorization') ?? '';
   if (!auth.startsWith('Bearer ')) return false;
   const token = auth.slice(7).trim();
@@ -267,15 +256,6 @@ async function handleAdminApi(request: Request, env: Env, url: URL): Promise<Res
   }
 
   const path = url.pathname;
-
-  // Login just validates the password so the UI can show the editor.
-  if (path === '/admin/api/login' && request.method === 'POST') {
-    const { password } = (await request.json().catch(() => ({}))) as { password?: string };
-    if (env.ADMIN_PASSWORD && password && safeEqual(password, env.ADMIN_PASSWORD)) {
-      return json({ ok: true });
-    }
-    return json({ ok: false, error: 'Wrong password' }, 401);
-  }
 
   // Everything below requires admin auth (password or portal session).
   if (!(await authed(request, env))) return json({ error: 'Unauthorized' }, 401);
