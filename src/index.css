@@ -221,26 +221,29 @@ html, body {
    ══════════════════════════════════════════════════════════════ */
 
 .prose-blog {
-  color: #334155;
-  line-height: 1.7;
-  font-size: 1.0625rem;
+  color: #3a4757;
+  line-height: 1.78;
+  font-size: 1.1rem;
+  letter-spacing: -0.003em;
 }
 .prose-blog > :first-child { margin-top: 0; }
+/* Lead paragraph — the opening line gets a touch more presence. */
+.prose-blog > p:first-of-type { font-size: 1.22rem; line-height: 1.65; color: #1e2a38; }
 .prose-blog h2 {
-  font-size: 1.5rem;
+  font-size: 1.65rem;
   font-weight: 800;
   color: #162431;
-  margin: 2rem 0 0.75rem;
-  line-height: 1.25;
-  letter-spacing: -0.01em;
+  margin: 2.4rem 0 0.85rem;
+  line-height: 1.22;
+  letter-spacing: -0.02em;
 }
 .prose-blog h3 {
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: #162431;
-  margin: 1.5rem 0 0.5rem;
+  margin: 1.7rem 0 0.55rem;
 }
-.prose-blog p { margin: 1rem 0; }
+.prose-blog p { margin: 1.1rem 0; }
 .prose-blog a {
   color: #24a383;
   text-decoration: underline;
