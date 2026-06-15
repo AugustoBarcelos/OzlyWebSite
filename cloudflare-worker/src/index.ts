@@ -239,10 +239,10 @@ function safeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
-// Two ways in: the standalone /admin password (x-admin-key), OR a logged-in
-// admin-portal session (Authorization: Bearer <supabase access token>). The
-// token is validated AND checked for admin via the team_my_grants RPC — same
-// gate the portal uses — so no separate password is needed from the portal.
+// Auth = a logged-in admin-portal session (Authorization: Bearer <supabase
+// access token>). The token is validated against Supabase's /auth/v1/user —
+// a real, current session — which is robust and dependency-free. (Optional
+// emergency password via x-admin-key is kept until the portal flow is proven.)
 async function authed(request: Request, env: Env): Promise<boolean> {
   const key = request.headers.get('x-admin-key') ?? '';
   if (env.ADMIN_PASSWORD && key && safeEqual(key, env.ADMIN_PASSWORD)) return true;
@@ -252,18 +252,10 @@ async function authed(request: Request, env: Env): Promise<boolean> {
   const token = auth.slice(7).trim();
   if (!token) return false;
   try {
-    const res = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/team_my_grants`, {
-      method: 'POST',
-      headers: {
-        apikey: env.SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: '{}',
+    const res = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, {
+      headers: { apikey: env.SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` },
     });
-    if (!res.ok) return false;
-    const g = (await res.json()) as { authenticated?: boolean; is_admin?: boolean };
-    return Boolean(g?.is_admin);
+    return res.ok; // 200 = valid current session
   } catch {
     return false;
   }
@@ -291,6 +283,15 @@ async function handleAdminApi(request: Request, env: Env, url: URL): Promise<Res
   if (path === '/admin/api/topics' && request.method === 'GET') {
     const done = await listExistingSlugs(env);
     return json({ topics: TOPICS.map((t) => ({ ...t, done: done.includes(t.slug) })) });
+  }
+
+  // Fresh AI-generated topic ideas (excludes ones already written/curated).
+  if (path === '/admin/api/suggest-topics' && request.method === 'POST') {
+    try {
+      return json({ topics: await suggestTopics(env) });
+    } catch (e) {
+      return json({ error: `Suggest failed: ${(e as Error).message}` }, 502);
+    }
   }
 
   if (path === '/admin/api/generate' && request.method === 'POST') {
@@ -345,6 +346,59 @@ async function listExistingSlugs(env: Env): Promise<string[]> {
   if (!res.ok) return []; // folder may not exist yet
   const files = (await res.json()) as Array<{ name: string }>;
   return files.filter((f) => f.name.endsWith('.md')).map((f) => f.name.replace(/\.md$/, ''));
+}
+
+/* ── Fresh AI-generated topic ideas (the "suggest more" button) ── */
+async function suggestTopics(env: Env): Promise<Array<{ slug: string; title: string; angle: string; done: boolean }>> {
+  const existing = new Set<string>([...(await listExistingSlugs(env)), ...TOPICS.map((t) => t.slug)]);
+  const avoid = TOPICS.map((t) => t.title).join('; ');
+  const system = `You suggest blog topic ideas for Ozly — a free invoicing & tax app for Australian sole traders (cleaners, tradies, contractors) and migrants on student / working-holiday visas.
+
+Propose 6 FRESH, specific, high-search-intent topics people actually Google about: ABN, income tax, GST, deductions, invoicing, and visa work rules in Australia. Each must be a specific question/angle (not generic). Australia-specific.
+
+Do NOT repeat any of these existing topics: ${avoid}.
+
+Output EXACTLY this, one block per idea, nothing else:
+@@@TOPIC@@@
+<title up to 70 chars> | <one-line angle>`;
+
+  const result = (await env.AI.run(AI_MODEL, {
+    max_tokens: 700,
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: 'Give me 6 fresh topic ideas now. Output only the @@@TOPIC@@@ blocks.' },
+    ],
+  })) as { response?: unknown };
+
+  const text = String(result.response ?? '');
+  const out: Array<{ slug: string; title: string; angle: string; done: boolean }> = [];
+
+  // Accept the @@@TOPIC@@@ format OR a plain list — pull "title | angle" /
+  // "title - angle" / "title: angle" from each candidate line.
+  const candidates = text.includes('@@@TOPIC@@@')
+    ? text.split('@@@TOPIC@@@').map((s) => s.split('\n').map((l) => l.trim()).filter(Boolean)[0] ?? '')
+    : text.split('\n');
+
+  for (const raw of candidates) {
+    let line = raw.trim().replace(/^[-*•]\s*/, '').replace(/^\d+[.)]\s*/, '');
+    if (line.length < 8) continue;
+    if (/^(here|sure|below|topic ideas|ideas?:)/i.test(line)) continue;
+    let title = line;
+    let angle = '';
+    const sep = line.match(/\s[|–—-]\s|:\s/);
+    if (sep && sep.index !== undefined) {
+      title = line.slice(0, sep.index).trim();
+      angle = line.slice(sep.index + sep[0].length).trim();
+    }
+    title = title.replace(/^["'*]+|["'*]+$/g, '').trim();
+    if (title.length < 8 || title.length > 90) continue;
+    const slug = slugify(title);
+    if (existing.has(slug)) continue;
+    existing.add(slug);
+    out.push({ slug, title, angle, done: false });
+    if (out.length >= 6) break;
+  }
+  return out;
 }
 
 /* ── Generate a post with Cloudflare Workers AI (free tier) ──

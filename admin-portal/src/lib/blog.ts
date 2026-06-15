@@ -81,6 +81,10 @@ export function fetchTopics() {
   return blogApi<{ topics: BlogTopic[] }>('topics');
 }
 
+export function suggestMoreTopics() {
+  return blogApi<{ topics: BlogTopic[] }>('suggest-topics', { method: 'POST', timeoutMs: 90000 });
+}
+
 export function generatePost(topic: string, slug?: string) {
   return blogApi<BlogPost>('generate', {
     method: 'POST',
