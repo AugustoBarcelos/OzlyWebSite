@@ -132,7 +132,24 @@ export function MarketingBlogPage() {
     if (!post) return;
     setApplyingIdx(idx);
     try {
-      const fixed = await applyFix(lang, post[lang], finding);
+      const before = post[lang];
+      const fixed = await applyFix(lang, before, finding);
+      // The free AI sometimes returns the draft unchanged (a vague finding it
+      // can't act on, or a truncated reply). If nothing changed, do NOT claim
+      // success and do NOT drop the finding — otherwise the list looks clean
+      // while the text is identical, and the next fact-check re-flags it.
+      const changed =
+        fixed.title !== before.title ||
+        fixed.description !== before.description ||
+        fixed.body !== before.body;
+      if (!changed) {
+        toast({
+          variant: 'error',
+          title: 'A IA não alterou o texto',
+          description: 'O apontamento continua na lista — edite manualmente ou tente de novo.',
+        });
+        return;
+      }
       setPost((p) => (p ? { ...p, [lang]: fixed } : p));
       // Remove the addressed finding from the list.
       setReviews((prev) => {

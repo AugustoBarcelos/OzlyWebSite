@@ -600,12 +600,14 @@ async function applyFix(
   env: Env,
 ): Promise<GenLang> {
   const langName = LANG_NAMES[(input.lang as 'en' | 'pt' | 'es')] ?? 'the original language';
-  const system = `You are editing a blog draft written in ${langName} for Ozly. Apply ONLY the single fix below and change nothing else — keep the same language, tone, structure, links, headings, CTA and the mandatory disclaimer (Ozly is not an accountant/registered tax agent).
+  const system = `You are a copy editor fixing a blog draft written in ${langName} for Ozly.
 
-THE FIX TO APPLY:
+YOU MUST make a concrete edit that resolves the issue below. Find the exact word, number or sentence the issue refers to and rewrite it. Do NOT return the text unchanged — if you return it identical, you have failed the task. Change ONLY what the issue requires; keep everything else (language, tone, structure, links, headings, CTA and the mandatory disclaimer that Ozly is not an accountant/registered tax agent) exactly as-is.
+
+THE ISSUE TO FIX:
 ${input.finding}
 
-If the fix is about a wrong/outdated number, correct it to the accurate Australian 2025–26 value. Keep GitHub-flavoured Markdown. Do not add commentary.
+If the issue is a wrong/outdated number, replace it with the accurate Australian 2025–26 value. Reproduce the FULL body verbatim except for your edit. Keep GitHub-flavoured Markdown. Do not add commentary.
 
 Output EXACTLY this, nothing else:
 @@@TITLE@@@
@@ -613,10 +615,12 @@ Output EXACTLY this, nothing else:
 @@@DESC@@@
 (description)
 @@@BODY@@@
-(corrected markdown body)`;
+(full corrected markdown body)`;
   const user = `TITLE: ${input.title ?? ''}\nDESC: ${input.description ?? ''}\n\nBODY:\n${input.body ?? ''}`;
   const result = (await env.AI.run(AI_MODEL, {
-    max_tokens: 2048,
+    // Roomy budget: the model must re-emit the whole body plus the edit, so
+    // 2048 would truncate longer posts and lose the tail of the body.
+    max_tokens: 4096,
     messages: [
       { role: 'system', content: system },
       { role: 'user', content: user },
