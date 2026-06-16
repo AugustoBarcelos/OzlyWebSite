@@ -20,16 +20,30 @@ type EnvKey =
   | 'VITE_POSTHOG_API_KEY'
   | 'VITE_POSTHOG_HOST'
   | 'VITE_SENTRY_DSN'
-  | 'VITE_SENTRY_API_TOKEN'
   | 'VITE_SENTRY_ORG'
   | 'VITE_SENTRY_PROJECT'
-  | 'VITE_YT_API_KEY'
   | 'VITE_YT_CHANNEL_ID'
-  | 'VITE_GEMINI_API_KEY'
   | 'VITE_APP_URL';
 
+// IMPORTANT: access each var STATICALLY. A dynamic `import.meta.env[name]`
+// makes Vite inline the ENTIRE env object into the bundle — including any
+// secret VITE_* var that happens to be set at build time. Listing only the
+// non-secret keys here guarantees secrets never reach the browser, even if
+// they're still present in the build environment.
+const RAW: Record<EnvKey, string | undefined> = {
+  VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
+  VITE_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY,
+  VITE_POSTHOG_API_KEY: import.meta.env.VITE_POSTHOG_API_KEY,
+  VITE_POSTHOG_HOST: import.meta.env.VITE_POSTHOG_HOST,
+  VITE_SENTRY_DSN: import.meta.env.VITE_SENTRY_DSN,
+  VITE_SENTRY_ORG: import.meta.env.VITE_SENTRY_ORG,
+  VITE_SENTRY_PROJECT: import.meta.env.VITE_SENTRY_PROJECT,
+  VITE_YT_CHANNEL_ID: import.meta.env.VITE_YT_CHANNEL_ID,
+  VITE_APP_URL: import.meta.env.VITE_APP_URL,
+};
+
 function read(name: EnvKey): string | undefined {
-  const v = (import.meta.env as Record<string, string | undefined>)[name];
+  const v = RAW[name];
   return typeof v === 'string' && v.length > 0 ? v : undefined;
 }
 
@@ -68,26 +82,15 @@ export const env = {
   posthogApiKey: read('VITE_POSTHOG_API_KEY'),
   posthogHost: read('VITE_POSTHOG_HOST') ?? 'https://eu.posthog.com',
   sentryDsn: read('VITE_SENTRY_DSN'),
-  /**
-   * Sentry REST API personal auth token — optional.
-   * When set together with `sentryOrg` and `sentryProject`, the /errors page
-   * fetches event counts and top issues directly. When absent, the page
-   * renders quick-link cards to the Sentry web UI instead.
-   */
-  sentryApiToken: read('VITE_SENTRY_API_TOKEN'),
+  // NOTE: the Sentry API token, YouTube API key and Gemini API key are
+  // intentionally NOT read here. They are secrets and must never reach the
+  // browser bundle. The client calls same-origin Pages Functions
+  // (/api/sentry, /api/youtube, /api/gemini) which inject the key server-side.
   /** Sentry organization slug (e.g. `ozly`). */
   sentryOrg: read('VITE_SENTRY_ORG'),
   /** Sentry project slug (e.g. `ozly-mobile`). */
   sentryProject: read('VITE_SENTRY_PROJECT'),
-  /** YouTube Data API v3 key — read-only, restricted server-side ideally. */
-  ytApiKey: read('VITE_YT_API_KEY'),
-  /** YouTube channel id (UCxxxxx) we care about. */
+  /** YouTube channel id (UCxxxxx) we care about — not a secret. */
   ytChannelId: read('VITE_YT_CHANNEL_ID'),
-  /**
-   * Google AI (Gemini) API key — powers /marketing/ai-composer.
-   * Restricted to client-side use of generateContent endpoint. Cost
-   * tracked per call via ai_inference_log table.
-   */
-  geminiApiKey: read('VITE_GEMINI_API_KEY'),
   appUrl,
 } as const;

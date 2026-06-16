@@ -10,7 +10,7 @@
  *   - gemini-1.5-pro:    $1.25 in / $5.00 out   (heavy tasks)
  *   - gemini-2.0-flash:  $0.10 in / $0.40 out
  */
-import { env } from './env';
+import { supabase } from './supabase';
 import { logAiInference } from './aiInferenceLog';
 
 export type GeminiModel = 'gemini-1.5-flash' | 'gemini-1.5-pro' | 'gemini-2.0-flash';
@@ -57,11 +57,12 @@ export class GeminiError extends Error {
 }
 
 /**
- * True when VITE_GEMINI_API_KEY is configured.
- * Use to render a "configure secret" banner before any UI that depends on AI.
+ * The Gemini key now lives server-side (Pages Function /api/gemini). The client
+ * can't see it, so we assume it's available and let the proxy surface a clear
+ * 503 if the server key is missing.
  */
 export function isGeminiConfigured(): boolean {
-  return Boolean(env.geminiApiKey);
+  return true;
 }
 
 interface GeminiResponse {
@@ -85,15 +86,13 @@ interface GeminiResponse {
 export async function generateContent(
   opts: GenerateContentOptions,
 ): Promise<GenerateContentResult> {
-  const apiKey = env.geminiApiKey;
-  if (!apiKey) {
-    throw new GeminiError('VITE_GEMINI_API_KEY not configured', 400, 'no_key');
-  }
-
   const model = opts.model ?? DEFAULT_MODEL;
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(
-    apiKey,
-  )}`;
+  // Same-origin proxy — the key is injected server-side, never in the bundle.
+  const url = `/api/gemini/${model}:generateContent`;
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    throw new GeminiError('Sessão expirada — entre de novo.', 401, 'no_session');
+  }
 
   const parts: Array<Record<string, unknown>> = [{ text: opts.prompt }];
   if (opts.inlineData) {
@@ -117,7 +116,10 @@ export async function generateContent(
   try {
     response = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+      },
       body: JSON.stringify(body),
     });
   } catch (e) {
