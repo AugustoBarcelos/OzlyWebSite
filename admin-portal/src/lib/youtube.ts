@@ -11,8 +11,11 @@
  */
 
 import { env } from './env';
+import { supabase } from './supabase';
 
-const BASE = 'https://www.googleapis.com/youtube/v3';
+// Same-origin proxy (Pages Function) — injects the YouTube key server-side so
+// it never ships in the browser bundle.
+const BASE = '/api/youtube';
 const TTL_MS = 5 * 60 * 1000;
 const cache = new Map<string, { at: number; data: unknown }>();
 
@@ -20,7 +23,13 @@ async function cachedJson<T>(url: string): Promise<T | null> {
   const hit = cache.get(url);
   if (hit && Date.now() - hit.at < TTL_MS) return hit.data as T;
   try {
-    const res = await fetch(url);
+    const { data: { session } } = await supabase.auth.getSession();
+    const res = await fetch(
+      url,
+      session?.access_token
+        ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+        : undefined,
+    );
     if (!res.ok) return null;
     const data = (await res.json()) as T;
     cache.set(url, { at: Date.now(), data });
@@ -31,7 +40,7 @@ async function cachedJson<T>(url: string): Promise<T | null> {
 }
 
 export function isYoutubeConfigured(): boolean {
-  return Boolean(env.ytApiKey && env.ytChannelId);
+  return Boolean(env.ytChannelId);
 }
 
 export interface YtChannelStats {
@@ -73,7 +82,7 @@ function asInt(v: string | undefined | null): number | null {
 
 export async function fetchChannelStats(): Promise<YtChannelStats | null> {
   if (!isYoutubeConfigured()) return null;
-  const url = `${BASE}/channels?part=snippet,statistics&id=${env.ytChannelId}&key=${env.ytApiKey}`;
+  const url = `${BASE}/channels?part=snippet,statistics&id=${env.ytChannelId}`;
   const data = await cachedJson<RawChannelResp>(url);
   const item = data?.items?.[0];
   if (!item) return null;
@@ -130,8 +139,7 @@ interface RawVideosResp {
 export async function fetchRecentVideos(limit = 10): Promise<YtVideoSummary[]> {
   if (!isYoutubeConfigured()) return [];
   const channelId = env.ytChannelId!;
-  const apiKey = env.ytApiKey!;
-  const searchUrl = `${BASE}/search?part=snippet&channelId=${channelId}&order=date&type=video&maxResults=${limit}&key=${apiKey}`;
+  const searchUrl = `${BASE}/search?part=snippet&channelId=${channelId}&order=date&type=video&maxResults=${limit}`;
   const search = await cachedJson<RawSearchResp>(searchUrl);
   const items = search?.items ?? [];
   if (items.length === 0) return [];
@@ -143,7 +151,7 @@ export async function fetchRecentVideos(limit = 10): Promise<YtVideoSummary[]> {
     .filter((v): v is string => Boolean(v));
   const statsMap = new Map<string, VideoStats>();
   if (ids.length > 0) {
-    const statsUrl = `${BASE}/videos?part=statistics,contentDetails&id=${ids.join(',')}&key=${apiKey}`;
+    const statsUrl = `${BASE}/videos?part=statistics,contentDetails&id=${ids.join(',')}`;
     const stats = await cachedJson<RawVideosResp>(statsUrl);
     for (const s of stats?.items ?? []) {
       if (s.id) statsMap.set(s.id, s);

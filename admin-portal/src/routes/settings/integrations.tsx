@@ -198,10 +198,10 @@ export function SettingsIntegrationsPage() {
       category: 'analytics',
       description: 'Error tracking + performance monitoring (mobile + web).',
       status: env.sentryDsn ? 'active' : 'pending',
-      detail: env.sentryApiToken
-        ? 'DSN + API token configurados (errors page com REST data)'
+      detail: env.sentryOrg && env.sentryProject
+        ? 'DSN + REST via proxy server-side (errors page com dados)'
         : env.sentryDsn
-          ? 'DSN configurado, sem API token (errors page mostra link)'
+          ? 'DSN configurado; defina org/project p/ REST'
           : 'VITE_SENTRY_DSN não configurado',
       consoleUrl: 'https://sentry.io',
       icon: ShieldCheckIcon,
@@ -280,11 +280,10 @@ export function SettingsIntegrationsPage() {
       name: 'YouTube Data API v3',
       category: 'marketing',
       description: 'Stats do canal Ozly — followers, views, recent videos.',
-      status: env.ytApiKey && env.ytChannelId ? 'active' : 'pending',
-      detail:
-        env.ytApiKey && env.ytChannelId
-          ? `Channel: ${env.ytChannelId.slice(0, 12)}…`
-          : 'API key + Channel ID precisam estar nos secrets',
+      status: env.ytChannelId ? 'active' : 'pending',
+      detail: env.ytChannelId
+        ? `Channel: ${env.ytChannelId.slice(0, 12)}… (key via proxy server-side)`
+        : 'Channel ID + YT_API_KEY_SERVER precisam estar configurados',
       consoleUrl: 'https://console.cloud.google.com/apis/credentials',
       icon: MegaphoneIcon,
     },
