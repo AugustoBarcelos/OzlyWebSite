@@ -132,15 +132,58 @@ export function MarketingBlogPage() {
     if (!post) return;
     setApplyingIdx(idx);
     try {
-      const fixed = await applyFix(lang, post[lang], finding);
-      setPost((p) => (p ? { ...p, [lang]: fixed } : p));
-      // Remove the addressed finding from the list.
+      // Apply the same fix to EVERY language (each rewritten in its own
+      // language), so the 3 drafts stay in sync — not just the active tab.
+      const codes = LANGS.filter((c) => post[c]?.title);
+      const results = await Promise.all(
+        codes.map(async (c) => {
+          try {
+            return [c, await applyFix(c, post[c], finding)] as const;
+          } catch {
+            return [c, null] as const;
+          }
+        }),
+      );
+
+      const next: BlogPost = { ...post };
+      let anyChanged = false;
+      for (const [c, fixed] of results) {
+        if (
+          fixed &&
+          (fixed.title !== post[c].title ||
+            fixed.description !== post[c].description ||
+            fixed.body !== post[c].body)
+        ) {
+          next[c] = fixed;
+          anyChanged = true;
+        }
+      }
+
+      // The free AI sometimes returns the draft unchanged (vague finding /
+      // truncated reply). If nothing changed anywhere, don't claim success and
+      // don't drop the finding — otherwise the list looks clean while the text
+      // is identical and the next fact-check re-flags it.
+      if (!anyChanged) {
+        toast({
+          variant: 'error',
+          title: 'A IA não alterou o texto',
+          description: 'O apontamento continua na lista — edite manualmente ou tente de novo.',
+        });
+        return;
+      }
+
+      setPost(next);
+      // Drop the addressed finding from the current language's list.
       setReviews((prev) => {
         if (!prev?.[lang]) return prev;
         const cur = prev[lang];
         return { ...prev, [lang]: { ...cur, findings: cur.findings.filter((_, i) => i !== idx) } };
       });
-      toast({ variant: 'success', title: 'Correção aplicada', description: 'Confira o texto e o número.' });
+      toast({
+        variant: 'success',
+        title: 'Correção aplicada nos 3 idiomas',
+        description: 'Confira o texto e os números em cada aba.',
+      });
     } catch (e) {
       toast({ variant: 'error', title: 'Falha ao aplicar', description: errMsg(e) });
     } finally {

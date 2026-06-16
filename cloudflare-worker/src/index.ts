@@ -358,6 +358,7 @@ Output EXACTLY this, one block per idea, nothing else:
 
   const result = (await env.AI.run(AI_MODEL, {
     max_tokens: 700,
+    temperature: 0.9, // fresh ideas each click
     messages: [
       { role: 'system', content: system },
       { role: 'user', content: 'Give me 6 fresh topic ideas now. Output only the @@@TOPIC@@@ blocks.' },
@@ -472,6 +473,9 @@ Output using these exact separator lines, copied literally character-for-charact
   // a ~700-word post and keeps each call fast.
   const result = (await env.AI.run(AI_MODEL, {
     max_tokens: 2048,
+    // Higher temperature so regenerating the same topic yields a fresh draft
+    // (the model is near-deterministic at low temp → "always the same text").
+    temperature: 0.85,
     messages: [
       { role: 'system', content: system },
       { role: 'user', content: `Topic: ${topic}\n\nWrite the post in ${langName} now. Output ONLY the ###-delimited format, nothing else.` },
