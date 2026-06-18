@@ -635,29 +635,52 @@ async function applyFix(
   env: Env,
 ): Promise<GenLang> {
   const langName = LANG_NAMES[(input.lang as 'en' | 'pt' | 'es')] ?? 'the original language';
-  const system = `You are editing a blog draft written in ${langName} for Ozly. Apply ONLY the single fix below and change nothing else — keep the same language, tone, structure, links, headings, CTA and the mandatory disclaimer (Ozly is not an accountant/registered tax agent).
+  const system = `You are an editor fixing a blog draft written in ${langName} for Ozly.
 
-THE FIX TO APPLY:
+THE PROBLEM TO FIX (you MUST resolve this):
 ${input.finding}
 
-If the fix is about a wrong/outdated number, correct it to the accurate Australian 2025–26 value. Keep GitHub-flavoured Markdown. Do not add commentary.
+Your job: rewrite the draft so this problem is GONE. You MUST change the text — returning it unchanged is a failure. Make the smallest edit that fully resolves the problem (fix the wrong wording/number/claim, rephrase the offending sentence, etc.), and leave everything else as close to the original as possible: same language, tone, structure, links, headings, CTA and the mandatory disclaimer (Ozly is not an accountant/registered tax agent).
 
-Output EXACTLY this, nothing else:
+If the problem is a wrong/outdated number, correct it to the accurate Australian 2025–26 value. Keep GitHub-flavoured Markdown. No commentary, no explanation of what you changed.
+
+Output EXACTLY this, nothing else (keep the @@@ separator lines literally):
 @@@TITLE@@@
-(title)
+(title — unchanged unless the fix is about the title)
 @@@DESC@@@
-(description)
+(description — unchanged unless the fix is about it)
 @@@BODY@@@
-(corrected markdown body)`;
-  const user = `TITLE: ${input.title ?? ''}\nDESC: ${input.description ?? ''}\n\nBODY:\n${input.body ?? ''}`;
+(the full corrected markdown body)`;
+  const user = `Here is the draft to fix. Apply the fix and output the full corrected version.\n\nTITLE: ${input.title ?? ''}\nDESC: ${input.description ?? ''}\n\nBODY:\n${input.body ?? ''}`;
   const result = (await env.AI.run(AI_MODEL, {
-    max_tokens: 2048,
+    max_tokens: 4096, // full body + headroom so the corrected body isn't truncated
+    temperature: 0.4, // enough to actually edit (0 → model often echoes verbatim)
     messages: [
       { role: 'system', content: system },
       { role: 'user', content: user },
     ],
   })) as { response?: unknown };
-  return parseDelimited(result.response ?? result);
+
+  // Robust parse: never blank out or corrupt a field.
+  const rawText = String(result.response ?? '').trim();
+  if (/@@@BODY@@@/i.test(rawText)) {
+    // Markers present — trust the delimited parse, but keep originals if a
+    // field came back empty.
+    const parsed = parseDelimited(rawText);
+    return {
+      title: parsed.title && parsed.title.length > 2 ? parsed.title : (input.title ?? ''),
+      description: parsed.description && parsed.description.length > 2 ? parsed.description : (input.description ?? ''),
+      body: parsed.body && parsed.body.length > 40 ? parsed.body : (input.body ?? ''),
+    };
+  }
+  // No markers — the model returned the corrected body directly. Use the whole
+  // reply as the body and keep the original title/desc (do NOT let the generic
+  // salvage turn the first body line into a title).
+  return {
+    title: input.title ?? '',
+    description: input.description ?? '',
+    body: rawText.length > 40 ? rawText : (input.body ?? ''),
+  };
 }
 
 /* ── Publish: commit content/blog/<lang>/<slug>.md for each language ── */
