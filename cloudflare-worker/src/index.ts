@@ -213,6 +213,12 @@ const TOPICS = [
   { slug: 'gst-register-75000', title: 'Do I need to register for GST? ($75k explained)', angle: 'Rolling 12-month turnover, 21-day rule, backdating risk.' },
   { slug: 'work-over-visa-hours', title: 'What happens if you work over your visa hours', angle: 'Real consequences, how the limit is tracked.' },
   { slug: 'cleaning-rates-per-hour', title: 'How much to charge per hour for cleaning', angle: 'Real 2026 ranges, employee vs ABN, what to factor in.' },
+  // ── B2B / Ozly for Companies (audience: business operators & owners) ──
+  { slug: 'contractor-tax-bill-business-problem', title: "When a contractor's tax bill becomes your business's problem", angle: 'Retention, admin load and compliance risk of a disorganised contractor base.', audience: 'business' },
+  { slug: 'contractor-or-employee-ato-test', title: 'Are your contractors actually employees? (ATO test)', angle: 'Sham-contracting risk, the multi-factor test, penalties, how to stay clean.', audience: 'business' },
+  { slug: 'onboard-abn-contractors-fast', title: 'How to onboard ABN contractors without the paperwork chaos', angle: 'Checklist: valid ABN, GST status, insurance, invoicing — done in minutes.', audience: 'business' },
+  { slug: 'reduce-contractor-churn', title: 'Why your best contractors leave (and how to keep them)', angle: 'Financial stress as the hidden churn driver; what operators can do.', audience: 'business' },
+  { slug: 'cleaning-business-payroll-vs-contractors', title: 'Employees vs contractors for your cleaning business', angle: 'Cost, control, compliance trade-offs; when each model makes sense.', audience: 'business' },
 ];
 
 function corsHeaders(): Record<string, string> {
@@ -346,15 +352,17 @@ async function listExistingSlugs(env: Env): Promise<string[]> {
 async function suggestTopics(env: Env): Promise<Array<{ slug: string; title: string; angle: string; done: boolean }>> {
   const existing = new Set<string>([...(await listExistingSlugs(env)), ...TOPICS.map((t) => t.slug)]);
   const avoid = TOPICS.map((t) => t.title).join('; ');
-  const system = `You suggest blog topic ideas for Ozly — a free invoicing & tax app for Australian sole traders (cleaners, tradies, contractors) and migrants on student / working-holiday visas.
+  const system = `You suggest blog topic ideas for Ozly. Ozly serves TWO distinct audiences:
+A) CONSUMER — Australian sole traders (cleaners, tradies, contractors) and migrants on student / working-holiday visas. They Google about ABN, income tax, GST, deductions, invoicing, visa work rules.
+B) BUSINESS ("Ozly for Companies") — operators & owners of businesses that run on ABN contractors (cleaning companies, trades, labour-hire, delivery fleets). They care about contractor onboarding, retention, sham-contracting / misclassification risk, compliance, and reducing admin load.
 
-Propose 6 FRESH, specific, high-search-intent topics people actually Google about: ABN, income tax, GST, deductions, invoicing, and visa work rules in Australia. Each must be a specific question/angle (not generic). Australia-specific.
+Propose 6 FRESH, specific, high-search-intent topics — a MIX of both audiences (aim for ~3 consumer + ~3 business). Each must be a specific question/angle (not generic). Australia-specific.
 
 Do NOT repeat any of these existing topics: ${avoid}.
 
-Output EXACTLY this, one block per idea, nothing else:
+Output EXACTLY this, one block per idea, nothing else. Prefix each title with [B2B] for business topics and [B2C] for consumer topics:
 @@@TOPIC@@@
-<title up to 70 chars> | <one-line angle>`;
+[B2C] <title up to 70 chars> | <one-line angle>`;
 
   const result = (await env.AI.run(AI_MODEL, {
     max_tokens: 700,
@@ -375,7 +383,7 @@ Output EXACTLY this, one block per idea, nothing else:
     : text.split('\n');
 
   for (const raw of candidates) {
-    let line = raw.trim().replace(/^[-*•]\s*/, '').replace(/^\d+[.)]\s*/, '');
+    let line = raw.trim().replace(/^[-*•]\s*/, '').replace(/^\d+[.)]\s*/, '').replace(/^\[B2[BC]\]\s*/i, '');
     if (line.length < 8) continue;
     if (/^(here|sure|below|topic ideas|ideas?:)/i.test(line)) continue;
     let title = line;
@@ -443,18 +451,41 @@ function parseDelimited(raw: unknown): GenLang {
   return { title, description, body };
 }
 
+/** Heuristic: is this topic aimed at the BUSINESS audience (Ozly for Companies)
+ *  rather than the individual sole trader/migrant? Used to switch voice + CTA. */
+function isBusinessTopic(topic: string): boolean {
+  return /\b(business(es)?|company|companies|for companies|workforce|employer|operators?|onboard(ing)?|hir(e|ing)|payroll|sham[- ]?contracting|misclassif|retention|churn|labour[- ]?hire|your (contractors|team|cleaners|staff)|employees? vs|vs employees?|b2b)\b/i.test(
+    topic,
+  );
+}
+
 async function aiGenerateLang(topic: string, code: 'en' | 'pt' | 'es', env: Env): Promise<GenLang> {
   const langName = LANG_NAMES[code];
-  const system = `You write blog posts for Ozly — a free invoicing & tax app for Australian sole traders (cleaners, tradies, contractors) and migrants on student/working-holiday visas.
+  const business = isBusinessTopic(topic);
+
+  const audienceLine = business
+    ? 'operators and owners of Australian businesses that run on ABN contractors (cleaning companies, trades, labour-hire, delivery fleets) — the "Ozly for Companies" audience'
+    : 'Australian sole traders (cleaners, tradies, contractors) and migrants on student/working-holiday visas';
+  const specificRule = business
+    ? 'Write to the business operator (e.g. "if you run a cleaning company with 15 contractors"). Frame everything as the operator\'s cost: retention, admin load, and compliance / sham-contracting risk. Never generic.'
+    : 'Be specific to the audience (e.g. "cleaner with an ABN"), never generic.';
+  const experienceRule = business
+    ? 'Include ONE line of real, lived experience ("the #1 thing operators tell us is…").'
+    : 'Include ONE line of real, lived experience ("the #1 thing we see in the app is…").';
+  const ctaRule = business
+    ? 'End with a CTA for Ozly for Companies — give your contractor workforce one app to invoice right, stay compliant and reduce your admin. Link the org portal: https://app.ozly.au . Do NOT link the consumer App Store / Google Play here.'
+    : 'End with a CTA tied to the pain, linking the app: App Store https://apps.apple.com/au/app/ozly/id6760398649 and Google Play https://play.google.com/store/apps/details?id=com.augusto.ozly .';
+
+  const system = `You write blog posts for Ozly. This post targets: ${audienceLine}.
 
 Write ONE blog post in ${langName} — native, idiomatic writing (NOT a translation).
 
 Rules (follow strictly):
 1. Answer the core number/question in the FIRST line. No preamble.
-2. Be specific to the audience (e.g. "cleaner with an ABN"), never generic.
-3. Include ONE line of real, lived experience ("the #1 thing we see in the app is…").
+2. ${specificRule}
+3. ${experienceRule}
 4. For any tax/visa fact, add an inline markdown link to the official source: ATO https://www.ato.gov.au/ or Home Affairs https://immi.homeaffairs.gov.au/ .
-5. End with a CTA tied to the pain, linking the app: App Store https://apps.apple.com/au/app/ozly/id6760398649 and Google Play https://play.google.com/store/apps/details?id=com.augusto.ozly .
+5. ${ctaRule}
 6. MANDATORY — always end with a clear disclaimer (in ${langName}): Ozly is a record-keeping tool, NOT an accountant or registered tax agent, and this article is general information, not tax or accounting advice — consult a registered tax agent for your own situation. Every post must include this.
 7. Numbers must be correct for the 2025–26 year and phrased so a human can verify them. A human reviews before publishing.
 
