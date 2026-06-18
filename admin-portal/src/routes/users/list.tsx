@@ -22,12 +22,20 @@ import { useToast } from '@/components/Toast';
 import { FiltersBar } from './FiltersBar';
 import { StatRibbon } from './StatRibbon';
 import { BulkActionsBar } from './BulkActionsBar';
-import { LifecycleBadge, PlanBadge, PlatformBadge, RoleBadge, StoreBadge } from './badges';
+import {
+  EmailConsentBadge,
+  LifecycleBadge,
+  PlanBadge,
+  PlatformBadge,
+  RoleBadge,
+  StoreBadge,
+} from './badges';
 import {
   EMPTY_FILTERS,
   filtersToRpc,
   filtersToSearchParams,
   searchParamsToFilters,
+  type EmailConsent,
   type SortKey,
   type UserFilters,
   type UserListResponse,
@@ -145,6 +153,8 @@ export function UserListPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  // Email marketing consent per user id (fetched separately from the list RPC).
+  const [consent, setConsent] = useState<Record<string, EmailConsent>>({});
 
   // Debounce the query so typing doesn't fire one RPC per keystroke.
   const [debouncedQuery, setDebouncedQuery] = useState(filters.query);
@@ -209,6 +219,35 @@ export function UserListPage() {
           });
           return next;
         });
+
+        // Fetch email-marketing consent for the visible page (separate admin
+        // RPC so we don't have to touch admin_list_users). Non-fatal on error.
+        const pageIds = d.rows.map((r) => r.id);
+        if (pageIds.length > 0) {
+          callRpc<
+            Array<{
+              id: string;
+              email_marketing_consent: boolean;
+              email_consent_updated_at: string | null;
+            }>
+          >('admin_list_email_consent', { p_ids: pageIds })
+            .then((list) => {
+              if (cancelled) return;
+              const next: Record<string, EmailConsent> = {};
+              for (const c of list) {
+                next[c.id] = {
+                  granted: !!c.email_marketing_consent,
+                  at: c.email_consent_updated_at,
+                };
+              }
+              setConsent(next);
+            })
+            .catch(() => {
+              /* badge falls back to "—" if consent can't be loaded */
+            });
+        } else {
+          setConsent({});
+        }
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -391,6 +430,7 @@ export function UserListPage() {
               </th>
               <th scope="col" className="px-3 py-2.5">User</th>
               <th scope="col" className="px-3 py-2.5">Email</th>
+              <th scope="col" className="px-3 py-2.5">Email mkt</th>
               <th scope="col" className="px-3 py-2.5">Plano</th>
               <th scope="col" className="px-3 py-2.5">Lifecycle</th>
               <th scope="col" className="px-3 py-2.5">Role</th>
@@ -418,7 +458,7 @@ export function UserListPage() {
           <tbody className="divide-y divide-navy-50 bg-white">
             {loading && rows.length === 0 && (
               <tr>
-                <td colSpan={10} className="px-4 py-10 text-center">
+                <td colSpan={11} className="px-4 py-10 text-center">
                   <Spinner size="md" label="Carregando" />
                 </td>
               </tr>
@@ -426,7 +466,7 @@ export function UserListPage() {
 
             {!loading && rows.length === 0 && (
               <tr>
-                <td colSpan={10} className="px-4 py-10 text-center text-sm text-navy-400">
+                <td colSpan={11} className="px-4 py-10 text-center text-sm text-navy-400">
                   Nenhum usuário bate com os filtros.
                 </td>
               </tr>
@@ -481,6 +521,15 @@ export function UserListPage() {
                     onClick={() => navigate(`/users/${row.id}`)}
                   >
                     {row.email_masked}
+                  </td>
+                  <td
+                    className="cursor-pointer px-3 py-2.5"
+                    onClick={() => navigate(`/users/${row.id}`)}
+                  >
+                    <EmailConsentBadge
+                      granted={consent[row.id]?.granted}
+                      at={consent[row.id]?.at}
+                    />
                   </td>
                   <td
                     className="cursor-pointer px-3 py-2.5"

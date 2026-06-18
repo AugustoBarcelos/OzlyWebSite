@@ -126,6 +126,38 @@ export function PlatformBadge({ platform }: { platform: string | null }) {
   );
 }
 
+/** Email marketing consent indicator.
+ *  - granted  → green "✓ Email" (safe to send marketing)
+ *  - denied   → muted "✕ Email" (Spam Act 2003: do NOT send)
+ *  - unknown  → em-dash (consent not loaded yet) */
+export function EmailConsentBadge({
+  granted,
+  at,
+}: {
+  granted: boolean | null | undefined;
+  at?: string | null | undefined;
+}) {
+  if (granted == null) {
+    return <span className="text-[11px] text-navy-300">—</span>;
+  }
+  const title = granted
+    ? `Opt-in${at ? ` em ${new Date(at).toLocaleDateString('pt-BR')}` : ''} — pode receber email marketing`
+    : 'Sem consent — NÃO enviar email marketing (Spam Act 2003)';
+  return (
+    <span
+      title={title}
+      className={[
+        'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset',
+        granted
+          ? 'bg-emerald-50 text-emerald-700 ring-emerald-100'
+          : 'bg-navy-50 text-navy-500 ring-navy-100',
+      ].join(' ')}
+    >
+      {granted ? '✓ Email' : '✕ Email'}
+    </span>
+  );
+}
+
 export function RoleBadge({ role }: { role: string }) {
   const isAdmin = role === 'admin';
   return (
