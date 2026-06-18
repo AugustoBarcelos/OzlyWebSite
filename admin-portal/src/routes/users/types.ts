@@ -41,6 +41,13 @@ export interface UserListRow {
   total_revenue_usd_cents: number | null;
 }
 
+/** Email marketing consent for a user (from admin_list_email_consent RPC).
+ *  `granted=false` means we must NOT send marketing email (Spam Act 2003). */
+export interface EmailConsent {
+  granted: boolean;
+  at: string | null;
+}
+
 export interface UserListStats {
   paying: number;
   trial: number;
