@@ -79,8 +79,13 @@ async function blogApi<T>(
   }
 }
 
+export interface PublishedPost {
+  slug: string;
+  title: string;
+}
+
 export function fetchTopics() {
-  return blogApi<{ topics: BlogTopic[] }>('topics');
+  return blogApi<{ topics: BlogTopic[]; published?: PublishedPost[] }>('topics');
 }
 
 export function suggestMoreTopics(audience?: 'business' | 'consumer') {

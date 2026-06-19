@@ -32,7 +32,7 @@ const GITHUB_BRANCH = "main";
 // Free Workers AI model. Strong instruct model on the free tier.
 const AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 // Bump on each meaningful worker change so /admin/api/health proves what's live.
-const WORKER_BUILD = "2026-06-19-surgical-apply-v7";
+const WORKER_BUILD = "2026-06-19-published-visibility-v8";
 
 const CRAWLER_UA_RE =
   /facebookexternalhit|facebot|whatsapp|twitterbot|telegrambot|linkedinbot|discordbot|slackbot|googlebot|bingbot|pinterest|skypeuripreview|redditbot|applebot|yahoobot|duckduckbot/i;
@@ -289,12 +289,16 @@ async function handleAdminApi(request: Request, env: Env, url: URL): Promise<Res
 
   if (path === '/admin/api/topics' && request.method === 'GET') {
     const done = await listExistingSlugs(env);
+    const titleBySlug = new Map(TOPICS.map((t) => [t.slug, t.title]));
     return json({
       topics: TOPICS.map((t) => ({
         ...t,
         audience: (t as { audience?: string }).audience === 'business' ? 'business' : 'consumer',
         done: done.includes(t.slug),
       })),
+      // Everything actually published (incl. custom posts not in the curated
+      // list) so the wizard can show what's already live.
+      published: done.map((slug) => ({ slug, title: titleBySlug.get(slug) ?? humanizeSlug(slug) })),
     });
   }
 
@@ -361,6 +365,12 @@ async function handleAdminApi(request: Request, env: Env, url: URL): Promise<Res
 }
 
 /* ── List which post slugs already exist (content/blog/en) ── */
+/** "contractor-or-employee-ato-test" → "Contractor or employee ato test" */
+function humanizeSlug(slug: string): string {
+  const s = slug.replace(/-/g, ' ').trim();
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 async function listExistingSlugs(env: Env): Promise<string[]> {
   const res = await fetch(
     `https://api.github.com/repos/${GITHUB_REPO}/contents/content/blog/en?ref=${GITHUB_BRANCH}`,
@@ -382,8 +392,18 @@ async function suggestTopics(
   env: Env,
   audience?: 'business' | 'consumer',
 ): Promise<Array<{ slug: string; title: string; angle: string; audience: 'business' | 'consumer'; done: boolean }>> {
-  const existing = new Set<string>([...(await listExistingSlugs(env)), ...TOPICS.map((t) => t.slug)]);
-  const avoid = TOPICS.map((t) => t.title).join('; ');
+  const publishedSlugs = await listExistingSlugs(env);
+  const existing = new Set<string>([...publishedSlugs, ...TOPICS.map((t) => t.slug)]);
+  // Avoid list = curated titles + the subjects of everything already published
+  // (humanised from the slug for posts not in the curated list), so the model
+  // doesn't propose a topic on a subject we've already covered.
+  const titleBySlug = new Map(TOPICS.map((t) => [t.slug, t.title]));
+  const avoid = [
+    ...new Set([
+      ...TOPICS.map((t) => t.title),
+      ...publishedSlugs.map((s) => titleBySlug.get(s) ?? humanizeSlug(s)),
+    ]),
+  ].join('; ');
 
   const CONSUMER = `CONSUMER — Australian sole traders (cleaners, tradies, contractors) and migrants on student / working-holiday visas. They Google about ABN, income tax, GST, deductions, invoicing, visa work rules.`;
   const BUSINESS = `BUSINESS ("Ozly for Companies") — operators & owners of businesses that run on ABN contractors (cleaning companies, trades, labour-hire, delivery fleets). They care about contractor onboarding, retention, sham-contracting / misclassification risk, compliance, and reducing admin load.`;
@@ -405,7 +425,8 @@ async function suggestTopics(
 
 ${mixRule} Each must be a specific question/angle (not generic). Australia-specific.
 
-Do NOT repeat any of these existing topics: ${avoid}.
+ALREADY COVERED — do NOT propose any topic on the same SUBJECT as any of these (not even a different angle, wording or sub-question). If your idea overlaps with one of them, drop it and pick a genuinely new subject:
+${avoid}.
 
 ANTI-CANNIBALISATION (critical): Ozly IS an invoicing, expense and tax-tracking app. NEVER suggest topics that give away a free alternative to Ozly's own product — no "free invoice template", "invoice generator", "spreadsheet/Excel templates", "track expenses in a spreadsheet", "DIY bookkeeping template". Every topic must make Ozly the natural solution, not replace it. Educational/explainer angles are great; "here's a free tool that does what our app does" is banned.
 
