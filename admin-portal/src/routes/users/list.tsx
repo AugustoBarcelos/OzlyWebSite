@@ -23,6 +23,13 @@ import { FiltersBar } from './FiltersBar';
 import { StatRibbon } from './StatRibbon';
 import { BulkActionsBar } from './BulkActionsBar';
 import {
+  fetchUserInsights,
+  FineStageBadge,
+  InstallBadge,
+  ChurnReasonsPanel,
+  type UserInsight,
+} from './insights';
+import {
   EmailConsentBadge,
   LifecycleBadge,
   PlanBadge,
@@ -155,6 +162,8 @@ export function UserListPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   // Email marketing consent per user id (fetched separately from the list RPC).
   const [consent, setConsent] = useState<Record<string, EmailConsent>>({});
+  // Granular stage + app-install status per user id (admin_user_insights).
+  const [insights, setInsights] = useState<Record<string, UserInsight>>({});
 
   // Debounce the query so typing doesn't fire one RPC per keystroke.
   const [debouncedQuery, setDebouncedQuery] = useState(filters.query);
@@ -224,6 +233,15 @@ export function UserListPage() {
         // RPC so we don't have to touch admin_list_users). Non-fatal on error.
         const pageIds = d.rows.map((r) => r.id);
         if (pageIds.length > 0) {
+          // Granular stage + app-install status for the visible page (separate
+          // admin RPC so admin_list_users stays untouched). Non-fatal on error.
+          fetchUserInsights(pageIds)
+            .then((m) => {
+              if (!cancelled) setInsights(m);
+            })
+            .catch(() => {
+              /* badges fall back to coarse lifecycle / "—" */
+            });
           callRpc<
             Array<{
               id: string;
@@ -247,6 +265,7 @@ export function UserListPage() {
             });
         } else {
           setConsent({});
+          setInsights({});
         }
       })
       .catch((err: unknown) => {
@@ -401,6 +420,8 @@ export function UserListPage() {
         />
       )}
 
+      <ChurnReasonsPanel />
+
       {error && (
         <div
           role="alert"
@@ -546,6 +567,7 @@ export function UserListPage() {
                       {row.store === 'promotional' && row.lifecycle_state !== 'promo' && (
                         <StoreBadge store={row.store} />
                       )}
+                      <FineStageBadge stage={insights[row.id]?.fine_stage} />
                     </div>
                   </td>
                   <td
@@ -558,7 +580,10 @@ export function UserListPage() {
                     className="cursor-pointer px-3 py-2.5"
                     onClick={() => navigate(`/users/${row.id}`)}
                   >
-                    <PlatformBadge platform={row.last_seen_platform} />
+                    <div className="flex flex-wrap items-center gap-1">
+                      <PlatformBadge platform={row.last_seen_platform} />
+                      <InstallBadge insight={insights[row.id]} />
+                    </div>
                   </td>
                   <td
                     className="cursor-pointer px-3 py-2.5 font-mono text-xs text-navy-600"
