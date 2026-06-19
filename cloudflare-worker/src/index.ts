@@ -32,7 +32,7 @@ const GITHUB_BRANCH = "main";
 // Free Workers AI model. Strong instruct model on the free tier.
 const AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 // Bump on each meaningful worker change so /admin/api/health proves what's live.
-const WORKER_BUILD = "2026-06-19-factcheck-apply-v2";
+const WORKER_BUILD = "2026-06-19-topics-curated-v3";
 
 const CRAWLER_UA_RE =
   /facebookexternalhit|facebot|whatsapp|twitterbot|telegrambot|linkedinbot|discordbot|slackbot|googlebot|bingbot|pinterest|skypeuripreview|redditbot|applebot|yahoobot|duckduckbot/i;
@@ -200,27 +200,31 @@ function renderOgHtml(code: string, ownerName: string): string {
    Auth: a valid admin-portal Supabase session (Bearer token). No password.
    ════════════════════════════════════════════════════════════════════ */
 
-// Curated editorial backlog (from the keyword research). `slug` is the post's
-// cross-language identity; `done` is filled in from the repo at request time.
+// Curated editorial backlog. B2C (sole traders / migrants) and B2B (Ozly for
+// Companies) are INTERLEAVED — the wizard renders them in order, so a flat
+// block of B2C made the list look consumer-only.
+// RULE: every angle must position Ozly as the solution. Never give away a free
+// alternative to our own product (no invoice templates, no "do it in Excel") —
+// that's anti-product. `slug` is the post's cross-language identity; `done` is
+// filled in from the repo at request time.
 const TOPICS = [
   { slug: 'abn-vs-tfn', title: 'ABN vs TFN: which one do you need', angle: 'Define both, the 47% no-ABN trap, bust the $75k myth.' },
+  { slug: 'contractor-or-employee-ato-test', title: 'Are your contractors actually employees? (ATO test)', angle: 'Sham-contracting risk, the multi-factor test, penalties, how to stay clean.', audience: 'business' },
   { slug: 'sole-trader-tax-how-much', title: 'How much tax does a sole trader pay', angle: 'Real numbers by income, the July bill shock, deductions.' },
-  { slug: 'free-abn-is-it-free', title: 'Is it free to get an ABN in Australia?', angle: 'Bust the paid-registration myth; how to apply on ABR.' },
-  { slug: 'cleaner-tax-deductions', title: 'Tax deductions cleaners forget', angle: 'Specific claimable items for cleaners with real examples.' },
-  { slug: 'student-visa-work-hours', title: 'Student visa: how many hours can you work (2026)', angle: '48h/fortnight rule, what counts, the 60h proposal is NOT law.' },
-  { slug: 'how-to-invoice-with-abn', title: 'How to invoice with an ABN (+ template)', angle: 'Required fields, the "tax invoice" wording, GST line.' },
-  { slug: 'working-holiday-tax', title: 'Working holiday tax: why 15% from $1', angle: '417/462 rates, no tax-free threshold, employer registration.' },
-  { slug: 'july-tax-shock', title: 'The July tax shock nobody warns sole traders about', angle: 'ABN has no withholding; how to set money aside.' },
-  { slug: 'tax-return-step-by-step', title: 'How to do your tax return (step by step)', angle: 'Seasonal — publish before June. Deadlines, myGov, deductions.' },
+  { slug: 'onboard-abn-contractors-fast', title: 'How to onboard ABN contractors without the paperwork chaos', angle: 'Checklist: valid ABN, GST status, insurance, invoicing — done in minutes.', audience: 'business' },
+  { slug: 'july-tax-shock', title: 'The July tax shock nobody warns sole traders about', angle: 'ABN has no withholding; how to set money aside (Ozly tracks it for you).' },
+  { slug: 'contractor-tax-bill-business-problem', title: "When a contractor's tax bill becomes your business's problem", angle: 'Retention, admin load and compliance risk of a disorganised contractor base.', audience: 'business' },
   { slug: 'gst-register-75000', title: 'Do I need to register for GST? ($75k explained)', angle: 'Rolling 12-month turnover, 21-day rule, backdating risk.' },
+  { slug: 'reduce-contractor-churn', title: 'Why your best contractors leave (and how to keep them)', angle: 'Financial stress as the hidden churn driver; what operators can do.', audience: 'business' },
+  { slug: 'cleaner-tax-deductions', title: 'Tax deductions cleaners forget', angle: 'Specific claimable items for cleaners with real examples.' },
+  { slug: 'cleaning-business-payroll-vs-contractors', title: 'Employees vs contractors for your cleaning business', angle: 'Cost, control, compliance trade-offs; when each model makes sense.', audience: 'business' },
+  { slug: 'student-visa-work-hours', title: 'Student visa: how many hours can you work (2026)', angle: '48h/fortnight rule, what counts, the 60h proposal is NOT law.' },
+  { slug: 'valid-tax-invoice-australia', title: 'What makes a tax invoice valid in Australia', angle: 'Required fields, the "tax invoice" wording, GST line, and the errors that delay payment — Ozly builds a compliant invoice for you.' },
+  { slug: 'working-holiday-tax', title: 'Working holiday tax: why 15% from $1', angle: '417/462 rates, no tax-free threshold, employer registration.' },
+  { slug: 'free-abn-is-it-free', title: 'Is it free to get an ABN in Australia?', angle: 'Bust the paid-registration myth; how to apply on ABR.' },
+  { slug: 'tax-return-step-by-step', title: 'How to do your tax return (step by step)', angle: 'Seasonal — publish before June. Deadlines, myGov, deductions.' },
   { slug: 'work-over-visa-hours', title: 'What happens if you work over your visa hours', angle: 'Real consequences, how the limit is tracked.' },
   { slug: 'cleaning-rates-per-hour', title: 'How much to charge per hour for cleaning', angle: 'Real 2026 ranges, employee vs ABN, what to factor in.' },
-  // ── B2B / Ozly for Companies (audience: business operators & owners) ──
-  { slug: 'contractor-tax-bill-business-problem', title: "When a contractor's tax bill becomes your business's problem", angle: 'Retention, admin load and compliance risk of a disorganised contractor base.', audience: 'business' },
-  { slug: 'contractor-or-employee-ato-test', title: 'Are your contractors actually employees? (ATO test)', angle: 'Sham-contracting risk, the multi-factor test, penalties, how to stay clean.', audience: 'business' },
-  { slug: 'onboard-abn-contractors-fast', title: 'How to onboard ABN contractors without the paperwork chaos', angle: 'Checklist: valid ABN, GST status, insurance, invoicing — done in minutes.', audience: 'business' },
-  { slug: 'reduce-contractor-churn', title: 'Why your best contractors leave (and how to keep them)', angle: 'Financial stress as the hidden churn driver; what operators can do.', audience: 'business' },
-  { slug: 'cleaning-business-payroll-vs-contractors', title: 'Employees vs contractors for your cleaning business', angle: 'Cost, control, compliance trade-offs; when each model makes sense.', audience: 'business' },
 ];
 
 function corsHeaders(): Record<string, string> {
@@ -375,6 +379,8 @@ B) BUSINESS ("Ozly for Companies") — operators & owners of businesses that run
 Propose 6 FRESH, specific, high-search-intent topics — a MIX of both audiences (aim for ~3 consumer + ~3 business). Each must be a specific question/angle (not generic). Australia-specific.
 
 Do NOT repeat any of these existing topics: ${avoid}.
+
+ANTI-CANNIBALISATION (critical): Ozly IS an invoicing, expense and tax-tracking app. NEVER suggest topics that give away a free alternative to Ozly's own product — no "free invoice template", "invoice generator", "spreadsheet/Excel templates", "track expenses in a spreadsheet", "DIY bookkeeping template". Every topic must make Ozly the natural solution, not replace it. Educational/explainer angles are great; "here's a free tool that does what our app does" is banned.
 
 Output EXACTLY this, one block per idea, nothing else. Prefix each title with [B2B] for business topics and [B2C] for consumer topics:
 @@@TOPIC@@@
