@@ -13,6 +13,7 @@ import {
   publishPost,
   type BlogTopic,
   type BlogPost,
+  type BlogLang,
   type LangCode,
   type ReviewLang,
 } from '@/lib/blog';
@@ -43,7 +44,12 @@ export function MarketingBlogPage() {
   const [lang, setLang] = useState<LangCode>('en');
   const [reviews, setReviews] = useState<Record<LangCode, ReviewLang> | null>(null);
   const [applyingIdx, setApplyingIdx] = useState<number | null>(null);
-  const [applyingAll, setApplyingAll] = useState(false);
+  const [proposing, setProposing] = useState(false);
+  // A proposed corrected draft for the current language — shown for review
+  // before it touches the body. `identical` flags when the AI returned no change.
+  const [proposal, setProposal] = useState<
+    { lang: LangCode; corrected: BlogLang; identical: boolean } | null
+  >(null);
   const [reviewing, setReviewing] = useState(false);
   const [publishing, setPublishing] = useState(false);
 
@@ -135,140 +141,68 @@ export function MarketingBlogPage() {
     }
   }
 
+  // Pressing "Aplicar" on a single finding generates a corrected version of the
+  // CURRENT language addressing that finding, and shows it in the review panel
+  // for you to accept (or hand-edit). Nothing changes until you accept.
   async function onApplyFix(idx: number, finding: string) {
     if (!post) return;
     setApplyingIdx(idx);
     try {
-      // Apply the same fix to EVERY language (each rewritten in its own
-      // language), so the 3 drafts stay in sync — not just the active tab.
-      const codes = LANGS.filter((c) => post[c]?.title);
-      const results = await Promise.all(
-        codes.map(async (c) => {
-          try {
-            return [c, await applyFix(c, post[c], finding)] as const;
-          } catch {
-            return [c, null] as const;
-          }
-        }),
-      );
-
-      const next: BlogPost = { ...post };
-      let anyChanged = false;
-      let currentChanged = false;
-      for (const [c, fixed] of results) {
-        if (
-          fixed &&
-          (fixed.title !== post[c].title ||
-            fixed.description !== post[c].description ||
-            fixed.body !== post[c].body)
-        ) {
-          next[c] = fixed;
-          anyChanged = true;
-          if (c === lang) currentChanged = true;
-        }
-      }
-
-      // The free AI sometimes returns the draft unchanged (vague finding /
-      // truncated reply). If nothing changed anywhere, don't claim success and
-      // don't drop the finding — otherwise the list looks clean while the text
-      // is identical and the next fact-check re-flags it.
-      if (!anyChanged) {
-        toast({
-          variant: 'error',
-          title: 'A IA não alterou o texto',
-          description: 'Tenta “Aplicar tudo”, ou edite o corpo à mão (o campo é editável).',
-        });
-        return;
-      }
-
-      setPost(next);
-      // Drop the addressed finding from the current language's list.
-      setReviews((prev) => {
-        if (!prev?.[lang]) return prev;
-        const cur = prev[lang];
-        return { ...prev, [lang]: { ...cur, findings: cur.findings.filter((_, i) => i !== idx) } };
-      });
-      toast({
-        variant: currentChanged ? 'success' : 'info',
-        title: currentChanged ? 'Correção aplicada' : 'Aplicada nos outros idiomas',
-        description: currentChanged
-          ? 'O corpo foi atualizado nas 3 abas.'
-          : `A IA não mexeu no ${LANG_LABEL[lang]} (provável que já estivesse ok), mas mudou outras abas.`,
-      });
+      const corrected = await applyFix(lang, post[lang], finding);
+      const identical =
+        corrected.body === post[lang].body &&
+        corrected.title === post[lang].title &&
+        corrected.description === post[lang].description;
+      setProposal({ lang, corrected, identical });
     } catch (e) {
-      toast({ variant: 'error', title: 'Falha ao aplicar', description: errMsg(e) });
+      toast({ variant: 'error', title: 'Falha ao gerar correção', description: errMsg(e) });
     } finally {
       setApplyingIdx(null);
     }
   }
 
-  // Apply ALL findings of a language in a single AI call — far more reliable
-  // than one-by-one (the free model echoes the draft when there's little to
-  // change; with the whole list it actually rewrites).
-  async function onApplyAll() {
+  // Generate a PROPOSED corrected draft for the CURRENT language, addressing
+  // every finding at once, and show it for review. Nothing touches the body
+  // until the user clicks "Aceitar".
+  async function onProposeCorrection() {
     if (!post || !reviews) return;
-    setApplyingAll(true);
+    const findings = reviews[lang]?.findings ?? [];
+    if (findings.length === 0) return;
+    setProposing(true);
     try {
-      const codes = LANGS.filter((c) => post[c]?.title);
-      const results = await Promise.all(
-        codes.map(async (c) => {
-          const findings = reviews[c]?.findings ?? [];
-          if (findings.length === 0) return [c, null] as const;
-          const combined =
-            `Fix ALL of these problems in the draft (rewrite as needed):\n` +
-            findings.map((f, i) => `${i + 1}. [${f.severity}] ${f.text}`).join('\n');
-          try {
-            return [c, await applyFix(c, post[c], combined)] as const;
-          } catch {
-            return [c, null] as const;
-          }
-        }),
-      );
-
-      const next: BlogPost = { ...post };
-      const fixedLangs: LangCode[] = [];
-      for (const [c, fixed] of results) {
-        if (
-          fixed &&
-          (fixed.title !== post[c].title ||
-            fixed.description !== post[c].description ||
-            fixed.body !== post[c].body)
-        ) {
-          next[c] = fixed;
-          fixedLangs.push(c);
-        }
-      }
-
-      if (fixedLangs.length === 0) {
-        toast({
-          variant: 'error',
-          title: 'A IA não alterou o texto',
-          description: 'Edite o corpo à mão (o campo é editável) — o modelo grátis travou nesses apontamentos.',
-        });
-        return;
-      }
-
-      setPost(next);
-      // Clear the findings of the languages we just rewrote — re-run the
-      // fact-check to confirm.
-      setReviews((prev) => {
-        if (!prev) return prev;
-        const copy = { ...prev };
-        for (const c of fixedLangs) {
-          if (copy[c]) copy[c] = { ...copy[c], findings: [] };
-        }
-        return copy;
-      });
-      toast({
-        variant: 'success',
-        title: 'Tudo aplicado',
-        description: `Reescrevi ${fixedLangs.map((c) => LANG_LABEL[c]).join(', ')}. Confira o corpo e rode o Fact-check de novo.`,
-      });
+      const combined =
+        `Fix ALL of these problems in the draft (rewrite as needed):\n` +
+        findings.map((f, i) => `${i + 1}. [${f.severity}] ${f.text}`).join('\n');
+      const corrected = await applyFix(lang, post[lang], combined);
+      const identical =
+        corrected.body === post[lang].body &&
+        corrected.title === post[lang].title &&
+        corrected.description === post[lang].description;
+      setProposal({ lang, corrected, identical });
     } catch (e) {
-      toast({ variant: 'error', title: 'Falha ao aplicar tudo', description: errMsg(e) });
+      toast({ variant: 'error', title: 'Falha ao gerar correção', description: errMsg(e) });
     } finally {
-      setApplyingAll(false);
+      setProposing(false);
     }
+  }
+
+  // Accept the proposed (and possibly hand-edited) correction → write it into
+  // the body of its language, clear that language's findings, and prompt a
+  // fresh fact-check.
+  function onAcceptProposal() {
+    if (!post || !proposal) return;
+    setPost({ ...post, [proposal.lang]: proposal.corrected });
+    setReviews((prev) => {
+      if (!prev?.[proposal.lang]) return prev;
+      return { ...prev, [proposal.lang]: { ...prev[proposal.lang], findings: [] } };
+    });
+    const acceptedLang = proposal.lang;
+    setProposal(null);
+    toast({
+      variant: 'success',
+      title: 'Correção aceita',
+      description: `Aplicada no corpo (${LANG_LABEL[acceptedLang]}). Rode o Fact-check de novo pra confirmar.`,
+    });
   }
 
   async function onPublish(draft: boolean) {
@@ -518,11 +452,11 @@ export function MarketingBlogPage() {
                 {reviews[lang].findings.length > 0 && (
                   <button
                     type="button"
-                    onClick={() => void onApplyAll()}
-                    disabled={applyingAll || applyingIdx !== null}
+                    onClick={() => void onProposeCorrection()}
+                    disabled={proposing || applyingIdx !== null}
                     className="shrink-0 rounded-full bg-brand-500 px-3 py-1 text-xs font-bold text-white transition hover:bg-brand-600 disabled:opacity-40"
                   >
-                    {applyingAll ? 'Aplicando tudo…' : '✓ Aplicar tudo (3 idiomas)'}
+                    {proposing ? 'Gerando correção…' : '✨ Gerar texto corrigido'}
                   </button>
                 )}
               </div>
@@ -536,7 +470,7 @@ export function MarketingBlogPage() {
                     <button
                       type="button"
                       onClick={() => void onApplyFix(i, f.text)}
-                      disabled={applyingIdx !== null || applyingAll}
+                      disabled={applyingIdx !== null || proposing}
                       className="shrink-0 rounded-full border border-brand-300 px-2.5 py-0.5 font-bold text-brand-700 transition hover:bg-brand-50 disabled:opacity-40"
                     >
                       {applyingIdx === i ? 'Aplicando…' : 'Aplicar'}
@@ -547,6 +481,60 @@ export function MarketingBlogPage() {
                   <li className="text-xs text-navy-400">Nenhum apontamento.</li>
                 )}
               </ul>
+            </div>
+          )}
+
+          {/* Proposed corrected text — review, optionally edit, then accept. */}
+          {proposal && proposal.lang === lang && (
+            <div className="rounded-xl border-2 border-brand-300 bg-brand-50/40 p-4">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="text-sm font-bold text-navy-700">
+                  ✨ Texto corrigido proposto ({LANG_LABEL[lang]})
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setProposal(null)}
+                    className="rounded-full border border-slate-300 px-3 py-1 text-xs font-bold text-navy-500 transition hover:bg-slate-100"
+                  >
+                    Descartar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onAcceptProposal}
+                    className="rounded-full bg-brand-500 px-3 py-1 text-xs font-bold text-white transition hover:bg-brand-600"
+                  >
+                    ✓ Aceitar e usar no corpo
+                  </button>
+                </div>
+              </div>
+              {proposal.identical ? (
+                <p className="mb-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                  ⚠️ A IA devolveu o texto praticamente igual — o modelo grátis travou nesses apontamentos.
+                  Edite o corpo abaixo à mão (ex.: corrija o número) e clique em Aceitar.
+                </p>
+              ) : (
+                <p className="mb-2 text-xs text-navy-400">
+                  Revise abaixo. Pode editar antes de aceitar — ao aceitar, isso substitui o corpo de {LANG_LABEL[lang]}.
+                </p>
+              )}
+              <input
+                type="text"
+                value={proposal.corrected.title}
+                onChange={(e) =>
+                  setProposal((p) => (p ? { ...p, corrected: { ...p.corrected, title: e.target.value } } : p))
+                }
+                className="mb-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold focus:border-brand-400 focus:outline-none"
+                placeholder="Título"
+              />
+              <textarea
+                value={proposal.corrected.body}
+                onChange={(e) =>
+                  setProposal((p) => (p ? { ...p, corrected: { ...p.corrected, body: e.target.value } } : p))
+                }
+                rows={14}
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 font-mono text-xs leading-relaxed focus:border-brand-400 focus:outline-none"
+              />
             </div>
           )}
 
