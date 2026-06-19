@@ -18,17 +18,15 @@ function formatDate(iso, lang) {
   }
 }
 
-const GRADIENTS = [
-  "linear-gradient(135deg,#2BBB97,#1d8a6e)",
-  "linear-gradient(135deg,#89c94e,#24a383)",
-  "linear-gradient(135deg,#162431,#24a383)",
-  "linear-gradient(135deg,#33c19e,#9DD760)",
-  "linear-gradient(135deg,#1d8a6e,#162431)",
-];
-function gradientFor(slug = "") {
-  let h = 0;
-  for (let i = 0; i < slug.length; i++) h = (h * 31 + slug.charCodeAt(i)) >>> 0;
-  return GRADIENTS[h % GRADIENTS.length];
+const BUSINESS_TAG_RE = /compan|empresa|organi/i;
+function audienceLabel(tags, lang) {
+  const biz = (tags || []).some((t) => BUSINESS_TAG_RE.test(String(t)));
+  const L = {
+    en: { org: "For business", me: "For sole traders" },
+    pt: { org: "Pra empresas", me: "Pra autônomos" },
+    es: { org: "Para empresas", me: "Para autónomos" },
+  }[lang] || { org: "For business", me: "For sole traders" };
+  return biz ? L.org : L.me;
 }
 
 /** The prerender hands React the post body inline so the first paint needs no
@@ -137,7 +135,7 @@ function BlogPostInner({ slug, lang }) {
   if (error) {
     return (
       <div className="bg-white pt-40 pb-28 min-h-screen">
-        <div className="mx-auto max-w-2xl px-5 text-center">
+        <div className="mx-auto max-w-2xl px-6 text-center">
           <p className="text-slate-500 mb-6">{tb.notFound || "This article isn't available."}</p>
           <Link to={lp("/blog")} className="inline-flex items-center gap-2 font-semibold text-brand-600">
             <ArrowLeft size={16} /> {tb.back || "All articles"}
@@ -155,41 +153,33 @@ function BlogPostInner({ slug, lang }) {
     );
   }
 
-  const tags = (post.tags || []).slice(0, 3);
+  const category = (post.tags || [])[0];
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero band */}
-      <header className="relative overflow-hidden border-b border-slate-100">
-        <div className="absolute inset-0 opacity-[0.07]" style={{ background: gradientFor(post.slug) }} />
-        <div className="relative mx-auto max-w-3xl px-5 pt-28 pb-10 md:pt-36 md:pb-12">
+      <article className="mx-auto max-w-2xl px-6">
+        {/* Header */}
+        <header className="pt-28 md:pt-36">
           {/* Breadcrumb */}
-          <nav className="mb-6 text-sm text-slate-400">
-            <Link to={lp("/blog")} className="font-medium hover:text-brand-600">
-              {tb.title || "Blog"}
+          <nav className="mb-8 text-sm">
+            <Link to={lp("/blog")} className="inline-flex items-center gap-1.5 font-medium text-slate-400 transition hover:text-brand-600">
+              <ArrowLeft size={14} /> {tb.title || "Blog"}
             </Link>
-            <span className="mx-2">/</span>
-            <span className="text-slate-500">{tags[0] || (tb.read ? "" : "")}</span>
           </nav>
 
-          {tags.length > 0 && (
-            <div className="mb-4 flex flex-wrap gap-2">
-              {tags.map((tag) => (
-                <span key={tag} className="rounded-full bg-brand-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-brand-700">
-                  {tag}
-                </span>
-              ))}
-            </div>
-          )}
+          <div className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.14em]">
+            <span className="text-brand-600">{audienceLabel(post.tags, lang)}</span>
+            {category && <><span className="text-slate-300" aria-hidden>/</span><span className="text-slate-400">{category}</span></>}
+          </div>
 
-          <h1 className="text-3xl sm:text-[2.6rem] font-extrabold leading-[1.12] tracking-tight text-navy-700">
+          <h1 className="mt-4 text-[2rem] sm:text-[2.7rem] font-bold leading-[1.1] tracking-tight text-navy-700">
             {post.title}
           </h1>
-          <p className="mt-4 text-lg leading-relaxed text-slate-500">{post.description}</p>
+          <p className="mt-5 text-xl leading-relaxed text-slate-500">{post.description}</p>
 
-          {/* Author / meta */}
-          <div className="mt-7 flex items-center gap-3 border-t border-slate-100 pt-6">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500 text-sm font-extrabold text-white">
+          {/* Byline */}
+          <div className="mt-8 flex items-center gap-3 border-y border-slate-100 py-5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-navy-700 text-sm font-bold text-white">
               O
             </div>
             <div className="text-sm">
@@ -203,17 +193,15 @@ function BlogPostInner({ slug, lang }) {
               </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* Body */}
-      <article className="mx-auto max-w-3xl px-5 py-12 md:py-16">
-        <div className="prose-blog" dangerouslySetInnerHTML={{ __html: post.html }} />
+        {/* Body */}
+        <div className="prose-blog py-10 md:py-12" dangerouslySetInnerHTML={{ __html: post.html }} />
 
         {/* Download CTA */}
-        <div className="mt-14 overflow-hidden rounded-3xl bg-navy-700 p-8 text-center md:p-10">
-          <h2 className="text-2xl font-extrabold text-white">{tb.ctaTitle || "Run your ABN the easy way"}</h2>
-          <p className="mx-auto mt-2 max-w-md text-slate-300">
+        <div className="mb-16 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-8 text-center">
+          <h2 className="text-xl font-bold text-navy-700">{tb.ctaTitle || "Run your ABN the easy way"}</h2>
+          <p className="mx-auto mt-2 max-w-md text-slate-500">
             {tb.ctaSubtitle || "Free invoicing and real-time tax estimates, built for Australian sole traders."}
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
@@ -222,7 +210,7 @@ function BlogPostInner({ slug, lang }) {
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => trackStoreClick("ios", campaign, lang)}
-              className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-6 py-3 font-bold text-white transition hover:bg-brand-600"
+              className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-6 py-3 font-semibold text-white transition hover:bg-brand-600"
             >
               App Store <ArrowRight size={16} />
             </a>
@@ -231,7 +219,7 @@ function BlogPostInner({ slug, lang }) {
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => trackStoreClick("android", campaign, lang)}
-              className="inline-flex items-center gap-2 rounded-full bg-white/10 px-6 py-3 font-bold text-white transition hover:bg-white/20"
+              className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-6 py-3 font-semibold text-navy-700 transition hover:border-brand-300 hover:bg-white"
             >
               Google Play <ArrowRight size={16} />
             </a>
@@ -239,7 +227,7 @@ function BlogPostInner({ slug, lang }) {
         </div>
 
         {/* Back */}
-        <div className="mt-10 text-center">
+        <div className="border-t border-slate-100 py-10 text-center">
           <Link to={lp("/blog")} className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-brand-600">
             <ArrowLeft size={16} /> {tb.back || "All articles"}
           </Link>
