@@ -34,7 +34,7 @@ const GITHUB_BRANCH = "main";
 // Free Workers AI model. Strong instruct model on the free tier.
 const AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 // Bump on each meaningful worker change so /admin/api/health proves what's live.
-const WORKER_BUILD = "2026-06-20-blog-ssr-v9";
+const WORKER_BUILD = "2026-06-20-shell-fresh-v10";
 
 const CRAWLER_UA_RE =
   /facebookexternalhit|facebot|whatsapp|twitterbot|telegrambot|linkedinbot|discordbot|slackbot|googlebot|bingbot|pinterest|skypeuripreview|redditbot|applebot|yahoobot|duckduckbot/i;
@@ -301,8 +301,10 @@ async function handleBlogApi(_request: Request, env: Env, url: URL): Promise<Res
 /** Cache the origin SPA shell (asset tags) — warm across requests. */
 let _shellCache: { at: number; html: string } | null = null;
 async function getShell(): Promise<string> {
-  if (_shellCache && Date.now() - _shellCache.at < 300_000) return _shellCache.html;
-  const res = await fetch(`${ORIGIN}/`, { cf: { cacheTtl: 300 } } as RequestInit);
+  if (_shellCache && Date.now() - _shellCache.at < 60_000) return _shellCache.html;
+  // `?shell` is a distinct cache key from the public home page, and a short TTL
+  // keeps the asset hashes current shortly after each site deploy.
+  const res = await fetch(`${ORIGIN}/?shell`, { cf: { cacheTtl: 60 } } as RequestInit);
   if (!res.ok) throw new Error(`shell ${res.status}`);
   const html = await res.text();
   _shellCache = { at: Date.now(), html };
