@@ -147,53 +147,16 @@ export default function Blog() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero — restrained, editorial */}
-      <div className="border-b border-slate-100">
-        <div className="mx-auto max-w-4xl px-6 pt-32 pb-12 md:pt-40 md:pb-14">
-          <span className="block text-[13px] font-bold uppercase tracking-[0.16em] text-brand-600">
-            {tb.eyebrow || "Ozly Blog"}
-          </span>
-          <h1 className="mt-3 text-4xl sm:text-5xl font-bold tracking-tight text-navy-700">
+      <div className="mx-auto max-w-5xl px-6 pt-24 pb-16 md:pt-28">
+        {/* Compact header: small title + search on one line, then audience tabs.
+            Articles start right below the fold — no oversized hero. */}
+        <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+          <h1 className="text-xl font-bold tracking-tight text-navy-700">
             {tb.title || "Ozly Blog"}
+            {tb.intro && <span className="ml-3 align-middle text-sm font-normal text-slate-400">{tb.intro}</span>}
           </h1>
-          <p className="mt-4 max-w-2xl text-lg leading-relaxed text-slate-500">{tb.intro}</p>
-        </div>
-      </div>
-
-      <div className="mx-auto max-w-5xl px-6 py-12 md:py-16">
-        {/* Audience picker (first visit / direct access) */}
-        {showPicker && (
-          <div className="mb-14 grid gap-px overflow-hidden rounded-2xl border border-slate-200 bg-slate-200 sm:grid-cols-2">
-            <button
-              type="button"
-              onClick={() => setAud("consumer")}
-              className="bg-white p-6 text-left transition hover:bg-slate-50"
-            >
-              <div className="text-[12px] font-bold uppercase tracking-wide text-brand-600">{ui.me}</div>
-              <div className="mt-1 font-semibold text-navy-700">{ui.pickMe}</div>
-              <div className="text-sm text-slate-400">{ui.pickMeSub}</div>
-            </button>
-            <button
-              type="button"
-              onClick={() => setAud("business")}
-              className="bg-white p-6 text-left transition hover:bg-slate-50"
-            >
-              <div className="text-[12px] font-bold uppercase tracking-wide text-violet-600">{ui.org}</div>
-              <div className="mt-1 font-semibold text-navy-700">{ui.pickOrg}</div>
-              <div className="text-sm text-slate-400">{ui.pickOrgSub}</div>
-            </button>
-          </div>
-        )}
-
-        {/* Controls — underline tabs + minimal search */}
-        {posts && (
-          <div className="mb-10 flex flex-col gap-4 border-b border-slate-100 pb-4 sm:flex-row sm:items-end sm:justify-between">
-            <div className="flex items-center gap-6">
-              {seg("", ui.all)}
-              {seg("consumer", ui.me)}
-              {seg("business", ui.org)}
-            </div>
-            <div className="relative w-full sm:max-w-[16rem]">
+          {posts && (
+            <div className="relative w-full sm:w-60">
               <Search size={15} className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="search"
@@ -207,6 +170,18 @@ export default function Blog() {
                 {suggestions.map((s) => <option key={s} value={s} />)}
               </datalist>
             </div>
+          )}
+        </div>
+
+        {/* Audience tabs */}
+        {posts && (
+          <div className="mb-10 flex items-center gap-6 border-b border-slate-100">
+            {seg("", ui.all)}
+            {seg("consumer", ui.me)}
+            {seg("business", ui.org)}
+            {showPicker && (
+              <span className="ml-auto hidden pb-2 text-xs text-slate-400 sm:inline">{ui.pickSub}</span>
+            )}
           </div>
         )}
 
