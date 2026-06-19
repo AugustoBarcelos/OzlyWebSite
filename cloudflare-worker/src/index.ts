@@ -32,7 +32,7 @@ const GITHUB_BRANCH = "main";
 // Free Workers AI model. Strong instruct model on the free tier.
 const AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 // Bump on each meaningful worker change so /admin/api/health proves what's live.
-const WORKER_BUILD = "2026-06-19-topics-split-v4";
+const WORKER_BUILD = "2026-06-19-publish-pr-v5";
 
 const CRAWLER_UA_RE =
   /facebookexternalhit|facebot|whatsapp|twitterbot|telegrambot|linkedinbot|discordbot|slackbot|googlebot|bingbot|pinterest|skypeuripreview|redditbot|applebot|yahoobot|duckduckbot/i;
@@ -673,7 +673,11 @@ PASS or NEEDS_WORK
 }
 
 async function reviewPost(body: PublishBody, env: Env): Promise<Record<string, ReviewLang>> {
-  const codes = (['en', 'pt', 'es'] as const).filter((c) => body[c] && body[c]!.title);
+  // Review any language that has a title OR a real body — so a draft you paste
+  // in (even without a perfect title) still gets fact-checked.
+  const hasContent = (g?: GenLang): boolean =>
+    !!g && ((g.title?.trim().length ?? 0) > 0 || (g.body?.trim().length ?? 0) > 20);
+  const codes = (['en', 'pt', 'es'] as const).filter((c) => hasContent(body[c]));
   // One web search (in English — ATO content is English), reused for all langs.
   const seed = body.en?.title || body.pt?.title || body.es?.title || '';
   const context = await webContext(`${seed} Australia ATO 2025-26 tax rules`, env);
@@ -752,7 +756,10 @@ function frontmatter(tr: GenLang, date: string, draft: boolean): string {
   return `---\ntitle: "${esc(tr.title)}"\ndescription: "${esc(tr.description)}"\ndate: ${date}\nauthor: "Ozly"\ndraft: ${draft ? 'true' : 'false'}\n---\n\n${tr.body.trim()}\n`;
 }
 
-async function publishPost(body: PublishBody, env: Env): Promise<{ ok: true; committed: string[] }> {
+async function publishPost(
+  body: PublishBody,
+  env: Env,
+): Promise<{ ok: true; committed: string[]; pr: number; merged: boolean }> {
   const date = body.date || isoDate();
   const draft = body.draft !== false; // default true — review gate
   const langs: Array<['en' | 'pt' | 'es', GenLang | undefined]> = [
@@ -760,15 +767,41 @@ async function publishPost(body: PublishBody, env: Env): Promise<{ ok: true; com
     ['pt', body.pt],
     ['es', body.es],
   ];
+
+  // `main` is a PROTECTED branch — direct commits return 409. So publish via a
+  // pull request: branch off main → commit each language → open PR → merge it.
+  const baseSha = await githubGetRefSha(GITHUB_BRANCH, env);
+  const branch = `blog/${body.slug}-${Date.now().toString(36)}`;
+  await githubCreateBranch(branch, baseSha, env);
+
   const committed: string[] = [];
   for (const [lang, tr] of langs) {
     if (!tr || !tr.title) continue;
     const path = `content/blog/${lang}/${body.slug}.md`;
     const content = frontmatter(tr, date, draft);
-    await githubPutFile(path, content, `blog: ${draft ? 'draft' : 'publish'} ${body.slug} (${lang})`, env);
+    await githubPutFile(path, content, `blog: ${draft ? 'draft' : 'publish'} ${body.slug} (${lang})`, env, branch);
     committed.push(path);
   }
-  return { ok: true, committed };
+  if (committed.length === 0) throw new Error('Nothing to publish — no language had a title.');
+
+  const pr = await githubCreatePr(
+    branch,
+    `blog: ${draft ? 'draft' : 'publish'} ${body.slug}`,
+    `Automated blog ${draft ? 'draft' : 'publish'} from the admin portal.\n\nFiles:\n${committed.map((p) => `- ${p}`).join('\n')}`,
+    env,
+  );
+
+  // Merge it (squash). main requires a PR but 0 approvals, so this succeeds.
+  let merged = false;
+  try {
+    await githubMergePr(pr, env);
+    merged = true;
+    await githubDeleteBranch(branch, env); // best-effort cleanup
+  } catch (e) {
+    // PR is open but couldn't auto-merge (e.g. a required check appeared).
+    throw new Error(`Files committed and PR #${pr} opened, but auto-merge failed: ${(e as Error).message}. Merge PR #${pr} manually.`);
+  }
+  return { ok: true, committed, pr, merged };
 }
 
 function isoDate(): string {
@@ -777,17 +810,74 @@ function isoDate(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-async function githubPutFile(path: string, content: string, message: string, env: Env): Promise<void> {
-  const apiUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/${path}`;
-  const ghHeaders = {
+function githubHeaders(env: Env): Record<string, string> {
+  return {
     Authorization: `Bearer ${env.GITHUB_TOKEN}`,
     Accept: 'application/vnd.github+json',
     'User-Agent': 'ozly-blog-admin',
     'Content-Type': 'application/json',
   };
-  // Need the existing sha to update an existing file.
+}
+
+async function githubGetRefSha(branch: string, env: Env): Promise<string> {
+  const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/git/ref/heads/${branch}`, {
+    headers: githubHeaders(env),
+  });
+  if (!res.ok) throw new Error(`GitHub ${res.status} reading ref ${branch}: ${(await res.text()).slice(0, 160)}`);
+  const data = (await res.json()) as { object?: { sha?: string } };
+  if (!data.object?.sha) throw new Error(`No sha for ref ${branch}`);
+  return data.object.sha;
+}
+
+async function githubCreateBranch(branch: string, sha: string, env: Env): Promise<void> {
+  const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/git/refs`, {
+    method: 'POST',
+    headers: githubHeaders(env),
+    body: JSON.stringify({ ref: `refs/heads/${branch}`, sha }),
+  });
+  if (!res.ok) throw new Error(`GitHub ${res.status} creating branch ${branch}: ${(await res.text()).slice(0, 160)}`);
+}
+
+async function githubCreatePr(head: string, title: string, prBody: string, env: Env): Promise<number> {
+  const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/pulls`, {
+    method: 'POST',
+    headers: githubHeaders(env),
+    body: JSON.stringify({ title, head, base: GITHUB_BRANCH, body: prBody }),
+  });
+  if (!res.ok) throw new Error(`GitHub ${res.status} creating PR: ${(await res.text()).slice(0, 160)}`);
+  const data = (await res.json()) as { number?: number };
+  if (!data.number) throw new Error('PR created but no number returned');
+  return data.number;
+}
+
+async function githubMergePr(prNumber: number, env: Env): Promise<void> {
+  const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/pulls/${prNumber}/merge`, {
+    method: 'PUT',
+    headers: githubHeaders(env),
+    body: JSON.stringify({ merge_method: 'squash' }),
+  });
+  if (!res.ok) throw new Error(`GitHub ${res.status}: ${(await res.text()).slice(0, 160)}`);
+}
+
+async function githubDeleteBranch(branch: string, env: Env): Promise<void> {
+  await fetch(`https://api.github.com/repos/${GITHUB_REPO}/git/refs/heads/${branch}`, {
+    method: 'DELETE',
+    headers: githubHeaders(env),
+  }).catch(() => {}); // best-effort
+}
+
+async function githubPutFile(
+  path: string,
+  content: string,
+  message: string,
+  env: Env,
+  branch: string,
+): Promise<void> {
+  const apiUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/${path}`;
+  const ghHeaders = githubHeaders(env);
+  // Need the existing sha (on THIS branch) to update an existing file.
   let sha: string | undefined;
-  const getRes = await fetch(`${apiUrl}?ref=${GITHUB_BRANCH}`, { headers: ghHeaders });
+  const getRes = await fetch(`${apiUrl}?ref=${branch}`, { headers: ghHeaders });
   if (getRes.ok) {
     const existing = (await getRes.json()) as { sha?: string };
     sha = existing.sha;
@@ -798,7 +888,7 @@ async function githubPutFile(path: string, content: string, message: string, env
     body: JSON.stringify({
       message,
       content: base64Utf8(content),
-      branch: GITHUB_BRANCH,
+      branch,
       ...(sha ? { sha } : {}),
     }),
   });
