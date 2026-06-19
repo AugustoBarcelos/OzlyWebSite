@@ -31,6 +31,8 @@ const GITHUB_REPO = "AugustoBarcelos/OzlyWebSite";
 const GITHUB_BRANCH = "main";
 // Free Workers AI model. Strong instruct model on the free tier.
 const AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
+// Bump on each meaningful worker change so /admin/api/health proves what's live.
+const WORKER_BUILD = "2026-06-19-factcheck-apply-v2";
 
 const CRAWLER_UA_RE =
   /facebookexternalhit|facebot|whatsapp|twitterbot|telegrambot|linkedinbot|discordbot|slackbot|googlebot|bingbot|pinterest|skypeuripreview|redditbot|applebot|yahoobot|duckduckbot/i;
@@ -263,6 +265,20 @@ async function handleAdminApi(request: Request, env: Env, url: URL): Promise<Res
   }
 
   const path = url.pathname;
+
+  // Public health/version marker so a deploy can be verified from a browser
+  // (no secrets, no auth). Bump WORKER_BUILD on each meaningful change.
+  if (path === '/admin/api/health') {
+    return json({
+      ok: true,
+      build: WORKER_BUILD,
+      features: {
+        b2bTopics: true,
+        audienceAwareGeneration: true,
+        factCheckApplyEdits: true, // temperature 0.4 + directive prompt
+      },
+    });
+  }
 
   // Everything below requires admin auth (password or portal session).
   if (!(await authed(request, env))) return json({ error: 'Unauthorized' }, 401);
