@@ -12,6 +12,8 @@ export interface BlogTopic {
   slug: string;
   title: string;
   angle: string;
+  /** 'business' = Ozly for Companies / organizations; 'consumer' = sole traders. */
+  audience?: 'business' | 'consumer';
   done: boolean;
 }
 
@@ -81,8 +83,12 @@ export function fetchTopics() {
   return blogApi<{ topics: BlogTopic[] }>('topics');
 }
 
-export function suggestMoreTopics() {
-  return blogApi<{ topics: BlogTopic[] }>('suggest-topics', { method: 'POST', timeoutMs: 90000 });
+export function suggestMoreTopics(audience?: 'business' | 'consumer') {
+  return blogApi<{ topics: BlogTopic[] }>('suggest-topics', {
+    method: 'POST',
+    body: audience ? { audience } : {},
+    timeoutMs: 90000,
+  });
 }
 
 export function generatePost(topic: string, slug?: string) {

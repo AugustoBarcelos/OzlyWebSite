@@ -37,7 +37,8 @@ export function MarketingBlogPage() {
   const [custom, setCustom] = useState('');
 
   const [loadError, setLoadError] = useState(false);
-  const [suggesting, setSuggesting] = useState(false);
+  // Which audience column is currently fetching more ideas (null = none).
+  const [suggesting, setSuggesting] = useState<'business' | 'consumer' | null>(null);
   const [post, setPost] = useState<BlogPost | null>(null);
   const [lang, setLang] = useState<LangCode>('en');
   const [reviews, setReviews] = useState<Record<LangCode, ReviewLang> | null>(null);
@@ -57,13 +58,16 @@ export function MarketingBlogPage() {
     }
   }, [toast]);
 
-  const onSuggestMore = useCallback(async () => {
-    setSuggesting(true);
+  const onSuggestMore = useCallback(async (audience: 'business' | 'consumer') => {
+    setSuggesting(audience);
     try {
-      const { topics: more } = await suggestMoreTopics();
+      const { topics: more } = await suggestMoreTopics(audience);
+      // Force the requested audience on the results so they always land in the
+      // right column even if the model mistags one.
+      const tagged = more.map((t) => ({ ...t, audience }));
       setTopics((prev) => {
         const seen = new Set((prev ?? []).map((t) => t.slug));
-        const fresh = more.filter((t) => !seen.has(t.slug));
+        const fresh = tagged.filter((t) => !seen.has(t.slug));
         return [...(prev ?? []), ...fresh];
       });
       if (more.length === 0) {
@@ -72,7 +76,7 @@ export function MarketingBlogPage() {
     } catch (e) {
       toast({ variant: 'error', title: 'Falha ao sugerir temas', description: errMsg(e) });
     } finally {
-      setSuggesting(false);
+      setSuggesting(null);
     }
   }, [toast]);
 
@@ -93,6 +97,8 @@ export function MarketingBlogPage() {
 
   const todo = (topics ?? []).filter((t) => !t.done);
   const done = (topics ?? []).filter((t) => t.done);
+  const soleTraderTopics = todo.filter((t) => t.audience !== 'business');
+  const orgTopics = todo.filter((t) => t.audience === 'business');
 
   async function onGenerate() {
     const topic = custom.trim() || selected?.title;
@@ -226,44 +232,86 @@ export function MarketingBlogPage() {
           ) : (
             <>
               <div>
-                <div className="mb-2 flex items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-navy-700">Temas sugeridos</p>
-                  <button
-                    type="button"
-                    onClick={() => void onSuggestMore()}
-                    disabled={suggesting}
-                    className="rounded-full border border-brand-300 px-3 py-1 text-xs font-bold text-brand-700 transition hover:bg-brand-50 disabled:opacity-50"
-                  >
-                    {suggesting ? 'Gerando…' : '+ Sugerir mais (IA)'}
-                  </button>
-                </div>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {todo.map((t) => (
-                    <button
-                      key={t.slug}
-                      type="button"
-                      onClick={() => {
-                        setSelected(t);
-                        setCustom('');
-                      }}
-                      className={`rounded-xl border p-3 text-left transition ${
-                        selected?.slug === t.slug && !custom
-                          ? 'border-brand-400 bg-brand-50'
-                          : 'border-slate-200 hover:border-brand-300'
-                      }`}
-                    >
-                      <span className="block text-sm font-semibold text-navy-700">{t.title}</span>
-                      <span className="block text-xs text-navy-300">{t.angle}</span>
-                    </button>
-                  ))}
+                <p className="mb-3 text-sm font-semibold text-navy-700">Temas sugeridos</p>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {/* ── Coluna 1: Sole trader (consumer) ── */}
+                  <div className="rounded-2xl border border-sky-100 bg-sky-50/40 p-3">
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <span className="inline-flex items-center gap-1.5 text-sm font-bold text-sky-800">
+                        🧑‍🔧 Sole trader
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => void onSuggestMore('consumer')}
+                        disabled={suggesting !== null}
+                        className="rounded-full border border-sky-300 px-2.5 py-1 text-xs font-bold text-sky-700 transition hover:bg-sky-100 disabled:opacity-50"
+                      >
+                        {suggesting === 'consumer' ? 'Gerando…' : '+ Sugerir (IA)'}
+                      </button>
+                    </div>
+                    <p className="mb-2 text-xs text-sky-700/70">Autônomos: ABN, imposto, GST, deduções, visto.</p>
+                    <div className="space-y-2">
+                      {soleTraderTopics.map((t) => (
+                        <button
+                          key={t.slug}
+                          type="button"
+                          onClick={() => { setSelected(t); setCustom(''); }}
+                          className={`block w-full rounded-xl border p-3 text-left transition ${
+                            selected?.slug === t.slug && !custom
+                              ? 'border-brand-400 bg-brand-50'
+                              : 'border-slate-200 bg-white hover:border-brand-300'
+                          }`}
+                        >
+                          <span className="block text-sm font-semibold text-navy-700">{t.title}</span>
+                          <span className="block text-xs text-navy-300">{t.angle}</span>
+                        </button>
+                      ))}
+                      {soleTraderTopics.length === 0 && (
+                        <p className="text-xs text-navy-300">Sem temas — clique em “+ Sugerir (IA)”.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* ── Coluna 2: Organizations (business) ── */}
+                  <div className="rounded-2xl border border-violet-100 bg-violet-50/40 p-3">
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <span className="inline-flex items-center gap-1.5 text-sm font-bold text-violet-800">
+                        🏢 Organizations
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => void onSuggestMore('business')}
+                        disabled={suggesting !== null}
+                        className="rounded-full border border-violet-300 px-2.5 py-1 text-xs font-bold text-violet-700 transition hover:bg-violet-100 disabled:opacity-50"
+                      >
+                        {suggesting === 'business' ? 'Gerando…' : '+ Sugerir (IA)'}
+                      </button>
+                    </div>
+                    <p className="mb-2 text-xs text-violet-700/70">Empresas: onboarding, retenção, sham-contracting, compliance.</p>
+                    <div className="space-y-2">
+                      {orgTopics.map((t) => (
+                        <button
+                          key={t.slug}
+                          type="button"
+                          onClick={() => { setSelected(t); setCustom(''); }}
+                          className={`block w-full rounded-xl border p-3 text-left transition ${
+                            selected?.slug === t.slug && !custom
+                              ? 'border-brand-400 bg-brand-50'
+                              : 'border-slate-200 bg-white hover:border-brand-300'
+                          }`}
+                        >
+                          <span className="block text-sm font-semibold text-navy-700">{t.title}</span>
+                          <span className="block text-xs text-navy-300">{t.angle}</span>
+                        </button>
+                      ))}
+                      {orgTopics.length === 0 && (
+                        <p className="text-xs text-navy-300">Sem temas — clique em “+ Sugerir (IA)”.</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
                 {loadError && (
-                  <p className="mt-2 text-sm text-red-600">Não consegui carregar os temas. Recarregue a página ou tente “Sugerir mais”.</p>
-                )}
-                {!loadError && todo.length === 0 && (
-                  <p className="mt-2 text-sm text-navy-300">
-                    Sem temas na fila — clique em “Sugerir mais (IA)” ou escreva um tema próprio abaixo.
-                  </p>
+                  <p className="mt-2 text-sm text-red-600">Não consegui carregar os temas. Recarregue a página ou tente “Sugerir”.</p>
                 )}
               </div>
 
