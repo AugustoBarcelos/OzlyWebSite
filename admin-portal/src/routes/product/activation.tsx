@@ -19,10 +19,21 @@ import type {
  * Signup → onboard → trial picked → first session → first job. Plus the
  * time-to-activation distribution. Both fed by existing RPCs.
  */
+interface LifecycleFunnelResponse {
+  period_days: number;
+  signed_up: number;
+  created_job: number;
+  sent_first_invoice: number;
+  saw_paywall: number;
+  started_trial: number;
+  converted_paying: number;
+}
+
 export function ProductActivationPage() {
   const { periodDays } = useGlobalFilters();
   const [funnel, setFunnel] = useState<ActivationFunnelResponse | null>(null);
   const [tta, setTta] = useState<TimeToActivationResponse | null>(null);
+  const [lifecycle, setLifecycle] = useState<LifecycleFunnelResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,18 +46,35 @@ export function ProductActivationPage() {
         p_period_days: periodDays,
       }),
       callRpc<TimeToActivationResponse>('admin_time_to_activation', {}),
+      callRpc<LifecycleFunnelResponse>('admin_lifecycle_funnel', {
+        p_days: periodDays,
+      }),
     ]).then((results) => {
       if (!alive) return;
-      const [r0, r1] = results;
+      const [r0, r1, r2] = results;
       if (r0.status === 'fulfilled') setFunnel(r0.value);
       else if (r0.reason instanceof RpcError) setError(r0.reason.message);
       if (r1.status === 'fulfilled') setTta(r1.value);
+      if (r2.status === 'fulfilled') setLifecycle(r2.value);
       setLoading(false);
     });
     return () => {
       alive = false;
     };
   }, [periodDays]);
+
+  const lifecycleStages = useMemo(() => {
+    if (!lifecycle) return [];
+    return [
+      { key: 'signed_up', label: 'Cadastrou', value: lifecycle.signed_up, hint: 'Conta criada' },
+      { key: 'created_job', label: 'Criou trabalho', value: lifecycle.created_job, hint: '1º job registrado' },
+      { key: 'sent_first_invoice', label: 'Mandou 1ª invoice', value: lifecycle.sent_first_invoice, hint: 'Ativou — viu o valor' },
+      { key: 'saw_paywall', label: 'Viu paywall', value: lifecycle.saw_paywall, hint: 'Chegou na tela de assinatura' },
+      { key: 'started_trial', label: 'Começou trial', value: lifecycle.started_trial, hint: 'Iniciou o teste' },
+      { key: 'converted_paying', label: 'Virou pagante', value: lifecycle.converted_paying, hint: 'Assinatura ativa' },
+    ];
+  }, [lifecycle]);
+  const lifecycleMax = Math.max(0, ...lifecycleStages.map((s) => s.value ?? 0));
 
   const stages = useMemo(() => {
     if (!funnel) return [];
@@ -135,6 +163,66 @@ export function ProductActivationPage() {
                         <div className="text-sm font-medium text-navy-700">
                           {stage.label}
                         </div>
+                        <div className="text-[11px] text-navy-400">{stage.hint}</div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className="text-base font-semibold text-navy-700">
+                        {formatNumber(stage.value)}
+                      </span>
+                      {conv !== null ? (
+                        <span className="text-[11px] text-brand-600">
+                          {formatPercent(stage.value, prev?.value ?? null)} conv.
+                        </span>
+                      ) : i > 0 ? (
+                        <span className="text-[11px] text-navy-300">conv. n/a</span>
+                      ) : null}
+                    </div>
+                  </div>
+                  <div className="mt-2 h-1.5 w-full rounded-full bg-navy-50">
+                    <div
+                      className="h-1.5 rounded-full"
+                      style={{
+                        width: `${widthPct}%`,
+                        background:
+                          'linear-gradient(90deg, var(--color-brand-400), var(--color-lime-400))',
+                      }}
+                    />
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        )}
+      </Card>
+
+      {/* Behavioral funnel — activation → conversion (from real app events) */}
+      <Card className="ozly-card">
+        <Title className="!text-sm !font-semibold text-navy-700">
+          Funil comportamental: ativação → conversão ({periodDays} dias)
+        </Title>
+        {loading ? (
+          <div className="mt-4 flex items-center gap-2 text-xs text-navy-400">
+            <Spinner size="sm" /> Carregando…
+          </div>
+        ) : !lifecycle ? (
+          <div className="mt-3 text-xs text-navy-300">Sem dados.</div>
+        ) : (
+          <ol className="mt-4 space-y-2">
+            {lifecycleStages.map((stage, i) => {
+              const prev = i > 0 ? lifecycleStages[i - 1] : null;
+              const conv = prev && prev.value > 0 ? stage.value / prev.value : null;
+              const widthPct =
+                lifecycleMax > 0 ? Math.max((stage.value / lifecycleMax) * 100, 2) : 0;
+              return (
+                <li key={stage.key} className="rounded-md border border-navy-50 bg-white p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-mono text-navy-300">
+                        {String(i + 1).padStart(2, '0')}
+                      </span>
+                      <div>
+                        <div className="text-sm font-medium text-navy-700">{stage.label}</div>
                         <div className="text-[11px] text-navy-400">{stage.hint}</div>
                       </div>
                     </div>

@@ -529,11 +529,71 @@ function ActionPanel({
 // Main page
 // ─────────────────────────────────────────────────────────────────────────────
 
+interface TimelineEvent {
+  event_name: string;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+}
+
+const EVENT_LABEL: Record<string, string> = {
+  signup: 'Cadastrou-se',
+  login: 'Entrou',
+  session_start: 'Abriu o app',
+  onboarding_step_completed: 'Passo do onboarding',
+  job_created: 'Criou trabalho',
+  invoice_created: 'Criou invoice',
+  first_invoice_emitted: 'Emitiu 1ª invoice',
+  invoice_sent: 'Enviou invoice',
+  invoice_marked_paid: 'Invoice marcada paga',
+  paywall_shown: 'Viu paywall',
+  paywall_dismissed: 'Fechou paywall',
+  trial_started: 'Começou trial',
+  expense_added: 'Lançou despesa',
+  cancel_flow_started: 'Abriu cancelamento',
+  cancel_reason_selected: 'Motivo de cancelamento',
+  retention_offer_shown: 'Viu oferta de retenção',
+  retention_offer_accepted: 'Aceitou oferta',
+  retention_offer_declined: 'Recusou oferta',
+  account_deleted: 'Deletou conta',
+};
+
+function TimelineSection({ events }: { events: TimelineEvent[] | null }) {
+  if (!events) return <div className="mt-3 text-xs text-navy-300">Carregando…</div>;
+  if (events.length === 0) {
+    return (
+      <div className="mt-3 text-xs text-navy-300">
+        Sem eventos registrados ainda (começa a popular conforme o usuário usa a versão nova do app).
+      </div>
+    );
+  }
+  return (
+    <div className="mt-3 max-h-96 space-y-1.5 overflow-y-auto pr-1">
+      {events.map((e, i) => (
+        <div
+          key={i}
+          className="flex items-center justify-between rounded-md border border-navy-50 bg-white px-3 py-1.5 text-xs"
+        >
+          <span className="font-medium text-navy-700">
+            {EVENT_LABEL[e.event_name] ?? e.event_name}
+            {typeof e.metadata?.reason === 'string' && (
+              <span className="ml-1 font-normal text-navy-400">· {String(e.metadata.reason)}</span>
+            )}
+          </span>
+          <span className="shrink-0 text-navy-400">
+            {new Date(e.created_at).toLocaleString('en-AU')}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function User360Page() {
   const { id } = useParams<{ id: string }>();
   const [data, setData] = useState<User360Payload | null>(null);
   const [grants, setGrants] = useState<UserGrantsPayload | null>(null);
   const [audit, setAudit] = useState<UserAuditPayload | null>(null);
+  const [timeline, setTimeline] = useState<TimelineEvent[] | null>(null);
   const [errors, setErrors] = useState<UserErrorsPayload | null>(null);
   const [errorsLoading, setErrorsLoading] = useState(false);
   const [errorsError, setErrorsError] = useState<string | null>(null);
@@ -546,7 +606,7 @@ export function User360Page() {
   // Fetch the user 360 payload + grants + audit in parallel.
   const fetchUser = useCallback(
     async (target: string, includePii: boolean) => {
-      const [payload, grantsData, auditData] = await Promise.all([
+      const [payload, grantsData, auditData, timelineData] = await Promise.all([
         callRpc<User360Payload>('admin_get_user_360', {
           p_target: target,
           p_include_pii: includePii,
@@ -558,9 +618,13 @@ export function User360Page() {
           p_target: target,
           p_limit: 30,
         }).catch(() => null),
+        callRpc<{ events: TimelineEvent[] }>('admin_user_timeline', {
+          p_user_id: target,
+        }).catch(() => null),
       ]);
       setGrants(grantsData);
       setAudit(auditData);
+      setTimeline(timelineData?.events ?? []);
       return payload;
     },
     []
@@ -1026,6 +1090,10 @@ export function User360Page() {
                       <Text>Expenses (30d)</Text>
                       <Metric>{data.activity_30d?.expenses ?? 0}</Metric>
                     </Card>
+                  </div>
+                  <div className="mt-5">
+                    <Text>Timeline de atividade</Text>
+                    <TimelineSection events={timeline} />
                   </div>
                 </TabPanel>
 
