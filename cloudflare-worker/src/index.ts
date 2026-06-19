@@ -32,7 +32,7 @@ const GITHUB_BRANCH = "main";
 // Free Workers AI model. Strong instruct model on the free tier.
 const AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 // Bump on each meaningful worker change so /admin/api/health proves what's live.
-const WORKER_BUILD = "2026-06-19-publish-pr-v5";
+const WORKER_BUILD = "2026-06-19-factcheck-grounded-v6";
 
 const CRAWLER_UA_RE =
   /facebookexternalhit|facebot|whatsapp|twitterbot|telegrambot|linkedinbot|discordbot|slackbot|googlebot|bingbot|pinterest|skypeuripreview|redditbot|applebot|yahoobot|duckduckbot/i;
@@ -638,38 +638,78 @@ async function webContext(query: string, env: Env): Promise<string> {
   }
 }
 
+function normalizeForMatch(s: string): string {
+  return s.toLowerCase().replace(/[“”„]/g, '"').replace(/\s+/g, ' ').trim();
+}
+
+/** Pull the quoted offending snippet out of a finding line (« », " ", ' '). */
+function extractQuote(text: string): string | null {
+  const m = text.match(/[«"“']([^«»"“”']{3,})[»"”']/);
+  return m ? m[1].trim() : null;
+}
+
+/** Is the mandatory "not an accountant / general info" disclaimer present? */
+function hasDisclaimer(body: string): boolean {
+  return /not an accountant|registered tax agent|not (tax|accounting|legal) advice|general information|n[ãa]o (somos|é|substitui)|contabilidade|agente fiscal|orienta[çc][ãa]o (fiscal|profissional)|informa[çc][ãa]o geral|no (somos|reemplaza)|asesoramiento|informaci[oó]n general/i.test(
+    body,
+  );
+}
+
 async function aiReviewLang(tr: GenLang, code: 'en' | 'pt' | 'es', env: Env, context: string): Promise<ReviewLang> {
   const langName = LANG_NAMES[code];
   const grounding = context
-    ? `\n\nAUTHORITATIVE WEB CONTEXT (from ato.gov.au / Home Affairs — treat as current truth; compare the draft's numbers and rules against it and flag mismatches):\n${context}\n`
+    ? `\n\nAUTHORITATIVE WEB CONTEXT (from ato.gov.au / Home Affairs — treat as current truth; compare the draft's numbers/rules against it and flag mismatches):\n${context}\n`
     : '';
-  const system = `You are a meticulous editor AND an Australian tax/visa fact-checker for Ozly's blog. Review the draft below (written in ${langName}) and list problems a human MUST fix before publishing.
+  const system = `You are an Australian tax/visa fact-checker for Ozly's blog. Review this draft (written in ${langName}).
 
-Check for:
-- GRAMMAR / spelling / clarity / awkward phrasing.
-- TAX & VISA ACCURACY: flag every rate, threshold, number or rule. ${context ? 'Use the WEB CONTEXT below as the source of truth — if the draft disagrees with it, flag HIGH and give the correct value.' : 'Flag anything that looks outdated or wrong for 2025–26 (e.g. an old marginal rate like 32.5%, a wrong tax-free threshold, a wrong student-visa hour limit).'} Quote the exact text.
-- MISSING SOURCES: a factual claim with no official ATO/Home Affairs link.
-- BRAND/CTA: missing app download CTA or missing "not an accountant / not tax advice" disclaimer.
+STRICT RULES — follow exactly:
+1. Only flag problems that are ACTUALLY present in the BODY below. For EVERY problem you list, quote the exact offending text VERBATIM inside «guillemets». If you cannot copy the exact words from the body, DO NOT list it.
+2. Do NOT give generic advice ("add more detail", "consider adding a source", "make it clearer"). Do NOT flag a missing disclaimer, CTA or source link — those are checked separately by code, not by you.
+3. Focus only on: wrong/outdated Australian tax or visa numbers & rules (e.g. an old 32.5% marginal rate, a wrong tax-free threshold, a wrong student-visa hour limit), clear factual errors, and real grammar/spelling mistakes.
+${context ? 'Use the WEB CONTEXT below as the source of truth — flag HIGH where the draft disagrees and give the correct value.' : 'Use accurate Australian 2025–26 values.'}
 
-Be specific and quote the offending text. Severity HIGH = wrong/risky fact; MED = should fix; LOW = minor.${grounding}
+Severity HIGH = wrong/risky fact; MED = should fix; LOW = minor.${grounding}
 
 Output EXACTLY this, copied literally:
 @@@VERDICT@@@
 PASS or NEEDS_WORK
 @@@FINDINGS@@@
-[HIGH] one problem per line
-[MED] ...
+[HIGH] «exact quote from the body» — what is wrong and the correct value
+[MED] «exact quote» — ...
 (write "none" if there are genuinely no problems)`;
 
-  const user = `TITLE: ${tr.title}\nDESCRIPTION: ${tr.description}\n\nBODY:\n${tr.body}`;
+  const user = `BODY:\n${tr.body}`;
   const result = (await env.AI.run(AI_MODEL, {
     max_tokens: 1500,
+    temperature: 0.2, // stable re-checks
     messages: [
       { role: 'system', content: system },
       { role: 'user', content: user },
     ],
   })) as { response?: unknown };
-  return parseReview(result.response ?? result);
+  const parsed = parseReview(result.response ?? result);
+
+  // Keep ONLY findings that quote text actually present in the draft. This kills
+  // the generic / hallucinated findings that otherwise reappear on every
+  // re-check — once you fix the text, the quoted snippet is gone, so the finding
+  // can't come back.
+  const haystack = normalizeForMatch(`${tr.title}\n${tr.description}\n${tr.body}`);
+  const grounded: Finding[] = parsed.findings.filter((f) => {
+    const q = extractQuote(f.text);
+    if (!q) return false; // drop quote-less generic advice
+    return haystack.includes(normalizeForMatch(q));
+  });
+
+  // Reliable, deterministic check for the one thing that legitimately has no
+  // quote: the mandatory disclaimer. Won't reappear once it's added.
+  if (!hasDisclaimer(tr.body)) {
+    grounded.unshift({
+      severity: 'HIGH',
+      text: 'Falta o disclaimer obrigatório: Ozly não é contador/agente fiscal e isto é informação geral, não orientação fiscal.',
+    });
+  }
+
+  return { verdict: grounded.length > 0 ? 'NEEDS_WORK' : 'PASS', findings: grounded };
 }
 
 async function reviewPost(body: PublishBody, env: Env): Promise<Record<string, ReviewLang>> {
