@@ -16,6 +16,7 @@ import {
   type BlogLang,
   type LangCode,
   type ReviewLang,
+  type PublishedPost,
 } from '@/lib/blog';
 
 type Step = 'pick' | 'generating' | 'edit';
@@ -34,6 +35,7 @@ export function MarketingBlogPage() {
 
   const [step, setStep] = useState<Step>('pick');
   const [topics, setTopics] = useState<BlogTopic[] | null>(null);
+  const [published, setPublished] = useState<PublishedPost[]>([]);
   const [selected, setSelected] = useState<BlogTopic | null>(null);
   const [custom, setCustom] = useState('');
 
@@ -56,8 +58,9 @@ export function MarketingBlogPage() {
   const loadTopics = useCallback(async () => {
     setLoadError(false);
     try {
-      const { topics: list } = await fetchTopics();
+      const { topics: list, published: pub } = await fetchTopics();
       setTopics(list);
+      setPublished(pub ?? []);
     } catch (e) {
       toast({ variant: 'error', title: 'Falha ao carregar temas', description: errMsg(e) });
       setTopics([]);
@@ -103,7 +106,6 @@ export function MarketingBlogPage() {
   }
 
   const todo = (topics ?? []).filter((t) => !t.done);
-  const done = (topics ?? []).filter((t) => t.done);
   const soleTraderTopics = todo.filter((t) => t.audience !== 'business');
   const orgTopics = todo.filter((t) => t.audience === 'business');
 
@@ -340,10 +342,30 @@ export function MarketingBlogPage() {
                 />
               </div>
 
-              {done.length > 0 && (
-                <p className="text-xs text-navy-300">
-                  Já publicados: {done.map((t) => t.title).join(' · ')}
-                </p>
+              {published.length > 0 && (
+                <div className="rounded-xl border border-slate-200 bg-white p-3">
+                  <p className="mb-2 text-sm font-semibold text-navy-700">
+                    📝 Já publicados <span className="text-navy-400">({published.length})</span>
+                  </p>
+                  <ul className="flex flex-wrap gap-1.5">
+                    {published.map((p) => (
+                      <li key={p.slug}>
+                        <a
+                          href={`https://ozly.au/blog/${p.slug}/`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={`Ver ${p.title} no ar`}
+                          className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-navy-600 transition hover:border-brand-300 hover:bg-brand-50"
+                        >
+                          {p.title} ↗
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-2 text-xs text-navy-300">
+                    As sugestões já evitam esses assuntos — não vão repetir o que está aqui.
+                  </p>
+                </div>
               )}
 
               <button
