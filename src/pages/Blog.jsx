@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Clock } from "lucide-react";
+import { ArrowRight, Clock, Search, User, Building2 } from "lucide-react";
 import { useI18n, useLangPath, useSeoMeta } from "../i18n";
 
 /** Date → localized "15 Jun 2026" style, best-effort per language. */
@@ -33,16 +33,43 @@ function gradientFor(slug) {
   return GRADIENTS[h % GRADIENTS.length];
 }
 
-const PER_PAGE = 8;
+const PER_PAGE = 4;
+const AUDIENCE_KEY = "ozly_blog_audience";
+// A post is "business" (Ozly for Organisations) if any tag mentions
+// companies / empresas / organisations. Everything else is for the individual.
+const BUSINESS_TAG_RE = /compan|empresa|organi/i;
+function audienceOf(post) {
+  return (post.tags || []).some((t) => BUSINESS_TAG_RE.test(String(t))) ? "business" : "consumer";
+}
+
+const UI = {
+  en: { all: "All", me: "For me", org: "For business", searchPh: "Search articles…",
+        pickTitle: "What are you here for?", pickSub: "Pick one so we show what's relevant — you can switch anytime.",
+        pickMe: "I work for myself", pickMeSub: "ABN, tax, GST, visas",
+        pickOrg: "I run a business", pickOrgSub: "Contractors, compliance, retention", none: "No articles match." },
+  pt: { all: "Todos", me: "Pra mim", org: "Pra empresa", searchPh: "Buscar artigos…",
+        pickTitle: "O que te traz aqui?", pickSub: "Escolha uma opção pra mostrarmos o que faz sentido — dá pra trocar quando quiser.",
+        pickMe: "Trabalho por conta própria", pickMeSub: "ABN, imposto, GST, vistos",
+        pickOrg: "Tenho uma empresa", pickOrgSub: "Contractors, compliance, retenção", none: "Nenhum artigo encontrado." },
+  es: { all: "Todos", me: "Para mí", org: "Para empresa", searchPh: "Buscar artículos…",
+        pickTitle: "¿Qué te trae por acá?", pickSub: "Elegí una opción para mostrarte lo relevante — podés cambiar cuando quieras.",
+        pickMe: "Trabajo por mi cuenta", pickMeSub: "ABN, impuestos, GST, visas",
+        pickOrg: "Tengo una empresa", pickOrgSub: "Contractors, compliance, retención", none: "No hay artículos." },
+};
 
 export default function Blog() {
   const { t, lang } = useI18n();
   const lp = useLangPath();
   useSeoMeta("blog");
+  const ui = UI[lang] || UI.en;
+  const tb = t.blog || {};
   const [posts, setPosts] = useState(null);
   const [error, setError] = useState(false);
   const [page, setPage] = useState(1);
-  const tb = t.blog || {};
+  const [query, setQuery] = useState("");
+  const [audience, setAudience] = useState(() => {
+    try { return localStorage.getItem(AUDIENCE_KEY) || ""; } catch { return ""; }
+  });
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -54,21 +81,60 @@ export default function Blog() {
       .catch(() => fetch(`${import.meta.env.BASE_URL}blog-data/index.json`).then((r) => (r.ok ? r.json() : Promise.reject())))
       .then((data) => active && setPosts(data))
       .catch(() => active && setError(true));
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, []);
 
-  const empty = (error || (posts && posts.length === 0));
-  const total = posts ? posts.length : 0;
-  const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
-  const current = Math.min(page, totalPages);
-  const visible = (posts || []).slice((current - 1) * PER_PAGE, current * PER_PAGE);
+  const setAud = (a) => {
+    setAudience(a);
+    setPage(1);
+    try { localStorage.setItem(AUDIENCE_KEY, a); } catch { /* ignore */ }
+  };
 
+  const sumFor = (p) => p.summaries[lang] || p.summaries[p.langs[0]];
+
+  // Filter by audience + live search query.
+  const filtered = useMemo(() => {
+    let list = posts || [];
+    if (audience === "business" || audience === "consumer") {
+      list = list.filter((p) => audienceOf(p) === audience);
+    }
+    const q = query.trim().toLowerCase();
+    if (q) {
+      list = list.filter((p) => {
+        const s = sumFor(p);
+        return `${s.title} ${s.description} ${(s.tags || []).join(" ")}`.toLowerCase().includes(q);
+      });
+    }
+    return list;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [posts, audience, query, lang]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  const current = Math.min(page, totalPages);
+  const visible = filtered.slice((current - 1) * PER_PAGE, current * PER_PAGE);
   const goTo = (p) => {
     setPage(p);
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  const empty = error || (posts && filtered.length === 0);
+  const showPicker = posts && !audience;
+  // Autocomplete suggestions for the search box (current audience scope).
+  const suggestions = (posts || [])
+    .filter((p) => !audience || audienceOf(p) === audience)
+    .map((p) => sumFor(p).title);
+
+  const seg = (val, label) => (
+    <button
+      type="button"
+      onClick={() => setAud(val)}
+      className={`rounded-full px-4 py-1.5 text-sm font-bold transition ${
+        audience === val ? "bg-brand-500 text-white" : "text-navy-500 hover:bg-white"
+      }`}
+    >
+      {label}
+    </button>
+  );
 
   return (
     <div className="min-h-screen bg-white">
@@ -85,15 +151,77 @@ export default function Blog() {
         </div>
       </div>
 
-      {/* Posts */}
       <div className="mx-auto max-w-5xl px-5 py-14 md:py-20">
+        {/* Audience picker (first visit / direct access) */}
+        {showPicker && (
+          <div className="mb-12 rounded-3xl border border-slate-200 bg-slate-50/60 p-7 text-center">
+            <h2 className="text-xl font-extrabold text-navy-700">{ui.pickTitle}</h2>
+            <p className="mx-auto mt-1 max-w-md text-sm text-slate-500">{ui.pickSub}</p>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => setAud("consumer")}
+                className="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 text-left transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-lg"
+              >
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
+                  <User size={22} />
+                </span>
+                <span>
+                  <span className="block font-bold text-navy-700">{ui.pickMe}</span>
+                  <span className="block text-xs text-slate-400">{ui.pickMeSub}</span>
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setAud("business")}
+                className="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 text-left transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-lg"
+              >
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+                  <Building2 size={22} />
+                </span>
+                <span>
+                  <span className="block font-bold text-navy-700">{ui.pickOrg}</span>
+                  <span className="block text-xs text-slate-400">{ui.pickOrgSub}</span>
+                </span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Controls: audience toggle + search */}
+        {posts && (
+          <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="inline-flex items-center gap-1 self-start rounded-full bg-slate-100 p-1">
+              {seg("", ui.all)}
+              {seg("consumer", ui.me)}
+              {seg("business", ui.org)}
+            </div>
+            <div className="relative w-full sm:max-w-xs">
+              <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="search"
+                list="blog-search-suggestions"
+                value={query}
+                onChange={(e) => { setQuery(e.target.value); setPage(1); }}
+                placeholder={ui.searchPh}
+                className="w-full rounded-full border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm focus:border-brand-400 focus:outline-none"
+              />
+              <datalist id="blog-search-suggestions">
+                {suggestions.map((s) => <option key={s} value={s} />)}
+              </datalist>
+            </div>
+          </div>
+        )}
+
         {empty && (
-          <p className="text-center text-slate-400 py-20">{tb.empty || "No articles yet — check back soon."}</p>
+          <p className="text-center text-slate-400 py-20">
+            {query || audience ? ui.none : (tb.empty || "No articles yet — check back soon.")}
+          </p>
         )}
 
         <div className="grid gap-7 md:grid-cols-2">
           {visible.map((post) => {
-            const s = post.summaries[lang] || post.summaries[post.langs[0]];
+            const s = sumFor(post);
             const tags = (s.tags || []).slice(0, 2);
             return (
               <Link
@@ -101,13 +229,15 @@ export default function Blog() {
                 to={lp(`/blog/${post.slug}`)}
                 className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-xl hover:shadow-brand-500/10"
               >
-                {/* Gradient banner */}
                 <div className="relative h-32 w-full" style={{ background: gradientFor(post.slug) }}>
                   {tags[0] && (
                     <span className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-navy-700">
                       {tags[0]}
                     </span>
                   )}
+                  <span className="absolute right-4 top-4 rounded-full bg-black/25 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur">
+                    {audienceOf(post) === "business" ? ui.org : ui.me}
+                  </span>
                 </div>
                 <div className="flex flex-1 flex-col p-6">
                   <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-400">
@@ -138,10 +268,7 @@ export default function Blog() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <nav
-            className="mt-12 flex items-center justify-center gap-1.5"
-            aria-label={tb.pagination || "Pagination"}
-          >
+          <nav className="mt-12 flex items-center justify-center gap-1.5" aria-label={tb.pagination || "Pagination"}>
             <button
               type="button"
               onClick={() => goTo(current - 1)}
