@@ -7,6 +7,14 @@ compatibility_date = "2024-09-01"
 routes = [
   { pattern = "ozly.au/v/*", zone_name = "ozly.au" },
   { pattern = "ozly.au/admin/api/*", zone_name = "ozly.au" },
+  # Public blog: SSR + JSON API served from Supabase.
+  { pattern = "ozly.au/blog-api/*", zone_name = "ozly.au" },
+  { pattern = "ozly.au/blog", zone_name = "ozly.au" },
+  { pattern = "ozly.au/blog/*", zone_name = "ozly.au" },
+  { pattern = "ozly.au/pt/blog", zone_name = "ozly.au" },
+  { pattern = "ozly.au/pt/blog/*", zone_name = "ozly.au" },
+  { pattern = "ozly.au/es/blog", zone_name = "ozly.au" },
+  { pattern = "ozly.au/es/blog/*", zone_name = "ozly.au" },
 ]
 
 # Public, non-secret values. The anon Supabase key is safe in client

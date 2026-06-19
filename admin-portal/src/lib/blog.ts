@@ -120,10 +120,29 @@ export function reviewPost(post: BlogPost) {
   });
 }
 
-export function publishPost(post: BlogPost, draft: boolean) {
-  return blogApi<{ ok: true; committed: string[] }>('publish', {
-    method: 'POST',
-    body: { slug: post.slug, draft, en: post.en, pt: post.pt, es: post.es },
-    timeoutMs: 60000,
-  });
+/**
+ * Publish = upsert straight into the Supabase `blog_posts` table (source of
+ * truth). The worker SSRs the blog from there, so the post is live instantly —
+ * no PR, no build. RLS (is_admin) authorises the write via the admin session.
+ */
+export async function publishPost(post: BlogPost, draft: boolean) {
+  const hasContent = (g?: BlogLang) => Boolean(g && g.title?.trim());
+  const row = {
+    slug: post.slug,
+    draft,
+    en: hasContent(post.en) ? post.en : null,
+    pt: hasContent(post.pt) ? post.pt : null,
+    es: hasContent(post.es) ? post.es : null,
+    updated_at: new Date().toISOString(),
+  };
+  const { error } = await supabase.from('blog_posts').upsert(row, { onConflict: 'slug' });
+  if (error) throw new Error(error.message);
+  return { ok: true as const, committed: [post.slug] };
+}
+
+/** Delete a post from the blog (admin only, via RLS). */
+export async function deletePost(slug: string) {
+  const { error } = await supabase.from('blog_posts').delete().eq('slug', slug);
+  if (error) throw new Error(error.message);
+  return { ok: true as const };
 }

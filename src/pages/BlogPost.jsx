@@ -46,6 +46,14 @@ function readInline(slug, lang) {
 }
 
 async function fetchPost(slug, lang) {
+  // Source of truth: the worker's Supabase-backed API. Falls back to the static
+  // prerender JSON (local dev / worker outage) so the page always renders.
+  try {
+    const api = await fetch(`/blog-api/post?slug=${encodeURIComponent(slug)}&lang=${lang}`);
+    if (api.ok) return api.json();
+  } catch {
+    /* fall through to static */
+  }
   const base = import.meta.env.BASE_URL;
   const direct = await fetch(`${base}blog-data/${slug}.${lang}.json`);
   if (direct.ok) return direct.json();
