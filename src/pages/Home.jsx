@@ -120,7 +120,10 @@ function Hero() {
             >
               <button
                 type="button"
-                onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })}
+                onClick={() => {
+                  try { localStorage.setItem("ozly_blog_audience", "consumer"); } catch { /* ignore */ }
+                  document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
+                }}
                 className="flex w-full items-center justify-between gap-6 py-4 cursor-pointer group"
               >
                 <span className="text-[15px] font-medium text-navy-700 dark:text-white">
@@ -132,6 +135,7 @@ function Hero() {
               </button>
               <Link
                 to={lp("/business")}
+                onClick={() => { try { localStorage.setItem("ozly_blog_audience", "business"); } catch { /* ignore */ } }}
                 className="flex w-full items-center justify-between gap-6 py-4 group"
               >
                 <span className="text-[15px] font-medium text-navy-700 dark:text-white">

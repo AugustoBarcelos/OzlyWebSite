@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { ArrowRight, Clock, Search, User, Building2 } from "lucide-react";
 import { useI18n, useLangPath, useSeoMeta } from "../i18n";
 
@@ -67,9 +67,20 @@ export default function Blog() {
   const [error, setError] = useState(false);
   const [page, setPage] = useState(1);
   const [query, setQuery] = useState("");
+  const [searchParams] = useSearchParams();
   const [audience, setAudience] = useState(() => {
     try { return localStorage.getItem(AUDIENCE_KEY) || ""; } catch { return ""; }
   });
+
+  // Honour ?for=business|consumer (e.g. clicked from the home / business landing)
+  // so the visitor lands straight on the relevant content.
+  useEffect(() => {
+    const f = searchParams.get("for");
+    if (f === "business" || f === "consumer") {
+      setAudience(f);
+      try { localStorage.setItem(AUDIENCE_KEY, f); } catch { /* ignore */ }
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
