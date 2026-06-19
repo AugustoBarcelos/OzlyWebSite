@@ -148,29 +148,32 @@ export default function Blog() {
   return (
     <div className="min-h-screen bg-white">
       <div className="mx-auto max-w-5xl px-6 pt-24 pb-16 md:pt-28">
-        {/* Compact header: small title + search on one line, then audience tabs.
-            Articles start right below the fold — no oversized hero. */}
-        <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-          <h1 className="text-xl font-bold tracking-tight text-navy-700">
-            {tb.title || "Ozly Blog"}
-            {tb.intro && <span className="ml-3 align-middle text-sm font-normal text-slate-400">{tb.intro}</span>}
-          </h1>
-          {posts && (
-            <div className="relative w-full sm:w-60">
-              <Search size={15} className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="search"
-                list="blog-search-suggestions"
-                value={query}
-                onChange={(e) => { setQuery(e.target.value); setPage(1); }}
-                placeholder={ui.searchPh}
-                className="w-full border-0 border-b border-slate-200 bg-transparent py-1.5 pl-6 pr-2 text-sm focus:border-brand-400 focus:outline-none focus:ring-0"
-              />
-              <datalist id="blog-search-suggestions">
-                {suggestions.map((s) => <option key={s} value={s} />)}
-              </datalist>
-            </div>
-          )}
+        {/* Compact header: brand logo + Blog, search on the right; the intro on
+            its own line below. Articles start right below — no oversized hero. */}
+        <div className="mb-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <h1 className="flex items-center gap-2">
+              <img src={`${import.meta.env.BASE_URL}OSLY.svg`} alt="Ozly" width="36" height="36" className="h-9 w-auto" />
+              <span className="text-2xl font-bold tracking-tight text-navy-700">Blog</span>
+            </h1>
+            {posts && (
+              <div className="relative w-full sm:w-60">
+                <Search size={15} className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="search"
+                  list="blog-search-suggestions"
+                  value={query}
+                  onChange={(e) => { setQuery(e.target.value); setPage(1); }}
+                  placeholder={ui.searchPh}
+                  className="w-full border-0 border-b border-slate-200 bg-transparent py-1.5 pl-6 pr-2 text-sm focus:border-brand-400 focus:outline-none focus:ring-0"
+                />
+                <datalist id="blog-search-suggestions">
+                  {suggestions.map((s) => <option key={s} value={s} />)}
+                </datalist>
+              </div>
+            )}
+          </div>
+          {tb.intro && <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-slate-500">{tb.intro}</p>}
         </div>
 
         {/* Audience tabs */}
