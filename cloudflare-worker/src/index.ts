@@ -18,6 +18,8 @@
 //
 // Deploy: see ../README.md.
 
+import { marked } from 'marked';
+
 interface Env {
   SUPABASE_URL: string;
   SUPABASE_ANON_KEY: string;
@@ -32,7 +34,7 @@ const GITHUB_BRANCH = "main";
 // Free Workers AI model. Strong instruct model on the free tier.
 const AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 // Bump on each meaningful worker change so /admin/api/health proves what's live.
-const WORKER_BUILD = "2026-06-19-published-visibility-v8";
+const WORKER_BUILD = "2026-06-20-blog-ssr-v9";
 
 const CRAWLER_UA_RE =
   /facebookexternalhit|facebot|whatsapp|twitterbot|telegrambot|linkedinbot|discordbot|slackbot|googlebot|bingbot|pinterest|skypeuripreview|redditbot|applebot|yahoobot|duckduckbot/i;
@@ -50,6 +52,24 @@ export default {
     // /admin page itself is served by GitHub Pages — only /admin/api/* is us.
     if (url.pathname.startsWith('/admin/api/')) {
       return handleAdminApi(request, env, url);
+    }
+
+    // Public blog JSON API (consumed by the React app).
+    if (url.pathname.startsWith('/blog-api/')) {
+      return handleBlogApi(request, env, url);
+    }
+
+    // Blog pages — SSR from Supabase with full SEO. Any failure falls through
+    // to the origin (GitHub Pages) so the blog can never go dark on a worker bug.
+    const blogRoute = matchBlogRoute(url.pathname);
+    if (blogRoute) {
+      try {
+        const ssr = await handleBlogSsr(env, blogRoute);
+        if (ssr) return ssr;
+      } catch {
+        /* fall through to origin */
+      }
+      return fetch(request);
     }
 
     // Only intercept /v/:code (affiliate landing). /me/:code is the dashboard
@@ -188,6 +208,216 @@ function renderOgHtml(code: string, ownerName: string): string {
 </p>
 </body>
 </html>`;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   PUBLIC BLOG — served from Supabase (source of truth) with SSR + SEO.
+   - GET /blog-api/index         → listing JSON (for the React app)
+   - GET /blog-api/post?slug&lang → one post JSON (rendered HTML)
+   - SSR for /blog, /blog/:slug (+ /pt, /es) → full HTML with meta/OG/JSON-LD
+   ════════════════════════════════════════════════════════════════════ */
+const ORIGIN = 'https://ozly.au';
+const BLOG_LANGS: Record<'en' | 'pt' | 'es', { prefix: string; hreflang: string; og: string; html: string }> = {
+  en: { prefix: '', hreflang: 'en-AU', og: 'en_AU', html: 'en-AU' },
+  pt: { prefix: '/pt', hreflang: 'pt-BR', og: 'pt_BR', html: 'pt-BR' },
+  es: { prefix: '/es', hreflang: 'es', og: 'es_ES', html: 'es' },
+};
+const BLOG_LISTING_META: Record<'en' | 'pt' | 'es', { title: string; description: string; intro: string }> = {
+  en: { title: 'Ozly Blog — Tax, ABN & visa guides for Australian sole traders', description: 'Plain-English guides on ABN, tax, GST, invoicing and visa work rules for sole traders and migrants working in Australia.', intro: 'Plain-English guides on tax, ABN, GST and visas — for people working for themselves in Australia.' },
+  pt: { title: 'Blog da Ozly — Guias de imposto, ABN e visto na Austrália', description: 'Guias diretos sobre ABN, imposto, GST, invoices e regras de trabalho por visto para quem trabalha por conta própria na Austrália.', intro: 'Guias diretos sobre imposto, ABN, GST e vistos — para quem trabalha por conta própria na Austrália.' },
+  es: { title: 'Blog de Ozly — Guías de impuestos, ABN y visa en Australia', description: 'Guías claras sobre ABN, impuestos, GST, facturas y reglas de trabajo por visa para quienes trabajan por su cuenta en Australia.', intro: 'Guías claras sobre impuestos, ABN, GST y visas — para quienes trabajan por su cuenta en Australia.' },
+};
+type BlogLangCode = 'en' | 'pt' | 'es';
+interface DbPost { slug: string; date: string; author: string; tags: string[]; en?: GenLang | null; pt?: GenLang | null; es?: GenLang | null; }
+interface BlogRoute { lang: BlogLangCode; slug: string | null; }
+
+function matchBlogRoute(pathname: string): BlogRoute | null {
+  const m = pathname.match(/^\/(?:(pt|es)\/)?blog(?:\/([a-z0-9][a-z0-9-]*))?\/?$/i);
+  if (!m) return null;
+  const lang = (m[1]?.toLowerCase() as BlogLangCode) || 'en';
+  return { lang, slug: m[2] ? m[2].toLowerCase() : null };
+}
+
+async function dbQuery(env: Env, qs: string): Promise<DbPost[]> {
+  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/blog_posts?${qs}`, {
+    headers: { apikey: env.SUPABASE_ANON_KEY, Authorization: `Bearer ${env.SUPABASE_ANON_KEY}` },
+  });
+  if (!res.ok) throw new Error(`Supabase ${res.status}`);
+  return (await res.json()) as DbPost[];
+}
+const dbListPosts = (env: Env) =>
+  dbQuery(env, 'select=slug,date,author,tags,en,pt,es&draft=eq.false&order=date.desc');
+const dbGetPost = async (env: Env, slug: string): Promise<DbPost | null> => {
+  const rows = await dbQuery(env, `select=slug,date,author,tags,en,pt,es&draft=eq.false&slug=eq.${encodeURIComponent(slug)}&limit=1`);
+  return rows[0] ?? null;
+};
+
+const blogLangsOf = (p: DbPost): BlogLangCode[] =>
+  (['en', 'pt', 'es'] as const).filter((c) => p[c] && (p[c] as GenLang).title);
+function readingTimeOf(body: string): number {
+  return Math.max(1, Math.round((body || '').trim().split(/\s+/).filter(Boolean).length / 200));
+}
+
+/** Listing summary shape — mirrors the old public/blog-data/index.json. */
+function postSummaries(p: DbPost) {
+  const langs = blogLangsOf(p);
+  const summaries: Record<string, unknown> = {};
+  for (const c of langs) {
+    const tr = p[c] as GenLang;
+    summaries[c] = {
+      slug: p.slug, lang: c, langs, date: p.date, author: p.author, cover: null,
+      tags: p.tags || [], readingTime: readingTimeOf(tr.body), title: tr.title, description: tr.description,
+    };
+  }
+  return { slug: p.slug, date: p.date, author: p.author, cover: null, tags: p.tags || [], langs, summaries };
+}
+
+async function handleBlogApi(_request: Request, env: Env, url: URL): Promise<Response> {
+  try {
+    if (url.pathname === '/blog-api/index') {
+      const posts = await dbListPosts(env);
+      return json(posts.filter((p) => blogLangsOf(p).length > 0).map(postSummaries));
+    }
+    if (url.pathname === '/blog-api/post') {
+      const slug = url.searchParams.get('slug') || '';
+      const lang = (url.searchParams.get('lang') as BlogLangCode) || 'en';
+      const p = await dbGetPost(env, slug);
+      if (!p) return json({ error: 'Not found' }, 404);
+      const langs = blogLangsOf(p);
+      const code = langs.includes(lang) ? lang : langs[0];
+      const tr = p[code] as GenLang;
+      return json({
+        slug: p.slug, lang: code, langs, title: tr.title, description: tr.description,
+        date: p.date, author: p.author, cover: null, tags: p.tags || [],
+        readingTime: readingTimeOf(tr.body), html: marked.parse(tr.body),
+      });
+    }
+    return json({ error: 'Not found' }, 404);
+  } catch (e) {
+    return json({ error: `Blog API failed: ${(e as Error).message}` }, 502);
+  }
+}
+
+/** Cache the origin SPA shell (asset tags) — warm across requests. */
+let _shellCache: { at: number; html: string } | null = null;
+async function getShell(): Promise<string> {
+  if (_shellCache && Date.now() - _shellCache.at < 300_000) return _shellCache.html;
+  const res = await fetch(`${ORIGIN}/`, { cf: { cacheTtl: 300 } } as RequestInit);
+  if (!res.ok) throw new Error(`shell ${res.status}`);
+  const html = await res.text();
+  _shellCache = { at: Date.now(), html };
+  return html;
+}
+
+function metaTags(opts: {
+  title: string; description: string; canonical: string; htmlLang: string;
+  ogLocale: string; alternates: Array<{ hreflang: string; href: string }>; jsonLd: unknown[];
+}): string {
+  const alts = opts.alternates
+    .map((a) => `<link rel="alternate" hreflang="${a.hreflang}" href="${a.href}">`)
+    .join('');
+  const ld = opts.jsonLd
+    .map((o) => `<script type="application/ld+json">${JSON.stringify(o).replace(/</g, '\\u003c')}</script>`)
+    .join('');
+  return (
+    `<meta name="description" content="${escapeHtml(opts.description)}">` +
+    `<link rel="canonical" href="${opts.canonical}">` +
+    alts +
+    `<meta property="og:type" content="article">` +
+    `<meta property="og:site_name" content="Ozly">` +
+    `<meta property="og:title" content="${escapeHtml(opts.title)}">` +
+    `<meta property="og:description" content="${escapeHtml(opts.description)}">` +
+    `<meta property="og:url" content="${opts.canonical}">` +
+    `<meta property="og:image" content="${ORIGIN}/OSLY.svg">` +
+    `<meta property="og:locale" content="${opts.ogLocale}">` +
+    `<meta name="twitter:card" content="summary_large_image">` +
+    `<meta name="twitter:title" content="${escapeHtml(opts.title)}">` +
+    `<meta name="twitter:description" content="${escapeHtml(opts.description)}">` +
+    ld
+  );
+}
+
+/** Inject head meta + #root prerender + optional inline data into the shell. */
+function injectShell(shell: string, head: { title: string; tags: string }, rootInner: string, inlineScript: string): string {
+  let out = shell;
+  // Replace <title> (first occurrence).
+  out = out.replace(/<title>[\s\S]*?<\/title>/i, () => `<title>${head.title}</title>`);
+  // Strip the origin home shell's own SEO tags so ours win (otherwise the blog
+  // page would carry the home page's description / hreflang / OG).
+  out = out
+    .replace(/<meta\s+name="description"[^>]*>/gi, '')
+    .replace(/<link\s+rel="canonical"[^>]*>/gi, '')
+    .replace(/<link\s+rel="alternate"\s+hreflang=[^>]*>/gi, '')
+    .replace(/<meta\s+property="og:[^"]*"[^>]*>/gi, '')
+    .replace(/<meta\s+name="twitter:[^"]*"[^>]*>/gi, '');
+  out = out.replace(/<\/head>/i, `${head.tags}</head>`);
+  // Paint content inside #root so crawlers + no-JS users see it; React hydrates.
+  out = out.replace(/<div id="root">[\s\S]*?<\/div>/i, `<div id="root">${rootInner}</div>${inlineScript}`);
+  return out;
+}
+
+async function handleBlogSsr(env: Env, route: BlogRoute): Promise<Response | null> {
+  const L = BLOG_LANGS[route.lang];
+
+  // ── Post page ──
+  if (route.slug) {
+    const p = await dbGetPost(env, route.slug);
+    if (!p) return null; // fall through to origin (404/SPA)
+    const langs = blogLangsOf(p);
+    const code = langs.includes(route.lang) ? route.lang : langs[0];
+    const tr = p[code] as GenLang;
+    const canonical = `${ORIGIN}${BLOG_LANGS[code].prefix}/blog/${p.slug}/`;
+    const html = marked.parse(tr.body) as string;
+    const alternates = langs.map((c) => ({ hreflang: BLOG_LANGS[c].hreflang, href: `${ORIGIN}${BLOG_LANGS[c].prefix}/blog/${p.slug}/` }));
+    const postLd = {
+      '@context': 'https://schema.org', '@type': 'BlogPosting',
+      headline: tr.title, description: tr.description, datePublished: p.date, dateModified: p.date,
+      inLanguage: BLOG_LANGS[code].html,
+      author: { '@type': 'Organization', name: p.author || 'Ozly', url: `${ORIGIN}/` },
+      publisher: { '@type': 'Organization', name: 'Ozly Pty Ltd', url: `${ORIGIN}/`, logo: `${ORIGIN}/OSLY.svg` },
+      mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
+    };
+    const head = {
+      title: escapeHtml(`${tr.title} — Ozly`),
+      tags: metaTags({ title: `${tr.title} — Ozly`, description: tr.description, canonical, htmlLang: BLOG_LANGS[code].html, ogLocale: BLOG_LANGS[code].og, alternates, jsonLd: [postLd] }),
+    };
+    const rootInner = `<article><h1>${escapeHtml(tr.title)}</h1><p>${escapeHtml(tr.description)}</p>${html}</article>`;
+    const payload = {
+      slug: p.slug, lang: code, langs, title: tr.title, description: tr.description,
+      date: p.date, author: p.author, cover: null, tags: p.tags || [],
+      readingTime: readingTimeOf(tr.body), html,
+    };
+    const inline = `<script id="blog-post-data" type="application/json">${JSON.stringify(payload).replace(/</g, '\\u003c')}</script>`;
+    const shell = await getShell();
+    return new Response(injectShell(shell, head, rootInner, inline), {
+      headers: { 'Content-Type': 'text/html; charset=UTF-8', 'Cache-Control': 'public, max-age=120, s-maxage=120', 'X-Blog-SSR': 'post' },
+    });
+  }
+
+  // ── Listing page ──
+  const posts = (await dbListPosts(env)).filter((p) => blogLangsOf(p).length > 0);
+  const m = BLOG_LISTING_META[route.lang];
+  const canonical = `${ORIGIN}${L.prefix}/blog/`;
+  const items = posts.map((p) => {
+    const langs = blogLangsOf(p);
+    const code = langs.includes(route.lang) ? route.lang : langs[0];
+    const tr = p[code] as GenLang;
+    return `<h2><a href="${ORIGIN}${L.prefix}/blog/${p.slug}/">${escapeHtml(tr.title)}</a></h2><p>${escapeHtml(tr.description)}</p>`;
+  }).join('');
+  const blogLd = {
+    '@context': 'https://schema.org', '@type': 'Blog', name: m.title, description: m.description,
+    url: canonical, inLanguage: L.html, publisher: { '@type': 'Organization', name: 'Ozly Pty Ltd', url: `${ORIGIN}/` },
+  };
+  const alternates = (['en', 'pt', 'es'] as const).map((c) => ({ hreflang: BLOG_LANGS[c].hreflang, href: `${ORIGIN}${BLOG_LANGS[c].prefix}/blog/` }));
+  const head = {
+    title: escapeHtml(m.title),
+    tags: metaTags({ title: m.title, description: m.description, canonical, htmlLang: L.html, ogLocale: L.og, alternates, jsonLd: [blogLd] }),
+  };
+  const rootInner = `<h1>${escapeHtml(m.title)}</h1><p>${escapeHtml(m.intro)}</p>${items}`;
+  const shell = await getShell();
+  return new Response(injectShell(shell, head, rootInner, ''), {
+    headers: { 'Content-Type': 'text/html; charset=UTF-8', 'Cache-Control': 'public, max-age=120, s-maxage=120', 'X-Blog-SSR': 'listing' },
+  });
 }
 
 /* ════════════════════════════════════════════════════════════════════

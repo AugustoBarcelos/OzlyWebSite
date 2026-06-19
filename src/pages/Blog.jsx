@@ -47,8 +47,11 @@ export default function Blog() {
   useEffect(() => {
     window.scrollTo(0, 0);
     let active = true;
-    fetch(`${import.meta.env.BASE_URL}blog-data/index.json`)
+    // Source of truth: the worker's Supabase-backed API. Falls back to the
+    // static index (local dev / worker outage).
+    fetch(`/blog-api/index`)
       .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .catch(() => fetch(`${import.meta.env.BASE_URL}blog-data/index.json`).then((r) => (r.ok ? r.json() : Promise.reject())))
       .then((data) => active && setPosts(data))
       .catch(() => active && setError(true));
     return () => {
