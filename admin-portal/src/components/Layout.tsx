@@ -157,15 +157,15 @@ function useNavGroups(simple: boolean): ReadonlyArray<NavGroup> {
           items: [
             { label: 'Cockpit', to: '/cockpit', icon: HomeIcon, end: true },
             { label: 'Inbox', to: '/inbox', icon: InboxIcon },
-            { label: 'Blog', to: '/marketing/blog', icon: PenSquareIcon },
           ],
         },
         {
           label: 'Áreas',
           items: [
-            { label: 'Dinheiro', to: '/finance', icon: DollarSignIcon },
-            { label: 'Crescimento', to: '/growth', icon: TrendingUpIcon },
+            { label: 'Aquisição', to: '/marketing', icon: MegaphoneIcon },
+            { label: 'Comunicação & CRM', to: '/users', icon: MailIcon },
             { label: 'Produto', to: '/product', icon: PackageIcon },
+            { label: 'Dinheiro', to: '/finance', icon: DollarSignIcon },
             { label: 'Ozly for Business', to: '/business', icon: HandshakeIcon },
             { label: 'Ops & Tech', to: '/operations', icon: ServerIcon },
           ],
@@ -173,54 +173,43 @@ function useNavGroups(simple: boolean): ReadonlyArray<NavGroup> {
       ];
     }
     if (isAdmin) {
-      // IA por pergunta — 5 áreas. Cockpit/Inbox no topo (uso diário).
-      // Nenhuma rota removida — só reagrupada; cmd-K continua achando tudo.
+      // IA por jornada do usuário: Aquisição (trazer) → Comunicação (relacionar)
+      // → Produto (construir) → Dinheiro → Business → Ops. Cockpit/Inbox no topo
+      // (uso diário). Nenhuma rota removida — só reagrupada; cmd-K acha tudo.
       return [
         {
           items: [
             { label: 'Cockpit', to: '/cockpit', icon: HomeIcon, end: true },
             { label: 'Inbox', to: '/inbox', icon: InboxIcon },
-            { label: 'Blog', to: '/marketing/blog', icon: PenSquareIcon },
           ],
         },
         {
-          label: 'Dinheiro',
-          items: [
-            { label: 'Receita & assinaturas', to: '/revenue', icon: DollarSignIcon },
-            { label: 'Custos (automático)', to: '/finance/cost-monitor' },
-            { label: 'Custos (manual)', to: '/finance/costs' },
-            { label: 'Lucro (P&L)', to: '/finance/pnl' },
-            { label: 'Previsão & caixa', to: '/finance/forecast' },
-            { label: 'Conciliação', to: '/finance/reconciliation' },
-            { label: 'Impostos & relatórios', to: '/finance/tax' },
-            { label: 'Hub financeiro', to: '/finance', end: true },
-          ],
-        },
-        {
-          label: 'Crescimento',
+          label: 'Aquisição',
           items: [
             {
-              label: 'Marketing',
-              icon: MegaphoneIcon,
+              label: 'Conteúdo',
+              icon: PenSquareIcon,
               to: '/marketing',
               children: [
                 { label: 'Calendário', to: '/marketing/calendar' },
                 { label: 'Posts', to: '/marketing/posts' },
                 { label: 'Composer', to: '/marketing/composer' },
                 { label: 'AI Composer', to: '/marketing/ai-composer' },
-                { label: 'Canais (orgânico)', to: '/marketing/channels' },
-                { label: 'SEO & Site', to: '/marketing/seo' },
                 { label: 'Blog', to: '/marketing/blog' },
-                { label: 'ASO (App Store)', to: '/marketing/aso' },
-                { label: 'Push', to: '/messaging/push' },
-                { label: 'Email', to: '/messaging/email' },
-                { label: 'WhatsApp', to: '/messaging/whatsapp' },
-                { label: 'Messenger', to: '/messaging/messenger' },
-                { label: 'SMS', to: '/messaging/sms' },
               ],
             },
             {
-              label: 'Anúncios & funil',
+              label: 'Descoberta',
+              icon: SearchIcon,
+              to: '/marketing/seo',
+              children: [
+                { label: 'SEO & Site', to: '/marketing/seo' },
+                { label: 'ASO (App Store)', to: '/marketing/aso' },
+                { label: 'Canais (orgânico)', to: '/marketing/channels' },
+              ],
+            },
+            {
+              label: 'Ads & funil',
               icon: TrendingUpIcon,
               to: '/growth',
               children: [
@@ -238,21 +227,61 @@ function useNavGroups(simple: boolean): ReadonlyArray<NavGroup> {
           ],
         },
         {
-          label: 'Produto',
+          label: 'Comunicação & CRM',
           items: [
             { label: 'Usuários', to: '/users', icon: UsersIcon },
-            { label: 'Ativação (primeiros passos)', to: '/product/activation' },
-            { label: 'Retenção (quem volta)', to: '/product/retention' },
-            { label: 'Engajamento', to: '/product/engagement' },
-            { label: 'Uso das funcionalidades', to: '/product/features' },
-            { label: 'Feedback', to: '/product/feedback' },
+            { label: 'Inbox', to: '/inbox', icon: InboxIcon },
+            {
+              label: 'Mensageria',
+              icon: MailIcon,
+              to: '/messaging/push',
+              children: [
+                { label: 'Push', to: '/messaging/push' },
+                { label: 'Email', to: '/messaging/email' },
+                { label: 'WhatsApp', to: '/messaging/whatsapp' },
+                { label: 'Messenger', to: '/messaging/messenger' },
+                { label: 'SMS', to: '/messaging/sms' },
+              ],
+            },
+            {
+              label: 'Ciclo de vida',
+              icon: ActivityIcon,
+              to: '/product/activation',
+              children: [
+                { label: 'Ativação (primeiros passos)', to: '/product/activation' },
+                { label: 'Retenção (quem volta)', to: '/product/retention' },
+                { label: 'Engajamento', to: '/product/engagement' },
+                { label: 'Feedback', to: '/product/feedback' },
+              ],
+            },
+          ],
+        },
+        {
+          label: 'Produto',
+          items: [
+            { label: 'Uso das funcionalidades', to: '/product/features', icon: PackageIcon },
+            { label: 'Roadmap', to: '/operations/roadmap' },
             { label: 'Hub do produto', to: '/product', end: true },
+          ],
+        },
+        {
+          label: 'Dinheiro',
+          items: [
+            { label: 'Receita & assinaturas', to: '/revenue', icon: DollarSignIcon },
+            { label: 'Custos (automático)', to: '/finance/cost-monitor' },
+            { label: 'Custos (manual)', to: '/finance/costs' },
+            { label: 'Lucro (P&L)', to: '/finance/pnl' },
+            { label: 'Previsão & caixa', to: '/finance/forecast' },
+            { label: 'Conciliação', to: '/finance/reconciliation' },
+            { label: 'Impostos & relatórios', to: '/finance/tax' },
+            { label: 'Hub financeiro', to: '/finance', end: true },
           ],
         },
         {
           label: 'Ozly for Business',
           items: [
             { label: 'Monitor (orgs)', to: '/business', icon: HandshakeIcon },
+            { label: 'Organizações', to: '/ops/orgs' },
           ],
         },
         {
@@ -265,12 +294,10 @@ function useNavGroups(simple: boolean): ReadonlyArray<NavGroup> {
               to: '/operations',
               children: [
                 { label: 'Hub', to: '/operations', end: true },
-                { label: 'Roadmap', to: '/operations/roadmap' },
                 { label: 'Incidentes', to: '/operations/incidents' },
                 { label: 'Releases', to: '/operations/releases' },
                 { label: 'Runbooks', to: '/operations/runbooks' },
                 { label: 'Permissões', to: '/ops/grants' },
-                { label: 'Organizações', to: '/ops/orgs' },
                 { label: 'Auditoria', to: '/ops/audit' },
               ],
             },
