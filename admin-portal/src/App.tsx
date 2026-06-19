@@ -180,6 +180,11 @@ const MessagingSmsPage = lazy(() =>
     default: m.MessagingSmsPage,
   })),
 );
+const MessagingPushPage = lazy(() =>
+  import('./routes/messaging/push').then((m) => ({
+    default: m.MessagingPushPage,
+  })),
+);
 
 // ─── W4 — real Inbox ────────────────────────────────────────────────────────
 const InboxPage = lazy(() =>
@@ -407,6 +412,7 @@ export function App() {
                 <Route path="/messaging/whatsapp" element={lazyRoute(MessagingWhatsAppPage)} />
                 <Route path="/messaging/messenger" element={lazyRoute(MessagingMessengerPage)} />
                 <Route path="/messaging/sms" element={lazyRoute(MessagingSmsPage)} />
+                <Route path="/messaging/push" element={lazyRoute(MessagingPushPage)} />
 
                 {/* Finance Hub */}
                 <Route path="/finance" element={lazyRoute(FinanceHubPage)} />

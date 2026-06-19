@@ -212,6 +212,7 @@ function useNavGroups(simple: boolean): ReadonlyArray<NavGroup> {
                 { label: 'SEO & Site', to: '/marketing/seo' },
                 { label: 'Blog', to: '/marketing/blog' },
                 { label: 'ASO (App Store)', to: '/marketing/aso' },
+                { label: 'Push', to: '/messaging/push' },
                 { label: 'Email', to: '/messaging/email' },
                 { label: 'WhatsApp', to: '/messaging/whatsapp' },
                 { label: 'Messenger', to: '/messaging/messenger' },
@@ -331,6 +332,7 @@ function useNavGroups(simple: boolean): ReadonlyArray<NavGroup> {
         label: 'Messaging',
         icon: MailIcon,
         children: [
+          { label: 'Push', to: '/messaging/push' },
           { label: 'Email', to: '/messaging/email' },
           { label: 'WhatsApp', to: '/messaging/whatsapp' },
           { label: 'Messenger', to: '/messaging/messenger' },
