@@ -78,6 +78,7 @@ const ALL_COMMANDS: CommandItem[] = [
   { id: 'mkt-channels', label: 'Channels (organic)', group: 'Marketing', icon: MegaphoneIcon, to: '/marketing/channels' },
   { id: 'mkt-aso', label: 'ASO (App Store)', group: 'Marketing', icon: PackageIcon, to: '/marketing/aso' },
   { id: 'mkt-seo', label: 'SEO & Site', group: 'Marketing', icon: TrendingUpIcon, to: '/marketing/seo' },
+  { id: 'msg-push', label: 'Messaging — Push', group: 'Marketing', icon: MailIcon, to: '/messaging/push' },
   { id: 'msg-email', label: 'Messaging — Email', group: 'Marketing', icon: MailIcon, to: '/messaging/email' },
   { id: 'msg-whatsapp', label: 'Messaging — WhatsApp', group: 'Marketing', icon: MailIcon, to: '/messaging/whatsapp' },
   { id: 'msg-messenger', label: 'Messaging — Messenger', group: 'Marketing', icon: MailIcon, to: '/messaging/messenger' },
