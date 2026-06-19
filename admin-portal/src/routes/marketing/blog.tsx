@@ -43,6 +43,7 @@ export function MarketingBlogPage() {
   const [lang, setLang] = useState<LangCode>('en');
   const [reviews, setReviews] = useState<Record<LangCode, ReviewLang> | null>(null);
   const [applyingIdx, setApplyingIdx] = useState<number | null>(null);
+  const [applyingAll, setApplyingAll] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [publishing, setPublishing] = useState(false);
 
@@ -153,6 +154,7 @@ export function MarketingBlogPage() {
 
       const next: BlogPost = { ...post };
       let anyChanged = false;
+      let currentChanged = false;
       for (const [c, fixed] of results) {
         if (
           fixed &&
@@ -162,6 +164,7 @@ export function MarketingBlogPage() {
         ) {
           next[c] = fixed;
           anyChanged = true;
+          if (c === lang) currentChanged = true;
         }
       }
 
@@ -173,7 +176,7 @@ export function MarketingBlogPage() {
         toast({
           variant: 'error',
           title: 'A IA não alterou o texto',
-          description: 'O apontamento continua na lista — edite manualmente ou tente de novo.',
+          description: 'Tenta “Aplicar tudo”, ou edite o corpo à mão (o campo é editável).',
         });
         return;
       }
@@ -186,14 +189,85 @@ export function MarketingBlogPage() {
         return { ...prev, [lang]: { ...cur, findings: cur.findings.filter((_, i) => i !== idx) } };
       });
       toast({
-        variant: 'success',
-        title: 'Correção aplicada nos 3 idiomas',
-        description: 'Confira o texto e os números em cada aba.',
+        variant: currentChanged ? 'success' : 'info',
+        title: currentChanged ? 'Correção aplicada' : 'Aplicada nos outros idiomas',
+        description: currentChanged
+          ? 'O corpo foi atualizado nas 3 abas.'
+          : `A IA não mexeu no ${LANG_LABEL[lang]} (provável que já estivesse ok), mas mudou outras abas.`,
       });
     } catch (e) {
       toast({ variant: 'error', title: 'Falha ao aplicar', description: errMsg(e) });
     } finally {
       setApplyingIdx(null);
+    }
+  }
+
+  // Apply ALL findings of a language in a single AI call — far more reliable
+  // than one-by-one (the free model echoes the draft when there's little to
+  // change; with the whole list it actually rewrites).
+  async function onApplyAll() {
+    if (!post || !reviews) return;
+    setApplyingAll(true);
+    try {
+      const codes = LANGS.filter((c) => post[c]?.title);
+      const results = await Promise.all(
+        codes.map(async (c) => {
+          const findings = reviews[c]?.findings ?? [];
+          if (findings.length === 0) return [c, null] as const;
+          const combined =
+            `Fix ALL of these problems in the draft (rewrite as needed):\n` +
+            findings.map((f, i) => `${i + 1}. [${f.severity}] ${f.text}`).join('\n');
+          try {
+            return [c, await applyFix(c, post[c], combined)] as const;
+          } catch {
+            return [c, null] as const;
+          }
+        }),
+      );
+
+      const next: BlogPost = { ...post };
+      const fixedLangs: LangCode[] = [];
+      for (const [c, fixed] of results) {
+        if (
+          fixed &&
+          (fixed.title !== post[c].title ||
+            fixed.description !== post[c].description ||
+            fixed.body !== post[c].body)
+        ) {
+          next[c] = fixed;
+          fixedLangs.push(c);
+        }
+      }
+
+      if (fixedLangs.length === 0) {
+        toast({
+          variant: 'error',
+          title: 'A IA não alterou o texto',
+          description: 'Edite o corpo à mão (o campo é editável) — o modelo grátis travou nesses apontamentos.',
+        });
+        return;
+      }
+
+      setPost(next);
+      // Clear the findings of the languages we just rewrote — re-run the
+      // fact-check to confirm.
+      setReviews((prev) => {
+        if (!prev) return prev;
+        const copy = { ...prev };
+        for (const c of fixedLangs) {
+          if (copy[c]) copy[c] = { ...copy[c], findings: [] };
+        }
+        return copy;
+      });
+      toast({
+        variant: 'success',
+        title: 'Tudo aplicado',
+        description: `Reescrevi ${fixedLangs.map((c) => LANG_LABEL[c]).join(', ')}. Confira o corpo e rode o Fact-check de novo.`,
+      });
+    } catch (e) {
+      toast({ variant: 'error', title: 'Falha ao aplicar tudo', description: errMsg(e) });
+    } finally {
+      setApplyingAll(false);
     }
   }
 
@@ -434,12 +508,24 @@ export function MarketingBlogPage() {
           {/* Fact-check findings */}
           {reviews?.[lang] && (
             <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-              <p className="mb-2 text-sm font-bold text-navy-700">
-                Fact-check ({LANG_LABEL[lang]}):{' '}
-                <span className={reviews[lang].verdict === 'PASS' ? 'text-lime-600' : 'text-amber-600'}>
-                  {reviews[lang].verdict === 'PASS' ? 'sem problemas graves' : 'revisar antes de publicar'}
-                </span>
-              </p>
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="text-sm font-bold text-navy-700">
+                  Fact-check ({LANG_LABEL[lang]}):{' '}
+                  <span className={reviews[lang].verdict === 'PASS' ? 'text-lime-600' : 'text-amber-600'}>
+                    {reviews[lang].verdict === 'PASS' ? 'sem problemas graves' : 'revisar antes de publicar'}
+                  </span>
+                </p>
+                {reviews[lang].findings.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => void onApplyAll()}
+                    disabled={applyingAll || applyingIdx !== null}
+                    className="shrink-0 rounded-full bg-brand-500 px-3 py-1 text-xs font-bold text-white transition hover:bg-brand-600 disabled:opacity-40"
+                  >
+                    {applyingAll ? 'Aplicando tudo…' : '✓ Aplicar tudo (3 idiomas)'}
+                  </button>
+                )}
+              </div>
               <ul className="space-y-2">
                 {reviews[lang].findings.map((f, i) => (
                   <li key={i} className="flex items-start gap-2 text-xs">
@@ -450,7 +536,7 @@ export function MarketingBlogPage() {
                     <button
                       type="button"
                       onClick={() => void onApplyFix(i, f.text)}
-                      disabled={applyingIdx !== null}
+                      disabled={applyingIdx !== null || applyingAll}
                       className="shrink-0 rounded-full border border-brand-300 px-2.5 py-0.5 font-bold text-brand-700 transition hover:bg-brand-50 disabled:opacity-40"
                     >
                       {applyingIdx === i ? 'Aplicando…' : 'Aplicar'}
