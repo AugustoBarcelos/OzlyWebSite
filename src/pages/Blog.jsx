@@ -33,12 +33,15 @@ function gradientFor(slug) {
   return GRADIENTS[h % GRADIENTS.length];
 }
 
+const PER_PAGE = 8;
+
 export default function Blog() {
   const { t, lang } = useI18n();
   const lp = useLangPath();
   useSeoMeta("blog");
   const [posts, setPosts] = useState(null);
   const [error, setError] = useState(false);
+  const [page, setPage] = useState(1);
   const tb = t.blog || {};
 
   useEffect(() => {
@@ -54,6 +57,15 @@ export default function Blog() {
   }, []);
 
   const empty = (error || (posts && posts.length === 0));
+  const total = posts ? posts.length : 0;
+  const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
+  const current = Math.min(page, totalPages);
+  const visible = (posts || []).slice((current - 1) * PER_PAGE, current * PER_PAGE);
+
+  const goTo = (p) => {
+    setPage(p);
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -77,7 +89,7 @@ export default function Blog() {
         )}
 
         <div className="grid gap-7 md:grid-cols-2">
-          {(posts || []).map((post) => {
+          {visible.map((post) => {
             const s = post.summaries[lang] || post.summaries[post.langs[0]];
             const tags = (s.tags || []).slice(0, 2);
             return (
@@ -120,6 +132,46 @@ export default function Blog() {
             );
           })}
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <nav
+            className="mt-12 flex items-center justify-center gap-1.5"
+            aria-label={tb.pagination || "Pagination"}
+          >
+            <button
+              type="button"
+              onClick={() => goTo(current - 1)}
+              disabled={current === 1}
+              className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-navy-600 transition hover:border-brand-300 hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              ‹
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => goTo(p)}
+                aria-current={p === current ? "page" : undefined}
+                className={`min-w-[2.5rem] rounded-lg border px-3 py-2 text-sm font-bold transition ${
+                  p === current
+                    ? "border-brand-500 bg-brand-500 text-white"
+                    : "border-slate-200 text-navy-600 hover:border-brand-300 hover:bg-brand-50"
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => goTo(current + 1)}
+              disabled={current === totalPages}
+              className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-navy-600 transition hover:border-brand-300 hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              ›
+            </button>
+          </nav>
+        )}
       </div>
     </div>
   );
