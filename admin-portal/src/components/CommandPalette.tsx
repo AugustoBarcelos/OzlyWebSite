@@ -42,7 +42,7 @@ interface CommandItem {
   id: string;
   label: string;
   hint?: string;
-  group: 'Hubs' | 'Growth' | 'Marketing' | 'Finance' | 'Tech' | 'Operations' | 'Users' | 'Product' | 'Inbox' | 'Quick Actions';
+  group: 'Hubs' | 'Growth' | 'Marketing' | 'Communication' | 'Finance' | 'Tech' | 'Operations' | 'Users' | 'Product' | 'Inbox' | 'Quick Actions';
   icon: React.ComponentType<{ className?: string }>;
   to?: string;
   onAction?: () => void;
@@ -78,11 +78,11 @@ const ALL_COMMANDS: CommandItem[] = [
   { id: 'mkt-channels', label: 'Channels (organic)', group: 'Marketing', icon: MegaphoneIcon, to: '/marketing/channels' },
   { id: 'mkt-aso', label: 'ASO (App Store)', group: 'Marketing', icon: PackageIcon, to: '/marketing/aso' },
   { id: 'mkt-seo', label: 'SEO & Site', group: 'Marketing', icon: TrendingUpIcon, to: '/marketing/seo' },
-  { id: 'msg-push', label: 'Messaging — Push', group: 'Marketing', icon: MailIcon, to: '/messaging/push' },
-  { id: 'msg-email', label: 'Messaging — Email', group: 'Marketing', icon: MailIcon, to: '/messaging/email' },
-  { id: 'msg-whatsapp', label: 'Messaging — WhatsApp', group: 'Marketing', icon: MailIcon, to: '/messaging/whatsapp' },
-  { id: 'msg-messenger', label: 'Messaging — Messenger', group: 'Marketing', icon: MailIcon, to: '/messaging/messenger' },
-  { id: 'msg-sms', label: 'Messaging — SMS', group: 'Marketing', icon: MailIcon, to: '/messaging/sms' },
+  { id: 'msg-push', label: 'Messaging — Push', group: 'Communication', icon: MailIcon, to: '/messaging/push' },
+  { id: 'msg-email', label: 'Messaging — Email', group: 'Communication', icon: MailIcon, to: '/messaging/email' },
+  { id: 'msg-whatsapp', label: 'Messaging — WhatsApp', group: 'Communication', icon: MailIcon, to: '/messaging/whatsapp' },
+  { id: 'msg-messenger', label: 'Messaging — Messenger', group: 'Communication', icon: MailIcon, to: '/messaging/messenger' },
+  { id: 'msg-sms', label: 'Messaging — SMS', group: 'Communication', icon: MailIcon, to: '/messaging/sms' },
 
   // Finance
   { id: 'fin-revenue', label: 'Revenue', group: 'Finance', icon: DollarSignIcon, to: '/revenue', keywords: ['mrr', 'subscriptions'] },
