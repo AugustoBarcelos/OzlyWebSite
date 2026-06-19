@@ -191,34 +191,43 @@ export default function Blog() {
           </p>
         )}
 
-        {/* Featured lead article */}
+        {/* Featured lead — full-width card */}
         {featured && (() => {
           const s = sumFor(featured);
           return (
             <Link
               to={lp(`/blog/${featured.slug}`)}
-              className="group mb-14 block border-b border-slate-100 pb-14"
+              className="group mb-8 block rounded-2xl border border-slate-200 bg-slate-50/50 p-7 transition hover:border-brand-300 hover:bg-white hover:shadow-sm md:p-9"
             >
-              <div className="text-[12px] font-bold uppercase tracking-[0.14em] text-slate-400">{ui.featured}</div>
-              <h2 className="mt-3 max-w-3xl text-3xl font-bold leading-tight tracking-tight text-navy-700 transition group-hover:text-brand-600 sm:text-[2.5rem]">
+              <div className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em]">
+                <span className="rounded bg-brand-500/10 px-2 py-0.5 text-brand-700">{ui.featured}</span>
+                <span className="text-slate-400">{audienceLabel(featured)}</span>
+              </div>
+              <h2 className="max-w-3xl text-2xl font-bold leading-tight tracking-tight text-navy-700 transition group-hover:text-brand-600 sm:text-3xl">
                 {s.title}
               </h2>
-              <p className="mt-4 max-w-2xl text-lg leading-relaxed text-slate-500">{s.description}</p>
-              <div className="mt-5">
-                <Meta s={s} p={featured} />
+              <p className="mt-3 max-w-2xl text-base leading-relaxed text-slate-500">{s.description}</p>
+              <div className="mt-5 flex items-center gap-x-2 text-[13px] text-slate-400">
+                <span>{formatDate(s.date, lang)}</span>
+                <span aria-hidden>·</span>
+                <span>{s.readingTime} {ui.min}</span>
               </div>
             </Link>
           );
         })()}
 
-        {/* Article list — editorial cards, no gradient */}
-        <div className="grid gap-x-10 gap-y-10 sm:grid-cols-2">
+        {/* Article list — bordered cards, clear separation, no gradient */}
+        <div className="grid gap-5 sm:grid-cols-2">
           {rest.map((post) => {
             const s = sumFor(post);
             return (
-              <Link key={post.slug} to={lp(`/blog/${post.slug}`)} className="group flex flex-col">
+              <Link
+                key={post.slug}
+                to={lp(`/blog/${post.slug}`)}
+                className="group flex flex-col rounded-2xl border border-slate-200 p-6 transition hover:border-brand-300 hover:shadow-sm"
+              >
                 <Meta s={s} p={post} />
-                <h3 className="mt-2 text-xl font-bold leading-snug tracking-tight text-navy-700 transition group-hover:text-brand-600">
+                <h3 className="mt-3 text-lg font-bold leading-snug tracking-tight text-navy-700 transition group-hover:text-brand-600">
                   {s.title}
                 </h3>
                 <p className="mt-2 flex-1 text-[15px] leading-relaxed text-slate-500 line-clamp-3">
