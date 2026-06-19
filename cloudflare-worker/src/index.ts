@@ -32,7 +32,7 @@ const GITHUB_BRANCH = "main";
 // Free Workers AI model. Strong instruct model on the free tier.
 const AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 // Bump on each meaningful worker change so /admin/api/health proves what's live.
-const WORKER_BUILD = "2026-06-19-factcheck-grounded-v6";
+const WORKER_BUILD = "2026-06-19-surgical-apply-v7";
 
 const CRAWLER_UA_RE =
   /facebookexternalhit|facebot|whatsapp|twitterbot|telegrambot|linkedinbot|discordbot|slackbot|googlebot|bingbot|pinterest|skypeuripreview|redditbot|applebot|yahoobot|duckduckbot/i;
@@ -728,56 +728,106 @@ async function reviewPost(body: PublishBody, env: Env): Promise<Record<string, R
 }
 
 /* ── Apply one fact-check finding to a single-language draft ── */
+
+/** Locate a quoted snippet inside the body, tolerant of case/whitespace.
+ *  Returns the exact matched range so we can string-replace it precisely. */
+function locateSnippet(body: string, quote: string): { index: number; length: number } | null {
+  const exact = body.indexOf(quote);
+  if (exact >= 0) return { index: exact, length: quote.length };
+  const pattern = quote
+    .trim()
+    .split(/\s+/)
+    .map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .join('\\s+');
+  try {
+    const m = body.match(new RegExp(pattern, 'i'));
+    if (m && m.index !== undefined) return { index: m.index, length: m[0].length };
+  } catch {
+    /* bad regex — ignore */
+  }
+  return null;
+}
+
 async function applyFix(
   input: { lang?: string; title?: string; description?: string; body?: string; finding?: string },
   env: Env,
 ): Promise<GenLang> {
   const langName = LANG_NAMES[(input.lang as 'en' | 'pt' | 'es')] ?? 'the original language';
+  const body = input.body ?? '';
+  const finding = input.finding ?? '';
+  const keep = { title: input.title ?? '', description: input.description ?? '' };
+
+  // ── SURGICAL path ──────────────────────────────────────────────────────
+  // The finding quotes the exact offending snippet («…»). Ask the model to fix
+  // ONLY that short snippet, then string-replace it in the body by code. Far
+  // more reliable than asking it to regenerate the whole post (which echoes).
+  const quote = extractQuote(finding);
+  if (quote) {
+    const loc = locateSnippet(body, quote);
+    if (loc) {
+      const original = body.slice(loc.index, loc.index + loc.length);
+      const sys = `You fix one short snippet from an Australian tax/visa blog written in ${langName}.
+
+THE PROBLEM: ${finding}
+
+Output ONLY the corrected snippet that replaces the original — same language and style, GitHub-flavoured Markdown, no surrounding quotes, no explanation. If a number/threshold/rate is wrong, put the correct Australian 2025–26 value. Your output MUST differ from the original.`;
+      const res = (await env.AI.run(AI_MODEL, {
+        max_tokens: 600,
+        temperature: 0.3,
+        messages: [
+          { role: 'system', content: sys },
+          { role: 'user', content: `Original snippet:\n${original}` },
+        ],
+      })) as { response?: unknown };
+      let fixed = String(res.response ?? '').trim();
+      // Strip wrapping quotes / code fences the model sometimes adds.
+      fixed = fixed.replace(/^```[a-z]*\n?|\n?```$/g, '').replace(/^[«"'‘“]+|[»"'’”]+$/g, '').trim();
+      if (fixed && fixed.length > 1 && fixed !== original) {
+        const newBody = body.slice(0, loc.index) + fixed + body.slice(loc.index + loc.length);
+        return { ...keep, body: newBody };
+      }
+    }
+  }
+
+  // ── FALLBACK path ──────────────────────────────────────────────────────
+  // No quote (e.g. the disclaimer finding) or the snippet couldn't be located:
+  // rewrite the whole body.
   const system = `You are an editor fixing a blog draft written in ${langName} for Ozly.
 
 THE PROBLEM TO FIX (you MUST resolve this):
-${input.finding}
+${finding}
 
-Your job: rewrite the draft so this problem is GONE. You MUST change the text — returning it unchanged is a failure. Make the smallest edit that fully resolves the problem (fix the wrong wording/number/claim, rephrase the offending sentence, etc.), and leave everything else as close to the original as possible: same language, tone, structure, links, headings, CTA and the mandatory disclaimer (Ozly is not an accountant/registered tax agent).
+Rewrite the draft so this problem is GONE. You MUST change the text — returning it unchanged is a failure. Make the smallest edit that fully resolves the problem and leave everything else as close to the original as possible: same language, tone, structure, links, headings, CTA and the mandatory disclaimer (Ozly is not an accountant/registered tax agent). Keep GitHub-flavoured Markdown. No commentary.
 
-If the problem is a wrong/outdated number, correct it to the accurate Australian 2025–26 value. Keep GitHub-flavoured Markdown. No commentary, no explanation of what you changed.
-
-Output EXACTLY this, nothing else (keep the @@@ separator lines literally):
+Output EXACTLY this, nothing else:
 @@@TITLE@@@
 (title — unchanged unless the fix is about the title)
 @@@DESC@@@
 (description — unchanged unless the fix is about it)
 @@@BODY@@@
 (the full corrected markdown body)`;
-  const user = `Here is the draft to fix. Apply the fix and output the full corrected version.\n\nTITLE: ${input.title ?? ''}\nDESC: ${input.description ?? ''}\n\nBODY:\n${input.body ?? ''}`;
+  const user = `Apply the fix and output the full corrected version.\n\nTITLE: ${keep.title}\nDESC: ${keep.description}\n\nBODY:\n${body}`;
   const result = (await env.AI.run(AI_MODEL, {
-    max_tokens: 4096, // full body + headroom so the corrected body isn't truncated
-    temperature: 0.4, // enough to actually edit (0 → model often echoes verbatim)
+    max_tokens: 4096,
+    temperature: 0.4,
     messages: [
       { role: 'system', content: system },
       { role: 'user', content: user },
     ],
   })) as { response?: unknown };
 
-  // Robust parse: never blank out or corrupt a field.
   const rawText = String(result.response ?? '').trim();
   if (/@@@BODY@@@/i.test(rawText)) {
-    // Markers present — trust the delimited parse, but keep originals if a
-    // field came back empty.
     const parsed = parseDelimited(rawText);
     return {
-      title: parsed.title && parsed.title.length > 2 ? parsed.title : (input.title ?? ''),
-      description: parsed.description && parsed.description.length > 2 ? parsed.description : (input.description ?? ''),
-      body: parsed.body && parsed.body.length > 40 ? parsed.body : (input.body ?? ''),
+      title: parsed.title && parsed.title.length > 2 ? parsed.title : keep.title,
+      description: parsed.description && parsed.description.length > 2 ? parsed.description : keep.description,
+      body: parsed.body && parsed.body.length > 40 ? parsed.body : body,
     };
   }
-  // No markers — the model returned the corrected body directly. Use the whole
-  // reply as the body and keep the original title/desc (do NOT let the generic
-  // salvage turn the first body line into a title).
   return {
-    title: input.title ?? '',
-    description: input.description ?? '',
-    body: rawText.length > 40 ? rawText : (input.body ?? ''),
+    ...keep,
+    body: rawText.length > 40 ? rawText : body,
   };
 }
 
