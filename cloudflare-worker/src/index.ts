@@ -32,7 +32,7 @@ const GITHUB_BRANCH = "main";
 // Free Workers AI model. Strong instruct model on the free tier.
 const AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 // Bump on each meaningful worker change so /admin/api/health proves what's live.
-const WORKER_BUILD = "2026-06-19-topics-curated-v3";
+const WORKER_BUILD = "2026-06-19-topics-split-v4";
 
 const CRAWLER_UA_RE =
   /facebookexternalhit|facebot|whatsapp|twitterbot|telegrambot|linkedinbot|discordbot|slackbot|googlebot|bingbot|pinterest|skypeuripreview|redditbot|applebot|yahoobot|duckduckbot/i;
@@ -289,13 +289,22 @@ async function handleAdminApi(request: Request, env: Env, url: URL): Promise<Res
 
   if (path === '/admin/api/topics' && request.method === 'GET') {
     const done = await listExistingSlugs(env);
-    return json({ topics: TOPICS.map((t) => ({ ...t, done: done.includes(t.slug) })) });
+    return json({
+      topics: TOPICS.map((t) => ({
+        ...t,
+        audience: (t as { audience?: string }).audience === 'business' ? 'business' : 'consumer',
+        done: done.includes(t.slug),
+      })),
+    });
   }
 
   // Fresh AI-generated topic ideas (excludes ones already written/curated).
+  // Optional body { audience: 'business' | 'consumer' } to ask for one side only.
   if (path === '/admin/api/suggest-topics' && request.method === 'POST') {
+    const body = (await request.json().catch(() => ({}))) as { audience?: 'business' | 'consumer' };
+    const audience = body.audience === 'business' || body.audience === 'consumer' ? body.audience : undefined;
     try {
-      return json({ topics: await suggestTopics(env) });
+      return json({ topics: await suggestTopics(env, audience) });
     } catch (e) {
       return json({ error: `Suggest failed: ${(e as Error).message}` }, 502);
     }
@@ -369,20 +378,38 @@ async function listExistingSlugs(env: Env): Promise<string[]> {
 }
 
 /* ── Fresh AI-generated topic ideas (the "suggest more" button) ── */
-async function suggestTopics(env: Env): Promise<Array<{ slug: string; title: string; angle: string; done: boolean }>> {
+async function suggestTopics(
+  env: Env,
+  audience?: 'business' | 'consumer',
+): Promise<Array<{ slug: string; title: string; angle: string; audience: 'business' | 'consumer'; done: boolean }>> {
   const existing = new Set<string>([...(await listExistingSlugs(env)), ...TOPICS.map((t) => t.slug)]);
   const avoid = TOPICS.map((t) => t.title).join('; ');
-  const system = `You suggest blog topic ideas for Ozly. Ozly serves TWO distinct audiences:
-A) CONSUMER — Australian sole traders (cleaners, tradies, contractors) and migrants on student / working-holiday visas. They Google about ABN, income tax, GST, deductions, invoicing, visa work rules.
-B) BUSINESS ("Ozly for Companies") — operators & owners of businesses that run on ABN contractors (cleaning companies, trades, labour-hire, delivery fleets). They care about contractor onboarding, retention, sham-contracting / misclassification risk, compliance, and reducing admin load.
 
-Propose 6 FRESH, specific, high-search-intent topics — a MIX of both audiences (aim for ~3 consumer + ~3 business). Each must be a specific question/angle (not generic). Australia-specific.
+  const CONSUMER = `CONSUMER — Australian sole traders (cleaners, tradies, contractors) and migrants on student / working-holiday visas. They Google about ABN, income tax, GST, deductions, invoicing, visa work rules.`;
+  const BUSINESS = `BUSINESS ("Ozly for Companies") — operators & owners of businesses that run on ABN contractors (cleaning companies, trades, labour-hire, delivery fleets). They care about contractor onboarding, retention, sham-contracting / misclassification risk, compliance, and reducing admin load.`;
+
+  let audienceBlock: string;
+  let mixRule: string;
+  if (audience === 'business') {
+    audienceBlock = `Audience: ${BUSINESS}`;
+    mixRule = 'Propose 6 FRESH, specific, high-search-intent BUSINESS topics (all for the operator/owner audience above). Prefix every title with [B2B].';
+  } else if (audience === 'consumer') {
+    audienceBlock = `Audience: ${CONSUMER}`;
+    mixRule = 'Propose 6 FRESH, specific, high-search-intent CONSUMER topics (all for the sole-trader/migrant audience above). Prefix every title with [B2C].';
+  } else {
+    audienceBlock = `Ozly serves TWO distinct audiences:\nA) ${CONSUMER}\nB) ${BUSINESS}`;
+    mixRule = 'Propose 6 FRESH, specific, high-search-intent topics — a MIX of both audiences (aim for ~3 consumer + ~3 business). Prefix each title with [B2B] for business topics and [B2C] for consumer.';
+  }
+
+  const system = `You suggest blog topic ideas for Ozly. ${audienceBlock}
+
+${mixRule} Each must be a specific question/angle (not generic). Australia-specific.
 
 Do NOT repeat any of these existing topics: ${avoid}.
 
 ANTI-CANNIBALISATION (critical): Ozly IS an invoicing, expense and tax-tracking app. NEVER suggest topics that give away a free alternative to Ozly's own product — no "free invoice template", "invoice generator", "spreadsheet/Excel templates", "track expenses in a spreadsheet", "DIY bookkeeping template". Every topic must make Ozly the natural solution, not replace it. Educational/explainer angles are great; "here's a free tool that does what our app does" is banned.
 
-Output EXACTLY this, one block per idea, nothing else. Prefix each title with [B2B] for business topics and [B2C] for consumer topics:
+Output EXACTLY this, one block per idea, nothing else. Prefix each title with [B2B] or [B2C]:
 @@@TOPIC@@@
 [B2C] <title up to 70 chars> | <one-line angle>`;
 
@@ -396,7 +423,7 @@ Output EXACTLY this, one block per idea, nothing else. Prefix each title with [B
   })) as { response?: unknown };
 
   const text = String(result.response ?? '');
-  const out: Array<{ slug: string; title: string; angle: string; done: boolean }> = [];
+  const out: Array<{ slug: string; title: string; angle: string; audience: 'business' | 'consumer'; done: boolean }> = [];
 
   // Accept the @@@TOPIC@@@ format OR a plain list — pull "title | angle" /
   // "title - angle" / "title: angle" from each candidate line.
@@ -405,7 +432,12 @@ Output EXACTLY this, one block per idea, nothing else. Prefix each title with [B
     : text.split('\n');
 
   for (const raw of candidates) {
-    let line = raw.trim().replace(/^[-*•]\s*/, '').replace(/^\d+[.)]\s*/, '').replace(/^\[B2[BC]\]\s*/i, '');
+    const cleaned = raw.trim().replace(/^[-*•]\s*/, '').replace(/^\d+[.)]\s*/, '');
+    // Detect the audience tag, then strip it.
+    const tag = cleaned.match(/^\[(B2[BC])\]/i);
+    const lineAudience: 'business' | 'consumer' =
+      audience ?? (tag && tag[1].toUpperCase() === 'B2B' ? 'business' : 'consumer');
+    let line = cleaned.replace(/^\[B2[BC]\]\s*/i, '');
     if (line.length < 8) continue;
     if (/^(here|sure|below|topic ideas|ideas?:)/i.test(line)) continue;
     let title = line;
@@ -420,7 +452,7 @@ Output EXACTLY this, one block per idea, nothing else. Prefix each title with [B
     const slug = slugify(title);
     if (existing.has(slug)) continue;
     existing.add(slug);
-    out.push({ slug, title, angle, done: false });
+    out.push({ slug, title, angle, audience: lineAudience, done: false });
     if (out.length >= 6) break;
   }
   return out;
