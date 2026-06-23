@@ -256,6 +256,9 @@ const ProductFeaturesPage = lazy(() =>
 const ProductFeedbackPage = lazy(() =>
   import('./routes/product/feedback').then((m) => ({ default: m.ProductFeedbackPage })),
 );
+const ProductAtRiskPage = lazy(() =>
+  import('./routes/product/at-risk').then((m) => ({ default: m.ProductAtRiskPage })),
+);
 // W8 — real Operations
 const OperationsRoadmapPage = lazy(() =>
   import('./routes/operations/roadmap').then((m) => ({ default: m.OperationsRoadmapPage })),
@@ -432,6 +435,7 @@ export function App() {
                 <Route path="/product/engagement" element={lazyRoute(ProductEngagementPage)} />
                 <Route path="/product/features" element={lazyRoute(ProductFeaturesPage)} />
                 <Route path="/product/feedback" element={lazyRoute(ProductFeedbackPage)} />
+                <Route path="/product/at-risk" element={lazyRoute(ProductAtRiskPage)} />
 
                 {/* Users */}
                 <Route path="/users" element={lazyRoute(UserListPage)} />
