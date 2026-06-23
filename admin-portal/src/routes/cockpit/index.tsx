@@ -1,6 +1,7 @@
-import { useMemo, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { AreaChart, BarList, Card, Title } from '@tremor/react';
+import { callRpc } from '@/lib/rpc';
 import { GlobalFilterBar } from '@/components/GlobalFilterBar';
 import { HubPlaceholder } from '@/components/HubPlaceholder';
 import { PendingPayoutsAlert } from '@/components/PendingPayoutsAlert';
@@ -99,6 +100,46 @@ export function CockpitPage() {
   const { periodDays } = useGlobalFilters();
   const period = periodDays as Period;
   const { data, loading, error, refetch } = useDashboardData(period);
+
+  // ── Centro de Comando — fetches extra (não estão no useDashboardData) ───────
+  const [atRisk, setAtRisk] = useState<Array<{ segment: string; count: number }> | null>(null);
+  const [sources, setSources] = useState<Array<{ source: string; signups: number }> | null>(null);
+  useEffect(() => {
+    let alive = true;
+    callRpc<{ segments: Array<{ segment: string; count: number }> }>('admin_at_risk_board', {
+      p_limit_per_segment: 1,
+    })
+      .then((r) => alive && setAtRisk(r.segments.map((s) => ({ segment: s.segment, count: s.count }))))
+      .catch(() => alive && setAtRisk([]));
+    callRpc<{ top_sources?: Array<{ source: string; signups: number }> }>('admin_acquisition_overview', {
+      p_period_days: period,
+      p_channel: null,
+    })
+      .then((r) => alive && setSources(r.top_sources ?? []))
+      .catch(() => alive && setSources([]));
+    return () => {
+      alive = false;
+    };
+  }, [period]);
+  const riskTotal = atRisk ? atRisk.reduce((a, s) => a + s.count, 0) : null;
+  const riskBy = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const s of atRisk ?? []) m[s.segment] = s.count;
+    return m;
+  }, [atRisk]);
+  const latestCohort = useMemo(() => {
+    const cs = data.cohort?.cohorts ?? [];
+    for (let i = cs.length - 1; i >= 0; i--) {
+      const c = cs[i];
+      if (c && c.d7 !== null) return c;
+    }
+    return cs.length ? cs[cs.length - 1] ?? null : null;
+  }, [data.cohort]);
+  const signupsPeriod = data.kpi?.signups_period ?? null;
+  const activationPct =
+    data.kpi && signupsPeriod && signupsPeriod > 0
+      ? (data.kpi.activations_period ?? 0) / signupsPeriod
+      : null;
 
   // ── Pessoas usando ─────────────────────────────────────────────────────────
   const activeSeries = data.activeUsers?.series ?? [];
@@ -304,6 +345,84 @@ export function CockpitPage() {
           </span>
         )}
       </button>
+
+      {/* ═══ CENTRO DE COMANDO — grade 360, tudo num scan ═══ */}
+      <section>
+        <div className="mb-2 flex items-center justify-between">
+          <Title className="!text-base !font-semibold text-navy-700">Centro de Comando</Title>
+          <span className="text-[11px] text-navy-400">{periodLabel}</span>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Crescimento */}
+          <CommandCard title="Crescimento" to="/product/activation" tone="brand">
+            <CmdStat label="Signups" value={signupsPeriod === null ? '—' : formatNumber(signupsPeriod)} />
+            <CmdStat
+              label="Ativação"
+              value={activationPct === null ? '—' : `${(activationPct * 100).toFixed(0)}%`}
+              hint="emitiu 1ª invoice"
+            />
+          </CommandCard>
+
+          {/* Dinheiro */}
+          <CommandCard title="Dinheiro" to="/revenue" tone="emerald">
+            <CmdStat label="MRR" value={mrr === null ? '—' : formatCurrencyAUD(mrr)} />
+            <CmdStat label="Pagantes" value={paidActiveTotal === null ? '—' : formatNumber(paidActiveTotal)} />
+            <CmdStat label="Churn" value={churn === null ? '—' : formatNumber(churn)} />
+          </CommandCard>
+
+          {/* Risco & Churn */}
+          <CommandCard title="Risco & Churn" to="/product/at-risk" tone="rose" cta="Agir">
+            <CmdStat label="Em risco (total)" value={riskTotal === null ? '—' : formatNumber(riskTotal)} />
+            <div className="mt-1 space-y-0.5 text-[11px] text-navy-500">
+              <div>Pagante em risco: <b>{riskBy['paying_at_risk'] ?? 0}</b></div>
+              <div>Trial parado: <b>{riskBy['trial_idle'] ?? 0}</b></div>
+              <div>Ativou s/ converter: <b>{riskBy['activated_no_convert'] ?? 0}</b></div>
+            </div>
+          </CommandCard>
+
+          {/* Funil */}
+          <CommandCard title="Funil" to="/product/activation" tone="brand">
+            {data.funnel ? (
+              <div className="space-y-0.5 text-[11px] text-navy-500">
+                <div>Signups: <b>{formatNumber(data.funnel.signups)}</b></div>
+                <div>Ativações: <b>{formatNumber(data.funnel.activations)}</b></div>
+                <div>Trials: <b>{formatNumber(data.funnel.trials)}</b></div>
+                <div>Pagantes: <b>{formatNumber(data.funnel.paid)}</b></div>
+              </div>
+            ) : (
+              <div className="text-xs text-navy-300">—</div>
+            )}
+          </CommandCard>
+
+          {/* De onde vêm */}
+          <CommandCard title="De onde vêm" to="/growth/funnel" tone="violet">
+            {sources === null ? (
+              <div className="text-xs text-navy-300">Carregando…</div>
+            ) : sources.length === 0 ? (
+              <div className="text-xs text-navy-300">Sem dados de fonte (UTM)</div>
+            ) : (
+              <BarList
+                data={sources.slice(0, 4).map((s) => ({ name: s.source, value: s.signups }))}
+                className="mt-1"
+              />
+            )}
+          </CommandCard>
+
+          {/* Retenção */}
+          <CommandCard title="Retenção" to="/product/retention" tone="amber">
+            {latestCohort ? (
+              <div className="space-y-0.5 text-[11px] text-navy-500">
+                <div className="text-navy-400">cohort {latestCohort.cohort} · {latestCohort.size} users</div>
+                <div>D1: <b>{pctOrDash(latestCohort.d1)}</b></div>
+                <div>D7: <b>{pctOrDash(latestCohort.d7)}</b></div>
+                <div>D30: <b>{pctOrDash(latestCohort.d30)}</b></div>
+              </div>
+            ) : (
+              <div className="text-xs text-navy-300">—</div>
+            )}
+          </CommandCard>
+        </div>
+      </section>
 
       {/* 1 · Como está o dinheiro? — uma história em dois lados: o que entra
           (MRR + assinantes, um número só) e o que está saindo ou em risco
@@ -762,4 +881,58 @@ function PlainStat({
     );
   }
   return <div className="rounded-md border border-navy-50 bg-white p-3">{inner}</div>;
+}
+
+// ── Centro de Comando helpers ────────────────────────────────────────────────
+function pctOrDash(v: number | null): string {
+  return v === null ? '—' : `${(v * 100).toFixed(0)}%`;
+}
+
+const CMD_TONE: Record<string, string> = {
+  brand: 'hover:border-brand-200',
+  emerald: 'hover:border-emerald-200',
+  rose: 'hover:border-rose-200',
+  violet: 'hover:border-violet-200',
+  amber: 'hover:border-amber-200',
+};
+
+function CommandCard({
+  title,
+  to,
+  tone,
+  cta,
+  children,
+}: {
+  title: string;
+  to: string;
+  tone: keyof typeof CMD_TONE;
+  cta?: string;
+  children: ReactNode;
+}) {
+  return (
+    <Link
+      to={to}
+      className={`group relative block rounded-lg border border-navy-50 bg-white p-4 transition-all hover:shadow-sm ${CMD_TONE[tone]}`}
+    >
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-xs font-semibold uppercase tracking-wider text-navy-400">{title}</span>
+        <span className="flex items-center gap-1 text-[11px] font-medium text-navy-300 group-hover:text-brand-600">
+          {cta ?? 'Ver'} <ArrowUpRightIcon className="h-3 w-3" />
+        </span>
+      </div>
+      {children}
+    </Link>
+  );
+}
+
+function CmdStat({ label, value, hint }: { label: string; value: string; hint?: string }) {
+  return (
+    <div className="mb-1.5 last:mb-0">
+      <div className="flex items-baseline gap-1.5">
+        <span className="text-2xl font-semibold tabular-nums text-navy-700">{value}</span>
+        <span className="text-[11px] text-navy-400">{label}</span>
+      </div>
+      {hint && <div className="text-[10px] text-navy-300">{hint}</div>}
+    </div>
+  );
 }
