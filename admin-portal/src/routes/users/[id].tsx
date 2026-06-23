@@ -68,6 +68,11 @@ import {
   deriveLifecycleState,
   type LifecycleState,
 } from './types';
+import {
+  FineStageBadge,
+  fetchUserInsights,
+  type UserInsight,
+} from './insights';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types — mirror the RPC payload contract documented in the briefing.
@@ -557,6 +562,84 @@ const EVENT_LABEL: Record<string, string> = {
   account_deleted: 'Deletou conta',
 };
 
+// Recommended next action per granular stage — the "what do I do about this
+// user" line that turns the passive lifecycle hint into a directive.
+const FINE_STAGE_ACTION: Record<string, string> = {
+  paying_at_risk: 'Pagante em risco (auto-renovação off ou sumido). Contato + oferta de retenção AGORA.',
+  cancel_winback: 'Cancelou mas ainda tem acesso — win-back com desconto antes do período acabar.',
+  trial_idle: 'Trial parado há 5d+. Push urgente antes de expirar sem converter.',
+  trial_active: 'Trial engajado. Reforçar valor pra converter no fim do trial.',
+  activated_no_convert: 'Mandou a 1ª invoice mas não assinou. Nudge de assinatura / prova de valor.',
+  trial_expired: 'Trial expirou sem pagar. Oferta de reativação / segunda chance.',
+  churned: 'Era pagante e cancelou. Campanha de reativação com incentivo.',
+  paying_active: 'Pagante saudável. Manter — pedir review/indicação.',
+  signed_up_inactive: 'Cadastrou e nunca mandou invoice. Onboarding / nudge pra emitir a 1ª.',
+  promo: 'Tem grant promocional (cortesia) — não é receita real.',
+};
+
+const INSTALL_STATUS_LABEL: Record<string, string> = {
+  installed: 'App instalado',
+  uninstalled: 'Desinstalou',
+  recent_no_push: 'Visto recente, sem push',
+  unknown: 'Desconhecido',
+};
+
+function daysSince(iso: string | null): number | null {
+  if (!iso) return null;
+  const ms = Date.now() - new Date(iso).getTime();
+  return Math.max(0, Math.floor(ms / 86_400_000));
+}
+
+function BehaviorRiskCard({ insight }: { insight: UserInsight | null }) {
+  if (!insight) return null;
+  const inactive = daysSince(insight.last_seen_at);
+  const action = FINE_STAGE_ACTION[insight.fine_stage];
+
+  return (
+    <Card className="border-brand-100 bg-brand-50/40">
+      <div className="flex flex-wrap items-center gap-2">
+        <Text className="!text-sm !font-semibold !text-navy-700">
+          Comportamento &amp; Risco
+        </Text>
+        <FineStageBadge stage={insight.fine_stage} />
+        <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-navy-600 ring-1 ring-inset ring-navy-100">
+          {insight.activated ? 'Ativou (emitiu invoice)' : 'Não ativou'}
+        </span>
+        <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-navy-600 ring-1 ring-inset ring-navy-100">
+          {INSTALL_STATUS_LABEL[insight.install_status] ?? insight.install_status}
+        </span>
+      </div>
+
+      <div className="mt-3 grid gap-3 sm:grid-cols-3">
+        <div>
+          <Text className="!text-[11px] !text-navy-400">Última atividade</Text>
+          <div className="text-sm font-medium text-navy-700">
+            {inactive === null ? '—' : `${inactive} dia${inactive === 1 ? '' : 's'} atrás`}
+          </div>
+        </div>
+        <div>
+          <Text className="!text-[11px] !text-navy-400">App / versão</Text>
+          <div className="text-sm font-medium text-navy-700">
+            {insight.last_seen_app_version ?? '—'}
+          </div>
+        </div>
+        <div>
+          <Text className="!text-[11px] !text-navy-400">Motivo do cancelamento</Text>
+          <div className="text-sm font-medium text-navy-700">
+            {insight.last_cancel_reason ?? '—'}
+          </div>
+        </div>
+      </div>
+
+      {action && (
+        <div className="mt-3 rounded-md border border-brand-200 bg-white px-3 py-2 text-xs text-navy-700">
+          <span className="font-semibold text-brand-700">Próxima ação:</span> {action}
+        </div>
+      )}
+    </Card>
+  );
+}
+
 function TimelineSection({ events }: { events: TimelineEvent[] | null }) {
   if (!events) return <div className="mt-3 text-xs text-navy-300">Carregando…</div>;
   if (events.length === 0) {
@@ -594,6 +677,7 @@ export function User360Page() {
   const [grants, setGrants] = useState<UserGrantsPayload | null>(null);
   const [audit, setAudit] = useState<UserAuditPayload | null>(null);
   const [timeline, setTimeline] = useState<TimelineEvent[] | null>(null);
+  const [insight, setInsight] = useState<UserInsight | null>(null);
   const [errors, setErrors] = useState<UserErrorsPayload | null>(null);
   const [errorsLoading, setErrorsLoading] = useState(false);
   const [errorsError, setErrorsError] = useState<string | null>(null);
@@ -606,7 +690,7 @@ export function User360Page() {
   // Fetch the user 360 payload + grants + audit in parallel.
   const fetchUser = useCallback(
     async (target: string, includePii: boolean) => {
-      const [payload, grantsData, auditData, timelineData] = await Promise.all([
+      const [payload, grantsData, auditData, timelineData, insightsMap] = await Promise.all([
         callRpc<User360Payload>('admin_get_user_360', {
           p_target: target,
           p_include_pii: includePii,
@@ -621,10 +705,14 @@ export function User360Page() {
         callRpc<{ events: TimelineEvent[] }>('admin_user_timeline', {
           p_user_id: target,
         }).catch(() => null),
+        fetchUserInsights([target]).catch(
+          (): Record<string, UserInsight> => ({}),
+        ),
       ]);
       setGrants(grantsData);
       setAudit(auditData);
       setTimeline(timelineData?.events ?? []);
+      setInsight(insightsMap[target] ?? null);
       return payload;
     },
     []
@@ -1077,6 +1165,7 @@ export function User360Page() {
 
                 {/* ACTIVITY */}
                 <TabPanel>
+                  <BehaviorRiskCard insight={insight} />
                   <div className="mt-3 grid gap-3 sm:grid-cols-3">
                     <Card>
                       <Text>Jobs (30d)</Text>

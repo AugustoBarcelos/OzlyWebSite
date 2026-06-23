@@ -282,6 +282,12 @@ export function ProductHubPage() {
       icon={PackageIcon}
       links={[
         {
+          label: 'Risco & Churn',
+          to: '/product/at-risk',
+          description: 'Quem você ataca essa semana: em risco, trial parado, ativou sem converter — com a próxima ação.',
+          icon: ActivityIcon,
+        },
+        {
           label: 'Primeiros passos',
           to: '/product/activation',
           description: 'Quem cadastrou conseguiu começar a usar? Onde travam?',
