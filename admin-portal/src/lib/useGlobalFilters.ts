@@ -58,21 +58,48 @@ function parsePlan(v: string | null): PlanValue {
   return DEFAULTS.plan;
 }
 
+// Persist the chosen filters so they survive navigation even when a target
+// page's link doesn't carry the query string (e.g. cockpit cards). URL param
+// wins when present (shareable links); otherwise we fall back to the last
+// choice from localStorage.
+const STORAGE_KEY = 'ozly_admin_global_filters';
+function readFilterStore(): Partial<Record<keyof GlobalFilters, string>> {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as Record<keyof GlobalFilters, string>) : {};
+  } catch {
+    return {};
+  }
+}
+function writeFilterStore(patch: Partial<Record<keyof GlobalFilters, string>>) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...readFilterStore(), ...patch }));
+  } catch {
+    /* ignore */
+  }
+}
+
 export function useGlobalFilters() {
   const [params, setParams] = useSearchParams();
 
   const filters: GlobalFilters = useMemo(
-    () => ({
-      period: parsePeriod(params.get('period')),
-      channel: parseChannel(params.get('channel')),
-      plan: parsePlan(params.get('plan')),
-      geo: params.get('geo') || DEFAULTS.geo,
-    }),
+    () => {
+      const s = readFilterStore();
+      return {
+        period: parsePeriod(params.get('period') ?? s.period ?? null),
+        channel: parseChannel(params.get('channel') ?? s.channel ?? null),
+        plan: parsePlan(params.get('plan') ?? s.plan ?? null),
+        geo: params.get('geo') || s.geo || DEFAULTS.geo,
+      };
+    },
     [params],
   );
 
   const setFilter = useCallback(
     <K extends keyof GlobalFilters>(key: K, value: GlobalFilters[K]) => {
+      // Persist every explicit choice (incl. default) so it carries across
+      // navigation even when the URL param is dropped.
+      writeFilterStore({ [key]: String(value) } as Partial<Record<keyof GlobalFilters, string>>);
       setParams(
         (prev) => {
           const next = new URLSearchParams(prev);
@@ -91,6 +118,7 @@ export function useGlobalFilters() {
 
   const clearFilter = useCallback(
     (key: keyof GlobalFilters) => {
+      writeFilterStore({ [key]: String(DEFAULTS[key]) } as Partial<Record<keyof GlobalFilters, string>>);
       setParams(
         (prev) => {
           const next = new URLSearchParams(prev);
@@ -104,6 +132,11 @@ export function useGlobalFilters() {
   );
 
   const clearAll = useCallback(() => {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      /* ignore */
+    }
     setParams(
       (prev) => {
         const next = new URLSearchParams(prev);
