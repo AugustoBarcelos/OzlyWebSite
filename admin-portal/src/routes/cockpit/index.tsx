@@ -121,12 +121,19 @@ export function CockpitPage() {
       alive = false;
     };
   }, [period]);
-  const riskTotal = atRisk ? atRisk.reduce((a, s) => a + s.count, 0) : null;
   const riskBy = useMemo(() => {
     const m: Record<string, number> = {};
     for (const s of atRisk ?? []) m[s.segment] = s.count;
     return m;
   }, [atRisk]);
+  // Churn (mexe no dinheiro) ≠ conversão (free que nunca pagou). Não dá pra
+  // somar os dois num "em risco" só — isso inflava o número (8 com 1 pagante).
+  const riskChurn = atRisk
+    ? (riskBy['paying_at_risk'] ?? 0) + (riskBy['cancel_winback'] ?? 0) + (riskBy['churned'] ?? 0)
+    : null;
+  const riskConv = atRisk
+    ? (riskBy['activated_no_convert'] ?? 0) + (riskBy['trial_idle'] ?? 0) + (riskBy['trial_expired'] ?? 0)
+    : null;
   const latestCohort = useMemo(() => {
     const cs = data.cohort?.cohorts ?? [];
     for (let i = cs.length - 1; i >= 0; i--) {
@@ -370,13 +377,31 @@ export function CockpitPage() {
             <CmdStat label="Churn" value={churn === null ? '—' : formatNumber(churn)} />
           </CommandCard>
 
-          {/* Risco & Churn */}
-          <CommandCard title="Risco & Churn" to="/product/at-risk" tone="rose" cta="Agir">
-            <CmdStat label="Em risco (total)" value={riskTotal === null ? '—' : formatNumber(riskTotal)} />
+          {/* Churn (pagantes) — só quem mexe no dinheiro */}
+          <CommandCard title="Churn de pagantes" to="/product/at-risk" tone="rose" cta="Agir">
+            <CmdStat
+              label="Em risco de perder"
+              value={riskChurn === null ? '—' : formatNumber(riskChurn)}
+              hint="pagante em risco + cancelando + churned"
+            />
             <div className="mt-1 space-y-0.5 text-[11px] text-navy-500">
               <div>Pagante em risco: <b>{riskBy['paying_at_risk'] ?? 0}</b></div>
-              <div>Trial parado: <b>{riskBy['trial_idle'] ?? 0}</b></div>
+              <div>Cancelando (resgatável): <b>{riskBy['cancel_winback'] ?? 0}</b></div>
+              <div>Já cancelaram: <b>{riskBy['churned'] ?? 0}</b></div>
+            </div>
+          </CommandCard>
+
+          {/* Conversão (free que não pagou) — oportunidade, NÃO é churn */}
+          <CommandCard title="Conversão (free)" to="/product/at-risk" tone="teal" cta="Agir">
+            <CmdStat
+              label="Não pagaram ainda"
+              value={riskConv === null ? '—' : formatNumber(riskConv)}
+              hint="oportunidade, não é churn"
+            />
+            <div className="mt-1 space-y-0.5 text-[11px] text-navy-500">
               <div>Ativou s/ converter: <b>{riskBy['activated_no_convert'] ?? 0}</b></div>
+              <div>Trial parado: <b>{riskBy['trial_idle'] ?? 0}</b></div>
+              <div>Trial expirou: <b>{riskBy['trial_expired'] ?? 0}</b></div>
             </div>
           </CommandCard>
 
@@ -894,6 +919,7 @@ const CMD_TONE: Record<string, string> = {
   rose: 'hover:border-rose-200',
   violet: 'hover:border-violet-200',
   amber: 'hover:border-amber-200',
+  teal: 'hover:border-teal-200',
 };
 
 function CommandCard({
