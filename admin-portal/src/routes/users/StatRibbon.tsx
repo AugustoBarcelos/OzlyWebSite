@@ -77,7 +77,14 @@ export function StatRibbon({
             onClick={() => onToggleLifecycle('churned')}
           />
           <Chip
-            label="Nunca engajou"
+            label="Ativou (grátis)"
+            value={stats.lc_activated}
+            tone="teal"
+            active={filters.lifecycles.includes('activated')}
+            onClick={() => onToggleLifecycle('activated')}
+          />
+          <Chip
+            label="Não ativou"
             value={stats.lc_never_engaged}
             tone="slate"
             active={filters.lifecycles.includes('never_engaged')}
@@ -137,7 +144,7 @@ export function StatRibbon({
   );
 }
 
-type Tone = 'brand' | 'amber' | 'orange' | 'rose' | 'slate' | 'sky' | 'violet' | 'emerald';
+type Tone = 'brand' | 'amber' | 'orange' | 'rose' | 'slate' | 'sky' | 'violet' | 'emerald' | 'teal';
 
 function Chip({
   label,
@@ -184,6 +191,10 @@ function Chip({
     emerald: {
       on: 'bg-emerald-500 text-white ring-emerald-500',
       off: 'bg-emerald-50 text-emerald-700 ring-emerald-100 hover:bg-emerald-100',
+    },
+    teal: {
+      on: 'bg-teal-500 text-white ring-teal-500',
+      off: 'bg-teal-50 text-teal-700 ring-teal-100 hover:bg-teal-100',
     },
   };
   return (

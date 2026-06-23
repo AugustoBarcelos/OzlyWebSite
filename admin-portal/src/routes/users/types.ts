@@ -13,6 +13,7 @@ export type LifecycleState =
   | 'promo'
   | 'trial_expired'
   | 'churned'
+  | 'activated'
   | 'never_engaged';
 
 export interface UserListRow {
@@ -68,6 +69,7 @@ export interface UserListStats {
   lc_promo: number;
   lc_trial_expired: number;
   lc_churned: number;
+  lc_activated: number;
   lc_never_engaged: number;
 }
 
@@ -138,7 +140,8 @@ export const LIFECYCLE_LABEL: Record<LifecycleState, string> = {
   promo: 'Promo',
   trial_expired: 'Trial expirou',
   churned: 'Churn',
-  never_engaged: 'Nunca engajou',
+  activated: 'Ativou (grátis)',
+  never_engaged: 'Não ativou',
 };
 
 /** Short description of what each lifecycle state means — used as tooltip
@@ -149,7 +152,8 @@ export const LIFECYCLE_HINT: Record<LifecycleState, string> = {
   promo: 'Tem grant promocional ativo.',
   trial_expired: 'Tinha trial, expirou sem converter. Alvo de win-back.',
   churned: 'Era pagante e cancelou — período acabou. Alvo de reativação.',
-  never_engaged: 'Signup, mas nunca abriu o paywall.',
+  activated: 'Mandou a 1ª invoice (viu valor) mas não assinou. Alvo de win-back.',
+  never_engaged: 'Signup, mas ainda não mandou a 1ª invoice.',
 };
 
 export const STORE_LABEL: Record<UserStore, string> = {
@@ -214,7 +218,8 @@ export function searchParamsToFilters(
   const lifecycles = csv('lifecycle').filter(
     (s): s is LifecycleState =>
       s === 'paying' || s === 'trial' || s === 'promo' ||
-      s === 'trial_expired' || s === 'churned' || s === 'never_engaged',
+      s === 'trial_expired' || s === 'churned' ||
+      s === 'activated' || s === 'never_engaged',
   );
   const stores = csv('store').filter(
     (s): s is UserStore =>
@@ -256,8 +261,11 @@ export function deriveLifecycleState(input: {
   /** Either dollars (User 360) or cents (list RPC). Either is fine — we just
    *  check whether it's > 0. */
   total_revenue?: number | null | undefined;
+  /** Emitted ≥1 non-draft invoice — the activation signal. When true and the
+   *  user isn't a payer/trial/churn, they're 'activated' (free, not converted)
+   *  rather than 'never_engaged'. */
+  has_invoice?: boolean | null | undefined;
 }): LifecycleState {
-  if (!input.has_rc_row) return 'never_engaged';
   const active = !!input.is_active;
   const revenue = input.total_revenue ?? 0;
   const store = input.store ?? '';
@@ -271,6 +279,7 @@ export function deriveLifecycleState(input: {
   if (!active && input.trial_started_at && revenue === 0) return 'trial_expired';
   if (status === 'churned' && revenue > 0) return 'churned';
   if (status === 'churned') return 'trial_expired';
+  if (input.has_invoice) return 'activated';
   return 'never_engaged';
 }
 
