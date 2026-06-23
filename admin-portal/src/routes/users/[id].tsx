@@ -590,6 +590,14 @@ function daysSince(iso: string | null): number | null {
   return Math.max(0, Math.floor(ms / 86_400_000));
 }
 
+function acquisitionLabel(insight: UserInsight): string {
+  const parts = [insight.acq_source, insight.acq_medium, insight.acq_campaign]
+    .map((p) => (p ? p.trim() : ''))
+    .filter(Boolean);
+  if (parts.length === 0) return 'Orgânico / direto (sem UTM)';
+  return parts.join(' · ');
+}
+
 function BehaviorRiskCard({ insight }: { insight: UserInsight | null }) {
   if (!insight) return null;
   const inactive = daysSince(insight.last_seen_at);
@@ -610,7 +618,13 @@ function BehaviorRiskCard({ insight }: { insight: UserInsight | null }) {
         </span>
       </div>
 
-      <div className="mt-3 grid gap-3 sm:grid-cols-3">
+      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div>
+          <Text className="!text-[11px] !text-navy-400">Veio de</Text>
+          <div className="text-sm font-medium text-navy-700">
+            {acquisitionLabel(insight)}
+          </div>
+        </div>
         <div>
           <Text className="!text-[11px] !text-navy-400">Última atividade</Text>
           <div className="text-sm font-medium text-navy-700">
