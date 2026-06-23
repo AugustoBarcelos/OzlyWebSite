@@ -63,6 +63,7 @@ export function LifecycleBadge({ state }: { state: LifecycleState }) {
     promo: 'bg-violet-50 text-violet-700 ring-violet-100',
     trial_expired: 'bg-orange-50 text-orange-700 ring-orange-100',
     churned: 'bg-rose-50 text-rose-700 ring-rose-100',
+    activated: 'bg-teal-50 text-teal-700 ring-teal-100',
     never_engaged: 'bg-navy-50 text-navy-500 ring-navy-100',
   };
   return (

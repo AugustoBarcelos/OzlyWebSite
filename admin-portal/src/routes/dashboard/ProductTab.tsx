@@ -56,26 +56,26 @@ export function ProductTab({ data, loading, period }: Props) {
 
   const funnelSteps = activationFunnel
     ? [
-        { name: 'Signed up', value: activationFunnel.signed_up },
+        { name: 'Cadastrou', value: activationFunnel.signed_up },
         {
-          name: 'Onboarded',
-          value: activationFunnel.onboarded,
-          hint: 'onboarding_complete',
-        },
-        {
-          name: 'Trial picked',
-          value: activationFunnel.trial_picked,
-          hint: 'welcome_trial_plan_selected',
-        },
-        {
-          name: 'First session',
+          name: 'Abriu o app',
           value: activationFunnel.first_session,
           hint: 'session_start ≥ signup',
         },
         {
-          name: 'First job',
+          name: 'Onboarding',
+          value: activationFunnel.onboarded,
+          hint: 'onboarding_complete',
+        },
+        {
+          name: 'Criou job',
+          value: activationFunnel.trial_picked,
+          hint: 'jobs table',
+        },
+        {
+          name: 'Emitiu invoice (ativou)',
           value: activationFunnel.first_job,
-          hint: 'job_created event',
+          hint: 'non-draft invoice — activation',
         },
       ]
     : [

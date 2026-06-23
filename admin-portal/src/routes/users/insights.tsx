@@ -15,6 +15,7 @@ export type FineStage =
   | 'trial_idle'
   | 'churned'
   | 'trial_expired'
+  | 'promo'
   | 'activated_no_convert'
   | 'signed_up_inactive';
 
@@ -51,6 +52,7 @@ const FINE_STAGE_LABEL: Record<FineStage, string> = {
   trial_idle: 'Trial parado',
   churned: 'Churn',
   trial_expired: 'Trial expirou',
+  promo: 'Promo (cortesia)',
   activated_no_convert: 'Ativou, não converteu',
   signed_up_inactive: 'Não ativou',
 };
@@ -63,6 +65,7 @@ const FINE_STAGE_HINT: Record<FineStage, string> = {
   trial_idle: 'Em trial mas não abre há > 5d — provável não-conversão.',
   churned: 'Era pagante e o período acabou. Alvo de reativação.',
   trial_expired: 'Trial expirou sem pagar.',
+  promo: 'Grant promocional ativo (cortesia/staff) — não é receita real.',
   activated_no_convert: 'Mandou a 1ª invoice (viu valor) mas nunca assinou.',
   signed_up_inactive: 'Cadastrou e nunca mandou invoice — não ativou.',
 };
@@ -75,7 +78,8 @@ const FINE_STAGE_STYLE: Record<FineStage, string> = {
   trial_idle: 'bg-orange-50 text-orange-700 ring-orange-200',
   churned: 'bg-rose-50 text-rose-700 ring-rose-100',
   trial_expired: 'bg-orange-50 text-orange-700 ring-orange-100',
-  activated_no_convert: 'bg-violet-50 text-violet-700 ring-violet-100',
+  promo: 'bg-violet-50 text-violet-700 ring-violet-100',
+  activated_no_convert: 'bg-teal-50 text-teal-700 ring-teal-100',
   signed_up_inactive: 'bg-navy-50 text-navy-500 ring-navy-100',
 };
 
