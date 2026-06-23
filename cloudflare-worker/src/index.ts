@@ -603,7 +603,29 @@ function humanizeSlug(slug: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+// Source of truth for "already covered" = the Supabase blog_posts table (what
+// the site actually serves), UNIONed with the GitHub content folder. The two can
+// drift (posts published straight to the DB, or a commit that didn't land), and
+// the dedupe must catch every existing subject — otherwise the AI re-suggests
+// topics we've already written. Both sources are best-effort: if one fails we
+// still return the other.
 async function listExistingSlugs(env: Env): Promise<string[]> {
+  const [db, gh] = await Promise.all([listDbSlugs(env), listGithubSlugs(env)]);
+  return [...new Set([...db, ...gh])];
+}
+
+// All slugs in the DB, including drafts — we don't want to re-suggest a subject
+// that's already drafted, not just published.
+async function listDbSlugs(env: Env): Promise<string[]> {
+  try {
+    const rows = await dbQuery(env, 'select=slug');
+    return rows.map((r) => r.slug).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+async function listGithubSlugs(env: Env): Promise<string[]> {
   const res = await fetch(
     `https://api.github.com/repos/${GITHUB_REPO}/contents/content/blog/en?ref=${GITHUB_BRANCH}`,
     {
