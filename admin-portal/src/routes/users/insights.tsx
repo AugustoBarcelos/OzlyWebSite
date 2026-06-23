@@ -33,6 +33,9 @@ export interface UserInsight {
   last_cancel_at: string | null;
   install_status: InstallStatus;
   fine_stage: FineStage;
+  acq_source: string | null;
+  acq_medium: string | null;
+  acq_campaign: string | null;
 }
 
 export async function fetchUserInsights(ids: string[]): Promise<Record<string, UserInsight>> {
