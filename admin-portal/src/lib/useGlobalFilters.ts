@@ -65,7 +65,7 @@ function parsePlan(v: string | null): PlanValue {
 const STORAGE_KEY = 'ozly_admin_global_filters';
 function readFilterStore(): Partial<Record<keyof GlobalFilters, string>> {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = window.localStorage.getItem(STORAGE_KEY);
     return raw ? (JSON.parse(raw) as Record<keyof GlobalFilters, string>) : {};
   } catch {
     return {};
@@ -73,7 +73,7 @@ function readFilterStore(): Partial<Record<keyof GlobalFilters, string>> {
 }
 function writeFilterStore(patch: Partial<Record<keyof GlobalFilters, string>>) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...readFilterStore(), ...patch }));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...readFilterStore(), ...patch }));
   } catch {
     /* ignore */
   }
@@ -133,7 +133,7 @@ export function useGlobalFilters() {
 
   const clearAll = useCallback(() => {
     try {
-      localStorage.removeItem(STORAGE_KEY);
+      window.localStorage.removeItem(STORAGE_KEY);
     } catch {
       /* ignore */
     }
