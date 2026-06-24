@@ -126,13 +126,18 @@ export function CockpitPage() {
     for (const s of atRisk ?? []) m[s.segment] = s.count;
     return m;
   }, [atRisk]);
-  // Churn (mexe no dinheiro) ≠ conversão (free que nunca pagou). Não dá pra
-  // somar os dois num "em risco" só — isso inflava o número (8 com 1 pagante).
+  // 3 grupos mutuamente exclusivos — cada estágio em UM só, pra não inflar:
+  //  A) Em risco de perder (AINDA salvável — MRR real em risco)
+  //  B) Já perdemos (período/trial acabou — reativação, NÃO risco)
+  //  C) Conversão (free que nunca pagou — oportunidade)
   const riskChurn = atRisk
-    ? (riskBy['paying_at_risk'] ?? 0) + (riskBy['cancel_winback'] ?? 0) + (riskBy['churned'] ?? 0)
+    ? (riskBy['paying_at_risk'] ?? 0) + (riskBy['cancel_winback'] ?? 0)
+    : null;
+  const lostReactivate = atRisk
+    ? (riskBy['churned'] ?? 0) + (riskBy['trial_expired'] ?? 0)
     : null;
   const riskConv = atRisk
-    ? (riskBy['activated_no_convert'] ?? 0) + (riskBy['trial_idle'] ?? 0) + (riskBy['trial_expired'] ?? 0)
+    ? (riskBy['activated_no_convert'] ?? 0) + (riskBy['trial_idle'] ?? 0)
     : null;
   const latestCohort = useMemo(() => {
     const cs = data.cohort?.cohorts ?? [];
@@ -377,31 +382,42 @@ export function CockpitPage() {
             <CmdStat label="Churn" value={churn === null ? '—' : formatNumber(churn)} />
           </CommandCard>
 
-          {/* Churn (pagantes) — só quem mexe no dinheiro */}
-          <CommandCard title="Churn de pagantes" to="/product/at-risk" tone="rose" cta="Agir">
+          {/* A · Em risco de perder — AINDA salvável (MRR real em risco) */}
+          <CommandCard title="Em risco de perder" to="/product/at-risk" tone="rose" cta="Salvar">
             <CmdStat
-              label="Em risco de perder"
+              label="Pagantes salváveis"
               value={riskChurn === null ? '—' : formatNumber(riskChurn)}
-              hint="pagante em risco + cancelando + churned"
+              hint="ainda paga ou tem acesso — dá pra reverter"
             />
             <div className="mt-1 space-y-0.5 text-[11px] text-navy-500">
               <div>Pagante em risco: <b>{riskBy['paying_at_risk'] ?? 0}</b></div>
               <div>Cancelando (resgatável): <b>{riskBy['cancel_winback'] ?? 0}</b></div>
-              <div>Já cancelaram: <b>{riskBy['churned'] ?? 0}</b></div>
             </div>
           </CommandCard>
 
-          {/* Conversão (free que não pagou) — oportunidade, NÃO é churn */}
-          <CommandCard title="Conversão (free)" to="/product/at-risk" tone="teal" cta="Agir">
+          {/* B · Já perdemos — período/trial acabou (reativação, NÃO risco) */}
+          <CommandCard title="Já perdemos" to="/product/at-risk" tone="slate" cta="Reativar">
             <CmdStat
-              label="Não pagaram ainda"
+              label="Pra reativar"
+              value={lostReactivate === null ? '—' : formatNumber(lostReactivate)}
+              hint="já saíram — campanha de reativação, não é risco"
+            />
+            <div className="mt-1 space-y-0.5 text-[11px] text-navy-500">
+              <div>Pagante que saiu: <b>{riskBy['churned'] ?? 0}</b></div>
+              <div>Trial expirou: <b>{riskBy['trial_expired'] ?? 0}</b></div>
+            </div>
+          </CommandCard>
+
+          {/* C · Conversão — free que nunca pagou (oportunidade) */}
+          <CommandCard title="Conversão (free)" to="/product/at-risk" tone="teal" cta="Converter">
+            <CmdStat
+              label="Nunca pagaram"
               value={riskConv === null ? '—' : formatNumber(riskConv)}
-              hint="oportunidade, não é churn"
+              hint="oportunidade — ainda no funil"
             />
             <div className="mt-1 space-y-0.5 text-[11px] text-navy-500">
               <div>Ativou s/ converter: <b>{riskBy['activated_no_convert'] ?? 0}</b></div>
               <div>Trial parado: <b>{riskBy['trial_idle'] ?? 0}</b></div>
-              <div>Trial expirou: <b>{riskBy['trial_expired'] ?? 0}</b></div>
             </div>
           </CommandCard>
 
@@ -920,6 +936,7 @@ const CMD_TONE: Record<string, string> = {
   violet: 'hover:border-violet-200',
   amber: 'hover:border-amber-200',
   teal: 'hover:border-teal-200',
+  slate: 'hover:border-navy-200',
 };
 
 function CommandCard({
