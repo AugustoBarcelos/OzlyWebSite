@@ -6,7 +6,7 @@ export function MarketingAsoPage() {
     <div className="space-y-6">
       <PageHeader
         title="Lojas (ASO)"
-        description="App Store + Play Store — rating, reviews, versão atual, estado da listagem."
+        description="Apple App Store e Google Play SEPARADOS — installs por loja, rating, reviews, versão atual e usuários por versão."
       />
       <StoresTab />
     </div>
