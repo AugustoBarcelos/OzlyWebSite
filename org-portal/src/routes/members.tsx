@@ -50,6 +50,9 @@ interface MemberCard {
   // failed (or we never tried, e.g. SMS channel) so the admin doesn't
   // assume an unsent invite was actually delivered.
   deliveryStatus?: 'pending' | 'sent' | 'failed' | 'skipped' | null;
+  // Pending-invite cards only: the single-use token, so the admin can copy
+  // the share link or re-send the email without re-creating the invite.
+  inviteToken?: string;
 }
 
 /** Per-participant trial state derived from trial_ends_at + whether they're
@@ -78,7 +81,8 @@ export function MembersPage() {
 
   const [members, setMembers] = useState<OrgMembership[]>([]);
   const [profiles, setProfiles] = useState<Record<string, ProfileLite>>({});
-  const [pending, setPending] = useState<{ id: string; email_or_phone: string; role: MembershipRole; created_at: string; delivery_status: 'pending' | 'sent' | 'failed' | 'skipped' | null }[]>([]);
+  const [pending, setPending] = useState<{ id: string; email_or_phone: string; invited_name: string | null; token: string; role: MembershipRole; created_at: string; delivery_status: 'pending' | 'sent' | 'failed' | 'skipped' | null }[]>([]);
+  const [resendingId, setResendingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [detailMember, setDetailMember] = useState<MemberCard | null>(null);
@@ -100,7 +104,7 @@ export function MembersPage() {
         .in('status', ['accepted', 'pending']),
       supabase
         .from('org_invitations')
-        .select('id, email_or_phone, role, created_at, expires_at, delivery_status')
+        .select('id, email_or_phone, invited_name, token, role, created_at, expires_at, delivery_status')
         .eq('org_id', orgId)
         .is('accepted_at', null)
         // Hide expired invites so "pending" mirrors what the invitee can act on.
@@ -141,6 +145,33 @@ export function MembersPage() {
     void load();
   }, [load]);
 
+  // Re-send the invite email for an existing pending invitation (the token is
+  // reused — no new invite row). Mirrors the tri-state delivery toast from the
+  // InviteModal so the admin is never told "sent" when it actually skipped/failed.
+  const resendInvite = useCallback(async (inviteId: string) => {
+    setResendingId(inviteId);
+    const { data, error } = await supabase.functions.invoke('send-org-invite', {
+      body: { invitation_id: inviteId },
+    });
+    setResendingId(null);
+    const delivery = (data as { delivery?: string } | null)?.delivery;
+    if (error) {
+      notify("Couldn't resend the email. Copy the link and share it manually.", 'error');
+    } else if (delivery === 'skipped') {
+      notify("We don't send SMS yet — copy the link and share it directly.", 'info');
+    } else if (delivery === 'sent') {
+      notify('Invitation resent — email on its way.', 'success');
+    } else {
+      notify('Invitation re-sent.', 'info');
+    }
+    void load();
+  }, [notify, load]);
+
+  const copyInviteLink = useCallback((token: string) => {
+    void navigator.clipboard.writeText(`${env.inviteBaseUrl}/invite/${token}`);
+    notify('Invite link copied', 'success');
+  }, [notify]);
+
   const cards = useMemo<MemberCard[]>(() => {
     const memberCards: MemberCard[] = members.map((m) => {
       const p = profiles[m.user_id];
@@ -161,11 +192,12 @@ export function MembersPage() {
     });
     const pendingCards: MemberCard[] = pending.map((i) => ({
       key: i.id,
-      name: i.email_or_phone,
+      name: i.invited_name?.trim() || i.email_or_phone,
       role: i.role,
       status: 'pending',
       date: i.created_at,
       deliveryStatus: i.delivery_status,
+      inviteToken: i.token,
     }));
     return [...pendingCards, ...memberCards];
   }, [members, profiles, pending]);
@@ -350,7 +382,28 @@ export function MembersPage() {
                     </div>
                   </>
                 ) : (
-                  <div className="mt-3 text-xs text-navy-400">Invited {formatDate(c.date)}</div>
+                  <div className="mt-3 flex items-center justify-between gap-2">
+                    <span className="text-xs text-navy-400">Invited {formatDate(c.date)}</span>
+                    <div className="flex items-center gap-1.5">
+                      {c.deliveryStatus !== 'skipped' && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); void resendInvite(c.key); }}
+                          disabled={resendingId === c.key}
+                          className="rounded-md px-2 py-1 text-[11px] font-medium text-brand-700 ring-1 ring-brand-200 hover:bg-brand-50 disabled:opacity-50"
+                        >
+                          {resendingId === c.key ? 'Resending…' : 'Resend'}
+                        </button>
+                      )}
+                      {c.inviteToken && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); copyInviteLink(c.inviteToken!); }}
+                          className="rounded-md px-2 py-1 text-[11px] font-medium text-navy-600 ring-1 ring-navy-100 hover:bg-navy-50"
+                        >
+                          Copy link
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 )}
               </div>
             );
@@ -841,6 +894,7 @@ function InviteModal(props: {
 }) {
   const { orgId, planIsFree, atSeatLimit, seatLimit, onClose, onSent, notify } = props;
   const [channel, setChannel] = useState<'email' | 'phone'>('email');
+  const [name, setName] = useState('');
   const [value, setValue] = useState('');
   const [role, setRole] = useState<MembershipRole>('member');
   const [submitting, setSubmitting] = useState(false);
@@ -848,12 +902,12 @@ function InviteModal(props: {
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!value.trim()) return;
+    if (!value.trim() || !name.trim()) return;
     setSubmitting(true);
     try {
       const { data, error } = await supabase
         .from('org_invitations')
-        .insert({ org_id: orgId, email_or_phone: value.trim(), role })
+        .insert({ org_id: orgId, email_or_phone: value.trim(), invited_name: name.trim() || null, role })
         .select('id, token')
         .single();
       // Throw original error so friendlyError can map RLS / 23505 / etc.
@@ -952,6 +1006,19 @@ function InviteModal(props: {
           </div>
         ) : (
           <form onSubmit={onSubmit} className="mt-4">
+            <label className="mb-3 block text-xs font-medium text-navy-600">
+              Name
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. John Smith"
+                autoFocus
+                maxLength={80}
+                className="mt-1 w-full rounded-md border border-navy-100 bg-white px-3 py-2 text-sm text-navy-700 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+              />
+            </label>
+
             <div className="inline-flex rounded-md bg-navy-50 p-0.5 text-xs font-medium">
               {/* "phone" channel never sends an SMS — the flow only produces a
                   copyable link, so the label says what actually happens. */}
@@ -999,8 +1066,8 @@ function InviteModal(props: {
 
             <button
               type="submit"
-              disabled={submitting}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-500 disabled:bg-brand-300"
+              disabled={submitting || !name.trim() || !value.trim()}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-500 disabled:bg-brand-300 disabled:cursor-not-allowed"
             >
               {submitting && <Spinner size="sm" label="Sending" />}
               {submitting ? 'Sending…' : 'Send invitation'}
