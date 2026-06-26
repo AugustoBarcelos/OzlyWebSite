@@ -4,6 +4,9 @@ import type { ChannelKind } from './auth';
 export type MsgChannel = Extract<ChannelKind, `msg_${string}`>;
 
 export const MESSAGING_SEGMENTS = [
+  { value: 'not-activated', label: 'Não ativou', hint: 'Cadastrou e nunca emitiu a 1ª invoice' },
+  { value: 'activated-no-convert', label: 'Ativou, não converteu', hint: 'Emitiu a 1ª invoice (grátis) mas nunca pagou' },
+  { value: 'at-risk', label: 'Em risco (salvável)', hint: 'Pagante em risco ou cancelou mas ainda tem acesso' },
   { value: 'all-active', label: 'Todos signups (30d)', hint: 'Qualquer signup nos últimos 30 dias' },
   { value: 'trial-2d', label: 'Trial expirando (2d)', hint: 'Trial picked há 12-14 dias' },
   { value: 'trial-7d-no-pay', label: 'Trial expirou sem pagar (7d)', hint: 'Trial expirou 7d e nunca pagou' },
@@ -11,6 +14,21 @@ export const MESSAGING_SEGMENTS = [
   { value: 'paid-renewed', label: 'Pagantes renovados', hint: 'Já pagaram 2 ou mais vezes' },
   { value: 'affiliate-active', label: 'Vindos de afiliado', hint: 'Conversões de programa de afiliados' },
 ] as const;
+
+export interface SegmentEmail {
+  user_id: string;
+  email: string;
+  full_name: string | null;
+  created_at: string;
+}
+
+/** Emails REAIS de um segmento (PII, admin-only, auditado no backend). */
+export async function fetchSegmentEmails(segment: string) {
+  return callRpc<{ segment: string; count: number; emails: SegmentEmail[] }>(
+    'admin_segment_emails',
+    { p_segment: segment },
+  );
+}
 
 export type SegmentValue = (typeof MESSAGING_SEGMENTS)[number]['value'];
 

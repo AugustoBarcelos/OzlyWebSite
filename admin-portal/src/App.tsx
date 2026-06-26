@@ -34,6 +34,9 @@ const UserListPage = lazy(() =>
 const User360Page = lazy(() =>
   import('./routes/users/[id]').then((m) => ({ default: m.User360Page })),
 );
+const UserEmailsPage = lazy(() =>
+  import('./routes/users/emails').then((m) => ({ default: m.UserEmailsPage })),
+);
 const UsersNpsPage = lazy(() =>
   import('./routes/users/nps').then((m) => ({ default: m.UsersNpsPage })),
 );
@@ -439,6 +442,7 @@ export function App() {
 
                 {/* Users */}
                 <Route path="/users" element={lazyRoute(UserListPage)} />
+                <Route path="/users/emails" element={lazyRoute(UserEmailsPage)} />
                 <Route path="/users/nps" element={lazyRoute(UsersNpsPage)} />
                 <Route path="/users/:id" element={lazyRoute(User360Page)} />
 
