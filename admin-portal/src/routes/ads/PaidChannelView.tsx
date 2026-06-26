@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Card, Grid, Title, Text, Badge } from '@tremor/react';
 import { KpiCard } from '@/components/KpiCard';
 import { Spinner } from '@/components/Spinner';
@@ -6,6 +6,7 @@ import { IntegrationStub } from '../marketing/PlaceholderCard';
 import {
   fetchPaidChannel,
   formatCents,
+  triggerPaidSnapshot,
   type PaidChannelDetail,
   type PaidChannel,
 } from '@/lib/paid';
@@ -26,48 +27,91 @@ export function PaidChannelView({ channel, stubProps }: Props) {
   const [data, setData] = useState<PaidChannelDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncNote, setSyncNote] = useState<string | null>(null);
 
-  useEffect(() => {
-    let alive = true;
+  const load = useCallback(async () => {
     setLoading(true);
-    fetchPaidChannel(channel, 30)
-      .then((d) => {
-        if (alive) {
-          setData(d);
-          setLoading(false);
-        }
-      })
-      .catch((e) => {
-        if (alive) {
-          setError(e instanceof RpcError ? e.message : 'Failed');
-          setLoading(false);
-        }
-      });
-    return () => {
-      alive = false;
-    };
+    setError(null);
+    try {
+      setData(await fetchPaidChannel(channel, 30));
+    } catch (e) {
+      setError(e instanceof RpcError ? e.message : 'Failed');
+    } finally {
+      setLoading(false);
+    }
   }, [channel]);
 
-  if (loading) {
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const handleSync = useCallback(async () => {
+    setSyncing(true);
+    setSyncNote('Sincronizando com a loja…');
+    try {
+      const r = await triggerPaidSnapshot();
+      setSyncNote(r.note ?? 'Sync disparado. Aguardando…');
+    } catch (e) {
+      setSyncNote(e instanceof RpcError ? e.message : 'Falha ao sincronizar');
+      setSyncing(false);
+      return;
+    }
+    // Dá tempo do edge function chamar a Apple e gravar, então re-busca.
+    window.setTimeout(() => {
+      void load();
+      setSyncing(false);
+      setSyncNote('Atualizado. Se ainda não aparecer, o Apple pode não ter reportado ainda.');
+    }, 18000);
+  }, [load]);
+
+  const syncBar = (
+    <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-navy-50 bg-white px-3 py-2">
+      <span className="text-xs text-navy-400">
+        {syncNote ?? 'Snapshot atualiza 1×/h (cron :17). Não quer esperar?'}
+      </span>
+      <button
+        type="button"
+        onClick={() => void handleSync()}
+        disabled={syncing}
+        className="inline-flex items-center gap-1.5 rounded-md border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700 transition-colors hover:bg-brand-100 disabled:opacity-50"
+      >
+        {syncing && <Spinner size="sm" />}
+        {syncing ? 'Sincronizando…' : 'Sincronizar agora'}
+      </button>
+    </div>
+  );
+
+  if (loading && !data) {
     return (
-      <div className="flex justify-center py-10">
-        <Spinner size="md" />
+      <div className="space-y-3">
+        {syncBar}
+        <div className="flex justify-center py-10">
+          <Spinner size="md" />
+        </div>
       </div>
     );
   }
 
-  // Sem dados → mostra integration stub. Permission denied? show error.
   if (error) {
     return (
-      <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
-        {error}
+      <div className="space-y-3">
+        {syncBar}
+        <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
+          {error}
+        </div>
       </div>
     );
   }
 
   const hasData = data && data.campaigns && data.campaigns.length > 0;
   if (!hasData) {
-    return <IntegrationStub {...stubProps} />;
+    return (
+      <div className="space-y-3">
+        {syncBar}
+        <IntegrationStub {...stubProps} />
+      </div>
+    );
   }
 
   const totals = data.totals;
@@ -75,6 +119,7 @@ export function PaidChannelView({ channel, stubProps }: Props) {
 
   return (
     <div className="space-y-4">
+      {syncBar}
       {/* KPIs */}
       <Grid numItemsSm={2} numItemsLg={4} className="gap-4">
         <KpiCard
