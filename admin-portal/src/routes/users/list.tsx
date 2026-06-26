@@ -384,6 +384,12 @@ export function UserListPage() {
 
         <div className="flex items-center gap-2">
           <Link
+            to="/users/emails"
+            className="inline-flex items-center gap-1.5 rounded-md border border-navy-100 bg-white px-3 py-1.5 text-xs font-medium text-navy-600 transition-colors hover:border-brand-300 hover:text-brand-700"
+          >
+            Emails por segmento
+          </Link>
+          <Link
             to="/users/nps"
             className="inline-flex items-center gap-1.5 rounded-md border border-navy-100 bg-white px-3 py-1.5 text-xs font-medium text-navy-600 transition-colors hover:border-brand-300 hover:text-brand-700"
           >
