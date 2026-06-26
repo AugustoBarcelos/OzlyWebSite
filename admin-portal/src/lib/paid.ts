@@ -69,6 +69,19 @@ export async function triggerPaidSnapshot() {
   );
 }
 
+export interface PaidSnapshotRun {
+  channel: PaidChannel;
+  status: 'ok' | 'error' | 'missing_secrets';
+  rows: number;
+  error: string | null;
+  ran_at: string;
+}
+
+/** Última saúde do dispatch por canal (sucesso/erro/linhas/quando). */
+export async function fetchPaidRuns() {
+  return callRpc<{ runs: PaidSnapshotRun[] }>('admin_paid_snapshot_runs', {});
+}
+
 export function formatCents(cents: number, currency = 'AUD'): string {
   return `${currency} ${(cents / 100).toLocaleString('en-AU', {
     minimumFractionDigits: 2,

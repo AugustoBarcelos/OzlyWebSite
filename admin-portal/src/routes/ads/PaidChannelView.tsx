@@ -5,12 +5,15 @@ import { Spinner } from '@/components/Spinner';
 import { IntegrationStub } from '../marketing/PlaceholderCard';
 import {
   fetchPaidChannel,
+  fetchPaidRuns,
   formatCents,
   triggerPaidSnapshot,
   type PaidChannelDetail,
   type PaidChannel,
+  type PaidSnapshotRun,
 } from '@/lib/paid';
 import { RpcError } from '@/lib/rpc';
+import { formatRelativeTime } from '@/lib/format';
 import type { ComponentProps } from 'react';
 
 interface Props {
@@ -30,6 +33,8 @@ export function PaidChannelView({ channel, stubProps }: Props) {
   const [syncing, setSyncing] = useState(false);
   const [syncNote, setSyncNote] = useState<string | null>(null);
 
+  const [run, setRun] = useState<PaidSnapshotRun | null>(null);
+
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -40,6 +45,10 @@ export function PaidChannelView({ channel, stubProps }: Props) {
     } finally {
       setLoading(false);
     }
+    // Saúde do último sync deste canal (não bloqueia a tela se falhar).
+    fetchPaidRuns()
+      .then((r) => setRun(r.runs.find((x) => x.channel === channel) ?? null))
+      .catch(() => undefined);
   }, [channel]);
 
   useEffect(() => {
@@ -66,19 +75,36 @@ export function PaidChannelView({ channel, stubProps }: Props) {
   }, [load]);
 
   const syncBar = (
-    <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-navy-50 bg-white px-3 py-2">
-      <span className="text-xs text-navy-400">
-        {syncNote ?? 'Snapshot atualiza 1×/h (cron :17). Não quer esperar?'}
-      </span>
-      <button
-        type="button"
-        onClick={() => void handleSync()}
-        disabled={syncing}
-        className="inline-flex items-center gap-1.5 rounded-md border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700 transition-colors hover:bg-brand-100 disabled:opacity-50"
-      >
-        {syncing && <Spinner size="sm" />}
-        {syncing ? 'Sincronizando…' : 'Sincronizar agora'}
-      </button>
+    <div className="space-y-1.5 rounded-md border border-navy-50 bg-white px-3 py-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-xs text-navy-400">
+          {syncNote ?? 'Snapshot atualiza 1×/h (cron :17). Não quer esperar?'}
+        </span>
+        <button
+          type="button"
+          onClick={() => void handleSync()}
+          disabled={syncing}
+          className="inline-flex items-center gap-1.5 rounded-md border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700 transition-colors hover:bg-brand-100 disabled:opacity-50"
+        >
+          {syncing && <Spinner size="sm" />}
+          {syncing ? 'Sincronizando…' : 'Sincronizar agora'}
+        </button>
+      </div>
+      {run && (
+        <div className="text-[11px]">
+          {run.status === 'ok' ? (
+            <span className="text-navy-400">
+              Último sync {formatRelativeTime(run.ran_at)}: OK · {run.rows} linha(s) gravadas
+              {run.rows === 0 && ' (Apple ainda não reportou dados da campanha)'}.
+            </span>
+          ) : (
+            <span className="text-rose-600">
+              ⚠ Último sync {formatRelativeTime(run.ran_at)} falhou ({run.status}):{' '}
+              <span className="font-mono">{run.error ?? '—'}</span>
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 
