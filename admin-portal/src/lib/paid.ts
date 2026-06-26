@@ -61,6 +61,14 @@ export async function fetchPaidOverview(periodDays = 30) {
   });
 }
 
+/** Dispara o edge function paid-snapshot-dispatch on-demand (não espera o cron). */
+export async function triggerPaidSnapshot() {
+  return callRpc<{ ok: boolean; request_id: number; note: string }>(
+    'admin_trigger_paid_snapshot',
+    {},
+  );
+}
+
 export function formatCents(cents: number, currency = 'AUD'): string {
   return `${currency} ${(cents / 100).toLocaleString('en-AU', {
     minimumFractionDigits: 2,
