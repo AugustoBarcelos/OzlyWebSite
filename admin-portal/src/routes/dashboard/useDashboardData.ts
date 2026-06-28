@@ -140,7 +140,7 @@ export function useDashboardData(period: Period) {
         }),
         safeCall<FunnelResponse>('admin_funnel', { p_period_days: period }),
         safeCall<GeoSplitResponse>('admin_geo_split', {}),
-        safeCall<CohortRetentionResponse>('admin_cohort_retention', {}),
+        safeCall<CohortRetentionResponse>('admin_cohort_retention', { p_period_days: period }),
         safeCall<CohortRetentionResponse>('admin_login_retention', {}),
         safeCall<JobsTimeseriesResponse>('admin_jobs_timeseries', {
           p_period_days: period,
