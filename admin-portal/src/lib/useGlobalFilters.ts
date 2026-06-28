@@ -14,7 +14,12 @@ import { useSearchParams } from 'react-router-dom';
  *   setFilter('period', '30');
  */
 
-export type PeriodValue = '1' | '7' | '14' | '30' | '90' | 'custom';
+export type PeriodValue = '1' | '7' | '14' | '30' | '90' | 'all' | 'custom';
+
+// "Tudo" (all-time). As RPCs validam p_period_days até 365 e o produto tem
+// poucos meses, então 365d cobre todo o histórico hoje. (Subir o teto quando
+// passar de 1 ano de dados.)
+export const ALL_TIME_DAYS = 365;
 export type ChannelValue = 'all' | 'organic' | 'google' | 'meta' | 'asa' | 'tiktok' | 'referral' | 'affiliate';
 export type PlanValue = 'all' | 'tfn' | 'abn' | 'pro';
 
@@ -32,7 +37,7 @@ const DEFAULTS: GlobalFilters = {
   geo: 'all',
 };
 
-const VALID_PERIODS: ReadonlyArray<PeriodValue> = ['1', '7', '14', '30', '90', 'custom'];
+const VALID_PERIODS: ReadonlyArray<PeriodValue> = ['1', '7', '14', '30', '90', 'all', 'custom'];
 const VALID_CHANNELS: ReadonlyArray<ChannelValue> = [
   'all',
   'organic',
@@ -149,6 +154,7 @@ export function useGlobalFilters() {
 
   const periodDays = useMemo<number>(() => {
     if (filters.period === 'custom') return 30; // fallback until custom dates wired
+    if (filters.period === 'all') return ALL_TIME_DAYS;
     return Number(filters.period);
   }, [filters.period]);
 

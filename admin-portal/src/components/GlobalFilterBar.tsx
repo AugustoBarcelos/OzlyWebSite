@@ -8,6 +8,7 @@ const PERIOD_OPTIONS: ReadonlyArray<{ value: PeriodValue; label: string }> = [
   { value: '14', label: '14d' },
   { value: '30', label: '30d' },
   { value: '90', label: '90d' },
+  { value: 'all', label: 'Tudo' },
 ];
 
 const CHANNEL_OPTIONS: ReadonlyArray<{ value: ChannelValue; label: string }> = [

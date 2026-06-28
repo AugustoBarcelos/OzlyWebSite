@@ -234,11 +234,13 @@ export interface TimeToActivationResponse {
   never_activated: number;
 }
 
-export type Period = 1 | 7 | 30 | 90;
+export type Period = 1 | 7 | 30 | 90 | 365;
 
 export const PERIODS: ReadonlyArray<{ days: Period; label: string }> = [
   { days: 1, label: '24h' },
   { days: 7, label: '7d' },
   { days: 30, label: '30d' },
   { days: 90, label: '90d' },
+  // "Tudo" — 365d cobre todo o histórico hoje (produto < 1 ano).
+  { days: 365, label: 'Tudo' },
 ];
