@@ -118,16 +118,28 @@ function daysUntil(iso: string | null): number | null {
   return Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000);
 }
 
+const PERIOD_OPTS: ReadonlyArray<{ v: string; label: string; days: number | null }> = [
+  { v: 'all', label: 'Tudo', days: null },
+  { v: '7', label: '7d', days: 7 },
+  { v: '30', label: '30d', days: 30 },
+  { v: '90', label: '90d', days: 90 },
+];
+
 export function ProductAtRiskPage() {
   const [data, setData] = useState<AtRiskBoardResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [period, setPeriod] = useState<string>('all');
 
   useEffect(() => {
     let alive = true;
     setLoading(true);
     setError(null);
-    callRpc<AtRiskBoardResponse>('admin_at_risk_board', { p_limit_per_segment: 50 })
+    const days = PERIOD_OPTS.find((p) => p.v === period)?.days ?? null;
+    callRpc<AtRiskBoardResponse>('admin_at_risk_board', {
+      p_limit_per_segment: 50,
+      p_period_days: days,
+    })
       .then((res) => {
         if (!alive) return;
         setData(res);
@@ -141,7 +153,7 @@ export function ProductAtRiskPage() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [period]);
 
   const bySegment: Record<string, AtRiskSegment> = {};
   for (const s of data?.segments ?? []) bySegment[s.segment] = s;
@@ -167,12 +179,28 @@ export function ProductAtRiskPage() {
             </p>
           </div>
         </div>
-        <Link
-          to="/product"
-          className="self-start rounded-md border border-navy-100 bg-white px-3 py-1.5 text-xs font-medium text-navy-600 transition-colors hover:border-brand-200 hover:text-brand-700 md:self-end"
-        >
-          ← Product Hub
-        </Link>
+        <div className="flex items-center gap-2 self-start md:self-end">
+          <div className="inline-flex rounded-md border border-navy-100 bg-white p-0.5">
+            {PERIOD_OPTS.map((p) => (
+              <button
+                key={p.v}
+                type="button"
+                onClick={() => setPeriod(p.v)}
+                className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
+                  period === p.v ? 'bg-brand-500 text-white' : 'text-navy-500 hover:bg-navy-50'
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+          <Link
+            to="/product"
+            className="rounded-md border border-navy-100 bg-white px-3 py-1.5 text-xs font-medium text-navy-600 transition-colors hover:border-brand-200 hover:text-brand-700"
+          >
+            ← Product Hub
+          </Link>
+        </div>
       </header>
 
       {error && (
