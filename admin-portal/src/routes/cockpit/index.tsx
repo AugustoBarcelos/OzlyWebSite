@@ -199,6 +199,12 @@ export function CockpitPage() {
   }, [data.kpi]);
   const mrr = data.kpi?.mrr_estimate_aud ?? data.revenue?.mrr_total ?? null;
   const churn = data.kpi?.churn_period ?? null;
+  // Churn como taxa (% da base de pagantes do período).
+  const churnBase = (paidActiveTotal ?? 0) + (churn ?? 0);
+  const churnRate = churn !== null && churnBase > 0 ? churn / churnBase : null;
+  // Conversão trial→pago (o RPC já devolve em pontos percentuais).
+  const convTrialPaid = data.revenue?.conversion_trial_to_paid_period ?? null;
+  const pctTrialPaid = convTrialPaid === null ? '—' : `${convTrialPaid.toFixed(0)}%`;
   const pc = data.pendingCancellations;
   const mrrAtRisk = pc?.potential_mrr_loss_aud ?? null;
   // Trial que não vai converter ≠ pagante que pediu cancelamento — situações
@@ -379,7 +385,12 @@ export function CockpitPage() {
           <CommandCard title="Dinheiro" to="/revenue" tone="emerald">
             <CmdStat label="MRR" value={mrr === null ? '—' : formatCurrencyAUD(mrr)} />
             <CmdStat label="Pagantes" value={paidActiveTotal === null ? '—' : formatNumber(paidActiveTotal)} />
-            <CmdStat label="Churn" value={churn === null ? '—' : formatNumber(churn)} />
+            <CmdStat
+              label="Churn"
+              value={churnRate === null ? '—' : `${(churnRate * 100).toFixed(0)}%`}
+              hint={churn === null ? '' : `${churn} de ${churnBase} saíram`}
+            />
+            <CmdStat label="Conversão trial→pago" value={pctTrialPaid} hint="do funil de trial" />
           </CommandCard>
 
           {/* A · Em risco de perder — AINDA salvável (MRR real em risco) */}

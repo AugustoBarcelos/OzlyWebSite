@@ -115,6 +115,9 @@ export function RevenuePage() {
       (data.kpi.paid_active.abn ?? 0) +
       (data.kpi.paid_active.pro ?? 0)
     : null;
+  // Churn como TAXA (% da base de pagantes do período).
+  const churnBase = (paidActiveTotal ?? 0) + (churn ?? 0);
+  const churnRate = churn !== null && churnBase > 0 ? churn / churnBase : null;
   const trialsStarted = data?.kpi.trials_started_period ?? null;
   const trialsActive = data?.kpi.trials_active ?? null;
   const trialsLapsed = data?.kpi.trials_lapsed_period ?? null;
@@ -182,8 +185,9 @@ export function RevenuePage() {
         />
         <KpiHero
           label={`Churn · ${period}d`}
-          value={churn}
-          hint={churn === null ? 'Pending RC sync' : 'Paid subs expired in period'}
+          value={churnRate}
+          formatter={(v) => (v === null ? '—' : `${(v * 100).toFixed(1)}%`)}
+          hint={churn === null ? 'Pending RC sync' : `${churn} de ${churnBase} pagantes saíram`}
           loading={loading && !data}
           tone="warning"
           isIncreasePositive={false}

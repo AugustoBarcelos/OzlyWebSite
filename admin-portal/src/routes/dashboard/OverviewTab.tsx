@@ -31,6 +31,12 @@ export function OverviewTab({ data, loading, period }: Props) {
   const promoGrantsActive = kpi?.promo_grants_active ?? null;
   const trialsActive = kpi?.trials_active ?? null;
 
+  // Churn como TAXA: subs que saíram ÷ base de pagantes no período
+  // (ativos agora + os que saíram ≈ pagantes no início do período).
+  const churnCount = kpi?.churn_period ?? revenue?.churn_period ?? null;
+  const churnBase = (paidActiveTotal ?? 0) + (churnCount ?? 0);
+  const churnRate = churnCount !== null && churnBase > 0 ? churnCount / churnBase : null;
+
   const paidDonut = kpi?.paid_active
     ? [
         { name: 'TFN', value: kpi.paid_active.tfn ?? 0 },
@@ -88,11 +94,12 @@ export function OverviewTab({ data, loading, period }: Props) {
         />
         <KpiHero
           label={`Churn · ${period}d`}
-          value={kpi?.churn_period ?? revenue?.churn_period ?? null}
+          value={churnRate}
+          formatter={(v) => (v === null ? '—' : `${(v * 100).toFixed(1)}%`)}
           hint={
-            (kpi?.churn_period ?? revenue?.churn_period) === null
+            churnCount === null
               ? 'Pending RevenueCat sync'
-              : 'Paid subs expired in period'
+              : `${churnCount} de ${churnBase} pagantes saíram`
           }
           loading={loading && !kpi}
           tone="warning"
