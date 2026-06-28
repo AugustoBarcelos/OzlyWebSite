@@ -108,6 +108,7 @@ export function CockpitPage() {
     let alive = true;
     callRpc<{ segments: Array<{ segment: string; count: number }> }>('admin_at_risk_board', {
       p_limit_per_segment: 1,
+      p_period_days: period,
     })
       .then((r) => alive && setAtRisk(r.segments.map((s) => ({ segment: s.segment, count: s.count }))))
       .catch(() => alive && setAtRisk([]));
