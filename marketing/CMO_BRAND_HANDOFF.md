@@ -20,7 +20,7 @@ pdf_options:
   <div class="cover-meta">
     <div>
       <strong>Versão</strong>
-      1.1 — 2026-05-26
+      1.2 — 2026-07
     </div>
     <div>
       <strong>Mantenedor</strong>
@@ -35,7 +35,7 @@ pdf_options:
 
 # Sumário executivo
 
-Ozly é um app **mobile-first** para trabalhadores autônomos (ABN/TFN) na Austrália gerenciarem jobs, invoices, despesas e impostos sem precisar de contador no dia-a-dia. Está **em produção nas duas lojas** (App Store AU + Google Play) com 3 planos por assinatura (TFN, ABN, PRO). Preço de entrada equivalente a **AUD $2.88/semana** (TFN/ABN anual) ou **$14.99/mês** no plano mensal. Trial de 14 dias em todos os planos.
+Ozly é um app **mobile-first** para trabalhadores autônomos (ABN/TFN) na Austrália gerenciarem jobs, invoices, despesas e impostos sem precisar de contador no dia-a-dia. Está **em produção nas duas lojas** (App Store AU + Google Play) com 2 planos por assinatura (ABN, PRO). Preço de entrada equivalente a **AUD $2.88/semana** (ABN anual) ou **$14.99/mês** no plano mensal. Trial de 14 dias em todos os planos.
 
 <div class="stat-grid">
   <div class="stat-card">
@@ -406,7 +406,6 @@ Dois ciclos de cobrança por plano: **mensal** (preço cheio) ou **anual** (com 
 
 | Plano | Para quem | Mensal | Anual | Equiv. semanal (anual) | Equiv. mensal (anual) |
 |---|---|---|---|---|---|
-| **TFN** | Trabalhadores com TFN (salário, shifts, PAYG, Medicare) | **$14.99/mês** | **$149.99/ano** | $2.88/sem | $12.50/mês |
 | **ABN** | Sole traders com ABN (invoices, GST, BAS) | **$14.99/mês** | **$149.99/ano** | $2.88/sem | $12.50/mês |
 | **PRO** | Quem tem ambos (toggle TFN ↔ ABN no app) | **$19.99/mês** | **$199.99/ano** | $3.85/sem | $16.67/mês |
 
