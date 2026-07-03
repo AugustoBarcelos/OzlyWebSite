@@ -34,7 +34,7 @@ const GITHUB_BRANCH = "main";
 // Free Workers AI model. Strong instruct model on the free tier.
 const AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 // Bump on each meaningful worker change so /admin/api/health proves what's live.
-const WORKER_BUILD = "2026-06-20-shell-fresh-v10";
+const WORKER_BUILD = "2026-07-03-newsletter-generate-v11";
 
 const CRAWLER_UA_RE =
   /facebookexternalhit|facebot|whatsapp|twitterbot|telegrambot|linkedinbot|discordbot|slackbot|googlebot|bingbot|pinterest|skypeuripreview|redditbot|applebot|yahoobot|duckduckbot/i;
@@ -427,6 +427,7 @@ async function handleBlogSsr(env: Env, route: BlogRoute): Promise<Response | nul
    - GET  /admin/api/topics          → curated topics + which slugs exist
    - POST /admin/api/suggest-topics  → fresh AI-generated topic ideas
    - POST /admin/api/generate        → draft a post (EN/PT/ES) with Workers AI
+   - POST /admin/api/newsletter/generate → draft a newsletter edition (EN/PT/ES)
    - POST /admin/api/review          → AI fact-check / editorial review
    - POST /admin/api/publish         → commit markdown to GitHub (triggers deploy)
    Auth: a valid admin-portal Supabase session (Bearer token). No password.
@@ -552,6 +553,21 @@ async function handleAdminApi(request: Request, env: Env, url: URL): Promise<Res
     try {
       const post = await generatePost(topic, slug, env);
       return json(post);
+    } catch (e) {
+      return json({ error: `Generation failed: ${(e as Error).message}` }, 502);
+    }
+  }
+
+  // Draft a newsletter edition (EN/PT/ES: subject + preheader + body) with
+  // Workers AI. Same auth + model + defensive parsing as the blog generate
+  // route. A human reviews/edits in the admin before sending via the messaging
+  // broadcast pipeline. Topic can come from the query (?topic=) or JSON body.
+  if (path === '/admin/api/newsletter/generate' && request.method === 'POST') {
+    const bodyIn = (await request.json().catch(() => ({}))) as { topic?: string; brief?: string };
+    const topic = (bodyIn.topic ?? bodyIn.brief ?? url.searchParams.get('topic') ?? '').trim();
+    if (!topic) return json({ error: 'Missing topic' }, 400);
+    try {
+      return json(await generateNewsletter(topic, env));
     } catch (e) {
       return json({ error: `Generation failed: ${(e as Error).message}` }, 502);
     }
@@ -854,6 +870,100 @@ async function generatePost(topic: string, slug: string | undefined, env: Env): 
     aiGenerateLang(topic, 'es', env),
   ]);
   return { slug: slug ? slugify(slug) : slugify(en.title), en, pt, es };
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   NEWSLETTER AI-AUTHORING  (called by the admin-portal Newsletter page)
+   - POST /admin/api/newsletter/generate → draft an edition (EN/PT/ES) with
+     Workers AI: each language = { subject, preheader, body }.
+   Mirrors the blog generate route (same AI_MODEL, defensive @@@marker@@@
+   parsing, parallel per-language calls). Sending is handled elsewhere by the
+   messaging broadcast pipeline — this only drafts. Voice per
+   marketing/newsletter/README.md: direct, plain, Aussie-friendly, NO emojis,
+   never call the app "free/grátis", only real ATO/tax facts (don't invent
+   numbers). ~150–180-word body.
+   ════════════════════════════════════════════════════════════════════ */
+interface NewsletterLang { subject: string; preheader: string; body: string }
+interface NewsletterResult { en: NewsletterLang; pt: NewsletterLang; es: NewsletterLang }
+
+function parseNewsletter(raw: unknown): NewsletterLang {
+  if (raw && typeof raw === 'object' && 'subject' in (raw as object) && 'body' in (raw as object)) {
+    return raw as NewsletterLang;
+  }
+  const text = String(raw ?? '').trim();
+  let subject = section(text, 'SUBJECT');
+  let preheader = section(text, 'PREHEADER') || section(text, 'PREHEAD');
+  let body = section(text, 'BODY');
+
+  // Salvage: model ignored the markers. Take the first usable line as the
+  // subject and the rest as the body — a human reviews/edits anyway.
+  if (!subject || !body) {
+    const lines = text.split('\n').map((l) => l.replace(/^#+\s*/, '').trim());
+    const idx = lines.findIndex((l) => l.length > 0);
+    if (idx === -1) throw new Error('AI returned empty output — try again');
+    subject = subject || lines[idx].slice(0, 60);
+    body = body || lines.slice(idx + 1).join('\n').trim() || lines[idx];
+  }
+  if (!preheader) {
+    preheader = body.replace(/[#*>`\-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 90);
+  }
+  return { subject: subject.slice(0, 80), preheader: preheader.slice(0, 120), body };
+}
+
+async function aiGenerateNewsletterLang(
+  topic: string,
+  code: 'en' | 'pt' | 'es',
+  env: Env,
+): Promise<NewsletterLang> {
+  const langName = LANG_NAMES[code];
+
+  // Prompt from marketing/newsletter/README.md, adapted per language.
+  const system = `You write ONE edition of Ozly's email newsletter for Australian sole traders with an ABN (many are LATAM migrants). Write in ${langName} — native, idiomatic writing (NOT a translation).
+
+Voice: direct, plain, Aussie-friendly. NO emojis. Never call the app "free/grátis" — you MAY cite the trial or the first invoice being free as real offers, but never brand the product as free. Only real Australian tax/ATO facts — do NOT invent numbers, rates, thresholds or deadlines; if unsure, keep it qualitative. A human reviews before sending.
+
+Structure of the body:
+- Hook: 1 line, straight to the value.
+- 2–3 value blocks: each a mini-title + 1–2 concrete, actionable sentences.
+- 1 CTA: a single action (open the app / check X / send an invoice).
+- Sign off with "— ${code === 'pt' ? 'Equipe Ozly' : code === 'es' ? 'Equipo Ozly' : 'The Ozly team'}". Do NOT add an unsubscribe line — that is appended automatically on send.
+Keep the whole body to ~150–180 words. Skimmable — less is more. Plain text (light Markdown for the mini-titles is fine); no links required.
+
+Topic: ${topic}
+
+Output using these exact separator lines, copied literally character-for-character. Do NOT replace them with markdown headings:
+@@@SUBJECT@@@
+(subject line, <=50 chars, benefit-oriented, no emoji)
+@@@PREHEADER@@@
+(inbox preview line, <=90 chars)
+@@@BODY@@@
+(the newsletter body here)`;
+
+  const result = (await env.AI.run(AI_MODEL, {
+    max_tokens: 1024,
+    // ~0.8: fresh drafts on regenerate without going off the rails.
+    temperature: 0.8,
+    messages: [
+      { role: 'system', content: system },
+      {
+        role: 'user',
+        content: `Write the newsletter edition in ${langName} now. Output ONLY the @@@-delimited format, nothing else.`,
+      },
+    ],
+  })) as { response?: unknown };
+
+  return parseNewsletter(result.response ?? result);
+}
+
+async function generateNewsletter(topic: string, env: Env): Promise<NewsletterResult> {
+  // Parallel — the 3 languages run at once so we stay under the Worker time
+  // limit (mirrors the blog generate route).
+  const [en, pt, es] = await Promise.all([
+    aiGenerateNewsletterLang(topic, 'en', env),
+    aiGenerateNewsletterLang(topic, 'pt', env),
+    aiGenerateNewsletterLang(topic, 'es', env),
+  ]);
+  return { en, pt, es };
 }
 
 /* ── Fact-check / editorial review (a second AI pass) ── */
