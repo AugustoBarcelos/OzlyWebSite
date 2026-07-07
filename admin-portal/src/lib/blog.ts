@@ -28,9 +28,28 @@ export interface BlogPost {
   en: BlogLang;
   pt: BlogLang;
   es: BlogLang;
+  /** 'post' (default blog article) | 'guide' (/guias funnel content). */
+  kind?: PostKind;
+  /** Guide-only soft category. */
+  profession?: Profession | null;
+  /** Guide-only Ozly feature the CTA funnels toward (free text). */
+  feature?: string | null;
 }
 
 export type LangCode = 'en' | 'pt' | 'es';
+
+/** Blog article vs /guias guide — same table, discriminated by `kind`. */
+export type PostKind = 'post' | 'guide';
+
+/** Soft guide category. Free text on the DB side; these are the known values. */
+export type Profession = 'cleaner' | 'delivery' | 'tradie' | 'geral';
+export const PROFESSIONS: Profession[] = ['cleaner', 'delivery', 'tradie', 'geral'];
+export const PROFESSION_LABEL: Record<Profession, string> = {
+  cleaner: 'Cleaner',
+  delivery: 'Entregador',
+  tradie: 'Tradie',
+  geral: 'Geral',
+};
 
 export interface ReviewFinding {
   severity: 'HIGH' | 'MED' | 'LOW';
@@ -127,12 +146,18 @@ export function reviewPost(post: BlogPost) {
  */
 export async function publishPost(post: BlogPost, draft: boolean) {
   const hasContent = (g?: BlogLang) => Boolean(g && g.title?.trim());
+  const kind: PostKind = post.kind === 'guide' ? 'guide' : 'post';
   const row = {
     slug: post.slug,
     draft,
     en: hasContent(post.en) ? post.en : null,
     pt: hasContent(post.pt) ? post.pt : null,
     es: hasContent(post.es) ? post.es : null,
+    // Discriminator + guide metadata. Posts always reset guide fields to null so
+    // switching kind can't leave stale profession/feature behind.
+    kind,
+    profession: kind === 'guide' ? (post.profession ?? null) : null,
+    feature: kind === 'guide' ? (post.feature?.trim() || null) : null,
     updated_at: new Date().toISOString(),
   };
   const { error } = await supabase.from('blog_posts').upsert(row, { onConflict: 'slug' });

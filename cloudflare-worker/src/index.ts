@@ -34,7 +34,7 @@ const GITHUB_BRANCH = "main";
 // Free Workers AI model. Strong instruct model on the free tier.
 const AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 // Bump on each meaningful worker change so /admin/api/health proves what's live.
-const WORKER_BUILD = "2026-07-03-newsletter-generate-v11";
+const WORKER_BUILD = "2026-07-07-guias-v1";
 
 const CRAWLER_UA_RE =
   /facebookexternalhit|facebot|whatsapp|twitterbot|telegrambot|linkedinbot|discordbot|slackbot|googlebot|bingbot|pinterest|skypeuripreview|redditbot|applebot|yahoobot|duckduckbot/i;
@@ -66,6 +66,32 @@ export default {
       try {
         const ssr = await handleBlogSsr(env, blogRoute);
         if (ssr) return ssr;
+      } catch {
+        /* fall through to origin */
+      }
+      return fetch(request);
+    }
+
+    // Guides (/guias) — SAME engine as the blog: SSR'd from public.blog_posts
+    // rows where kind='guide'. Same fall-through-to-origin safety net.
+    const guideRoute = matchGuideRoute(url.pathname);
+    if (guideRoute) {
+      try {
+        const ssr = await handleGuideSsr(env, guideRoute);
+        if (ssr) return ssr;
+      } catch {
+        /* fall through to origin */
+      }
+      return fetch(request);
+    }
+
+    // sitemap.xml — take the origin's static sitemap and splice in the live
+    // published guides (blog handles its own URLs elsewhere). Any failure falls
+    // through to the origin's untouched sitemap.
+    if (url.pathname === '/sitemap.xml') {
+      try {
+        const merged = await handleSitemap(request, env);
+        if (merged) return merged;
       } catch {
         /* fall through to origin */
       }
@@ -420,6 +446,186 @@ async function handleBlogSsr(env: Env, route: BlogRoute): Promise<Response | nul
   return new Response(injectShell(shell, head, rootInner, ''), {
     headers: { 'Content-Type': 'text/html; charset=UTF-8', 'Cache-Control': 'public, max-age=120, s-maxage=120', 'X-Blog-SSR': 'listing' },
   });
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   GUIDES (/guias) — reuses the blog engine. Same public.blog_posts table,
+   same marked → HTML, same meta/OG helpers. A guide is just a row with
+   kind='guide'. Each guide page ends with a fixed, parametrizable funnel CTA.
+   - GET /guias           → index (published kind='guide', title/desc/profession)
+   - GET /guias/:slug     → one guide, SSR + SEO, canonical /guias/:slug
+   PT-only for now; the row already carries en/pt/es so EN/ES can be added later
+   by widening GUIDE_LANG / GUIDE_LANGS without touching callers.
+   ════════════════════════════════════════════════════════════════════ */
+
+// Single funnel target for the guide CTA. The site branches iOS vs Android at
+// click time (src/lib/track.js appStoreUrl/playStoreUrl) — a static SSR link
+// can't do device detection, and there is no /app landing at origin, so we
+// point at the home page, which already hosts the device-aware download CTAs.
+// STORE_LINKS holds the direct store URLs if a hard link is ever needed.
+const APP_URL = `${ORIGIN}/`;
+
+// ── The ONE guide CTA. Fixed + parametrizable (never scattered). PT copy.
+// RULE: never say "grátis/free" — the offer is the 14-day trial. `feature`
+// (from the row) lets a guide tailor the lead line; falls back to a neutral one.
+function guideCtaHtml(opts: { feature?: string | null; href?: string }): string {
+  const href = opts.href || APP_URL;
+  const lead = opts.feature
+    ? `Cansado de fazer ${escapeHtml(opts.feature)} na mão?`
+    : `Cansado de fazer isso na mão?`;
+  return (
+    `<aside class="guide-cta" data-guide-cta>` +
+    `<p class="guide-cta__lead">${lead}</p>` +
+    `<p class="guide-cta__pitch">A Ozly faz isso automático — testa 14 dias sem pagar.</p>` +
+    `<a class="guide-cta__btn" href="${href}" rel="noopener">Começar no Ozly</a>` +
+    `</aside>`
+  );
+}
+
+// Guide languages — PT first. Structured as a map so EN/ES drop in later.
+type GuideLangCode = 'pt' | 'en' | 'es';
+const GUIDE_LANG: GuideLangCode = 'pt';
+const GUIDE_LANGS: Record<GuideLangCode, { prefix: string; hreflang: string; og: string; html: string }> = {
+  pt: { prefix: '', hreflang: 'pt-BR', og: 'pt_BR', html: 'pt-BR' },
+  en: { prefix: '/en', hreflang: 'en-AU', og: 'en_AU', html: 'en-AU' },
+  es: { prefix: '/es', hreflang: 'es', og: 'es_ES', html: 'es' },
+};
+const GUIDE_LISTING_META: Record<GuideLangCode, { title: string; description: string; intro: string }> = {
+  pt: {
+    title: 'Guias da Ozly — passo a passo para autônomos na Austrália',
+    description: 'Guias práticos para cleaners, entregadores e tradies: invoice, despesas e imposto sem complicação, feito para quem trabalha por conta própria na Austrália.',
+    intro: 'Guias práticos, direto ao ponto — para quem trabalha por conta própria na Austrália.',
+  },
+  en: {
+    title: 'Ozly Guides — step-by-step for sole traders in Australia',
+    description: 'Practical guides for cleaners, delivery drivers and tradies: invoicing, expenses and tax made simple for people working for themselves in Australia.',
+    intro: 'Practical, to-the-point guides — for people working for themselves in Australia.',
+  },
+  es: {
+    title: 'Guías de Ozly — paso a paso para autónomos en Australia',
+    description: 'Guías prácticas para cleaners, repartidores y tradies: facturas, gastos e impuestos sin complicaciones para quienes trabajan por su cuenta en Australia.',
+    intro: 'Guías prácticas y directas — para quienes trabajan por su cuenta en Australia.',
+  },
+};
+const PROFESSION_LABEL: Record<string, string> = {
+  cleaner: 'Cleaner',
+  delivery: 'Entregador',
+  tradie: 'Tradie',
+  geral: 'Geral',
+};
+
+interface GuideRoute { lang: GuideLangCode; slug: string | null; }
+
+function matchGuideRoute(pathname: string): GuideRoute | null {
+  const m = pathname.match(/^\/guias(?:\/([a-z0-9][a-z0-9_-]*))?\/?$/i);
+  if (!m) return null;
+  return { lang: GUIDE_LANG, slug: m[1] ? m[1].toLowerCase() : null };
+}
+
+// Guides carry the same per-lang JSONB + the new discriminator columns.
+interface DbGuide extends DbPost { kind?: string; profession?: string | null; feature?: string | null; }
+
+async function dbQueryGuides(env: Env, qs: string): Promise<DbGuide[]> {
+  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/blog_posts?${qs}`, {
+    headers: { apikey: env.SUPABASE_ANON_KEY, Authorization: `Bearer ${env.SUPABASE_ANON_KEY}` },
+  });
+  if (!res.ok) throw new Error(`Supabase ${res.status}`);
+  return (await res.json()) as DbGuide[];
+}
+const GUIDE_COLS = 'select=slug,date,author,tags,en,pt,es,kind,profession,feature';
+const dbListGuides = (env: Env) =>
+  dbQueryGuides(env, `${GUIDE_COLS}&kind=eq.guide&draft=eq.false&order=date.desc`);
+const dbGetGuide = async (env: Env, slug: string): Promise<DbGuide | null> => {
+  const rows = await dbQueryGuides(env, `${GUIDE_COLS}&kind=eq.guide&draft=eq.false&slug=eq.${encodeURIComponent(slug)}&limit=1`);
+  return rows[0] ?? null;
+};
+
+async function handleGuideSsr(env: Env, route: GuideRoute): Promise<Response | null> {
+  const L = GUIDE_LANGS[route.lang];
+
+  // ── Single guide ──
+  if (route.slug) {
+    const g = await dbGetGuide(env, route.slug);
+    if (!g) return null; // fall through to origin (404/SPA)
+    // Prefer the guide's own language; fall back to any language present.
+    const langs = blogLangsOf(g);
+    if (langs.length === 0) return null;
+    const code = (langs as GuideLangCode[]).includes(route.lang) ? route.lang : (langs[0] as GuideLangCode);
+    const tr = g[code] as GenLang;
+    const canonical = `${ORIGIN}/guias/${g.slug}/`;
+    const bodyHtml = marked.parse(tr.body) as string;
+    const cta = guideCtaHtml({ feature: g.feature });
+    const guideLd = {
+      '@context': 'https://schema.org', '@type': 'HowTo',
+      name: tr.title, description: tr.description, datePublished: g.date, dateModified: g.date,
+      inLanguage: GUIDE_LANGS[code].html,
+      author: { '@type': 'Organization', name: g.author || 'Ozly', url: `${ORIGIN}/` },
+      publisher: { '@type': 'Organization', name: 'Ozly Pty Ltd', url: `${ORIGIN}/`, logo: `${ORIGIN}/OSLY.svg` },
+      mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
+    };
+    const head = {
+      title: escapeHtml(`${tr.title} — Guias Ozly`),
+      tags: metaTags({ title: `${tr.title} — Guias Ozly`, description: tr.description, canonical, htmlLang: GUIDE_LANGS[code].html, ogLocale: GUIDE_LANGS[code].og, alternates: [], jsonLd: [guideLd] }),
+    };
+    const rootInner = `<article><h1>${escapeHtml(tr.title)}</h1><p>${escapeHtml(tr.description)}</p>${bodyHtml}${cta}</article>`;
+    const shell = await getShell();
+    return new Response(injectShell(shell, head, rootInner, ''), {
+      headers: { 'Content-Type': 'text/html; charset=UTF-8', 'Cache-Control': 'public, max-age=120, s-maxage=120', 'X-Guide-SSR': 'guide' },
+    });
+  }
+
+  // ── Index ──
+  const guides = (await dbListGuides(env)).filter((g) => blogLangsOf(g).length > 0);
+  const m = GUIDE_LISTING_META[route.lang];
+  const canonical = `${ORIGIN}/guias/`;
+  const items = guides.map((g) => {
+    const langs = blogLangsOf(g);
+    const code = (langs as GuideLangCode[]).includes(route.lang) ? route.lang : (langs[0] as GuideLangCode);
+    const tr = g[code] as GenLang;
+    const profLabel = g.profession ? (PROFESSION_LABEL[g.profession] || g.profession) : null;
+    const badge = profLabel ? `<span class="guide-badge">${escapeHtml(profLabel)}</span>` : '';
+    return `<article class="guide-item"><h2><a href="${ORIGIN}/guias/${g.slug}/">${escapeHtml(tr.title)}</a></h2>${badge}<p>${escapeHtml(tr.description)}</p></article>`;
+  }).join('');
+  const guidesLd = {
+    '@context': 'https://schema.org', '@type': 'CollectionPage', name: m.title, description: m.description,
+    url: canonical, inLanguage: L.html, publisher: { '@type': 'Organization', name: 'Ozly Pty Ltd', url: `${ORIGIN}/` },
+  };
+  const head = {
+    title: escapeHtml(m.title),
+    tags: metaTags({ title: m.title, description: m.description, canonical, htmlLang: L.html, ogLocale: L.og, alternates: [], jsonLd: [guidesLd] }),
+  };
+  const rootInner = `<h1>${escapeHtml(m.title)}</h1><p>${escapeHtml(m.intro)}</p>${items}`;
+  const shell = await getShell();
+  return new Response(injectShell(shell, head, rootInner, ''), {
+    headers: { 'Content-Type': 'text/html; charset=UTF-8', 'Cache-Control': 'public, max-age=120, s-maxage=120', 'X-Guide-SSR': 'listing' },
+  });
+}
+
+/** Merge live published guide URLs into the origin's static sitemap.xml. */
+async function handleSitemap(request: Request, env: Env): Promise<Response | null> {
+  const originRes = await fetch(request);
+  if (!originRes.ok) return null;
+  const xml = await originRes.text();
+  const close = '</urlset>';
+  if (!xml.includes(close)) return null; // unexpected shape → leave untouched
+
+  const guides = (await dbListGuides(env)).filter((g) => blogLangsOf(g).length > 0);
+  if (guides.length === 0) {
+    return new Response(xml, { status: 200, headers: sitemapHeaders() });
+  }
+  const entries = [
+    `  <url><loc>${ORIGIN}/guias/</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>`,
+    ...guides.map((g) => {
+      const lastmod = (g.date || '').slice(0, 10);
+      const mod = /^\d{4}-\d{2}-\d{2}$/.test(lastmod) ? `<lastmod>${lastmod}</lastmod>` : '';
+      return `  <url><loc>${ORIGIN}/guias/${g.slug}/</loc>${mod}<changefreq>monthly</changefreq><priority>0.6</priority></url>`;
+    }),
+  ].join('\n');
+  const merged = xml.replace(close, `${entries}\n${close}`);
+  return new Response(merged, { status: 200, headers: sitemapHeaders() });
+}
+function sitemapHeaders(): Record<string, string> {
+  return { 'Content-Type': 'application/xml; charset=UTF-8', 'Cache-Control': 'public, max-age=300, s-maxage=300', 'X-Guide-Sitemap': '1' };
 }
 
 /* ════════════════════════════════════════════════════════════════════

@@ -11,12 +11,16 @@ import {
   reviewPost,
   applyFix,
   publishPost,
+  PROFESSIONS,
+  PROFESSION_LABEL,
   type BlogTopic,
   type BlogPost,
   type BlogLang,
   type LangCode,
   type ReviewLang,
   type PublishedPost,
+  type PostKind,
+  type Profession,
 } from '@/lib/blog';
 
 type Step = 'pick' | 'generating' | 'edit';
@@ -38,6 +42,8 @@ export function MarketingBlogPage() {
   const [published, setPublished] = useState<PublishedPost[]>([]);
   const [selected, setSelected] = useState<BlogTopic | null>(null);
   const [custom, setCustom] = useState('');
+  // Blog article vs /guias guide — same AI + edit flow, different kind + funnel.
+  const [kind, setKind] = useState<PostKind>('post');
 
   const [loadError, setLoadError] = useState(false);
   // Which audience column is currently fetching more ideas (null = none).
@@ -116,9 +122,16 @@ export function MarketingBlogPage() {
     setStep('generating');
     try {
       const result = await generatePost(topic, slug);
-      setPost(result);
+      // Carry the chosen kind through to the editor + publish. Guides start on
+      // the 'geral' category (editable below) so the funnel CTA renders.
+      setPost({
+        ...result,
+        kind,
+        profession: kind === 'guide' ? 'geral' : null,
+        feature: null,
+      });
       setReviews(null);
-      setLang('en');
+      setLang(kind === 'guide' ? 'pt' : 'en');
       setStep('edit');
     } catch (e) {
       toast({ variant: 'error', title: 'Falha ao gerar', description: errMsg(e) });
@@ -241,6 +254,30 @@ export function MarketingBlogPage() {
             <Spinner label="Carregando temas" />
           ) : (
             <>
+              {/* Kind: blog post vs /guias guide — same wizard, different funnel. */}
+              <div>
+                <p className="mb-2 text-sm font-semibold text-navy-700">Tipo de conteúdo</p>
+                <div className="inline-flex rounded-full border border-slate-200 bg-slate-50 p-1">
+                  {(['post', 'guide'] as PostKind[]).map((k) => (
+                    <button
+                      key={k}
+                      type="button"
+                      onClick={() => setKind(k)}
+                      className={`rounded-full px-4 py-1.5 text-sm font-bold transition ${
+                        kind === k ? 'bg-navy-700 text-white' : 'text-navy-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {k === 'post' ? '📝 Post do blog' : '📚 Guia (/guias)'}
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-1 text-xs text-navy-300">
+                  {kind === 'guide'
+                    ? 'Guias vão para ozly.au/guias — cada um termina com um CTA fixo pro app.'
+                    : 'Posts vão para ozly.au/blog.'}
+                </p>
+              </div>
+
               <div>
                 <p className="mb-3 text-sm font-semibold text-navy-700">Temas sugeridos</p>
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -407,8 +444,47 @@ export function MarketingBlogPage() {
               onChange={(e) => setPost((p) => (p ? { ...p, slug: e.target.value } : p))}
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-brand-400 focus:outline-none"
             />
-            <p className="mt-1 text-xs text-navy-300">ozly.au/blog/{post.slug || '…'}</p>
+            <p className="mt-1 text-xs text-navy-300">
+              ozly.au/{post.kind === 'guide' ? 'guias' : 'blog'}/{post.slug || '…'}
+            </p>
           </div>
+
+          {/* Guide-only: profession category + funnel feature. */}
+          {post.kind === 'guide' && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-navy-700" htmlFor="g-profession">
+                  Profissão (categoria)
+                </label>
+                <select
+                  id="g-profession"
+                  value={post.profession ?? 'geral'}
+                  onChange={(e) =>
+                    setPost((p) => (p ? { ...p, profession: e.target.value as Profession } : p))
+                  }
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-brand-400 focus:outline-none"
+                >
+                  {PROFESSIONS.map((pr) => (
+                    <option key={pr} value={pr}>{PROFESSION_LABEL[pr]}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-navy-700" htmlFor="g-feature">
+                  Feature do CTA <span className="font-normal text-navy-300">(opcional)</span>
+                </label>
+                <input
+                  id="g-feature"
+                  type="text"
+                  value={post.feature ?? ''}
+                  onChange={(e) => setPost((p) => (p ? { ...p, feature: e.target.value } : p))}
+                  placeholder="ex: invoice, despesas, imposto"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-brand-400 focus:outline-none"
+                />
+                <p className="mt-1 text-xs text-navy-300">Ajusta a chamada do CTA no fim do guia.</p>
+              </div>
+            </div>
+          )}
 
           {/* Lang tabs */}
           <div className="flex gap-2">
