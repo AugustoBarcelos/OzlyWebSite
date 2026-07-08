@@ -1,20 +1,36 @@
 name: Deploy Worker to Cloudflare
 
 # The blog AI-authoring API + affiliate OG worker (ozly-og-worker) lives in
-# cloudflare-worker/. Before this, it only deployed via a manual `wrangler
-# deploy` from a laptop — so worker merges never showed up in Actions and could
-# silently NOT reach production. Now every push to main that touches the worker
-# deploys it automatically, visible here like every other workflow.
+# cloudflare-worker/.
+#
+# REALITY (2026-07): the repo's CF_API_TOKEN has Pages permissions (used by
+# admin-portal.yml) but NOT Workers Scripts:Edit, so `wrangler deploy` here fails
+# with "Authentication error [code: 10000]". Until a token WITH Workers perms is
+# provisioned, the worker is deployed manually from a laptop:
+#     cd cloudflare-worker && npx wrangler deploy
+#
+# So this workflow always TYPE-CHECKS on push (useful signal, no creds needed),
+# but the deploy step is gated behind a repo variable — exactly like
+# admin-portal.yml's ENABLE_ADMIN_PORTAL_DEPLOY. Flip it ON once the token can
+# deploy Workers:
+#   Settings → Variables → Actions → set ENABLE_WORKER_CI_DEPLOY=true
+# The token needs: Workers Scripts:Edit + Workers AI:Read (+ Account Settings:Read).
 on:
   push:
     branches: [ main ]
     paths:
       - 'cloudflare-worker/**'
       - '.github/workflows/worker-deploy.yml'
+  pull_request:
+    paths:
+      - 'cloudflare-worker/**'
+      - '.github/workflows/worker-deploy.yml'
   workflow_dispatch:
 
 jobs:
-  deploy:
+  # Always runs — proves the worker compiles without needing any Cloudflare creds.
+  check:
+    name: Type-check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -33,10 +49,32 @@ jobs:
         working-directory: cloudflare-worker
         run: npx tsc --noEmit
 
+  # Gated: only runs when the operator has flipped ENABLE_WORKER_CI_DEPLOY=true
+  # (i.e. once CF_API_TOKEN can actually deploy Workers). Skipped on PRs and until
+  # then, so a token that lacks Workers perms no longer paints the run red.
+  deploy:
+    name: Deploy to Cloudflare
+    needs: check
+    if: |
+      github.event_name != 'pull_request'
+      && vars.ENABLE_WORKER_CI_DEPLOY == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        working-directory: cloudflare-worker
+        run: npm ci
+
       - name: Deploy to Cloudflare
         uses: cloudflare/wrangler-action@v3
         with:
-          # Reuse the Cloudflare creds already in the repo (since 2026-05).
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
           workingDirectory: cloudflare-worker
