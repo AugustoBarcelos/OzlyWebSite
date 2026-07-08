@@ -34,7 +34,7 @@ const GITHUB_BRANCH = "main";
 // Free Workers AI model. Strong instruct model on the free tier.
 const AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 // Bump on each meaningful worker change so /admin/api/health proves what's live.
-const WORKER_BUILD = "2026-07-07-guias-v1";
+const WORKER_BUILD = "2026-07-08-blog-suggest-diversity-v1";
 
 const CRAWLER_UA_RE =
   /facebookexternalhit|facebot|whatsapp|twitterbot|telegrambot|linkedinbot|discordbot|slackbot|googlebot|bingbot|pinterest|skypeuripreview|redditbot|applebot|yahoobot|duckduckbot/i;
@@ -727,8 +727,8 @@ async function handleAdminApi(request: Request, env: Env, url: URL): Promise<Res
   if (!(await authed(request, env))) return json({ error: 'Unauthorized' }, 401);
 
   if (path === '/admin/api/topics' && request.method === 'GET') {
-    const done = await listExistingSlugs(env);
-    const titleBySlug = new Map(TOPICS.map((t) => [t.slug, t.title]));
+    const [done, dbMeta] = await Promise.all([listExistingSlugs(env), listDbPostMeta(env)]);
+    const curatedTitle = new Map(TOPICS.map((t) => [t.slug, t.title]));
     return json({
       topics: TOPICS.map((t) => ({
         ...t,
@@ -736,18 +736,35 @@ async function handleAdminApi(request: Request, env: Env, url: URL): Promise<Res
         done: done.includes(t.slug),
       })),
       // Everything actually published (incl. custom posts not in the curated
-      // list) so the wizard can show what's already live.
-      published: done.map((slug) => ({ slug, title: titleBySlug.get(slug) ?? humanizeSlug(slug) })),
+      // list) so the wizard can show what's already live — with the REAL title
+      // (from the DB row) and its kind, so chips read properly and the editor can
+      // reopen posts vs guides at the right URL.
+      published: done.map((slug) => {
+        const m = dbMeta.get(slug);
+        return {
+          slug,
+          title: m?.title ?? curatedTitle.get(slug) ?? humanizeSlug(slug),
+          kind: m?.kind === 'guide' ? 'guide' : 'post',
+        };
+      }),
     });
   }
 
   // Fresh AI-generated topic ideas (excludes ones already written/curated).
-  // Optional body { audience: 'business' | 'consumer' } to ask for one side only.
+  // Optional body { audience: 'business' | 'consumer', avoid: string[] }. `avoid`
+  // carries the titles ALREADY on the wizard's screen so clicking "suggest more"
+  // repeatedly gives genuinely new subjects instead of re-proposing the same ones.
   if (path === '/admin/api/suggest-topics' && request.method === 'POST') {
-    const body = (await request.json().catch(() => ({}))) as { audience?: 'business' | 'consumer' };
+    const body = (await request.json().catch(() => ({}))) as {
+      audience?: 'business' | 'consumer';
+      avoid?: unknown;
+    };
     const audience = body.audience === 'business' || body.audience === 'consumer' ? body.audience : undefined;
+    const avoidExtra = Array.isArray(body.avoid)
+      ? body.avoid.filter((x): x is string => typeof x === 'string' && x.trim().length > 0).slice(0, 60)
+      : [];
     try {
-      return json({ topics: await suggestTopics(env, audience) });
+      return json({ topics: await suggestTopics(env, audience, avoidExtra) });
     } catch (e) {
       return json({ error: `Suggest failed: ${(e as Error).message}` }, 502);
     }
@@ -847,6 +864,28 @@ async function listDbSlugs(env: Env): Promise<string[]> {
   }
 }
 
+// slug → { real title, kind } for every DB post the anon key can read (i.e.
+// published, non-draft). Used to label the "already published" chips with the
+// actual post title instead of a humanised slug, and to route post vs guide.
+async function listDbPostMeta(
+  env: Env,
+): Promise<Map<string, { title: string; kind: 'post' | 'guide' }>> {
+  const map = new Map<string, { title: string; kind: 'post' | 'guide' }>();
+  try {
+    const rows = (await dbQuery(env, 'select=slug,kind,en,pt,es')) as Array<
+      DbPost & { kind?: string }
+    >;
+    for (const r of rows) {
+      const title =
+        (r.en?.title || r.pt?.title || r.es?.title || '').trim() || humanizeSlug(r.slug);
+      map.set(r.slug, { title, kind: r.kind === 'guide' ? 'guide' : 'post' });
+    }
+  } catch {
+    /* best-effort — chips fall back to humanised slug */
+  }
+  return map;
+}
+
 async function listGithubSlugs(env: Env): Promise<string[]> {
   const res = await fetch(
     `https://api.github.com/repos/${GITHUB_REPO}/contents/content/blog/en?ref=${GITHUB_BRANCH}`,
@@ -867,17 +906,26 @@ async function listGithubSlugs(env: Env): Promise<string[]> {
 async function suggestTopics(
   env: Env,
   audience?: 'business' | 'consumer',
+  avoidExtra: string[] = [],
 ): Promise<Array<{ slug: string; title: string; angle: string; audience: 'business' | 'consumer'; done: boolean }>> {
   const publishedSlugs = await listExistingSlugs(env);
-  const existing = new Set<string>([...publishedSlugs, ...TOPICS.map((t) => t.slug)]);
+  // `avoidExtra` = titles already shown in the wizard this session. Slugifying
+  // them into `existing` filters exact repeats out of THIS call's output, so the
+  // "suggest more" button keeps producing net-new subjects instead of looping.
+  const existing = new Set<string>([
+    ...publishedSlugs,
+    ...TOPICS.map((t) => t.slug),
+    ...avoidExtra.map((t) => slugify(t)),
+  ]);
   // Avoid list = curated titles + the subjects of everything already published
-  // (humanised from the slug for posts not in the curated list), so the model
-  // doesn't propose a topic on a subject we've already covered.
+  // (humanised from the slug for posts not in the curated list) + everything
+  // already suggested on screen, so the model doesn't re-propose a covered subject.
   const titleBySlug = new Map(TOPICS.map((t) => [t.slug, t.title]));
   const avoid = [
     ...new Set([
       ...TOPICS.map((t) => t.title),
       ...publishedSlugs.map((s) => titleBySlug.get(s) ?? humanizeSlug(s)),
+      ...avoidExtra,
     ]),
   ].join('; ');
 
@@ -913,6 +961,10 @@ Output EXACTLY this, one block per idea, nothing else. Prefix each title with [B
   const result = (await env.AI.run(AI_MODEL, {
     max_tokens: 700,
     temperature: 0.9, // fresh ideas each click
+    // A random seed per call is what actually varies the sampling — at a fixed
+    // seed the model is near-deterministic and returns the same popular subjects
+    // every click regardless of temperature.
+    seed: Math.floor(Math.random() * 2_000_000_000),
     messages: [
       { role: 'system', content: system },
       { role: 'user', content: 'Give me 6 fresh topic ideas now. Output only the @@@TOPIC@@@ blocks.' },

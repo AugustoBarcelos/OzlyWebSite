@@ -8,6 +8,7 @@ import {
   fetchTopics,
   suggestMoreTopics,
   generatePost,
+  fetchPost,
   reviewPost,
   applyFix,
   publishPost,
@@ -60,6 +61,8 @@ export function MarketingBlogPage() {
   >(null);
   const [reviewing, setReviewing] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  // Slug currently being loaded back into the editor from "already published".
+  const [editing, setEditing] = useState<string | null>(null);
 
   const loadTopics = useCallback(async () => {
     setLoadError(false);
@@ -77,7 +80,13 @@ export function MarketingBlogPage() {
   const onSuggestMore = useCallback(async (audience: 'business' | 'consumer') => {
     setSuggesting(audience);
     try {
-      const { topics: more } = await suggestMoreTopics(audience);
+      // Send everything already on screen (both columns) + published titles so
+      // the model proposes genuinely new subjects instead of repeating.
+      const avoid = [
+        ...(topics ?? []).map((t) => t.title),
+        ...published.map((p) => p.title),
+      ];
+      const { topics: more } = await suggestMoreTopics(audience, avoid);
       // Force the requested audience on the results so they always land in the
       // right column even if the model mistags one.
       const tagged = more.map((t) => ({ ...t, audience }));
@@ -94,7 +103,7 @@ export function MarketingBlogPage() {
     } finally {
       setSuggesting(null);
     }
-  }, [toast]);
+  }, [toast, topics, published]);
 
   useEffect(() => {
     if (isAdmin) void loadTopics();
@@ -114,6 +123,26 @@ export function MarketingBlogPage() {
   const todo = (topics ?? []).filter((t) => !t.done);
   const soleTraderTopics = todo.filter((t) => t.audience !== 'business');
   const orgTopics = todo.filter((t) => t.audience === 'business');
+
+  // Reopen an already-published post in the editor to revise it. Publishing
+  // again upserts on the same slug, so this updates the live post in place.
+  async function onEditPublished(p: PublishedPost) {
+    setEditing(p.slug);
+    try {
+      const loaded = await fetchPost(p.slug);
+      setPost(loaded);
+      setKind(loaded.kind ?? 'post');
+      setReviews(null);
+      setProposal(null);
+      // Land on the first language that actually has content.
+      setLang((['en', 'pt', 'es'] as LangCode[]).find((c) => loaded[c].title.trim()) ?? 'en');
+      setStep('edit');
+    } catch (e) {
+      toast({ variant: 'error', title: 'Falha ao abrir o post', description: errMsg(e) });
+    } finally {
+      setEditing(null);
+    }
+  }
 
   async function onGenerate() {
     const topic = custom.trim() || selected?.title;
@@ -384,23 +413,38 @@ export function MarketingBlogPage() {
                   <p className="mb-2 text-sm font-semibold text-navy-700">
                     📝 Já publicados <span className="text-navy-400">({published.length})</span>
                   </p>
-                  <ul className="flex flex-wrap gap-1.5">
-                    {published.map((p) => (
-                      <li key={p.slug}>
-                        <a
-                          href={`https://ozly.au/blog/${p.slug}/`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title={`Ver ${p.title} no ar`}
-                          className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-navy-600 transition hover:border-brand-300 hover:bg-brand-50"
-                        >
-                          {p.title} ↗
-                        </a>
-                      </li>
-                    ))}
+                  <ul className="divide-y divide-slate-100">
+                    {published.map((p) => {
+                      const base = p.kind === 'guide' ? 'guias' : 'blog';
+                      return (
+                        <li key={p.slug} className="flex items-center gap-2 py-1.5">
+                          <span className="min-w-0 flex-1 truncate text-sm text-navy-700" title={p.title}>
+                            {p.kind === 'guide' && <span className="mr-1">📚</span>}
+                            {p.title}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => void onEditPublished(p)}
+                            disabled={editing !== null}
+                            className="shrink-0 rounded-full border border-brand-300 px-2.5 py-1 text-xs font-bold text-brand-700 transition hover:bg-brand-50 disabled:opacity-40"
+                          >
+                            {editing === p.slug ? 'Abrindo…' : '✏️ Editar'}
+                          </button>
+                          <a
+                            href={`https://ozly.au/${base}/${p.slug}/`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={`Ver ${p.title} no ar`}
+                            className="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-navy-500 transition hover:border-brand-300 hover:bg-brand-50"
+                          >
+                            ver ↗
+                          </a>
+                        </li>
+                      );
+                    })}
                   </ul>
                   <p className="mt-2 text-xs text-navy-300">
-                    As sugestões já evitam esses assuntos — não vão repetir o que está aqui.
+                    Editar reabre o post aqui — publicar de novo atualiza o que está no ar (mesmo slug). As sugestões da IA já evitam esses assuntos.
                   </p>
                 </div>
               )}
