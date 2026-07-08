@@ -34,7 +34,7 @@ const GITHUB_BRANCH = "main";
 // Free Workers AI model. Strong instruct model on the free tier.
 const AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 // Bump on each meaningful worker change so /admin/api/health proves what's live.
-const WORKER_BUILD = "2026-07-08-blog-suggest-diversity-v1";
+const WORKER_BUILD = "2026-07-08-guide-ai-generation-v1";
 
 const CRAWLER_UA_RE =
   /facebookexternalhit|facebot|whatsapp|twitterbot|telegrambot|linkedinbot|discordbot|slackbot|googlebot|bingbot|pinterest|skypeuripreview|redditbot|applebot|yahoobot|duckduckbot/i;
@@ -666,6 +666,44 @@ const TOPICS = [
   { slug: 'cleaning-rates-per-hour', title: 'How much to charge per hour for cleaning', angle: 'Real 2026 ranges, employee vs ABN, what to factor in.' },
 ];
 
+// Curated GUIDE backlog — the /guias funnel content. UNLIKE blog TOPICS these
+// are grouped by `profession` and phrased as practical, step-by-step how-tos.
+// Each carries a `feature` that seeds the guide's funnel angle (invoice /
+// deduções / imposto / GST) — the SSR CTA uses the row's `feature`, so keeping
+// them aligned here means the whole guide points at one Ozly job.
+// RULE: same as TOPICS — never give away a free alternative to the app; the
+// guide should make Ozly the natural next step.
+type GuideProfession = 'cleaner' | 'delivery' | 'tradie' | 'geral';
+const GUIDE_TOPICS: Record<
+  GuideProfession,
+  Array<{ slug: string; title: string; angle: string; feature: string }>
+> = {
+  cleaner: [
+    { slug: 'guia-deducoes-cleaner-abn', title: 'Deduções que todo cleaner com ABN pode reivindicar', angle: 'Passo a passo: o que dá pra deduzir (produtos, transporte, equipamento) e como guardar o comprovante.', feature: 'despesas' },
+    { slug: 'guia-primeira-invoice-faxina', title: 'Sua primeira invoice de faxina em 2 minutos', angle: 'Como montar uma tax invoice válida pra um cliente de limpeza, do zero.', feature: 'invoice' },
+    { slug: 'guia-cleaner-guardar-imposto', title: 'Quanto um cleaner deve guardar de cada pagamento pro imposto', angle: 'Regra prática pra separar o imposto a cada job e não tomar susto em julho.', feature: 'imposto' },
+  ],
+  delivery: [
+    { slug: 'guia-deducoes-combustivel-entregador', title: 'Como um entregador deduz combustível e o carro', angle: 'Logbook vs cents-per-km, o que conta como despesa e como registrar cada corrida.', feature: 'despesas' },
+    { slug: 'guia-primeira-invoice-entregador', title: 'Nota/invoice de entrega: quando e como emitir', angle: 'Quando o app já paga vs quando você precisa faturar, e como fazer certo.', feature: 'invoice' },
+    { slug: 'guia-entregador-guardar-imposto', title: 'Quanto guardar de imposto dirigindo por app', angle: 'Sem retenção no ABN: quanto separar de cada semana de entregas.', feature: 'imposto' },
+  ],
+  tradie: [
+    { slug: 'guia-deducoes-ferramentas-tradie', title: 'Deduzir ferramentas e equipamento como tradie', angle: 'Compra imediata vs depreciação, o que dá pra reivindicar e como guardar a nota.', feature: 'despesas' },
+    { slug: 'guia-tradie-gst-invoice', title: 'Invoice de tradie com GST: quando cobrar e como', angle: 'Registrou GST? Como emitir uma tax invoice com a linha de GST certa.', feature: 'invoice' },
+    { slug: 'guia-tradie-guardar-imposto', title: 'Quanto um tradie deve separar pro imposto e GST', angle: 'Regra prática pra guardar imposto (e GST se registrado) a cada job.', feature: 'imposto' },
+  ],
+  geral: [
+    { slug: 'guia-quanto-guardar-imposto', title: 'Quanto guardar de cada pagamento pro imposto', angle: 'Regra simples pra separar o imposto a cada pagamento recebido no ABN.', feature: 'imposto' },
+    { slug: 'guia-primeira-invoice-abn', title: 'Sua primeira invoice com ABN, do zero', angle: 'O que uma tax invoice válida precisa ter e como emitir a primeira em minutos.', feature: 'invoice' },
+    { slug: 'guia-organizar-despesas-abn', title: 'Como organizar suas despesas dedutíveis o ano todo', angle: 'Rotina simples pra não perder comprovante e chegar em julho pronto.', feature: 'despesas' },
+  ],
+};
+const GUIDE_PROFESSIONS: GuideProfession[] = ['cleaner', 'delivery', 'tradie', 'geral'];
+function isGuideProfession(x: unknown): x is GuideProfession {
+  return typeof x === 'string' && (GUIDE_PROFESSIONS as string[]).includes(x);
+}
+
 function corsHeaders(): Record<string, string> {
   // Same-origin (ozly.au/admin → ozly.au/admin/api) so CORS isn't strictly
   // needed, but these keep local testing painless.
@@ -719,6 +757,7 @@ async function handleAdminApi(request: Request, env: Env, url: URL): Promise<Res
         b2bTopics: true,
         audienceAwareGeneration: true,
         factCheckApplyEdits: true, // temperature 0.4 + directive prompt
+        guideGeneration: true, // kind='guide' → step-by-step /guias how-tos
       },
     });
   }
@@ -756,13 +795,25 @@ async function handleAdminApi(request: Request, env: Env, url: URL): Promise<Res
   // repeatedly gives genuinely new subjects instead of re-proposing the same ones.
   if (path === '/admin/api/suggest-topics' && request.method === 'POST') {
     const body = (await request.json().catch(() => ({}))) as {
+      kind?: string;
+      profession?: unknown;
       audience?: 'business' | 'consumer';
       avoid?: unknown;
     };
-    const audience = body.audience === 'business' || body.audience === 'consumer' ? body.audience : undefined;
     const avoidExtra = Array.isArray(body.avoid)
       ? body.avoid.filter((x): x is string => typeof x === 'string' && x.trim().length > 0).slice(0, 60)
       : [];
+    // kind='guide' → per-profession GUIDE topics (curated + an AI variant).
+    // Anything else keeps the unchanged blog-topic behaviour.
+    if (body.kind === 'guide') {
+      const profession = isGuideProfession(body.profession) ? body.profession : 'geral';
+      try {
+        return json({ topics: await suggestGuideTopics(env, profession, avoidExtra) });
+      } catch (e) {
+        return json({ error: `Suggest failed: ${(e as Error).message}` }, 502);
+      }
+    }
+    const audience = body.audience === 'business' || body.audience === 'consumer' ? body.audience : undefined;
     try {
       return json({ topics: await suggestTopics(env, audience, avoidExtra) });
     } catch (e) {
@@ -771,9 +822,24 @@ async function handleAdminApi(request: Request, env: Env, url: URL): Promise<Res
   }
 
   if (path === '/admin/api/generate' && request.method === 'POST') {
-    const { topic, slug } = (await request.json().catch(() => ({}))) as { topic?: string; slug?: string };
+    const body = (await request.json().catch(() => ({}))) as {
+      topic?: string;
+      slug?: string;
+      kind?: string;
+      profession?: unknown;
+      feature?: unknown;
+    };
+    const { topic, slug } = body;
     if (!topic) return json({ error: 'Missing topic' }, 400);
     try {
+      // kind='guide' → practical step-by-step guide (distinct prompt + funnel).
+      // Anything else keeps the unchanged blog-post generation.
+      if (body.kind === 'guide') {
+        const profession = isGuideProfession(body.profession) ? body.profession : 'geral';
+        const feature = typeof body.feature === 'string' && body.feature.trim() ? body.feature.trim() : null;
+        const guide = await generateGuide(topic, slug, profession, feature, env);
+        return json(guide);
+      }
       const post = await generatePost(topic, slug, env);
       return json(post);
     } catch (e) {
@@ -1128,6 +1194,174 @@ async function generatePost(topic: string, slug: string | undefined, env: Env): 
     aiGenerateLang(topic, 'es', env),
   ]);
   return { slug: slug ? slugify(slug) : slugify(en.title), en, pt, es };
+}
+
+/* ── Generate a GUIDE with Cloudflare Workers AI (free tier) ──
+   Mirrors the blog generatePost (same model, same defensive @@@marker@@@
+   parsing, one call per language, all 3 in parallel), but with a distinct
+   GUIDE prompt: a practical, step-by-step how-to for a specific profession's
+   Australian ABN sole trader, funneling toward one Ozly `feature`. The /guias
+   SSR appends the funnel CTA (guideCtaHtml), so the body must NOT repeat one. */
+const GUIDE_PROFESSION_AUDIENCE: Record<GuideProfession, string> = {
+  cleaner: 'a cleaner working as a sole trader (ABN) in Australia',
+  delivery: 'a delivery / rideshare driver working as a sole trader (ABN) in Australia',
+  tradie: 'a tradie working as a sole trader (ABN) in Australia',
+  geral: 'a self-employed sole trader (ABN) in Australia',
+};
+
+async function aiGenerateGuideLang(
+  topic: string,
+  profession: GuideProfession,
+  feature: string | null,
+  code: 'en' | 'pt' | 'es',
+  env: Env,
+): Promise<GenLang> {
+  const langName = LANG_NAMES[code];
+  const audienceLine = GUIDE_PROFESSION_AUDIENCE[profession];
+  const featureLine = feature
+    ? `Everything should build toward the Ozly job "${feature}" (invoicing / expenses / tax set-aside) — the reader should finish ready to do it in Ozly. Do NOT write the call-to-action yourself: the page appends the Ozly CTA automatically.`
+    : `Where natural, position Ozly (an invoicing, expense and tax-tracking app) as the tool that makes this practical. Do NOT write the call-to-action yourself: the page appends the Ozly CTA automatically.`;
+
+  const system = `You write PRACTICAL step-by-step GUIDES for Ozly's /guias section. This guide is for: ${audienceLine}.
+
+Write ONE how-to guide in ${langName} — native, idiomatic writing (NOT a translation). This is a GUIDE, not an opinion article: it must be actionable, concrete and easy to follow.
+
+Structure the body in THIS order, using these headings (translated into ${langName}):
+1. A short intro headed "O que você vai aprender" (What you'll learn / Lo que vas a aprender) — 1-2 sentences on what the reader will be able to do by the end.
+2. 3 to 6 concrete, numbered STEPS. Each step = a heading + a short paragraph or a tight list of exactly what to do. Be specific to ${audienceLine} (real examples, real items). No filler.
+3. A section "Erros comuns" (Common mistakes / Errores comunes) — 3-4 quick bullets of what people get wrong.
+4. A short "Resumo" (Summary / Resumen) — 2-3 sentences recapping the steps.
+
+${featureLine}
+
+Rules (follow strictly):
+1. Brand voice: direct and practical. NO emojis anywhere.
+2. NEVER say "grátis" / "free" — the offer is the 14-day trial or the first invoice. Do not describe the app or anything as free.
+3. Only state REAL Australian tax facts. Do NOT invent numbers, rates, thresholds or dollar amounts. If a specific number matters, either omit it or link the official source rather than guessing.
+4. For any tax/GST/visa fact, add an inline markdown link to the official source: ATO https://www.ato.gov.au/ or Home Affairs https://immi.homeaffairs.gov.au/ .
+5. MANDATORY — end the body (before any CTA, which you must NOT write) with a clear disclaimer in ${langName}: Ozly is a record-keeping tool, NOT an accountant or registered tax agent, and this guide is general information, not tax or accounting advice — consult a registered tax agent for your own situation.
+6. Do NOT write a call-to-action, a "download Ozly" line, store links, or a sign-off pitch — the page adds the CTA automatically. A guide that ends in a sales CTA is WRONG.
+
+Body = GitHub-flavoured Markdown (## headings, **bold**, numbered lists, bullet lists). Do NOT put the H1 title in the body. 500–800 words.
+
+Output using these exact separator lines, copied literally character-for-character. Do NOT replace them with markdown headings:
+@@@TITLE@@@
+(title here, <=70 chars — phrase it as a how-to / practical guide)
+@@@DESC@@@
+(meta description here, <=160 chars)
+@@@BODY@@@
+(the markdown body here)`;
+
+  const result = (await env.AI.run(AI_MODEL, {
+    max_tokens: 2048,
+    temperature: 0.85,
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: `Guide topic: ${topic}\n\nWrite the guide in ${langName} now. Output ONLY the @@@-delimited format, nothing else. Remember: no CTA, no emojis, no "grátis/free", no invented numbers.` },
+    ],
+  })) as { response?: unknown };
+
+  return parseDelimited(result.response ?? result);
+}
+
+async function generateGuide(
+  topic: string,
+  slug: string | undefined,
+  profession: GuideProfession,
+  feature: string | null,
+  env: Env,
+): Promise<GenResult> {
+  // Same parallel 3-language shape as generatePost to stay under the Worker
+  // time limit.
+  const [en, pt, es] = await Promise.all([
+    aiGenerateGuideLang(topic, profession, feature, 'en', env),
+    aiGenerateGuideLang(topic, profession, feature, 'pt', env),
+    aiGenerateGuideLang(topic, profession, feature, 'es', env),
+  ]);
+  return { slug: slug ? slugify(slug) : slugify(pt.title || en.title), en, pt, es };
+}
+
+/* ── Fresh GUIDE topic ideas for a profession (the guide "suggest more") ──
+   Curated per-profession list (like blog TOPICS) + one AI-suggested variant,
+   filtered against everything already written/curated. */
+async function suggestGuideTopics(
+  env: Env,
+  profession: GuideProfession,
+  avoidExtra: string[] = [],
+): Promise<Array<{ slug: string; title: string; angle: string; profession: GuideProfession; feature: string; done: boolean }>> {
+  const publishedSlugs = await listExistingSlugs(env);
+  const curated = GUIDE_TOPICS[profession];
+  const existing = new Set<string>([
+    ...publishedSlugs,
+    ...Object.values(GUIDE_TOPICS).flat().map((t) => t.slug),
+    ...avoidExtra.map((t) => slugify(t)),
+  ]);
+
+  const out: Array<{ slug: string; title: string; angle: string; profession: GuideProfession; feature: string; done: boolean }> = [];
+  // Curated first — always relevant, never invents facts.
+  for (const t of curated) {
+    out.push({ ...t, profession, done: publishedSlugs.includes(t.slug) });
+    existing.add(t.slug);
+  }
+
+  // One AI-suggested variant on top, best-effort — if the free model is busy we
+  // still return the curated list.
+  try {
+    const avoid = [
+      ...new Set([
+        ...Object.values(GUIDE_TOPICS).flat().map((t) => t.title),
+        ...publishedSlugs.map((s) => humanizeSlug(s)),
+        ...avoidExtra,
+      ]),
+    ].join('; ');
+    const audienceLine = GUIDE_PROFESSION_AUDIENCE[profession];
+    const system = `You suggest PRACTICAL step-by-step GUIDE ideas for Ozly's /guias section, for ${audienceLine}. Each must be a concrete how-to (invoicing, deductions/expenses, or setting money aside for tax) — Australia-specific, actionable, not a generic opinion piece.
+
+ALREADY COVERED — do NOT propose anything on the same subject as any of these:
+${avoid}.
+
+ANTI-CANNIBALISATION: Ozly IS an invoicing, expense and tax-tracking app. NEVER suggest a free alternative to it (no "free template", "spreadsheet", "DIY generator"). Every guide must make Ozly the natural next step.
+
+Output EXACTLY this, one block per idea, nothing else:
+@@@TOPIC@@@
+<how-to title up to 70 chars> | <one-line angle>`;
+    const result = (await env.AI.run(AI_MODEL, {
+      max_tokens: 400,
+      temperature: 0.9,
+      seed: Math.floor(Math.random() * 2_000_000_000),
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: `Give me 2 fresh guide ideas for ${audienceLine} now. Output only the @@@TOPIC@@@ blocks.` },
+      ],
+    })) as { response?: unknown };
+    const text = String(result.response ?? '');
+    const candidates = text.includes('@@@TOPIC@@@')
+      ? text.split('@@@TOPIC@@@').map((s) => s.split('\n').map((l) => l.trim()).filter(Boolean)[0] ?? '')
+      : text.split('\n');
+    for (const raw of candidates) {
+      const cleaned = raw.trim().replace(/^[-*•]\s*/, '').replace(/^\d+[.)]\s*/, '');
+      if (cleaned.length < 8) continue;
+      if (/^(here|sure|below|guide ideas|ideas?:)/i.test(cleaned)) continue;
+      let title = cleaned;
+      let angle = '';
+      const sep = cleaned.match(/\s[|–—-]\s|:\s/);
+      if (sep && sep.index !== undefined) {
+        title = cleaned.slice(0, sep.index).trim();
+        angle = cleaned.slice(sep.index + sep[0].length).trim();
+      }
+      title = title.replace(/^["'*]+|["'*]+$/g, '').trim();
+      if (title.length < 8 || title.length > 90) continue;
+      const slug = slugify(title);
+      if (existing.has(slug)) continue;
+      existing.add(slug);
+      // AI variants default their funnel feature to the profession's tax angle.
+      out.push({ slug, title, angle, profession, feature: 'imposto', done: false });
+      if (out.length >= curated.length + 2) break;
+    }
+  } catch {
+    /* AI busy — curated list is enough. */
+  }
+  return out;
 }
 
 /* ════════════════════════════════════════════════════════════════════
