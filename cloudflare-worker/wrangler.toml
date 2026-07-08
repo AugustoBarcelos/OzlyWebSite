@@ -11,7 +11,14 @@ routes = [
   { pattern = "ozly.au/blog-api/*", zone_name = "ozly.au" },
   { pattern = "ozly.au/blog", zone_name = "ozly.au" },
   { pattern = "ozly.au/blog/*", zone_name = "ozly.au" },
-  # Guides: same SSR engine as the blog (kind='guide').
+  # Learn/Guides (/aprenda): same trilingual SSR engine as the blog (kind='guide').
+  { pattern = "ozly.au/aprenda", zone_name = "ozly.au" },
+  { pattern = "ozly.au/aprenda/*", zone_name = "ozly.au" },
+  { pattern = "ozly.au/pt/aprenda", zone_name = "ozly.au" },
+  { pattern = "ozly.au/pt/aprenda/*", zone_name = "ozly.au" },
+  { pattern = "ozly.au/es/aprenda", zone_name = "ozly.au" },
+  { pattern = "ozly.au/es/aprenda/*", zone_name = "ozly.au" },
+  # Legacy /guias → 301 to /aprenda (keeps old links + the shipped app build alive).
   { pattern = "ozly.au/guias", zone_name = "ozly.au" },
   { pattern = "ozly.au/guias/*", zone_name = "ozly.au" },
   { pattern = "ozly.au/pt/blog", zone_name = "ozly.au" },

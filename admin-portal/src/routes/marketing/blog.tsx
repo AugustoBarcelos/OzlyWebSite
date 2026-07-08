@@ -45,7 +45,7 @@ export function MarketingBlogPage() {
   const [published, setPublished] = useState<PublishedPost[]>([]);
   const [selected, setSelected] = useState<BlogTopic | null>(null);
   const [custom, setCustom] = useState('');
-  // Blog article vs /guias guide — same AI + edit flow, different kind + funnel.
+  // Blog article vs /aprenda guide — same AI + edit flow, different kind + funnel.
   const [kind, setKind] = useState<PostKind>('post');
   // Guide pick state (only used when kind='guide'): the chosen profession, its
   // topic list, and the selected guide topic (carries the funnel `feature`).
@@ -368,7 +368,7 @@ export function MarketingBlogPage() {
             <Spinner label="Carregando temas" />
           ) : (
             <>
-              {/* Kind: blog post vs /guias guide — same wizard, different funnel. */}
+              {/* Kind: blog post vs /aprenda guide — same wizard, different funnel. */}
               <div>
                 <p className="mb-2 text-sm font-semibold text-navy-700">Tipo de conteúdo</p>
                 <div className="inline-flex rounded-full border border-slate-200 bg-slate-50 p-1">
@@ -388,13 +388,13 @@ export function MarketingBlogPage() {
                         kind === k ? 'bg-navy-700 text-white' : 'text-navy-600 hover:bg-slate-200'
                       }`}
                     >
-                      {k === 'post' ? '📝 Post do blog' : '📚 Guia (/guias)'}
+                      {k === 'post' ? '📝 Post do blog' : '📚 Guia (/aprenda)'}
                     </button>
                   ))}
                 </div>
                 <p className="mt-1 text-xs text-navy-300">
                   {kind === 'guide'
-                    ? 'Guias vão para ozly.au/guias — cada um termina com um CTA fixo pro app.'
+                    ? 'Guias vão para ozly.au/aprenda (trilingue: en /aprenda · pt /pt/aprenda · es /es/aprenda) — cada um termina com um CTA fixo pro app.'
                     : 'Posts vão para ozly.au/blog.'}
                 </p>
               </div>
@@ -573,7 +573,7 @@ export function MarketingBlogPage() {
                   </p>
                   <ul className="divide-y divide-slate-100">
                     {published.map((p) => {
-                      const base = p.kind === 'guide' ? 'guias' : 'blog';
+                      const base = p.kind === 'guide' ? 'aprenda' : 'blog';
                       return (
                         <li key={p.slug} className="flex items-center gap-2 py-1.5">
                           <span className="min-w-0 flex-1 truncate text-sm text-navy-700" title={p.title}>
@@ -647,7 +647,7 @@ export function MarketingBlogPage() {
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-brand-400 focus:outline-none"
             />
             <p className="mt-1 text-xs text-navy-300">
-              ozly.au/{post.kind === 'guide' ? 'guias' : 'blog'}/{post.slug || '…'}
+              ozly.au/{post.kind === 'guide' ? 'aprenda' : 'blog'}/{post.slug || '…'}
             </p>
           </div>
 

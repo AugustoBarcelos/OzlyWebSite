@@ -34,7 +34,7 @@ const GITHUB_BRANCH = "main";
 // Free Workers AI model. Strong instruct model on the free tier.
 const AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 // Bump on each meaningful worker change so /admin/api/health proves what's live.
-const WORKER_BUILD = "2026-07-08-guide-ai-generation-v1";
+const WORKER_BUILD = "2026-07-08-aprenda-trilingual-v1";
 
 const CRAWLER_UA_RE =
   /facebookexternalhit|facebot|whatsapp|twitterbot|telegrambot|linkedinbot|discordbot|slackbot|googlebot|bingbot|pinterest|skypeuripreview|redditbot|applebot|yahoobot|duckduckbot/i;
@@ -72,8 +72,18 @@ export default {
       return fetch(request);
     }
 
-    // Guides (/guias) — SAME engine as the blog: SSR'd from public.blog_posts
-    // rows where kind='guide'. Same fall-through-to-origin safety net.
+    // Legacy /guias → 301 to the equivalent /aprenda URL. The guides section was
+    // renamed and made trilingual; old links and the already-shipped app build
+    // both still point at /guias, so this keeps them alive. Preserves slug + query.
+    const legacyGuide = matchLegacyGuideRedirect(url.pathname);
+    if (legacyGuide) {
+      const target = `${ORIGIN}${legacyGuide}${url.search}`;
+      return Response.redirect(target, 301);
+    }
+
+    // Guides (/aprenda) — SAME engine as the blog: SSR'd from public.blog_posts
+    // rows where kind='guide', trilingual (en default, /pt/, /es/). Same
+    // fall-through-to-origin safety net.
     const guideRoute = matchGuideRoute(url.pathname);
     if (guideRoute) {
       try {
@@ -449,13 +459,15 @@ async function handleBlogSsr(env: Env, route: BlogRoute): Promise<Response | nul
 }
 
 /* ════════════════════════════════════════════════════════════════════
-   GUIDES (/guias) — reuses the blog engine. Same public.blog_posts table,
+   GUIDES (/aprenda) — reuses the blog engine. Same public.blog_posts table,
    same marked → HTML, same meta/OG helpers. A guide is just a row with
    kind='guide'. Each guide page ends with a fixed, parametrizable funnel CTA.
-   - GET /guias           → index (published kind='guide', title/desc/profession)
-   - GET /guias/:slug     → one guide, SSR + SEO, canonical /guias/:slug
-   PT-only for now; the row already carries en/pt/es so EN/ES can be added later
-   by widening GUIDE_LANG / GUIDE_LANGS without touching callers.
+   FULLY TRILINGUAL, mirroring the blog: en is the default (no prefix),
+   /pt/aprenda → pt, /es/aprenda → es — language detected from the path.
+   - GET /aprenda            → index (published kind='guide', title/desc/profession)
+   - GET /aprenda/:slug      → one guide, SSR + SEO, canonical per language
+   - GET /pt/aprenda[/:slug] → same, Portuguese · /es/aprenda[/:slug] → Spanish
+   Legacy /guias 301-redirects to /pt/aprenda (see matchLegacyGuideRedirect).
    ════════════════════════════════════════════════════════════════════ */
 
 // Single funnel target for the guide CTA. The site branches iOS vs Android at
@@ -465,46 +477,71 @@ async function handleBlogSsr(env: Env, route: BlogRoute): Promise<Response | nul
 // STORE_LINKS holds the direct store URLs if a hard link is ever needed.
 const APP_URL = `${ORIGIN}/`;
 
-// ── The ONE guide CTA. Fixed + parametrizable (never scattered). PT copy.
+// ── The ONE guide CTA. Fixed + parametrizable (never scattered), per-language.
 // RULE: never say "grátis/free" — the offer is the 14-day trial. `feature`
 // (from the row) lets a guide tailor the lead line; falls back to a neutral one.
-function guideCtaHtml(opts: { feature?: string | null; href?: string }): string {
+type GuideLangCode = 'en' | 'pt' | 'es';
+const GUIDE_CTA_COPY: Record<
+  GuideLangCode,
+  { lead: (feature: string) => string; leadNeutral: string; pitch: string; btn: string }
+> = {
+  en: {
+    lead: (f) => `Tired of doing ${f} by hand?`,
+    leadNeutral: `Tired of doing this by hand?`,
+    pitch: `Ozly does it for you — try it 14 days on us.`,
+    btn: `Get started with Ozly`,
+  },
+  pt: {
+    lead: (f) => `Cansado de fazer ${f} na mão?`,
+    leadNeutral: `Cansado de fazer isso na mão?`,
+    pitch: `A Ozly faz isso automático — testa 14 dias sem pagar.`,
+    btn: `Começar no Ozly`,
+  },
+  es: {
+    lead: (f) => `¿Cansado de hacer ${f} a mano?`,
+    leadNeutral: `¿Cansado de hacer esto a mano?`,
+    pitch: `Ozly lo hace por ti — pruébalo 14 días sin pagar.`,
+    btn: `Empezar en Ozly`,
+  },
+};
+function guideCtaHtml(opts: { feature?: string | null; href?: string; lang?: GuideLangCode }): string {
   const href = opts.href || APP_URL;
-  const lead = opts.feature
-    ? `Cansado de fazer ${escapeHtml(opts.feature)} na mão?`
-    : `Cansado de fazer isso na mão?`;
+  const c = GUIDE_CTA_COPY[opts.lang || 'en'];
+  const lead = opts.feature ? c.lead(escapeHtml(opts.feature)) : c.leadNeutral;
   return (
     `<aside class="guide-cta" data-guide-cta>` +
     `<p class="guide-cta__lead">${lead}</p>` +
-    `<p class="guide-cta__pitch">A Ozly faz isso automático — testa 14 dias sem pagar.</p>` +
-    `<a class="guide-cta__btn" href="${href}" rel="noopener">Começar no Ozly</a>` +
+    `<p class="guide-cta__pitch">${escapeHtml(c.pitch)}</p>` +
+    `<a class="guide-cta__btn" href="${href}" rel="noopener">${escapeHtml(c.btn)}</a>` +
     `</aside>`
   );
 }
 
-// Guide languages — PT first. Structured as a map so EN/ES drop in later.
-type GuideLangCode = 'pt' | 'en' | 'es';
-const GUIDE_LANG: GuideLangCode = 'pt';
+// Guide languages — mirror the blog exactly: en is default (no prefix),
+// /pt/ → pt, /es/ → es. Same JSONB columns on public.blog_posts.
 const GUIDE_LANGS: Record<GuideLangCode, { prefix: string; hreflang: string; og: string; html: string }> = {
-  pt: { prefix: '', hreflang: 'pt-BR', og: 'pt_BR', html: 'pt-BR' },
-  en: { prefix: '/en', hreflang: 'en-AU', og: 'en_AU', html: 'en-AU' },
+  en: { prefix: '', hreflang: 'en-AU', og: 'en_AU', html: 'en-AU' },
+  pt: { prefix: '/pt', hreflang: 'pt-BR', og: 'pt_BR', html: 'pt-BR' },
   es: { prefix: '/es', hreflang: 'es', og: 'es_ES', html: 'es' },
 };
-const GUIDE_LISTING_META: Record<GuideLangCode, { title: string; description: string; intro: string }> = {
-  pt: {
-    title: 'Guias da Ozly — passo a passo para autônomos na Austrália',
-    description: 'Guias práticos para cleaners, entregadores e tradies: invoice, despesas e imposto sem complicação, feito para quem trabalha por conta própria na Austrália.',
-    intro: 'Guias práticos, direto ao ponto — para quem trabalha por conta própria na Austrália.',
-  },
+const GUIDE_LISTING_META: Record<GuideLangCode, { title: string; description: string; intro: string; brand: string }> = {
   en: {
     title: 'Ozly Guides — step-by-step for sole traders in Australia',
     description: 'Practical guides for cleaners, delivery drivers and tradies: invoicing, expenses and tax made simple for people working for themselves in Australia.',
     intro: 'Practical, to-the-point guides — for people working for themselves in Australia.',
+    brand: 'Ozly Guides',
+  },
+  pt: {
+    title: 'Guias da Ozly — passo a passo para autônomos na Austrália',
+    description: 'Guias práticos para cleaners, entregadores e tradies: invoice, despesas e imposto sem complicação, feito para quem trabalha por conta própria na Austrália.',
+    intro: 'Guias práticos, direto ao ponto — para quem trabalha por conta própria na Austrália.',
+    brand: 'Guias Ozly',
   },
   es: {
     title: 'Guías de Ozly — paso a paso para autónomos en Australia',
     description: 'Guías prácticas para cleaners, repartidores y tradies: facturas, gastos e impuestos sin complicaciones para quienes trabajan por su cuenta en Australia.',
     intro: 'Guías prácticas y directas — para quienes trabajan por su cuenta en Australia.',
+    brand: 'Guías Ozly',
   },
 };
 const PROFESSION_LABEL: Record<string, string> = {
@@ -516,10 +553,23 @@ const PROFESSION_LABEL: Record<string, string> = {
 
 interface GuideRoute { lang: GuideLangCode; slug: string | null; }
 
+// Trilingual, mirroring matchBlogRoute: en default (no prefix), /pt/ → pt,
+// /es/ → es. Matches /aprenda and /aprenda/:slug under each prefix.
 function matchGuideRoute(pathname: string): GuideRoute | null {
+  const m = pathname.match(/^\/(?:(pt|es)\/)?aprenda(?:\/([a-z0-9][a-z0-9_-]*))?\/?$/i);
+  if (!m) return null;
+  const lang = (m[1]?.toLowerCase() as GuideLangCode) || 'en';
+  return { lang, slug: m[2] ? m[2].toLowerCase() : null };
+}
+
+// Legacy /guias was PT-only at the default (no-prefix) path — the shipped app
+// and old links all point there. Redirect it to the PT equivalent under
+// /pt/aprenda so those users keep landing on Portuguese content. Returns the
+// target PATH (no query) or null; the caller appends the original querystring.
+function matchLegacyGuideRedirect(pathname: string): string | null {
   const m = pathname.match(/^\/guias(?:\/([a-z0-9][a-z0-9_-]*))?\/?$/i);
   if (!m) return null;
-  return { lang: GUIDE_LANG, slug: m[1] ? m[1].toLowerCase() : null };
+  return m[1] ? `/pt/aprenda/${m[1].toLowerCase()}/` : `/pt/aprenda/`;
 }
 
 // Guides carry the same per-lang JSONB + the new discriminator columns.
@@ -552,9 +602,11 @@ async function handleGuideSsr(env: Env, route: GuideRoute): Promise<Response | n
     if (langs.length === 0) return null;
     const code = (langs as GuideLangCode[]).includes(route.lang) ? route.lang : (langs[0] as GuideLangCode);
     const tr = g[code] as GenLang;
-    const canonical = `${ORIGIN}/guias/${g.slug}/`;
+    const canonical = `${ORIGIN}${GUIDE_LANGS[code].prefix}/aprenda/${g.slug}/`;
     const bodyHtml = marked.parse(tr.body) as string;
-    const cta = guideCtaHtml({ feature: g.feature });
+    const cta = guideCtaHtml({ feature: g.feature, lang: code });
+    // hreflang alternates for every language this guide actually has — mirrors the blog.
+    const alternates = (langs as GuideLangCode[]).map((c) => ({ hreflang: GUIDE_LANGS[c].hreflang, href: `${ORIGIN}${GUIDE_LANGS[c].prefix}/aprenda/${g.slug}/` }));
     const guideLd = {
       '@context': 'https://schema.org', '@type': 'HowTo',
       name: tr.title, description: tr.description, datePublished: g.date, dateModified: g.date,
@@ -564,8 +616,8 @@ async function handleGuideSsr(env: Env, route: GuideRoute): Promise<Response | n
       mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
     };
     const head = {
-      title: escapeHtml(`${tr.title} — Guias Ozly`),
-      tags: metaTags({ title: `${tr.title} — Guias Ozly`, description: tr.description, canonical, htmlLang: GUIDE_LANGS[code].html, ogLocale: GUIDE_LANGS[code].og, alternates: [], jsonLd: [guideLd] }),
+      title: escapeHtml(`${tr.title} — ${GUIDE_LISTING_META[code].brand}`),
+      tags: metaTags({ title: `${tr.title} — ${GUIDE_LISTING_META[code].brand}`, description: tr.description, canonical, htmlLang: GUIDE_LANGS[code].html, ogLocale: GUIDE_LANGS[code].og, alternates, jsonLd: [guideLd] }),
     };
     const rootInner = `<article><h1>${escapeHtml(tr.title)}</h1><p>${escapeHtml(tr.description)}</p>${bodyHtml}${cta}</article>`;
     const shell = await getShell();
@@ -577,22 +629,24 @@ async function handleGuideSsr(env: Env, route: GuideRoute): Promise<Response | n
   // ── Index ──
   const guides = (await dbListGuides(env)).filter((g) => blogLangsOf(g).length > 0);
   const m = GUIDE_LISTING_META[route.lang];
-  const canonical = `${ORIGIN}/guias/`;
+  const canonical = `${ORIGIN}${L.prefix}/aprenda/`;
   const items = guides.map((g) => {
     const langs = blogLangsOf(g);
     const code = (langs as GuideLangCode[]).includes(route.lang) ? route.lang : (langs[0] as GuideLangCode);
     const tr = g[code] as GenLang;
     const profLabel = g.profession ? (PROFESSION_LABEL[g.profession] || g.profession) : null;
     const badge = profLabel ? `<span class="guide-badge">${escapeHtml(profLabel)}</span>` : '';
-    return `<article class="guide-item"><h2><a href="${ORIGIN}/guias/${g.slug}/">${escapeHtml(tr.title)}</a></h2>${badge}<p>${escapeHtml(tr.description)}</p></article>`;
+    return `<article class="guide-item"><h2><a href="${ORIGIN}${L.prefix}/aprenda/${g.slug}/">${escapeHtml(tr.title)}</a></h2>${badge}<p>${escapeHtml(tr.description)}</p></article>`;
   }).join('');
   const guidesLd = {
     '@context': 'https://schema.org', '@type': 'CollectionPage', name: m.title, description: m.description,
     url: canonical, inLanguage: L.html, publisher: { '@type': 'Organization', name: 'Ozly Pty Ltd', url: `${ORIGIN}/` },
   };
+  // hreflang alternates for all three languages — mirrors the blog listing.
+  const alternates = (['en', 'pt', 'es'] as const).map((c) => ({ hreflang: GUIDE_LANGS[c].hreflang, href: `${ORIGIN}${GUIDE_LANGS[c].prefix}/aprenda/` }));
   const head = {
     title: escapeHtml(m.title),
-    tags: metaTags({ title: m.title, description: m.description, canonical, htmlLang: L.html, ogLocale: L.og, alternates: [], jsonLd: [guidesLd] }),
+    tags: metaTags({ title: m.title, description: m.description, canonical, htmlLang: L.html, ogLocale: L.og, alternates, jsonLd: [guidesLd] }),
   };
   const rootInner = `<h1>${escapeHtml(m.title)}</h1><p>${escapeHtml(m.intro)}</p>${items}`;
   const shell = await getShell();
@@ -613,14 +667,19 @@ async function handleSitemap(request: Request, env: Env): Promise<Response | nul
   if (guides.length === 0) {
     return new Response(xml, { status: 200, headers: sitemapHeaders() });
   }
-  const entries = [
-    `  <url><loc>${ORIGIN}/guias/</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>`,
-    ...guides.map((g) => {
-      const lastmod = (g.date || '').slice(0, 10);
-      const mod = /^\d{4}-\d{2}-\d{2}$/.test(lastmod) ? `<lastmod>${lastmod}</lastmod>` : '';
-      return `  <url><loc>${ORIGIN}/guias/${g.slug}/</loc>${mod}<changefreq>monthly</changefreq><priority>0.6</priority></url>`;
-    }),
-  ].join('\n');
+  // Mirror the blog: one listing URL per language, plus each PUBLISHED guide in
+  // every language it actually has (en default path, /pt, /es prefixes).
+  const listings = (['en', 'pt', 'es'] as const).map(
+    (c) => `  <url><loc>${ORIGIN}${GUIDE_LANGS[c].prefix}/aprenda/</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>`,
+  );
+  const guideUrls = guides.flatMap((g) => {
+    const lastmod = (g.date || '').slice(0, 10);
+    const mod = /^\d{4}-\d{2}-\d{2}$/.test(lastmod) ? `<lastmod>${lastmod}</lastmod>` : '';
+    return (blogLangsOf(g) as GuideLangCode[]).map(
+      (c) => `  <url><loc>${ORIGIN}${GUIDE_LANGS[c].prefix}/aprenda/${g.slug}/</loc>${mod}<changefreq>monthly</changefreq><priority>0.6</priority></url>`,
+    );
+  });
+  const entries = [...listings, ...guideUrls].join('\n');
   const merged = xml.replace(close, `${entries}\n${close}`);
   return new Response(merged, { status: 200, headers: sitemapHeaders() });
 }
@@ -666,7 +725,7 @@ const TOPICS = [
   { slug: 'cleaning-rates-per-hour', title: 'How much to charge per hour for cleaning', angle: 'Real 2026 ranges, employee vs ABN, what to factor in.' },
 ];
 
-// Curated GUIDE backlog — the /guias funnel content. UNLIKE blog TOPICS these
+// Curated GUIDE backlog — the /aprenda funnel content. UNLIKE blog TOPICS these
 // are grouped by `profession` and phrased as practical, step-by-step how-tos.
 // Each carries a `feature` that seeds the guide's funnel angle (invoice /
 // deduções / imposto / GST) — the SSR CTA uses the row's `feature`, so keeping
@@ -757,7 +816,8 @@ async function handleAdminApi(request: Request, env: Env, url: URL): Promise<Res
         b2bTopics: true,
         audienceAwareGeneration: true,
         factCheckApplyEdits: true, // temperature 0.4 + directive prompt
-        guideGeneration: true, // kind='guide' → step-by-step /guias how-tos
+        guideGeneration: true, // kind='guide' → step-by-step /aprenda how-tos
+        aprendaTrilingual: true, // /aprenda + /pt/aprenda + /es/aprenda; /guias 301s here
       },
     });
   }
@@ -1200,7 +1260,7 @@ async function generatePost(topic: string, slug: string | undefined, env: Env): 
    Mirrors the blog generatePost (same model, same defensive @@@marker@@@
    parsing, one call per language, all 3 in parallel), but with a distinct
    GUIDE prompt: a practical, step-by-step how-to for a specific profession's
-   Australian ABN sole trader, funneling toward one Ozly `feature`. The /guias
+   Australian ABN sole trader, funneling toward one Ozly `feature`. The /aprenda
    SSR appends the funnel CTA (guideCtaHtml), so the body must NOT repeat one. */
 const GUIDE_PROFESSION_AUDIENCE: Record<GuideProfession, string> = {
   cleaner: 'a cleaner working as a sole trader (ABN) in Australia',
@@ -1222,7 +1282,7 @@ async function aiGenerateGuideLang(
     ? `Everything should build toward the Ozly job "${feature}" (invoicing / expenses / tax set-aside) — the reader should finish ready to do it in Ozly. Do NOT write the call-to-action yourself: the page appends the Ozly CTA automatically.`
     : `Where natural, position Ozly (an invoicing, expense and tax-tracking app) as the tool that makes this practical. Do NOT write the call-to-action yourself: the page appends the Ozly CTA automatically.`;
 
-  const system = `You write PRACTICAL step-by-step GUIDES for Ozly's /guias section. This guide is for: ${audienceLine}.
+  const system = `You write PRACTICAL step-by-step GUIDES for Ozly's /aprenda section. This guide is for: ${audienceLine}.
 
 Write ONE how-to guide in ${langName} — native, idiomatic writing (NOT a translation). This is a GUIDE, not an opinion article: it must be actionable, concrete and easy to follow.
 
@@ -1315,7 +1375,7 @@ async function suggestGuideTopics(
       ]),
     ].join('; ');
     const audienceLine = GUIDE_PROFESSION_AUDIENCE[profession];
-    const system = `Você sugere ideias de GUIA prático, passo a passo, para a seção /guias da Ozly, para ${audienceLine}. Cada ideia é um how-to concreto (emitir invoice, deduções/despesas, ou quanto guardar de imposto) — específico da Austrália, acionável, não um artigo genérico de opinião.
+    const system = `Você sugere ideias de GUIA prático, passo a passo, para a seção /aprenda da Ozly, para ${audienceLine}. Cada ideia é um how-to concreto (emitir invoice, deduções/despesas, ou quanto guardar de imposto) — específico da Austrália, acionável, não um artigo genérico de opinião.
 
 ESCREVA O TÍTULO E O ÂNGULO EM PORTUGUÊS DO BRASIL (pt-BR). Nada de inglês.
 
