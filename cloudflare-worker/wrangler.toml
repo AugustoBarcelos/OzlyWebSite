@@ -27,6 +27,11 @@ routes = [
   { pattern = "ozly.au/pt/blog/*", zone_name = "ozly.au" },
   { pattern = "ozly.au/es/blog", zone_name = "ozly.au" },
   { pattern = "ozly.au/es/blog/*", zone_name = "ozly.au" },
+  # NOTE: no worker route for /sitemap.xml — the apex path is already served by
+  # the origin (GitHub Pages static sitemap from scripts/seo-content.mjs) and a
+  # worker route there does NOT take effect. Guide URLs must be added to the
+  # static sitemap generator (seo-content.mjs), same as /blog and /guide, once
+  # guides are published. handleSitemap() stays in src/index.ts but is dormant.
 ]
 
 # Public, non-secret values. The anon Supabase key is safe in client
