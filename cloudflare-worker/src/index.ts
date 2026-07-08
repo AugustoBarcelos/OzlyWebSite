@@ -1315,23 +1315,25 @@ async function suggestGuideTopics(
       ]),
     ].join('; ');
     const audienceLine = GUIDE_PROFESSION_AUDIENCE[profession];
-    const system = `You suggest PRACTICAL step-by-step GUIDE ideas for Ozly's /guias section, for ${audienceLine}. Each must be a concrete how-to (invoicing, deductions/expenses, or setting money aside for tax) — Australia-specific, actionable, not a generic opinion piece.
+    const system = `Você sugere ideias de GUIA prático, passo a passo, para a seção /guias da Ozly, para ${audienceLine}. Cada ideia é um how-to concreto (emitir invoice, deduções/despesas, ou quanto guardar de imposto) — específico da Austrália, acionável, não um artigo genérico de opinião.
 
-ALREADY COVERED — do NOT propose anything on the same subject as any of these:
+ESCREVA O TÍTULO E O ÂNGULO EM PORTUGUÊS DO BRASIL (pt-BR). Nada de inglês.
+
+JÁ COBERTO — NÃO proponha nada no mesmo assunto de:
 ${avoid}.
 
-ANTI-CANNIBALISATION: Ozly IS an invoicing, expense and tax-tracking app. NEVER suggest a free alternative to it (no "free template", "spreadsheet", "DIY generator"). Every guide must make Ozly the natural next step.
+ANTI-CANIBALIZAÇÃO: a Ozly É um app de invoice, despesas e imposto. NUNCA sugira uma alternativa grátis a ela (nada de "modelo grátis", "planilha", "gerador DIY"). Todo guia deve levar à Ozly como o próximo passo natural.
 
-Output EXACTLY this, one block per idea, nothing else:
+Saída EXATAMENTE assim, um bloco por ideia, nada mais (não embrulhe o título em @@@):
 @@@TOPIC@@@
-<how-to title up to 70 chars> | <one-line angle>`;
+<título how-to em pt-BR, até 70 chars> | <ângulo de uma linha em pt-BR>`;
     const result = (await env.AI.run(AI_MODEL, {
       max_tokens: 400,
       temperature: 0.9,
       seed: Math.floor(Math.random() * 2_000_000_000),
       messages: [
         { role: 'system', content: system },
-        { role: 'user', content: `Give me 2 fresh guide ideas for ${audienceLine} now. Output only the @@@TOPIC@@@ blocks.` },
+        { role: 'user', content: `Me dê 2 ideias novas de guia para ${audienceLine} agora, em português. Só os blocos @@@TOPIC@@@.` },
       ],
     })) as { response?: unknown };
     const text = String(result.response ?? '');
@@ -1339,7 +1341,8 @@ Output EXACTLY this, one block per idea, nothing else:
       ? text.split('@@@TOPIC@@@').map((s) => s.split('\n').map((l) => l.trim()).filter(Boolean)[0] ?? '')
       : text.split('\n');
     for (const raw of candidates) {
-      const cleaned = raw.trim().replace(/^[-*•]\s*/, '').replace(/^\d+[.)]\s*/, '');
+      // Defensive: strip any leaked @@@ delimiter markers before cleaning.
+      const cleaned = raw.trim().replace(/@@@/g, '').replace(/^[-*•]\s*/, '').replace(/^\d+[.)]\s*/, '').trim();
       if (cleaned.length < 8) continue;
       if (/^(here|sure|below|guide ideas|ideas?:)/i.test(cleaned)) continue;
       let title = cleaned;
