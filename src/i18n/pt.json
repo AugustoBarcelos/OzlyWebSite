@@ -524,7 +524,7 @@
     "q66": "Quando preciso me registrar pro GST?",
     "a66": "Você precisa se registrar pro GST se o faturamento da sua empresa for AUD 75.000 ou mais em 12 meses. Abaixo disso, é opcional. O Ozly sugere automaticamente habilitar GST quando você passa do limite.",
     "q67": "Quais faixas de imposto o Ozly usa?",
-    "a67": "O Ozly usa as faixas progressivas atuais da ATO pra residentes (FY 2025–26): $0–$18.200: 0%; $18.201–$45.000: 16%; $45.001–$135.000: 30%; $135.001–$190.000: 37%; $190.001+: 45%. Mais 2% de Medicare levy quando aplicável (isento pra WHM e visto de estudante). Working Holiday Makers usam taxa flat de 15% até $45.000.",
+    "a67": "O Ozly usa as faixas progressivas atuais da ATO pra residentes (FY 2026–27): $0–$18.200: 0%; $18.201–$45.000: 15%; $45.001–$135.000: 30%; $135.001–$190.000: 37%; $190.001+: 45%. Mais 2% de Medicare levy quando aplicável (isento pra WHM e visto de estudante). Working Holiday Makers usam taxa flat de 15% até $45.000.",
     "q68": "Como exporto o relatório fiscal em PDF?",
     "a68": "Vá em Fiscal → Export → PDF. O relatório inclui resumo de invoices pagas, despesas claimable, receita líquida e imposto estimado pro ano fiscal selecionado. Compartilhe por email ou salve no dispositivo.",
     "q69": "Tenho Working Holiday Visa (WHM). O Ozly trata as regras especiais?",

@@ -8,15 +8,20 @@ import {
   fetchTopics,
   suggestMoreTopics,
   generatePost,
+  fetchPost,
   reviewPost,
   applyFix,
   publishPost,
+  PROFESSIONS,
+  PROFESSION_LABEL,
   type BlogTopic,
   type BlogPost,
   type BlogLang,
   type LangCode,
   type ReviewLang,
   type PublishedPost,
+  type PostKind,
+  type Profession,
 } from '@/lib/blog';
 
 type Step = 'pick' | 'generating' | 'edit';
@@ -38,6 +43,8 @@ export function MarketingBlogPage() {
   const [published, setPublished] = useState<PublishedPost[]>([]);
   const [selected, setSelected] = useState<BlogTopic | null>(null);
   const [custom, setCustom] = useState('');
+  // Blog article vs /guias guide — same AI + edit flow, different kind + funnel.
+  const [kind, setKind] = useState<PostKind>('post');
 
   const [loadError, setLoadError] = useState(false);
   // Which audience column is currently fetching more ideas (null = none).
@@ -54,6 +61,8 @@ export function MarketingBlogPage() {
   >(null);
   const [reviewing, setReviewing] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  // Slug currently being loaded back into the editor from "already published".
+  const [editing, setEditing] = useState<string | null>(null);
 
   const loadTopics = useCallback(async () => {
     setLoadError(false);
@@ -71,7 +80,13 @@ export function MarketingBlogPage() {
   const onSuggestMore = useCallback(async (audience: 'business' | 'consumer') => {
     setSuggesting(audience);
     try {
-      const { topics: more } = await suggestMoreTopics(audience);
+      // Send everything already on screen (both columns) + published titles so
+      // the model proposes genuinely new subjects instead of repeating.
+      const avoid = [
+        ...(topics ?? []).map((t) => t.title),
+        ...published.map((p) => p.title),
+      ];
+      const { topics: more } = await suggestMoreTopics(audience, avoid);
       // Force the requested audience on the results so they always land in the
       // right column even if the model mistags one.
       const tagged = more.map((t) => ({ ...t, audience }));
@@ -88,7 +103,7 @@ export function MarketingBlogPage() {
     } finally {
       setSuggesting(null);
     }
-  }, [toast]);
+  }, [toast, topics, published]);
 
   useEffect(() => {
     if (isAdmin) void loadTopics();
@@ -109,6 +124,26 @@ export function MarketingBlogPage() {
   const soleTraderTopics = todo.filter((t) => t.audience !== 'business');
   const orgTopics = todo.filter((t) => t.audience === 'business');
 
+  // Reopen an already-published post in the editor to revise it. Publishing
+  // again upserts on the same slug, so this updates the live post in place.
+  async function onEditPublished(p: PublishedPost) {
+    setEditing(p.slug);
+    try {
+      const loaded = await fetchPost(p.slug);
+      setPost(loaded);
+      setKind(loaded.kind ?? 'post');
+      setReviews(null);
+      setProposal(null);
+      // Land on the first language that actually has content.
+      setLang((['en', 'pt', 'es'] as LangCode[]).find((c) => loaded[c].title.trim()) ?? 'en');
+      setStep('edit');
+    } catch (e) {
+      toast({ variant: 'error', title: 'Falha ao abrir o post', description: errMsg(e) });
+    } finally {
+      setEditing(null);
+    }
+  }
+
   async function onGenerate() {
     const topic = custom.trim() || selected?.title;
     if (!topic) return;
@@ -116,9 +151,16 @@ export function MarketingBlogPage() {
     setStep('generating');
     try {
       const result = await generatePost(topic, slug);
-      setPost(result);
+      // Carry the chosen kind through to the editor + publish. Guides start on
+      // the 'geral' category (editable below) so the funnel CTA renders.
+      setPost({
+        ...result,
+        kind,
+        profession: kind === 'guide' ? 'geral' : null,
+        feature: null,
+      });
       setReviews(null);
-      setLang('en');
+      setLang(kind === 'guide' ? 'pt' : 'en');
       setStep('edit');
     } catch (e) {
       toast({ variant: 'error', title: 'Falha ao gerar', description: errMsg(e) });
@@ -241,6 +283,30 @@ export function MarketingBlogPage() {
             <Spinner label="Carregando temas" />
           ) : (
             <>
+              {/* Kind: blog post vs /guias guide — same wizard, different funnel. */}
+              <div>
+                <p className="mb-2 text-sm font-semibold text-navy-700">Tipo de conteúdo</p>
+                <div className="inline-flex rounded-full border border-slate-200 bg-slate-50 p-1">
+                  {(['post', 'guide'] as PostKind[]).map((k) => (
+                    <button
+                      key={k}
+                      type="button"
+                      onClick={() => setKind(k)}
+                      className={`rounded-full px-4 py-1.5 text-sm font-bold transition ${
+                        kind === k ? 'bg-navy-700 text-white' : 'text-navy-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {k === 'post' ? '📝 Post do blog' : '📚 Guia (/guias)'}
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-1 text-xs text-navy-300">
+                  {kind === 'guide'
+                    ? 'Guias vão para ozly.au/guias — cada um termina com um CTA fixo pro app.'
+                    : 'Posts vão para ozly.au/blog.'}
+                </p>
+              </div>
+
               <div>
                 <p className="mb-3 text-sm font-semibold text-navy-700">Temas sugeridos</p>
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -347,23 +413,38 @@ export function MarketingBlogPage() {
                   <p className="mb-2 text-sm font-semibold text-navy-700">
                     📝 Já publicados <span className="text-navy-400">({published.length})</span>
                   </p>
-                  <ul className="flex flex-wrap gap-1.5">
-                    {published.map((p) => (
-                      <li key={p.slug}>
-                        <a
-                          href={`https://ozly.au/blog/${p.slug}/`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title={`Ver ${p.title} no ar`}
-                          className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-navy-600 transition hover:border-brand-300 hover:bg-brand-50"
-                        >
-                          {p.title} ↗
-                        </a>
-                      </li>
-                    ))}
+                  <ul className="divide-y divide-slate-100">
+                    {published.map((p) => {
+                      const base = p.kind === 'guide' ? 'guias' : 'blog';
+                      return (
+                        <li key={p.slug} className="flex items-center gap-2 py-1.5">
+                          <span className="min-w-0 flex-1 truncate text-sm text-navy-700" title={p.title}>
+                            {p.kind === 'guide' && <span className="mr-1">📚</span>}
+                            {p.title}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => void onEditPublished(p)}
+                            disabled={editing !== null}
+                            className="shrink-0 rounded-full border border-brand-300 px-2.5 py-1 text-xs font-bold text-brand-700 transition hover:bg-brand-50 disabled:opacity-40"
+                          >
+                            {editing === p.slug ? 'Abrindo…' : '✏️ Editar'}
+                          </button>
+                          <a
+                            href={`https://ozly.au/${base}/${p.slug}/`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={`Ver ${p.title} no ar`}
+                            className="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-navy-500 transition hover:border-brand-300 hover:bg-brand-50"
+                          >
+                            ver ↗
+                          </a>
+                        </li>
+                      );
+                    })}
                   </ul>
                   <p className="mt-2 text-xs text-navy-300">
-                    As sugestões já evitam esses assuntos — não vão repetir o que está aqui.
+                    Editar reabre o post aqui — publicar de novo atualiza o que está no ar (mesmo slug). As sugestões da IA já evitam esses assuntos.
                   </p>
                 </div>
               )}
@@ -407,8 +488,47 @@ export function MarketingBlogPage() {
               onChange={(e) => setPost((p) => (p ? { ...p, slug: e.target.value } : p))}
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-brand-400 focus:outline-none"
             />
-            <p className="mt-1 text-xs text-navy-300">ozly.au/blog/{post.slug || '…'}</p>
+            <p className="mt-1 text-xs text-navy-300">
+              ozly.au/{post.kind === 'guide' ? 'guias' : 'blog'}/{post.slug || '…'}
+            </p>
           </div>
+
+          {/* Guide-only: profession category + funnel feature. */}
+          {post.kind === 'guide' && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-navy-700" htmlFor="g-profession">
+                  Profissão (categoria)
+                </label>
+                <select
+                  id="g-profession"
+                  value={post.profession ?? 'geral'}
+                  onChange={(e) =>
+                    setPost((p) => (p ? { ...p, profession: e.target.value as Profession } : p))
+                  }
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-brand-400 focus:outline-none"
+                >
+                  {PROFESSIONS.map((pr) => (
+                    <option key={pr} value={pr}>{PROFESSION_LABEL[pr]}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-navy-700" htmlFor="g-feature">
+                  Feature do CTA <span className="font-normal text-navy-300">(opcional)</span>
+                </label>
+                <input
+                  id="g-feature"
+                  type="text"
+                  value={post.feature ?? ''}
+                  onChange={(e) => setPost((p) => (p ? { ...p, feature: e.target.value } : p))}
+                  placeholder="ex: invoice, despesas, imposto"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-brand-400 focus:outline-none"
+                />
+                <p className="mt-1 text-xs text-navy-300">Ajusta a chamada do CTA no fim do guia.</p>
+              </div>
+            </div>
+          )}
 
           {/* Lang tabs */}
           <div className="flex gap-2">

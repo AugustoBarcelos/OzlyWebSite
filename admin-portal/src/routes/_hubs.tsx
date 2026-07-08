@@ -194,6 +194,12 @@ export function MarketingHubPage() {
           icon: PackageIcon,
         },
         {
+          label: 'Newsletter',
+          to: '/marketing/newsletter',
+          description: 'Gerar uma edição com IA (EN/PT/ES) e enviar pra newsletter.',
+          icon: MailIcon,
+        },
+        {
           label: 'Email',
           to: '/messaging/email',
           description: 'Mandar emails pros usuários e ver respostas.',

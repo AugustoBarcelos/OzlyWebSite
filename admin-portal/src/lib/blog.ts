@@ -28,9 +28,28 @@ export interface BlogPost {
   en: BlogLang;
   pt: BlogLang;
   es: BlogLang;
+  /** 'post' (default blog article) | 'guide' (/guias funnel content). */
+  kind?: PostKind;
+  /** Guide-only soft category. */
+  profession?: Profession | null;
+  /** Guide-only Ozly feature the CTA funnels toward (free text). */
+  feature?: string | null;
 }
 
 export type LangCode = 'en' | 'pt' | 'es';
+
+/** Blog article vs /guias guide — same table, discriminated by `kind`. */
+export type PostKind = 'post' | 'guide';
+
+/** Soft guide category. Free text on the DB side; these are the known values. */
+export type Profession = 'cleaner' | 'delivery' | 'tradie' | 'geral';
+export const PROFESSIONS: Profession[] = ['cleaner', 'delivery', 'tradie', 'geral'];
+export const PROFESSION_LABEL: Record<Profession, string> = {
+  cleaner: 'Cleaner',
+  delivery: 'Entregador',
+  tradie: 'Tradie',
+  geral: 'Geral',
+};
 
 export interface ReviewFinding {
   severity: 'HIGH' | 'MED' | 'LOW';
@@ -82,16 +101,26 @@ async function blogApi<T>(
 export interface PublishedPost {
   slug: string;
   title: string;
+  /** 'post' → ozly.au/blog/… · 'guide' → ozly.au/guias/…. Defaults to 'post'. */
+  kind?: PostKind;
 }
 
 export function fetchTopics() {
   return blogApi<{ topics: BlogTopic[]; published?: PublishedPost[] }>('topics');
 }
 
-export function suggestMoreTopics(audience?: 'business' | 'consumer') {
+/**
+ * Ask the AI for fresh topic ideas. `avoid` = titles already on screen so
+ * clicking "suggest more" repeatedly yields genuinely new subjects instead of
+ * looping on the same popular ones.
+ */
+export function suggestMoreTopics(audience?: 'business' | 'consumer', avoid: string[] = []) {
+  const body: { audience?: 'business' | 'consumer'; avoid?: string[] } = {};
+  if (audience) body.audience = audience;
+  if (avoid.length) body.avoid = avoid;
   return blogApi<{ topics: BlogTopic[] }>('suggest-topics', {
     method: 'POST',
-    body: audience ? { audience } : {},
+    body,
     timeoutMs: 90000,
   });
 }
@@ -127,17 +156,58 @@ export function reviewPost(post: BlogPost) {
  */
 export async function publishPost(post: BlogPost, draft: boolean) {
   const hasContent = (g?: BlogLang) => Boolean(g && g.title?.trim());
+  const kind: PostKind = post.kind === 'guide' ? 'guide' : 'post';
   const row = {
     slug: post.slug,
     draft,
     en: hasContent(post.en) ? post.en : null,
     pt: hasContent(post.pt) ? post.pt : null,
     es: hasContent(post.es) ? post.es : null,
+    // Discriminator + guide metadata. Posts always reset guide fields to null so
+    // switching kind can't leave stale profession/feature behind.
+    kind,
+    profession: kind === 'guide' ? (post.profession ?? null) : null,
+    feature: kind === 'guide' ? (post.feature?.trim() || null) : null,
     updated_at: new Date().toISOString(),
   };
   const { error } = await supabase.from('blog_posts').upsert(row, { onConflict: 'slug' });
   if (error) throw new Error(error.message);
   return { ok: true as const, committed: [post.slug] };
+}
+
+/**
+ * Load an already-published post back into the editor so it can be revised and
+ * re-published (upsert on the same slug). Reads the full row straight from
+ * Supabase (RLS is_admin authorises it), same source of truth the worker SSRs.
+ */
+export async function fetchPost(slug: string): Promise<BlogPost> {
+  const { data, error } = await supabase
+    .from('blog_posts')
+    .select('slug, en, pt, es, kind, profession, feature')
+    .eq('slug', slug)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error('Post não encontrado (pode ter sido removido).');
+
+  const empty: BlogLang = { title: '', description: '', body: '' };
+  const lang = (g: unknown): BlogLang => {
+    const v = (g ?? {}) as Partial<BlogLang>;
+    return {
+      title: v.title ?? '',
+      description: v.description ?? '',
+      body: v.body ?? '',
+    };
+  };
+  const kind: PostKind = data.kind === 'guide' ? 'guide' : 'post';
+  return {
+    slug: data.slug,
+    en: data.en ? lang(data.en) : empty,
+    pt: data.pt ? lang(data.pt) : empty,
+    es: data.es ? lang(data.es) : empty,
+    kind,
+    profession: kind === 'guide' ? ((data.profession as Profession | null) ?? 'geral') : null,
+    feature: kind === 'guide' ? ((data.feature as string | null) ?? null) : null,
+  };
 }
 
 /** Delete a post from the blog (admin only, via RLS). */

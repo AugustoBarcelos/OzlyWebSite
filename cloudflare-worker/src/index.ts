@@ -34,7 +34,7 @@ const GITHUB_BRANCH = "main";
 // Free Workers AI model. Strong instruct model on the free tier.
 const AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 // Bump on each meaningful worker change so /admin/api/health proves what's live.
-const WORKER_BUILD = "2026-06-20-shell-fresh-v10";
+const WORKER_BUILD = "2026-07-08-blog-suggest-diversity-v1";
 
 const CRAWLER_UA_RE =
   /facebookexternalhit|facebot|whatsapp|twitterbot|telegrambot|linkedinbot|discordbot|slackbot|googlebot|bingbot|pinterest|skypeuripreview|redditbot|applebot|yahoobot|duckduckbot/i;
@@ -66,6 +66,32 @@ export default {
       try {
         const ssr = await handleBlogSsr(env, blogRoute);
         if (ssr) return ssr;
+      } catch {
+        /* fall through to origin */
+      }
+      return fetch(request);
+    }
+
+    // Guides (/guias) — SAME engine as the blog: SSR'd from public.blog_posts
+    // rows where kind='guide'. Same fall-through-to-origin safety net.
+    const guideRoute = matchGuideRoute(url.pathname);
+    if (guideRoute) {
+      try {
+        const ssr = await handleGuideSsr(env, guideRoute);
+        if (ssr) return ssr;
+      } catch {
+        /* fall through to origin */
+      }
+      return fetch(request);
+    }
+
+    // sitemap.xml — take the origin's static sitemap and splice in the live
+    // published guides (blog handles its own URLs elsewhere). Any failure falls
+    // through to the origin's untouched sitemap.
+    if (url.pathname === '/sitemap.xml') {
+      try {
+        const merged = await handleSitemap(request, env);
+        if (merged) return merged;
       } catch {
         /* fall through to origin */
       }
@@ -423,10 +449,191 @@ async function handleBlogSsr(env: Env, route: BlogRoute): Promise<Response | nul
 }
 
 /* ════════════════════════════════════════════════════════════════════
+   GUIDES (/guias) — reuses the blog engine. Same public.blog_posts table,
+   same marked → HTML, same meta/OG helpers. A guide is just a row with
+   kind='guide'. Each guide page ends with a fixed, parametrizable funnel CTA.
+   - GET /guias           → index (published kind='guide', title/desc/profession)
+   - GET /guias/:slug     → one guide, SSR + SEO, canonical /guias/:slug
+   PT-only for now; the row already carries en/pt/es so EN/ES can be added later
+   by widening GUIDE_LANG / GUIDE_LANGS without touching callers.
+   ════════════════════════════════════════════════════════════════════ */
+
+// Single funnel target for the guide CTA. The site branches iOS vs Android at
+// click time (src/lib/track.js appStoreUrl/playStoreUrl) — a static SSR link
+// can't do device detection, and there is no /app landing at origin, so we
+// point at the home page, which already hosts the device-aware download CTAs.
+// STORE_LINKS holds the direct store URLs if a hard link is ever needed.
+const APP_URL = `${ORIGIN}/`;
+
+// ── The ONE guide CTA. Fixed + parametrizable (never scattered). PT copy.
+// RULE: never say "grátis/free" — the offer is the 14-day trial. `feature`
+// (from the row) lets a guide tailor the lead line; falls back to a neutral one.
+function guideCtaHtml(opts: { feature?: string | null; href?: string }): string {
+  const href = opts.href || APP_URL;
+  const lead = opts.feature
+    ? `Cansado de fazer ${escapeHtml(opts.feature)} na mão?`
+    : `Cansado de fazer isso na mão?`;
+  return (
+    `<aside class="guide-cta" data-guide-cta>` +
+    `<p class="guide-cta__lead">${lead}</p>` +
+    `<p class="guide-cta__pitch">A Ozly faz isso automático — testa 14 dias sem pagar.</p>` +
+    `<a class="guide-cta__btn" href="${href}" rel="noopener">Começar no Ozly</a>` +
+    `</aside>`
+  );
+}
+
+// Guide languages — PT first. Structured as a map so EN/ES drop in later.
+type GuideLangCode = 'pt' | 'en' | 'es';
+const GUIDE_LANG: GuideLangCode = 'pt';
+const GUIDE_LANGS: Record<GuideLangCode, { prefix: string; hreflang: string; og: string; html: string }> = {
+  pt: { prefix: '', hreflang: 'pt-BR', og: 'pt_BR', html: 'pt-BR' },
+  en: { prefix: '/en', hreflang: 'en-AU', og: 'en_AU', html: 'en-AU' },
+  es: { prefix: '/es', hreflang: 'es', og: 'es_ES', html: 'es' },
+};
+const GUIDE_LISTING_META: Record<GuideLangCode, { title: string; description: string; intro: string }> = {
+  pt: {
+    title: 'Guias da Ozly — passo a passo para autônomos na Austrália',
+    description: 'Guias práticos para cleaners, entregadores e tradies: invoice, despesas e imposto sem complicação, feito para quem trabalha por conta própria na Austrália.',
+    intro: 'Guias práticos, direto ao ponto — para quem trabalha por conta própria na Austrália.',
+  },
+  en: {
+    title: 'Ozly Guides — step-by-step for sole traders in Australia',
+    description: 'Practical guides for cleaners, delivery drivers and tradies: invoicing, expenses and tax made simple for people working for themselves in Australia.',
+    intro: 'Practical, to-the-point guides — for people working for themselves in Australia.',
+  },
+  es: {
+    title: 'Guías de Ozly — paso a paso para autónomos en Australia',
+    description: 'Guías prácticas para cleaners, repartidores y tradies: facturas, gastos e impuestos sin complicaciones para quienes trabajan por su cuenta en Australia.',
+    intro: 'Guías prácticas y directas — para quienes trabajan por su cuenta en Australia.',
+  },
+};
+const PROFESSION_LABEL: Record<string, string> = {
+  cleaner: 'Cleaner',
+  delivery: 'Entregador',
+  tradie: 'Tradie',
+  geral: 'Geral',
+};
+
+interface GuideRoute { lang: GuideLangCode; slug: string | null; }
+
+function matchGuideRoute(pathname: string): GuideRoute | null {
+  const m = pathname.match(/^\/guias(?:\/([a-z0-9][a-z0-9_-]*))?\/?$/i);
+  if (!m) return null;
+  return { lang: GUIDE_LANG, slug: m[1] ? m[1].toLowerCase() : null };
+}
+
+// Guides carry the same per-lang JSONB + the new discriminator columns.
+interface DbGuide extends DbPost { kind?: string; profession?: string | null; feature?: string | null; }
+
+async function dbQueryGuides(env: Env, qs: string): Promise<DbGuide[]> {
+  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/blog_posts?${qs}`, {
+    headers: { apikey: env.SUPABASE_ANON_KEY, Authorization: `Bearer ${env.SUPABASE_ANON_KEY}` },
+  });
+  if (!res.ok) throw new Error(`Supabase ${res.status}`);
+  return (await res.json()) as DbGuide[];
+}
+const GUIDE_COLS = 'select=slug,date,author,tags,en,pt,es,kind,profession,feature';
+const dbListGuides = (env: Env) =>
+  dbQueryGuides(env, `${GUIDE_COLS}&kind=eq.guide&draft=eq.false&order=date.desc`);
+const dbGetGuide = async (env: Env, slug: string): Promise<DbGuide | null> => {
+  const rows = await dbQueryGuides(env, `${GUIDE_COLS}&kind=eq.guide&draft=eq.false&slug=eq.${encodeURIComponent(slug)}&limit=1`);
+  return rows[0] ?? null;
+};
+
+async function handleGuideSsr(env: Env, route: GuideRoute): Promise<Response | null> {
+  const L = GUIDE_LANGS[route.lang];
+
+  // ── Single guide ──
+  if (route.slug) {
+    const g = await dbGetGuide(env, route.slug);
+    if (!g) return null; // fall through to origin (404/SPA)
+    // Prefer the guide's own language; fall back to any language present.
+    const langs = blogLangsOf(g);
+    if (langs.length === 0) return null;
+    const code = (langs as GuideLangCode[]).includes(route.lang) ? route.lang : (langs[0] as GuideLangCode);
+    const tr = g[code] as GenLang;
+    const canonical = `${ORIGIN}/guias/${g.slug}/`;
+    const bodyHtml = marked.parse(tr.body) as string;
+    const cta = guideCtaHtml({ feature: g.feature });
+    const guideLd = {
+      '@context': 'https://schema.org', '@type': 'HowTo',
+      name: tr.title, description: tr.description, datePublished: g.date, dateModified: g.date,
+      inLanguage: GUIDE_LANGS[code].html,
+      author: { '@type': 'Organization', name: g.author || 'Ozly', url: `${ORIGIN}/` },
+      publisher: { '@type': 'Organization', name: 'Ozly Pty Ltd', url: `${ORIGIN}/`, logo: `${ORIGIN}/OSLY.svg` },
+      mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
+    };
+    const head = {
+      title: escapeHtml(`${tr.title} — Guias Ozly`),
+      tags: metaTags({ title: `${tr.title} — Guias Ozly`, description: tr.description, canonical, htmlLang: GUIDE_LANGS[code].html, ogLocale: GUIDE_LANGS[code].og, alternates: [], jsonLd: [guideLd] }),
+    };
+    const rootInner = `<article><h1>${escapeHtml(tr.title)}</h1><p>${escapeHtml(tr.description)}</p>${bodyHtml}${cta}</article>`;
+    const shell = await getShell();
+    return new Response(injectShell(shell, head, rootInner, ''), {
+      headers: { 'Content-Type': 'text/html; charset=UTF-8', 'Cache-Control': 'public, max-age=120, s-maxage=120', 'X-Guide-SSR': 'guide' },
+    });
+  }
+
+  // ── Index ──
+  const guides = (await dbListGuides(env)).filter((g) => blogLangsOf(g).length > 0);
+  const m = GUIDE_LISTING_META[route.lang];
+  const canonical = `${ORIGIN}/guias/`;
+  const items = guides.map((g) => {
+    const langs = blogLangsOf(g);
+    const code = (langs as GuideLangCode[]).includes(route.lang) ? route.lang : (langs[0] as GuideLangCode);
+    const tr = g[code] as GenLang;
+    const profLabel = g.profession ? (PROFESSION_LABEL[g.profession] || g.profession) : null;
+    const badge = profLabel ? `<span class="guide-badge">${escapeHtml(profLabel)}</span>` : '';
+    return `<article class="guide-item"><h2><a href="${ORIGIN}/guias/${g.slug}/">${escapeHtml(tr.title)}</a></h2>${badge}<p>${escapeHtml(tr.description)}</p></article>`;
+  }).join('');
+  const guidesLd = {
+    '@context': 'https://schema.org', '@type': 'CollectionPage', name: m.title, description: m.description,
+    url: canonical, inLanguage: L.html, publisher: { '@type': 'Organization', name: 'Ozly Pty Ltd', url: `${ORIGIN}/` },
+  };
+  const head = {
+    title: escapeHtml(m.title),
+    tags: metaTags({ title: m.title, description: m.description, canonical, htmlLang: L.html, ogLocale: L.og, alternates: [], jsonLd: [guidesLd] }),
+  };
+  const rootInner = `<h1>${escapeHtml(m.title)}</h1><p>${escapeHtml(m.intro)}</p>${items}`;
+  const shell = await getShell();
+  return new Response(injectShell(shell, head, rootInner, ''), {
+    headers: { 'Content-Type': 'text/html; charset=UTF-8', 'Cache-Control': 'public, max-age=120, s-maxage=120', 'X-Guide-SSR': 'listing' },
+  });
+}
+
+/** Merge live published guide URLs into the origin's static sitemap.xml. */
+async function handleSitemap(request: Request, env: Env): Promise<Response | null> {
+  const originRes = await fetch(request);
+  if (!originRes.ok) return null;
+  const xml = await originRes.text();
+  const close = '</urlset>';
+  if (!xml.includes(close)) return null; // unexpected shape → leave untouched
+
+  const guides = (await dbListGuides(env)).filter((g) => blogLangsOf(g).length > 0);
+  if (guides.length === 0) {
+    return new Response(xml, { status: 200, headers: sitemapHeaders() });
+  }
+  const entries = [
+    `  <url><loc>${ORIGIN}/guias/</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>`,
+    ...guides.map((g) => {
+      const lastmod = (g.date || '').slice(0, 10);
+      const mod = /^\d{4}-\d{2}-\d{2}$/.test(lastmod) ? `<lastmod>${lastmod}</lastmod>` : '';
+      return `  <url><loc>${ORIGIN}/guias/${g.slug}/</loc>${mod}<changefreq>monthly</changefreq><priority>0.6</priority></url>`;
+    }),
+  ].join('\n');
+  const merged = xml.replace(close, `${entries}\n${close}`);
+  return new Response(merged, { status: 200, headers: sitemapHeaders() });
+}
+function sitemapHeaders(): Record<string, string> {
+  return { 'Content-Type': 'application/xml; charset=UTF-8', 'Cache-Control': 'public, max-age=300, s-maxage=300', 'X-Guide-Sitemap': '1' };
+}
+
+/* ════════════════════════════════════════════════════════════════════
    BLOG AI-AUTHORING API  (called by the admin-portal Blog page)
    - GET  /admin/api/topics          → curated topics + which slugs exist
    - POST /admin/api/suggest-topics  → fresh AI-generated topic ideas
    - POST /admin/api/generate        → draft a post (EN/PT/ES) with Workers AI
+   - POST /admin/api/newsletter/generate → draft a newsletter edition (EN/PT/ES)
    - POST /admin/api/review          → AI fact-check / editorial review
    - POST /admin/api/publish         → commit markdown to GitHub (triggers deploy)
    Auth: a valid admin-portal Supabase session (Bearer token). No password.
@@ -520,8 +727,8 @@ async function handleAdminApi(request: Request, env: Env, url: URL): Promise<Res
   if (!(await authed(request, env))) return json({ error: 'Unauthorized' }, 401);
 
   if (path === '/admin/api/topics' && request.method === 'GET') {
-    const done = await listExistingSlugs(env);
-    const titleBySlug = new Map(TOPICS.map((t) => [t.slug, t.title]));
+    const [done, dbMeta] = await Promise.all([listExistingSlugs(env), listDbPostMeta(env)]);
+    const curatedTitle = new Map(TOPICS.map((t) => [t.slug, t.title]));
     return json({
       topics: TOPICS.map((t) => ({
         ...t,
@@ -529,18 +736,35 @@ async function handleAdminApi(request: Request, env: Env, url: URL): Promise<Res
         done: done.includes(t.slug),
       })),
       // Everything actually published (incl. custom posts not in the curated
-      // list) so the wizard can show what's already live.
-      published: done.map((slug) => ({ slug, title: titleBySlug.get(slug) ?? humanizeSlug(slug) })),
+      // list) so the wizard can show what's already live — with the REAL title
+      // (from the DB row) and its kind, so chips read properly and the editor can
+      // reopen posts vs guides at the right URL.
+      published: done.map((slug) => {
+        const m = dbMeta.get(slug);
+        return {
+          slug,
+          title: m?.title ?? curatedTitle.get(slug) ?? humanizeSlug(slug),
+          kind: m?.kind === 'guide' ? 'guide' : 'post',
+        };
+      }),
     });
   }
 
   // Fresh AI-generated topic ideas (excludes ones already written/curated).
-  // Optional body { audience: 'business' | 'consumer' } to ask for one side only.
+  // Optional body { audience: 'business' | 'consumer', avoid: string[] }. `avoid`
+  // carries the titles ALREADY on the wizard's screen so clicking "suggest more"
+  // repeatedly gives genuinely new subjects instead of re-proposing the same ones.
   if (path === '/admin/api/suggest-topics' && request.method === 'POST') {
-    const body = (await request.json().catch(() => ({}))) as { audience?: 'business' | 'consumer' };
+    const body = (await request.json().catch(() => ({}))) as {
+      audience?: 'business' | 'consumer';
+      avoid?: unknown;
+    };
     const audience = body.audience === 'business' || body.audience === 'consumer' ? body.audience : undefined;
+    const avoidExtra = Array.isArray(body.avoid)
+      ? body.avoid.filter((x): x is string => typeof x === 'string' && x.trim().length > 0).slice(0, 60)
+      : [];
     try {
-      return json({ topics: await suggestTopics(env, audience) });
+      return json({ topics: await suggestTopics(env, audience, avoidExtra) });
     } catch (e) {
       return json({ error: `Suggest failed: ${(e as Error).message}` }, 502);
     }
@@ -552,6 +776,21 @@ async function handleAdminApi(request: Request, env: Env, url: URL): Promise<Res
     try {
       const post = await generatePost(topic, slug, env);
       return json(post);
+    } catch (e) {
+      return json({ error: `Generation failed: ${(e as Error).message}` }, 502);
+    }
+  }
+
+  // Draft a newsletter edition (EN/PT/ES: subject + preheader + body) with
+  // Workers AI. Same auth + model + defensive parsing as the blog generate
+  // route. A human reviews/edits in the admin before sending via the messaging
+  // broadcast pipeline. Topic can come from the query (?topic=) or JSON body.
+  if (path === '/admin/api/newsletter/generate' && request.method === 'POST') {
+    const bodyIn = (await request.json().catch(() => ({}))) as { topic?: string; brief?: string };
+    const topic = (bodyIn.topic ?? bodyIn.brief ?? url.searchParams.get('topic') ?? '').trim();
+    if (!topic) return json({ error: 'Missing topic' }, 400);
+    try {
+      return json(await generateNewsletter(topic, env));
     } catch (e) {
       return json({ error: `Generation failed: ${(e as Error).message}` }, 502);
     }
@@ -625,6 +864,28 @@ async function listDbSlugs(env: Env): Promise<string[]> {
   }
 }
 
+// slug → { real title, kind } for every DB post the anon key can read (i.e.
+// published, non-draft). Used to label the "already published" chips with the
+// actual post title instead of a humanised slug, and to route post vs guide.
+async function listDbPostMeta(
+  env: Env,
+): Promise<Map<string, { title: string; kind: 'post' | 'guide' }>> {
+  const map = new Map<string, { title: string; kind: 'post' | 'guide' }>();
+  try {
+    const rows = (await dbQuery(env, 'select=slug,kind,en,pt,es')) as Array<
+      DbPost & { kind?: string }
+    >;
+    for (const r of rows) {
+      const title =
+        (r.en?.title || r.pt?.title || r.es?.title || '').trim() || humanizeSlug(r.slug);
+      map.set(r.slug, { title, kind: r.kind === 'guide' ? 'guide' : 'post' });
+    }
+  } catch {
+    /* best-effort — chips fall back to humanised slug */
+  }
+  return map;
+}
+
 async function listGithubSlugs(env: Env): Promise<string[]> {
   const res = await fetch(
     `https://api.github.com/repos/${GITHUB_REPO}/contents/content/blog/en?ref=${GITHUB_BRANCH}`,
@@ -645,17 +906,26 @@ async function listGithubSlugs(env: Env): Promise<string[]> {
 async function suggestTopics(
   env: Env,
   audience?: 'business' | 'consumer',
+  avoidExtra: string[] = [],
 ): Promise<Array<{ slug: string; title: string; angle: string; audience: 'business' | 'consumer'; done: boolean }>> {
   const publishedSlugs = await listExistingSlugs(env);
-  const existing = new Set<string>([...publishedSlugs, ...TOPICS.map((t) => t.slug)]);
+  // `avoidExtra` = titles already shown in the wizard this session. Slugifying
+  // them into `existing` filters exact repeats out of THIS call's output, so the
+  // "suggest more" button keeps producing net-new subjects instead of looping.
+  const existing = new Set<string>([
+    ...publishedSlugs,
+    ...TOPICS.map((t) => t.slug),
+    ...avoidExtra.map((t) => slugify(t)),
+  ]);
   // Avoid list = curated titles + the subjects of everything already published
-  // (humanised from the slug for posts not in the curated list), so the model
-  // doesn't propose a topic on a subject we've already covered.
+  // (humanised from the slug for posts not in the curated list) + everything
+  // already suggested on screen, so the model doesn't re-propose a covered subject.
   const titleBySlug = new Map(TOPICS.map((t) => [t.slug, t.title]));
   const avoid = [
     ...new Set([
       ...TOPICS.map((t) => t.title),
       ...publishedSlugs.map((s) => titleBySlug.get(s) ?? humanizeSlug(s)),
+      ...avoidExtra,
     ]),
   ].join('; ');
 
@@ -691,6 +961,10 @@ Output EXACTLY this, one block per idea, nothing else. Prefix each title with [B
   const result = (await env.AI.run(AI_MODEL, {
     max_tokens: 700,
     temperature: 0.9, // fresh ideas each click
+    // A random seed per call is what actually varies the sampling — at a fixed
+    // seed the model is near-deterministic and returns the same popular subjects
+    // every click regardless of temperature.
+    seed: Math.floor(Math.random() * 2_000_000_000),
     messages: [
       { role: 'system', content: system },
       { role: 'user', content: 'Give me 6 fresh topic ideas now. Output only the @@@TOPIC@@@ blocks.' },
@@ -854,6 +1128,100 @@ async function generatePost(topic: string, slug: string | undefined, env: Env): 
     aiGenerateLang(topic, 'es', env),
   ]);
   return { slug: slug ? slugify(slug) : slugify(en.title), en, pt, es };
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   NEWSLETTER AI-AUTHORING  (called by the admin-portal Newsletter page)
+   - POST /admin/api/newsletter/generate → draft an edition (EN/PT/ES) with
+     Workers AI: each language = { subject, preheader, body }.
+   Mirrors the blog generate route (same AI_MODEL, defensive @@@marker@@@
+   parsing, parallel per-language calls). Sending is handled elsewhere by the
+   messaging broadcast pipeline — this only drafts. Voice per
+   marketing/newsletter/README.md: direct, plain, Aussie-friendly, NO emojis,
+   never call the app "free/grátis", only real ATO/tax facts (don't invent
+   numbers). ~150–180-word body.
+   ════════════════════════════════════════════════════════════════════ */
+interface NewsletterLang { subject: string; preheader: string; body: string }
+interface NewsletterResult { en: NewsletterLang; pt: NewsletterLang; es: NewsletterLang }
+
+function parseNewsletter(raw: unknown): NewsletterLang {
+  if (raw && typeof raw === 'object' && 'subject' in (raw as object) && 'body' in (raw as object)) {
+    return raw as NewsletterLang;
+  }
+  const text = String(raw ?? '').trim();
+  let subject = section(text, 'SUBJECT');
+  let preheader = section(text, 'PREHEADER') || section(text, 'PREHEAD');
+  let body = section(text, 'BODY');
+
+  // Salvage: model ignored the markers. Take the first usable line as the
+  // subject and the rest as the body — a human reviews/edits anyway.
+  if (!subject || !body) {
+    const lines = text.split('\n').map((l) => l.replace(/^#+\s*/, '').trim());
+    const idx = lines.findIndex((l) => l.length > 0);
+    if (idx === -1) throw new Error('AI returned empty output — try again');
+    subject = subject || lines[idx].slice(0, 60);
+    body = body || lines.slice(idx + 1).join('\n').trim() || lines[idx];
+  }
+  if (!preheader) {
+    preheader = body.replace(/[#*>`\-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 90);
+  }
+  return { subject: subject.slice(0, 80), preheader: preheader.slice(0, 120), body };
+}
+
+async function aiGenerateNewsletterLang(
+  topic: string,
+  code: 'en' | 'pt' | 'es',
+  env: Env,
+): Promise<NewsletterLang> {
+  const langName = LANG_NAMES[code];
+
+  // Prompt from marketing/newsletter/README.md, adapted per language.
+  const system = `You write ONE edition of Ozly's email newsletter for Australian sole traders with an ABN (many are LATAM migrants). Write in ${langName} — native, idiomatic writing (NOT a translation).
+
+Voice: direct, plain, Aussie-friendly. NO emojis. Never call the app "free/grátis" — you MAY cite the trial or the first invoice being free as real offers, but never brand the product as free. Only real Australian tax/ATO facts — do NOT invent numbers, rates, thresholds or deadlines; if unsure, keep it qualitative. A human reviews before sending.
+
+Structure of the body:
+- Hook: 1 line, straight to the value.
+- 2–3 value blocks: each a mini-title + 1–2 concrete, actionable sentences.
+- 1 CTA: a single action (open the app / check X / send an invoice).
+- Sign off with "— ${code === 'pt' ? 'Equipe Ozly' : code === 'es' ? 'Equipo Ozly' : 'The Ozly team'}". Do NOT add an unsubscribe line — that is appended automatically on send.
+Keep the whole body to ~150–180 words. Skimmable — less is more. Plain text (light Markdown for the mini-titles is fine); no links required.
+
+Topic: ${topic}
+
+Output using these exact separator lines, copied literally character-for-character. Do NOT replace them with markdown headings:
+@@@SUBJECT@@@
+(subject line, <=50 chars, benefit-oriented, no emoji)
+@@@PREHEADER@@@
+(inbox preview line, <=90 chars)
+@@@BODY@@@
+(the newsletter body here)`;
+
+  const result = (await env.AI.run(AI_MODEL, {
+    max_tokens: 1024,
+    // ~0.8: fresh drafts on regenerate without going off the rails.
+    temperature: 0.8,
+    messages: [
+      { role: 'system', content: system },
+      {
+        role: 'user',
+        content: `Write the newsletter edition in ${langName} now. Output ONLY the @@@-delimited format, nothing else.`,
+      },
+    ],
+  })) as { response?: unknown };
+
+  return parseNewsletter(result.response ?? result);
+}
+
+async function generateNewsletter(topic: string, env: Env): Promise<NewsletterResult> {
+  // Parallel — the 3 languages run at once so we stay under the Worker time
+  // limit (mirrors the blog generate route).
+  const [en, pt, es] = await Promise.all([
+    aiGenerateNewsletterLang(topic, 'en', env),
+    aiGenerateNewsletterLang(topic, 'pt', env),
+    aiGenerateNewsletterLang(topic, 'es', env),
+  ]);
+  return { en, pt, es };
 }
 
 /* ── Fact-check / editorial review (a second AI pass) ── */

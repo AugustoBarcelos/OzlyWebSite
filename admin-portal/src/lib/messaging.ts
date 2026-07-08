@@ -4,6 +4,7 @@ import type { ChannelKind } from './auth';
 export type MsgChannel = Extract<ChannelKind, `msg_${string}`>;
 
 export const MESSAGING_SEGMENTS = [
+  { value: 'newsletter', label: 'Newsletter (consentidos)', hint: 'Opt-in de marketing confirmado + leads pré-signup — o único segmento conforme p/ envio em massa (Spam Act)' },
   { value: 'not-activated', label: 'Não ativou', hint: 'Cadastrou e nunca emitiu a 1ª invoice' },
   { value: 'activated-no-convert', label: 'Ativou, não converteu', hint: 'Emitiu a 1ª invoice (grátis) mas nunca pagou' },
   { value: 'at-risk', label: 'Em risco (salvável)', hint: 'Pagante em risco ou cancelou mas ainda tem acesso' },

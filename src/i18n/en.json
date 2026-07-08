@@ -524,7 +524,7 @@
     "q66": "When do I have to register for GST?",
     "a66": "You must register for GST if your business turnover is AUD 75,000 or more in a 12-month period. Below that, registration is optional. Ozly automatically suggests enabling GST when you cross the threshold.",
     "q67": "Which tax brackets does Ozly use?",
-    "a67": "Ozly uses the current ATO progressive brackets for residents (FY 2025–26): $0–$18,200: 0%; $18,201–$45,000: 16%; $45,001–$135,000: 30%; $135,001–$190,000: 37%; $190,001+: 45%. Plus a 2% Medicare levy when applicable (exempt for WHM and student visas). Working Holiday Makers use a separate 15% flat rate up to $45,000.",
+    "a67": "Ozly uses the current ATO progressive brackets for residents (FY 2026–27): $0–$18,200: 0%; $18,201–$45,000: 15%; $45,001–$135,000: 30%; $135,001–$190,000: 37%; $190,001+: 45%. Plus a 2% Medicare levy when applicable (exempt for WHM and student visas). Working Holiday Makers use a separate 15% flat rate up to $45,000.",
     "q68": "How do I export the fiscal report PDF?",
     "a68": "Go to Fiscal → Export → PDF. The report includes a summary of paid invoices, claimable expenses, net income and estimated tax for the selected financial year. Share via email or save to your device.",
     "q69": "I'm on a Working Holiday Visa (WHM). Does Ozly handle the special tax rules?",
