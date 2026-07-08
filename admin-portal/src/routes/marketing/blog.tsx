@@ -7,6 +7,7 @@ import { Spinner } from '@/components/Spinner';
 import {
   fetchTopics,
   suggestMoreTopics,
+  suggestGuideTopics,
   generatePost,
   fetchPost,
   reviewPost,
@@ -15,6 +16,7 @@ import {
   PROFESSIONS,
   PROFESSION_LABEL,
   type BlogTopic,
+  type GuideTopic,
   type BlogPost,
   type BlogLang,
   type LangCode,
@@ -45,6 +47,13 @@ export function MarketingBlogPage() {
   const [custom, setCustom] = useState('');
   // Blog article vs /guias guide — same AI + edit flow, different kind + funnel.
   const [kind, setKind] = useState<PostKind>('post');
+  // Guide pick state (only used when kind='guide'): the chosen profession, its
+  // topic list, and the selected guide topic (carries the funnel `feature`).
+  const [guideProfession, setGuideProfession] = useState<Profession>('geral');
+  const [guideTopics, setGuideTopics] = useState<GuideTopic[] | null>(null);
+  const [loadingGuides, setLoadingGuides] = useState(false);
+  const [suggestingGuides, setSuggestingGuides] = useState(false);
+  const [selectedGuide, setSelectedGuide] = useState<GuideTopic | null>(null);
 
   const [loadError, setLoadError] = useState(false);
   // Which audience column is currently fetching more ideas (null = none).
@@ -105,9 +114,56 @@ export function MarketingBlogPage() {
     }
   }, [toast, topics, published]);
 
+  // Load GUIDE topics for a profession (curated + AI variant). Replaces the
+  // list; used on kind→guide, profession change, and refresh.
+  const loadGuideTopics = useCallback(
+    async (profession: Profession) => {
+      setLoadingGuides(true);
+      setSelectedGuide(null);
+      try {
+        const { topics } = await suggestGuideTopics(profession);
+        setGuideTopics(topics);
+      } catch (e) {
+        toast({ variant: 'error', title: 'Falha ao carregar guias', description: errMsg(e) });
+        setGuideTopics([]);
+      } finally {
+        setLoadingGuides(false);
+      }
+    },
+    [toast],
+  );
+
+  // Append more AI-suggested guide topics without dropping what's on screen.
+  const onSuggestMoreGuides = useCallback(async () => {
+    setSuggestingGuides(true);
+    try {
+      const avoid = (guideTopics ?? []).map((t) => t.title);
+      const { topics: more } = await suggestGuideTopics(guideProfession, avoid);
+      setGuideTopics((prev) => {
+        const seen = new Set((prev ?? []).map((t) => t.slug));
+        const fresh = more.filter((t) => !seen.has(t.slug));
+        if (fresh.length === 0) {
+          toast({ variant: 'info', title: 'A IA não trouxe novos guias', description: 'Tenta de novo ou use um tema próprio.' });
+        }
+        return [...(prev ?? []), ...fresh];
+      });
+    } catch (e) {
+      toast({ variant: 'error', title: 'Falha ao sugerir guias', description: errMsg(e) });
+    } finally {
+      setSuggestingGuides(false);
+    }
+  }, [toast, guideTopics, guideProfession]);
+
   useEffect(() => {
     if (isAdmin) void loadTopics();
   }, [isAdmin, loadTopics]);
+
+  // When the user switches to Guia (or changes profession while on Guia), pull
+  // the guide topics for that profession. Blog stays untouched.
+  useEffect(() => {
+    if (isAdmin && kind === 'guide') void loadGuideTopics(guideProfession);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin, kind, guideProfession]);
 
   if (!isAdmin) {
     return (
@@ -145,22 +201,51 @@ export function MarketingBlogPage() {
   }
 
   async function onGenerate() {
+    // Guide path: the chosen guide topic (or a custom one), generated with the
+    // worker's GUIDE prompt for the selected profession + funnel feature.
+    if (kind === 'guide') {
+      const topic = custom.trim() || selectedGuide?.title;
+      if (!topic) return;
+      const slug = custom.trim() ? undefined : selectedGuide?.slug;
+      const feature = custom.trim() ? null : (selectedGuide?.feature ?? null);
+      setStep('generating');
+      try {
+        const result = await generatePost(topic, slug, {
+          kind: 'guide',
+          profession: guideProfession,
+          feature,
+        });
+        setPost({
+          ...result,
+          kind: 'guide',
+          profession: guideProfession,
+          feature,
+        });
+        setReviews(null);
+        setLang('pt');
+        setStep('edit');
+      } catch (e) {
+        toast({ variant: 'error', title: 'Falha ao gerar', description: errMsg(e) });
+        setStep('pick');
+      }
+      return;
+    }
+
     const topic = custom.trim() || selected?.title;
     if (!topic) return;
     const slug = custom.trim() ? undefined : selected?.slug;
     setStep('generating');
     try {
       const result = await generatePost(topic, slug);
-      // Carry the chosen kind through to the editor + publish. Guides start on
-      // the 'geral' category (editable below) so the funnel CTA renders.
+      // Carry the chosen kind through to the editor + publish.
       setPost({
         ...result,
         kind,
-        profession: kind === 'guide' ? 'geral' : null,
+        profession: null,
         feature: null,
       });
       setReviews(null);
-      setLang(kind === 'guide' ? 'pt' : 'en');
+      setLang('en');
       setStep('edit');
     } catch (e) {
       toast({ variant: 'error', title: 'Falha ao gerar', description: errMsg(e) });
@@ -291,7 +376,14 @@ export function MarketingBlogPage() {
                     <button
                       key={k}
                       type="button"
-                      onClick={() => setKind(k)}
+                      onClick={() => {
+                        setKind(k);
+                        // Reset the pick so a stale selection from the other kind
+                        // can't leak into generation.
+                        setSelected(null);
+                        setSelectedGuide(null);
+                        setCustom('');
+                      }}
                       className={`rounded-full px-4 py-1.5 text-sm font-bold transition ${
                         kind === k ? 'bg-navy-700 text-white' : 'text-navy-600 hover:bg-slate-200'
                       }`}
@@ -307,6 +399,69 @@ export function MarketingBlogPage() {
                 </p>
               </div>
 
+              {/* ── GUIA: profissão + lista de guias (only when kind='guide') ── */}
+              {kind === 'guide' && (
+                <div>
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-navy-700">Guias sugeridos</p>
+                    <button
+                      type="button"
+                      onClick={() => void onSuggestMoreGuides()}
+                      disabled={loadingGuides || suggestingGuides}
+                      className="rounded-full border border-emerald-300 px-2.5 py-1 text-xs font-bold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
+                    >
+                      {suggestingGuides ? 'Gerando…' : '+ Sugerir (IA)'}
+                    </button>
+                  </div>
+                  <div className="mb-3">
+                    <label className="mb-1 block text-xs font-semibold text-navy-600" htmlFor="g-pick-profession">
+                      Profissão
+                    </label>
+                    <select
+                      id="g-pick-profession"
+                      value={guideProfession}
+                      onChange={(e) => setGuideProfession(e.target.value as Profession)}
+                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-brand-400 focus:outline-none"
+                    >
+                      {PROFESSIONS.map((pr) => (
+                        <option key={pr} value={pr}>{PROFESSION_LABEL[pr]}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="rounded-2xl border border-emerald-100 bg-emerald-50/40 p-3">
+                    <p className="mb-2 text-xs text-emerald-700/70">
+                      Guias práticos, passo a passo — invoice, deduções e imposto para {PROFESSION_LABEL[guideProfession]}.
+                    </p>
+                    {loadingGuides ? (
+                      <Spinner label="Carregando guias" />
+                    ) : (
+                      <div className="space-y-2">
+                        {(guideTopics ?? []).map((t) => (
+                          <button
+                            key={t.slug}
+                            type="button"
+                            onClick={() => { setSelectedGuide(t); setCustom(''); }}
+                            className={`block w-full rounded-xl border p-3 text-left transition ${
+                              selectedGuide?.slug === t.slug && !custom
+                                ? 'border-brand-400 bg-brand-50'
+                                : 'border-slate-200 bg-white hover:border-brand-300'
+                            }`}
+                          >
+                            <span className="block text-sm font-semibold text-navy-700">{t.title}</span>
+                            <span className="block text-xs text-navy-300">{t.angle}</span>
+                          </button>
+                        ))}
+                        {(guideTopics ?? []).length === 0 && (
+                          <p className="text-xs text-navy-300">Sem guias — clique em “+ Sugerir (IA)”.</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* ── POST: two-column blog topics (only when kind='post') ── */}
+              {kind === 'post' && (
               <div>
                 <p className="mb-3 text-sm font-semibold text-navy-700">Temas sugeridos</p>
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -390,10 +545,11 @@ export function MarketingBlogPage() {
                   <p className="mt-2 text-sm text-red-600">Não consegui carregar os temas. Recarregue a página ou tente “Sugerir”.</p>
                 )}
               </div>
+              )}
 
               <div>
                 <label className="mb-1 block text-sm font-semibold text-navy-700" htmlFor="custom-topic">
-                  …ou um tema próprio
+                  …ou um {kind === 'guide' ? 'guia' : 'tema'} próprio
                 </label>
                 <input
                   id="custom-topic"
@@ -401,9 +557,11 @@ export function MarketingBlogPage() {
                   value={custom}
                   onChange={(e) => {
                     setCustom(e.target.value);
-                    if (e.target.value) setSelected(null);
+                    if (e.target.value) { setSelected(null); setSelectedGuide(null); }
                   }}
-                  placeholder="ex: Como funciona o GST para motoristas de Uber"
+                  placeholder={kind === 'guide'
+                    ? 'ex: Como emitir sua primeira invoice de faxina'
+                    : 'ex: Como funciona o GST para motoristas de Uber'}
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-brand-400 focus:outline-none"
                 />
               </div>
@@ -451,11 +609,11 @@ export function MarketingBlogPage() {
 
               <button
                 type="button"
-                disabled={!custom.trim() && !selected}
+                disabled={!custom.trim() && !(kind === 'guide' ? selectedGuide : selected)}
                 onClick={() => void onGenerate()}
                 className="rounded-full bg-brand-500 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-600 disabled:opacity-40"
               >
-                Gerar com IA
+                {kind === 'guide' ? 'Gerar guia com IA' : 'Gerar com IA'}
               </button>
             </>
           )}

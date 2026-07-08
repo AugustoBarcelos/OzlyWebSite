@@ -17,6 +17,20 @@ export interface BlogTopic {
   done: boolean;
 }
 
+/**
+ * A GUIDE topic (for the /guias funnel). Same shape as a BlogTopic but grouped
+ * by `profession` instead of audience, and carries the funnel `feature` that
+ * seeds the guide's angle + CTA.
+ */
+export interface GuideTopic {
+  slug: string;
+  title: string;
+  angle: string;
+  profession: Profession;
+  feature: string;
+  done: boolean;
+}
+
 export interface BlogLang {
   title: string;
   description: string;
@@ -125,10 +139,54 @@ export function suggestMoreTopics(audience?: 'business' | 'consumer', avoid: str
   });
 }
 
-export function generatePost(topic: string, slug?: string) {
+/**
+ * Generate a draft (EN/PT/ES) with Workers AI.
+ *
+ * Default (`kind` omitted / 'post') = the unchanged blog-post path. Pass
+ * `kind: 'guide'` (+ optional profession/feature) to hit the worker's GUIDE
+ * prompt instead — a practical step-by-step how-to for /guias. The response
+ * shape is identical (slug + en/pt/es), so the editor handles both the same.
+ */
+/**
+ * GUIDE topics for a profession (curated per-profession list + an AI variant),
+ * for the /guias funnel. Mirrors suggestMoreTopics but on the guide path.
+ * `avoid` = titles already on screen so repeats are filtered out.
+ */
+export function suggestGuideTopics(profession: Profession, avoid: string[] = []) {
+  const body: { kind: 'guide'; profession: Profession; avoid?: string[] } = {
+    kind: 'guide',
+    profession,
+  };
+  if (avoid.length) body.avoid = avoid;
+  return blogApi<{ topics: GuideTopic[] }>('suggest-topics', {
+    method: 'POST',
+    body,
+    timeoutMs: 90000,
+  });
+}
+
+export function generatePost(
+  topic: string,
+  slug?: string,
+  opts: { kind?: PostKind; profession?: Profession; feature?: string | null } = {},
+) {
+  const body: {
+    topic: string;
+    slug?: string;
+    kind?: PostKind;
+    profession?: Profession;
+    feature?: string;
+  } = { topic };
+  if (slug) body.slug = slug;
+  if (opts.kind === 'guide') {
+    body.kind = 'guide';
+    body.profession = opts.profession ?? 'geral';
+    const feature = opts.feature?.trim();
+    if (feature) body.feature = feature;
+  }
   return blogApi<BlogPost>('generate', {
     method: 'POST',
-    body: { topic, slug },
+    body,
     timeoutMs: 115000,
   });
 }
