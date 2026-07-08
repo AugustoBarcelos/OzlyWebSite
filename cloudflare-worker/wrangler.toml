@@ -11,6 +11,9 @@ routes = [
   { pattern = "ozly.au/blog-api/*", zone_name = "ozly.au" },
   { pattern = "ozly.au/blog", zone_name = "ozly.au" },
   { pattern = "ozly.au/blog/*", zone_name = "ozly.au" },
+  # Guides: same SSR engine as the blog (kind='guide').
+  { pattern = "ozly.au/guias", zone_name = "ozly.au" },
+  { pattern = "ozly.au/guias/*", zone_name = "ozly.au" },
   { pattern = "ozly.au/pt/blog", zone_name = "ozly.au" },
   { pattern = "ozly.au/pt/blog/*", zone_name = "ozly.au" },
   { pattern = "ozly.au/es/blog", zone_name = "ozly.au" },
