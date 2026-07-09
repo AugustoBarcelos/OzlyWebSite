@@ -32,14 +32,42 @@
 
 interface Env {
   SENTRY_API_TOKEN_SERVER?: string;
+  VITE_SUPABASE_URL?: string;
+  VITE_SUPABASE_ANON_KEY?: string;
 }
 
 const ALLOWED_METHODS = new Set(['GET', 'PUT', 'POST']);
+
+/**
+ * Require a valid Supabase session (Bearer token) — same guard as the
+ * gemini/youtube proxies. Without this the proxy is an open relay to our
+ * Sentry API token (read AND mutate: resolve issues, create releases).
+ */
+async function authed(request: Request, env: Env): Promise<boolean> {
+  const auth = request.headers.get('Authorization') ?? '';
+  if (!auth.startsWith('Bearer ')) return false;
+  const token = auth.slice(7).trim();
+  const url = env.VITE_SUPABASE_URL;
+  const key = env.VITE_SUPABASE_ANON_KEY;
+  if (!token || !url || !key) return false;
+  try {
+    const res = await fetch(`${url}/auth/v1/user`, {
+      headers: { apikey: key, Authorization: `Bearer ${token}` },
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
 
 async function proxy(ctx: Parameters<PagesFunction<Env>>[0]): Promise<Response> {
   const method = ctx.request.method.toUpperCase();
   if (!ALLOWED_METHODS.has(method)) {
     return new Response('Method not allowed', { status: 405 });
+  }
+
+  if (!(await authed(ctx.request, ctx.env))) {
+    return json({ detail: 'Unauthorized' }, 401);
   }
 
   const token = ctx.env.SENTRY_API_TOKEN_SERVER;
