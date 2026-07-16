@@ -56,7 +56,7 @@ Num trabalho com **TFN**, o empregador já desconta o imposto antes de te pagar 
 
 É exatamente isso que o Ozly foi feito pra evitar: conforme você manda invoice e registra despesas, ele mostra o imposto estimado em tempo real — então julho nunca é surpresa, e o seu ABN já está em toda invoice que você envia.
 
-[**Baixe o Ozly grátis na App Store**](https://apps.apple.com/au/app/ozly/id6760398649) · [**Baixe no Google Play**](https://play.google.com/store/apps/details?id=com.augusto.ozly)
+[**Baixe o Ozly na App Store**](https://apps.apple.com/au/app/ozly/id6760398649) · [**Baixe no Google Play**](https://play.google.com/store/apps/details?id=com.augusto.ozly)
 
 ---
 

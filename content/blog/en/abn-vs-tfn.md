@@ -56,7 +56,7 @@ With a **TFN job**, your employer takes the tax out before you're paid — it's 
 
 That's exactly what Ozly is built to prevent: as you invoice and log expenses, it shows your estimated tax in real time — so July is never a surprise, and your ABN is already on every invoice you send.
 
-[**Get Ozly free on the App Store**](https://apps.apple.com/au/app/ozly/id6760398649) · [**Get it on Google Play**](https://play.google.com/store/apps/details?id=com.augusto.ozly)
+[**Get Ozly on the App Store**](https://apps.apple.com/au/app/ozly/id6760398649) · [**Get it on Google Play**](https://play.google.com/store/apps/details?id=com.augusto.ozly)
 
 ---
 
