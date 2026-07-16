@@ -18,13 +18,13 @@ export const content = {
   /* ════════════════════════════ HOME ════════════════════════════ */
   "/": {
     en: {
-      h1: 'Free Invoicing &amp; Tax Tracker<span class="accent">for Australian Sole Traders</span>',
+      h1: 'Invoicing &amp; Tax Tracker<span class="accent">for Australian Sole Traders</span>',
       body: `
-      <p class="sub">Send unlimited invoices, scan receipts, and stay on top of GST and PAYG tax — free on iOS and Android.</p>
-      <p>Ozly is the free, all-in-one mobile app built for Australian sole traders, independent contractors, tradies, freelancers, and small-business owners. From the moment you register an ABN, Ozly helps you run every financial side of your business: unlimited professional invoices, AI receipt scanning, ATO-aligned expense tracking, real-time GST estimates, PAYG income-tax projections, jobs and quotes, contractor payments, and end-of-financial-year reporting — all from your phone, on iOS or Android, with encrypted cloud sync across devices.</p>
+      <p class="sub">Send invoices, scan receipts, and stay on top of GST and PAYG tax — on iOS and Android.</p>
+      <p>Ozly is the all-in-one mobile app built for Australian sole traders, independent contractors, tradies, freelancers, and small-business owners. From the moment you register an ABN, Ozly helps you run every financial side of your business: unlimited professional invoices, AI receipt scanning, ATO-aligned expense tracking, real-time GST estimates, PAYG income-tax projections, jobs and quotes, contractor payments, and end-of-financial-year reporting — all from your phone, on iOS or Android, with encrypted cloud sync across devices.</p>
 
       <h2>Invoicing without limits</h2>
-      <p>Create and send professional invoices in under a minute. Add line items, GST (10%), PAYG withholding, due dates, purchase orders, and custom notes. Attach your logo and payment details. Track payment status in real time, send automatic reminders for overdue invoices, and keep a clean audit trail. There are no monthly invoice caps, no per-invoice fees, and no paywalls on the basics — unlimited invoicing is free for every Ozly user.</p>
+      <p>Create and send professional invoices in under a minute. Add line items, GST (10%), PAYG withholding, due dates, purchase orders, and custom notes. Attach your logo and payment details. Track payment status in real time, send automatic reminders for overdue invoices, and keep a clean audit trail. There are no per-invoice fees and no percentage taken from your earnings — send your first invoice on us, then unlock unlimited invoicing on a simple monthly plan.</p>
 
       <h2>AI-powered receipt scanning</h2>
       <p>Scan any paper or digital receipt with your phone camera. Ozly's AI reads the total, date, supplier, GST amount, and product category automatically, so you never type an expense by hand. Matched receipts are saved to encrypted cloud storage and linked back to the right job or tax period. At tax time, everything is already sorted, categorised, and export-ready.</p>
@@ -41,8 +41,8 @@ export const content = {
       <h2>Built specifically for Australian sole traders</h2>
       <p>Ozly is not a generic bookkeeping tool retrofitted for Australia. It is designed from day one around the Australian Taxation Office, the Australian Privacy Principles, and the realities of sole-trader life. The app ships in English, Portuguese, and Spanish so newcomers and migrant workers feel at home. Whether you are cleaning homes in Sydney, fixing bikes in Melbourne, delivering food in Brisbane, styling hair in Perth, or running a cafe on the side in Adelaide, Ozly keeps your books tidy, your GST tracked, and your tax reports ready for the ATO.</p>
 
-      <h2>Free forever on the basics</h2>
-      <p>Unlimited invoices, unlimited expenses, unlimited receipts, and live tax estimates are included at no cost. Ozly Pro unlocks advanced reports, multi-business support, contractor batch payments, and priority human support — for a flat, transparent monthly price. No lock-in contracts, no setup fees, no surprise charges, cancel anytime. Your data is always yours, always exportable.</p>
+      <h2>Simple, transparent pricing</h2>
+      <p>Your first invoice is on us — no card required. A plan then unlocks unlimited invoices, expenses, receipts, and live tax estimates, plus advanced reports, multi-business support, contractor batch payments, and priority human support — for a flat, transparent monthly price. No lock-in contracts, no setup fees, no surprise charges, cancel anytime. Your data is always yours, always exportable.</p>
 
       <h2>Private, secure, Australian-owned</h2>
       <p>Your data is encrypted in transit and at rest. You decide what syncs to the cloud and what stays on-device. We never sell your data. Ozly is operated by Ozly Pty Ltd, based in Australia, and complies with the Privacy Act 1988 and the Australian Privacy Principles. Delete your account at any time and every byte of your data is permanently purged within 30 days.</p>
@@ -56,11 +56,11 @@ export const content = {
     pt: {
       h1: 'Invoice, ABN e Impostos na Austrália<span class="accent">— num app só, em português</span>',
       body: `
-      <p class="sub">Emita invoices ilimitadas, escaneie recibos e acompanhe GST e imposto de renda na Austrália — grátis no iOS e Android.</p>
+      <p class="sub">Emita invoices, escaneie recibos e acompanhe GST e imposto de renda na Austrália — no iOS e Android.</p>
       <p>O Ozly é o app feito pra quem trabalha por conta própria na Austrália com ABN: cleaner, tradie, entregador, cozinheiro, babá, freelancer. Se você é brasileiro ou brasileira na Austrália e vive de trampo com ABN, o Ozly resolve a parte chata: invoice profissional ilimitada, leitura automática de recibo com IA, despesas dedutíveis organizadas do jeito que o ATO (a Receita australiana) espera, estimativa de GST e de imposto em tempo real, agenda de jobs e relatório pronto pro tax return — tudo no celular, em português.</p>
 
       <h2>Como emitir invoice com ABN — sem limite e sem taxa</h2>
-      <p>Crie e mande uma invoice profissional em menos de um minuto: itens, GST (10%), data de vencimento, seus dados de pagamento e logo. Acompanhe o status em tempo real, mande lembrete automático de invoice atrasada e mantenha o histórico organizado. Não tem limite mensal, não tem taxa por invoice e não tem paywall no básico — invoice ilimitada é grátis pra todo mundo no Ozly.</p>
+      <p>Crie e mande uma invoice profissional em menos de um minuto: itens, GST (10%), data de vencimento, seus dados de pagamento e logo. Acompanhe o status em tempo real, mande lembrete automático de invoice atrasada e mantenha o histórico organizado. Não tem taxa por invoice e não tem porcentagem sobre o que você ganha — sua primeira invoice é por nossa conta, e os planos liberam invoice ilimitada.</p>
 
       <h2>Recibo escaneado com IA — chega de digitar despesa</h2>
       <p>Aponte a câmera pro recibo (de papel ou digital) e o Ozly lê valor, data, loja, GST e categoria sozinho. Cada recibo fica salvo na nuvem criptografada e ligado ao job ou período fiscal certo. Na hora do tax return, está tudo categorizado e pronto pra exportar pro seu contador.</p>
@@ -77,8 +77,8 @@ export const content = {
       <h2>Feito pra quem chegou agora na Austrália</h2>
       <p>O Ozly nasceu pensando em quem trabalha com ABN e não quer se perder na burocracia australiana — incluindo a comunidade brasileira. O app inteiro funciona em português: telas, suporte e o <a href="/pt/guide">guia completo em português</a>. Visto de estudante? O Visa Shield monitora suas horas trabalhadas pra você ficar dentro do limite do visto.</p>
 
-      <h2>Grátis no essencial, sem pegadinha</h2>
-      <p>Invoice, despesas, recibos e estimativa de imposto ilimitados, sem custo. Os planos pagos liberam relatórios avançados, comparação de tarifas e o monitor de horas do visto — preço fixo, transparente, cancela quando quiser. Seus dados são seus, sempre exportáveis, protegidos pela lei de privacidade australiana (Privacy Act 1988).</p>
+      <h2>Preço transparente, sem pegadinha</h2>
+      <p>Sua primeira invoice é por nossa conta, sem cartão. Os planos liberam invoice, despesas, recibos e estimativa de imposto ilimitados, além de relatórios avançados, comparação de tarifas e o monitor de horas do visto — preço fixo, transparente, cancela quando quiser. Seus dados são seus, sempre exportáveis, protegidos pela lei de privacidade australiana (Privacy Act 1988).</p>
 
       <h2>Comece em 2 minutos</h2>
       <p>Baixe o Ozly, entre com Apple, Google ou email, adicione seu ABN e mande sua primeira invoice antes do café ficar pronto. Sem cartão de crédito, sem call de demonstração.</p>
@@ -89,11 +89,11 @@ export const content = {
     es: {
       h1: 'Invoices, ABN e Impuestos en Australia<span class="accent">— en una sola app, en español</span>',
       body: `
-      <p class="sub">Emite invoices ilimitadas, escanea recibos y controla el GST y tu impuesto en Australia — gratis en iOS y Android.</p>
+      <p class="sub">Emite invoices, escanea recibos y controla el GST y tu impuesto en Australia — en iOS y Android.</p>
       <p>Ozly es la app para quien trabaja por su cuenta en Australia con ABN: limpieza, construcción, delivery, cocina, cuidado de personas, freelance. Si sos latino o latina en Australia y vivís de trabajos con ABN, Ozly te saca la parte pesada: invoices profesionales ilimitadas, lectura automática de recibos con IA, gastos deducibles organizados como los espera el ATO (la oficina de impuestos australiana), estimación de GST y de impuesto en tiempo real, agenda de jobs y reportes listos para el tax return — todo en el celular, en español.</p>
 
       <h2>Cómo facturar con ABN — sin límite y sin comisión</h2>
-      <p>Crea y manda una invoice profesional en menos de un minuto: ítems, GST (10%), fecha de vencimiento, tus datos de pago y tu logo. Sigue el estado en tiempo real, manda recordatorios automáticos de invoices vencidas y mantén el historial ordenado. Sin tope mensual, sin comisión por invoice y sin paywall en lo básico — la facturación ilimitada es gratis para todos en Ozly.</p>
+      <p>Crea y manda una invoice profesional en menos de un minuto: ítems, GST (10%), fecha de vencimiento, tus datos de pago y tu logo. Sigue el estado en tiempo real, manda recordatorios automáticos de invoices vencidas y mantén el historial ordenado. Sin comisión por invoice y sin porcentaje sobre lo que ganás — tu primera invoice va por nuestra cuenta, y los planes desbloquean facturación ilimitada.</p>
 
       <h2>Recibos escaneados con IA — basta de tipear gastos</h2>
       <p>Apunta la cámara al recibo (de papel o digital) y Ozly lee solo el total, la fecha, la tienda, el GST y la categoría. Cada recibo queda guardado en la nube cifrada y vinculado al job o período fiscal correcto. Cuando llega el tax return, ya está todo categorizado y listo para exportar a tu contador.</p>
@@ -110,8 +110,8 @@ export const content = {
       <h2>Hecho para quien recién llega a Australia</h2>
       <p>Ozly nació pensando en quien trabaja con ABN y no quiere perderse en la burocracia australiana — incluida la comunidad latina. La app entera funciona en español: pantallas, soporte y la <a href="/es/guide">guía completa en español</a>. ¿Visa de estudiante? El Visa Shield monitorea tus horas trabajadas para que no te pases del límite de tu visa.</p>
 
-      <h2>Gratis en lo esencial, sin letra chica</h2>
-      <p>Invoices, gastos, recibos y estimación de impuestos ilimitados, sin costo. Los planes pagos suman reportes avanzados, comparación de tarifas y el monitor de horas de visa — precio fijo, transparente, cancelas cuando quieras. Tus datos son tuyos, siempre exportables, protegidos por la ley de privacidad australiana (Privacy Act 1988).</p>
+      <h2>Precio transparente, sin letra chica</h2>
+      <p>Tu primera invoice va por nuestra cuenta, sin tarjeta. Los planes desbloquean invoices, gastos, recibos y estimación de impuestos ilimitados, más reportes avanzados, comparación de tarifas y el monitor de horas de visa — precio fijo, transparente, cancelas cuando quieras. Tus datos son tuyos, siempre exportables, protegidos por la ley de privacidad australiana (Privacy Act 1988).</p>
 
       <h2>Empieza en 2 minutos</h2>
       <p>Descarga Ozly, entra con Apple, Google o email, agrega tu ABN y manda tu primera invoice antes de que se enfríe el café. Sin tarjeta de crédito, sin llamadas de demo.</p>
@@ -126,7 +126,7 @@ export const content = {
     en: {
       h1: "Ozly Support &amp; Frequently Asked Questions",
       body: `
-      <p>Find answers to the most common questions about using Ozly — the free invoicing and tax app for Australian sole traders. Our FAQ covers account setup, invoicing, expenses, GST, PAYG tax, receipts, subscriptions, and more.</p>
+      <p>Find answers to the most common questions about using Ozly — the invoicing and tax app for Australian sole traders. Our FAQ covers account setup, invoicing, expenses, GST, PAYG tax, receipts, subscriptions, and more.</p>
 
       <h2>Popular topics</h2>
       <ul>
@@ -136,7 +136,7 @@ export const content = {
         <li><strong>Tax:</strong> Understand GST thresholds, BAS, PAYG instalments, and end-of-financial-year reports.</li>
         <li><strong>Visa Shield:</strong> Track your working hours against your student-visa limit.</li>
         <li><strong>Jobs &amp; contractors:</strong> Manage clients, quotes, recurring jobs, and contractor payments.</li>
-        <li><strong>Subscriptions:</strong> Free vs. Pro, cancellations, refunds, and App Store / Play Store billing.</li>
+        <li><strong>Subscriptions:</strong> Basic vs. Pro, cancellations, refunds, and App Store / Play Store billing.</li>
       </ul>
 
       <h2>Need personal help?</h2>
@@ -156,7 +156,7 @@ export const content = {
         <li><strong>Impostos:</strong> limite de GST, BAS, PAYG e relatório do fim do ano fiscal australiano.</li>
         <li><strong>Visa Shield:</strong> acompanhar suas horas trabalhadas dentro do limite do visto de estudante.</li>
         <li><strong>Jobs e contractors:</strong> clientes, orçamentos, jobs recorrentes e pagamento de sub-contractors.</li>
-        <li><strong>Assinatura:</strong> grátis vs. pago, cancelamento, reembolso e cobrança pela App Store / Play Store.</li>
+        <li><strong>Assinatura:</strong> Basic vs. Pro, cancelamento, reembolso e cobrança pela App Store / Play Store.</li>
       </ul>
 
       <h2>Precisa falar com a gente?</h2>
@@ -176,7 +176,7 @@ export const content = {
         <li><strong>Impuestos:</strong> límite de GST, BAS, PAYG y reportes del cierre del año fiscal australiano.</li>
         <li><strong>Visa Shield:</strong> controlar tus horas trabajadas dentro del límite de tu visa de estudiante.</li>
         <li><strong>Jobs y contractors:</strong> clientes, presupuestos, jobs recurrentes y pagos a subcontratistas.</li>
-        <li><strong>Suscripción:</strong> gratis vs. pago, cancelación, reembolsos y cobro por App Store / Play Store.</li>
+        <li><strong>Suscripción:</strong> Basic vs. Pro, cancelación, reembolsos y cobro por App Store / Play Store.</li>
       </ul>
 
       <h2>¿Necesitas hablar con nosotros?</h2>
@@ -263,7 +263,7 @@ export const content = {
       <ul>
         <li><strong>Create your workspace:</strong> sign up, onboarding and your billing email.</li>
         <li><strong>Members:</strong> invite the ABN holders you work with and read compliance badges.</li>
-        <li><strong>Cover a plan:</strong> sponsor an ABN holder's Ozly access so they bill you for free.</li>
+        <li><strong>Cover a plan:</strong> sponsor an ABN holder's Ozly access so their invoicing to you is covered.</li>
         <li><strong>Inbox &amp; deliveries:</strong> receive invoices and track delivery status.</li>
         <li><strong>Invoices:</strong> mark paid and export For Xero, As CSV, or an ABA bank file.</li>
         <li><strong>Billing:</strong> Crew/Squad/Fleet/Operation tiers, seats, trial and the Stripe portal.</li>
@@ -282,7 +282,7 @@ export const content = {
       <ul>
         <li><strong>Criar o workspace:</strong> cadastro, onboarding e o email de faturamento.</li>
         <li><strong>Members:</strong> convidar os ABN holders e ler os selos de compliance.</li>
-        <li><strong>Cobrir um plano:</strong> custear o acesso Ozly de um ABN holder pra ele te faturar de graça.</li>
+        <li><strong>Cobrir um plano:</strong> custear o acesso Ozly de um ABN holder — as invoices dele pra você ficam cobertas.</li>
         <li><strong>Inbox e entregas:</strong> receber invoices e acompanhar o status de entrega.</li>
         <li><strong>Invoices:</strong> marcar como paga e exportar For Xero, As CSV ou arquivo ABA.</li>
         <li><strong>Billing:</strong> planos Crew/Squad/Fleet/Operation, seats, trial e o portal Stripe.</li>
@@ -301,7 +301,7 @@ export const content = {
       <ul>
         <li><strong>Crear el workspace:</strong> registro, onboarding y el email de facturación.</li>
         <li><strong>Members:</strong> invitar a los ABN holders y leer los sellos de compliance.</li>
-        <li><strong>Cubrir un plan:</strong> costear el acceso Ozly de un ABN holder para que te facture gratis.</li>
+        <li><strong>Cubrir un plan:</strong> costear el acceso Ozly de un ABN holder — su facturación hacia vos queda cubierta.</li>
         <li><strong>Inbox y entregas:</strong> recibir invoices y seguir el estado de entrega.</li>
         <li><strong>Invoices:</strong> marcar como pagada y exportar For Xero, As CSV o archivo ABA.</li>
         <li><strong>Billing:</strong> planes Crew/Squad/Fleet/Operation, seats, trial y el portal Stripe.</li>
@@ -318,11 +318,11 @@ export const content = {
       h1: "Ozly for Organisations — Manage Sub-contractors Without Spreadsheets",
       body: `
       <p class="sub">One portal to invite sub-contractors, receive their invoices, pay them and keep every record tidy.</p>
-      <p>Ozly for Organisations is the web portal for Australian businesses that work with ABN sub-contractors — cleaning companies, construction crews, delivery fleets, care providers. Your contractors invoice you from the free Ozly app; every invoice lands in one inbox with the ABN details, payment status, and audit trail already attached.</p>
+      <p>Ozly for Organisations is the web portal for Australian businesses that work with ABN sub-contractors — cleaning companies, construction crews, delivery fleets, care providers. Your contractors invoice you from the Ozly app; every invoice lands in one inbox with the ABN details, payment status, and audit trail already attached.</p>
 
       <h2>How it works</h2>
       <ul>
-        <li><strong>Invite:</strong> Add your sub-contractors by email — they get the free Ozly app and are linked to your organisation.</li>
+        <li><strong>Invite:</strong> Add your sub-contractors by email — they get the Ozly app and are linked to your organisation.</li>
         <li><strong>Receive:</strong> Their invoices arrive in your portal inbox, complete with ABN, line items and GST.</li>
         <li><strong>Pay &amp; record:</strong> Mark invoices paid, export totals, and keep TPAR-ready records of what you paid each contractor.</li>
       </ul>
@@ -331,18 +331,18 @@ export const content = {
       <p>The sub-contractor relationship is properly documented: who invoiced whom, when, for what, with full history retained. You stay in control of your Fair Work, super and tax obligations — Ozly keeps the paperwork. Data is encrypted, Australian-hosted, and covered by the Privacy Act 1988.</p>
 
       <h2>Pricing</h2>
-      <p>Per-seat pricing from $7.99 to $14.99 per contractor per month depending on team size, with annual discounts. Free 14-day trial, no payment method required to start. <a href="https://app.ozly.au/signup">Start your trial at app.ozly.au</a>.</p>
+      <p>Per-seat pricing from $7.99 to $14.99 per contractor per month depending on team size, with annual discounts. 14-day trial, no payment method required to start. <a href="https://app.ozly.au/signup">Start your trial at app.ozly.au</a>.</p>
       `,
     },
     pt: {
       h1: "Ozly para Organizações — Gerencie Sub-contractors sem Planilha",
       body: `
       <p class="sub">Um portal pra convidar sub-contractors, receber as invoices deles, pagar e manter cada registro em ordem.</p>
-      <p>O Ozly para Organizações é o portal web pra empresas na Austrália que trabalham com sub-contractors de ABN — empresas de cleaning, equipes de construção, frotas de delivery, prestadores de cuidado. Seus contractors emitem invoice pelo app gratuito do Ozly; cada invoice chega numa caixa de entrada única, já com ABN, status de pagamento e histórico completo.</p>
+      <p>O Ozly para Organizações é o portal web pra empresas na Austrália que trabalham com sub-contractors de ABN — empresas de cleaning, equipes de construção, frotas de delivery, prestadores de cuidado. Seus contractors emitem invoice pelo app do Ozly; cada invoice chega numa caixa de entrada única, já com ABN, status de pagamento e histórico completo.</p>
 
       <h2>Como funciona</h2>
       <ul>
-        <li><strong>Convide:</strong> adicione seus sub-contractors por email — eles baixam o app grátis e ficam vinculados à sua organização.</li>
+        <li><strong>Convide:</strong> adicione seus sub-contractors por email — eles baixam o app do Ozly e ficam vinculados à sua organização.</li>
         <li><strong>Receba:</strong> as invoices deles chegam na caixa de entrada do portal, com ABN, itens e GST.</li>
         <li><strong>Pague e registre:</strong> marque invoices como pagas, exporte totais e mantenha registros prontos pro TPAR.</li>
       </ul>
@@ -351,18 +351,18 @@ export const content = {
       <p>A relação de sub-contratação fica devidamente documentada: quem faturou, quando, pelo quê, com histórico completo. As obrigações de Fair Work, super e impostos continuam suas — o Ozly cuida da papelada. Dados criptografados, hospedados na Austrália, cobertos pelo Privacy Act 1988.</p>
 
       <h2>Preços</h2>
-      <p>Preço por assento, de $7.99 a $14.99 por contractor por mês conforme o tamanho do time, com desconto anual. 14 dias grátis, sem cartão pra começar. <a href="https://app.ozly.au/signup">Comece seu teste em app.ozly.au</a>.</p>
+      <p>Preço por assento, de $7.99 a $14.99 por contractor por mês conforme o tamanho do time, com desconto anual. Teste de 14 dias, sem cartão pra começar. <a href="https://app.ozly.au/signup">Comece seu teste em app.ozly.au</a>.</p>
       `,
     },
     es: {
       h1: "Ozly para Organizaciones — Gestiona Subcontratistas sin Planillas",
       body: `
       <p class="sub">Un portal para invitar subcontratistas, recibir sus invoices, pagarles y mantener cada registro en orden.</p>
-      <p>Ozly para Organizaciones es el portal web para empresas en Australia que trabajan con subcontratistas con ABN — empresas de limpieza, cuadrillas de construcción, flotas de delivery, proveedores de cuidado. Tus contractors facturan desde la app gratuita de Ozly; cada invoice llega a una sola bandeja de entrada, ya con el ABN, el estado de pago y el historial completo.</p>
+      <p>Ozly para Organizaciones es el portal web para empresas en Australia que trabajan con subcontratistas con ABN — empresas de limpieza, cuadrillas de construcción, flotas de delivery, proveedores de cuidado. Tus contractors facturan desde la app de Ozly; cada invoice llega a una sola bandeja de entrada, ya con el ABN, el estado de pago y el historial completo.</p>
 
       <h2>Cómo funciona</h2>
       <ul>
-        <li><strong>Invita:</strong> agrega a tus subcontratistas por email — descargan la app gratis y quedan vinculados a tu organización.</li>
+        <li><strong>Invita:</strong> agrega a tus subcontratistas por email — descargan la app de Ozly y quedan vinculados a tu organización.</li>
         <li><strong>Recibe:</strong> sus invoices llegan a la bandeja del portal, con ABN, ítems y GST.</li>
         <li><strong>Paga y registra:</strong> marca invoices como pagadas, exporta totales y mantén registros listos para el TPAR.</li>
       </ul>
@@ -371,7 +371,7 @@ export const content = {
       <p>La relación de subcontratación queda bien documentada: quién facturó, cuándo, por qué, con historial completo. Tus obligaciones de Fair Work, super e impuestos siguen siendo tuyas — Ozly se encarga del papeleo. Datos cifrados, alojados en Australia, cubiertos por el Privacy Act 1988.</p>
 
       <h2>Precios</h2>
-      <p>Precio por asiento, de $7.99 a $14.99 por contractor por mes según el tamaño del equipo, con descuento anual. 14 días gratis, sin tarjeta para empezar. <a href="https://app.ozly.au/signup">Empieza tu prueba en app.ozly.au</a>.</p>
+      <p>Precio por asiento, de $7.99 a $14.99 por contractor por mes según el tamaño del equipo, con descuento anual. Prueba de 14 días, sin tarjeta para empezar. <a href="https://app.ozly.au/signup">Empieza tu prueba en app.ozly.au</a>.</p>
       `,
     },
   },
