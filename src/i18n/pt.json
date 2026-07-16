@@ -841,7 +841,7 @@
     },
     "home": {
       "title": "Ozly — App de Invoice, ABN e Impostos na Austrália, em Português",
-      "description": "Emita invoices ilimitadas, escaneie recibos, organize despesas dedutíveis e acompanhe GST e imposto na Austrália — tudo em português. Feito pra quem tem ABN. Grátis no iOS e Android."
+      "description": "Emita invoices ilimitadas, escaneie recibos, organize despesas dedutíveis e acompanhe GST e imposto na Austrália — tudo em português. Feito pra quem tem ABN. Disponível no iOS e Android."
     },
     "support": {
       "title": "Ajuda Ozly — Dúvidas de Invoice, ABN e Imposto na Austrália",
@@ -871,6 +871,6 @@
     "empty": "Ainda não há artigos — volte em breve.",
     "notFound": "Este artigo não está disponível.",
     "ctaTitle": "Toque seu ABN do jeito fácil",
-    "ctaSubtitle": "Invoice grátis e imposto estimado em tempo real, feito para sole traders na Austrália."
+    "ctaSubtitle": "Invoices rápidas e imposto estimado em tempo real, feito para sole traders na Austrália."
   }
 }
