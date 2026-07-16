@@ -101,7 +101,7 @@ function appLd(lang) {
     inLanguage: ["en-AU", "pt-BR", "es"],
     url: urlFor(LANGS.find((l) => l.code === lang).prefix, "/"),
     image: OG_IMAGE,
-    offers: { "@type": "Offer", price: "0", priceCurrency: "AUD" },
+    offers: { "@type": "Offer", price: "14.99", priceCurrency: "AUD" },
     publisher: { "@type": "Organization", name: "Ozly Pty Ltd", url: `${ORIGIN}/` },
   };
 }
