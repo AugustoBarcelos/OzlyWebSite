@@ -199,6 +199,8 @@ export function CockpitPage() {
     return (p.tfn ?? 0) + (p.abn ?? 0) + (p.pro ?? 0);
   }, [data.kpi]);
   const mrr = data.kpi?.mrr_estimate_aud ?? data.revenue?.mrr_total ?? null;
+  // Trials em andamento AGORA (não é receita, mas é o pipeline que vira pagante).
+  const trialsActive = data.kpi?.trials_active ?? null;
   const churn = data.kpi?.churn_period ?? null;
   // Churn como taxa (% da base de pagantes do período).
   const churnBase = (paidActiveTotal ?? 0) + (churn ?? 0);
@@ -387,6 +389,11 @@ export function CockpitPage() {
             <CmdStat label="MRR" value={mrr === null ? '—' : formatCurrencyAUD(mrr)} />
             <CmdStat label="Pagantes" value={paidActiveTotal === null ? '—' : formatNumber(paidActiveTotal)} />
             <CmdStat
+              label="Trials ativos"
+              value={trialsActive === null ? '—' : formatNumber(trialsActive)}
+              hint="em teste agora — pipeline"
+            />
+            <CmdStat
               label="Churn"
               value={churnRate === null ? '—' : `${(churnRate * 100).toFixed(0)}%`}
               hint={churn === null ? '' : `${churn} de ${churnBase} saíram`}
@@ -515,6 +522,12 @@ export function CockpitPage() {
                   ? 'vindo de 1 assinante pagando hoje'
                   : `vindo de ${formatNumber(paidActiveTotal)} assinantes pagando hoje`}
             </div>
+            {!loading && trialsActive !== null && trialsActive > 0 && (
+              <div className="mt-0.5 text-xs text-navy-400">
+                + {formatNumber(trialsActive)} em trial ativo{' '}
+                <span className="text-navy-300">(ainda não paga)</span>
+              </div>
+            )}
           </Link>
 
           {/* Saindo ou em risco */}
