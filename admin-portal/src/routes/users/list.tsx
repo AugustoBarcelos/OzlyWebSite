@@ -82,6 +82,13 @@ function formatRelative(iso: string | null): string {
   return `há ${Math.floor(mo / 12)}a`;
 }
 
+// Dias restantes de trial até a cobrança. 0 = já venceu, null = não está em trial.
+function trialDaysLeft(iso: string | null): number | null {
+  if (!iso) return null;
+  const ms = new Date(iso).getTime() - Date.now();
+  return Math.max(0, Math.ceil(ms / 86_400_000));
+}
+
 function csvEscape(v: string | number | boolean | null | undefined): string {
   const s = v === null || v === undefined ? '' : String(v);
   if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
@@ -459,6 +466,7 @@ export function UserListPage() {
               <th scope="col" className="px-3 py-2.5">Email</th>
               <th scope="col" className="px-3 py-2.5">Email mkt</th>
               <th scope="col" className="px-3 py-2.5">Plano</th>
+              <th scope="col" className="px-3 py-2.5">Trial</th>
               <th scope="col" className="px-3 py-2.5">Lifecycle</th>
               <th scope="col" className="px-3 py-2.5">Role</th>
               <th scope="col" className="px-3 py-2.5">Platform</th>
@@ -485,7 +493,7 @@ export function UserListPage() {
           <tbody className="divide-y divide-navy-50 bg-white">
             {loading && rows.length === 0 && (
               <tr>
-                <td colSpan={11} className="px-4 py-10 text-center">
+                <td colSpan={12} className="px-4 py-10 text-center">
                   <Spinner size="md" label="Carregando" />
                 </td>
               </tr>
@@ -493,7 +501,7 @@ export function UserListPage() {
 
             {!loading && rows.length === 0 && (
               <tr>
-                <td colSpan={11} className="px-4 py-10 text-center text-sm text-navy-400">
+                <td colSpan={12} className="px-4 py-10 text-center text-sm text-navy-400">
                   Nenhum usuário bate com os filtros.
                 </td>
               </tr>
@@ -563,6 +571,33 @@ export function UserListPage() {
                     onClick={() => navigate(`/users/${row.id}`)}
                   >
                     <PlanBadge plan={row.plan} />
+                  </td>
+                  <td
+                    className="cursor-pointer px-3 py-2.5"
+                    onClick={() => navigate(`/users/${row.id}`)}
+                  >
+                    {row.status === 'trial' && row.trial_ends_at
+                      ? (() => {
+                          const left = trialDaysLeft(row.trial_ends_at);
+                          if (left === null) return <span className="text-navy-300">—</span>;
+                          const urgent = left <= 3;
+                          return (
+                            <span
+                              title={`Cobra em ${formatDate(row.trial_ends_at)}`}
+                              className={[
+                                'inline-flex items-center rounded-md px-1.5 py-0.5 text-xs font-medium',
+                                left === 0
+                                  ? 'bg-navy-100 text-navy-500'
+                                  : urgent
+                                    ? 'bg-amber-50 text-amber-700'
+                                    : 'bg-brand-50 text-brand-700',
+                              ].join(' ')}
+                            >
+                              {left === 0 ? 'vence hoje' : `faltam ${left}d`}
+                            </span>
+                          );
+                        })()
+                      : <span className="text-navy-300">—</span>}
                   </td>
                   <td
                     className="cursor-pointer px-3 py-2.5"

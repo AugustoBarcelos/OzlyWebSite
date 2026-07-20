@@ -590,6 +590,14 @@ function daysSince(iso: string | null): number | null {
   return Math.max(0, Math.floor(ms / 86_400_000));
 }
 
+// Dias restantes até uma data futura (ex: fim do trial = dia que vira cobrança).
+// Retorna 0 quando a data já passou, null quando não há data.
+function daysUntil(iso: string | null): number | null {
+  if (!iso) return null;
+  const ms = new Date(iso).getTime() - Date.now();
+  return Math.max(0, Math.ceil(ms / 86_400_000));
+}
+
 function acquisitionLabel(insight: UserInsight): string {
   const parts = [insight.acq_source, insight.acq_medium, insight.acq_campaign]
     .map((p) => (p ? p.trim() : ''))
@@ -1130,6 +1138,38 @@ export function User360Page() {
                             </span>
                           )}
                         </div>
+                        {sub?.status === 'trial' && sub?.trial_ends_at && (() => {
+                          const left = daysUntil(sub.trial_ends_at);
+                          const planLabel = sub.plan ? sub.plan.toUpperCase() : '—';
+                          const storeLabel =
+                            sub.store === 'app_store'
+                              ? 'App Store'
+                              : sub.store === 'play_store'
+                                ? 'Play Store'
+                                : sub.store === 'promotional'
+                                  ? 'Grant promocional'
+                                  : (sub.store ?? sub.source ?? '—');
+                          return (
+                            <div className="rounded-md border border-brand-200 bg-brand-50 p-3">
+                              <div className="text-xs font-semibold uppercase tracking-wide text-brand-700">
+                                Em trial · plano {planLabel}
+                              </div>
+                              <div className="mt-1 text-sm text-navy-700">
+                                {left !== null && left > 0 ? (
+                                  <>
+                                    Faltam <span className="font-semibold">{left} {left === 1 ? 'dia' : 'dias'}</span> até a
+                                    cobrança (em {formatDate(sub.trial_ends_at)}).
+                                  </>
+                                ) : (
+                                  <>Trial encerrado (venceu em {formatDate(sub.trial_ends_at)}).</>
+                                )}
+                              </div>
+                              <div className="mt-1 text-xs text-navy-500">
+                                Ativou em {formatDate(sub.trial_started_at ?? null)} · via {storeLabel}
+                              </div>
+                            </div>
+                          );
+                        })()}
                         <div className="space-y-1">
                           <FieldRow label="Plan" value={sub?.plan ?? null} />
                           <FieldRow label="Period type" value={sub?.period_type ?? null} />
@@ -1156,7 +1196,22 @@ export function User360Page() {
                             label="Current period ends"
                             value={formatDate(sub?.current_period_end ?? null)}
                           />
-                          <FieldRow label="Trial ends" value={formatDate(sub?.trial_ends_at ?? null)} />
+                          <FieldRow label="Trial started" value={formatDate(sub?.trial_started_at ?? null)} />
+                          <FieldRow
+                            label="Trial ends"
+                            value={
+                              sub?.trial_ends_at
+                                ? (() => {
+                                    const left = daysUntil(sub.trial_ends_at);
+                                    const when = formatDate(sub.trial_ends_at);
+                                    if (left === null) return when;
+                                    return left > 0
+                                      ? `${when} · faltam ${left} ${left === 1 ? 'dia' : 'dias'} p/ cobrança`
+                                      : `${when} · trial encerrado`;
+                                  })()
+                                : '—'
+                            }
+                          />
                           <FieldRow label="Cancelled at" value={formatDate(sub?.cancelled_at ?? null)} />
                           <FieldRow
                             label="Last RC sync"
