@@ -206,6 +206,7 @@ function useNavGroups(simple: boolean): ReadonlyArray<NavGroup> {
                 { label: 'SEO & Site', to: '/marketing/seo' },
                 { label: 'ASO (App Store)', to: '/marketing/aso' },
                 { label: 'Canais (orgânico)', to: '/marketing/channels' },
+                { label: 'Reddit (radar)', to: '/marketing/reddit' },
               ],
             },
             {

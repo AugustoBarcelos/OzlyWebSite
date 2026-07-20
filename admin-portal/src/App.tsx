@@ -144,6 +144,11 @@ const MarketingNewsletterPage = lazy(() =>
     default: m.MarketingNewsletterPage,
   })),
 );
+const MarketingRedditPage = lazy(() =>
+  import('./routes/marketing/reddit').then((m) => ({
+    default: m.MarketingRedditPage,
+  })),
+);
 
 // Ads (Tráfego Pago)
 const AdsOverviewPage = lazy(() =>
@@ -418,6 +423,7 @@ export function App() {
                 <Route path="/marketing/aso" element={lazyRoute(MarketingAsoPage)} />
                 <Route path="/marketing/blog" element={lazyRoute(MarketingBlogPage)} />
                 <Route path="/marketing/newsletter" element={lazyRoute(MarketingNewsletterPage)} />
+                <Route path="/marketing/reddit" element={lazyRoute(MarketingRedditPage)} />
 
                 {/* Messaging (Marketing > Messaging — kept at /messaging/* for compat) */}
                 <Route path="/messaging/email" element={lazyRoute(MessagingEmailPage)} />
