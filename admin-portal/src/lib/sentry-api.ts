@@ -20,6 +20,7 @@
  */
 
 import { env } from './env';
+import { supabase } from './supabase';
 
 // Browser hits the same-origin Pages Function which injects the auth token
 // server-side. Direct sentry.io calls are blocked by the org-level "Invalid
@@ -130,6 +131,14 @@ async function fetchSentry<T>(
     if (method !== 'GET') {
       headers['Content-Type'] = 'application/json';
     }
+    // The proxy requires a valid Supabase session (so it can't be abused as an
+    // open relay to our Sentry token). Attach the session JWT; the proxy
+    // injects the actual Sentry token server-side.
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session?.access_token) return null;
+    headers.Authorization = `Bearer ${session.access_token}`;
     const init: RequestInit = { method, headers };
     if (opts.signal) init.signal = opts.signal;
     if (opts.body !== undefined && method !== 'GET') {

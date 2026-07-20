@@ -18,7 +18,7 @@ export interface BlogTopic {
 }
 
 /**
- * A GUIDE topic (for the /guias funnel). Same shape as a BlogTopic but grouped
+ * A GUIDE topic (for the /aprenda funnel). Same shape as a BlogTopic but grouped
  * by `profession` instead of audience, and carries the funnel `feature` that
  * seeds the guide's angle + CTA.
  */
@@ -42,7 +42,7 @@ export interface BlogPost {
   en: BlogLang;
   pt: BlogLang;
   es: BlogLang;
-  /** 'post' (default blog article) | 'guide' (/guias funnel content). */
+  /** 'post' (default blog article) | 'guide' (/aprenda funnel content). */
   kind?: PostKind;
   /** Guide-only soft category. */
   profession?: Profession | null;
@@ -52,7 +52,7 @@ export interface BlogPost {
 
 export type LangCode = 'en' | 'pt' | 'es';
 
-/** Blog article vs /guias guide — same table, discriminated by `kind`. */
+/** Blog article vs /aprenda guide — same table, discriminated by `kind`. */
 export type PostKind = 'post' | 'guide';
 
 /** Soft guide category. Free text on the DB side; these are the known values. */
@@ -115,7 +115,7 @@ async function blogApi<T>(
 export interface PublishedPost {
   slug: string;
   title: string;
-  /** 'post' → ozly.au/blog/… · 'guide' → ozly.au/guias/…. Defaults to 'post'. */
+  /** 'post' → ozly.au/blog/… · 'guide' → ozly.au/aprenda/…. Defaults to 'post'. */
   kind?: PostKind;
 }
 
@@ -144,12 +144,12 @@ export function suggestMoreTopics(audience?: 'business' | 'consumer', avoid: str
  *
  * Default (`kind` omitted / 'post') = the unchanged blog-post path. Pass
  * `kind: 'guide'` (+ optional profession/feature) to hit the worker's GUIDE
- * prompt instead — a practical step-by-step how-to for /guias. The response
+ * prompt instead — a practical step-by-step how-to for /aprenda. The response
  * shape is identical (slug + en/pt/es), so the editor handles both the same.
  */
 /**
  * GUIDE topics for a profession (curated per-profession list + an AI variant),
- * for the /guias funnel. Mirrors suggestMoreTopics but on the guide path.
+ * for the /aprenda funnel. Mirrors suggestMoreTopics but on the guide path.
  * `avoid` = titles already on screen so repeats are filtered out.
  */
 export function suggestGuideTopics(profession: Profession, avoid: string[] = []) {

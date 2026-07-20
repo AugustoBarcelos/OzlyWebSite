@@ -11,13 +11,27 @@ routes = [
   { pattern = "ozly.au/blog-api/*", zone_name = "ozly.au" },
   { pattern = "ozly.au/blog", zone_name = "ozly.au" },
   { pattern = "ozly.au/blog/*", zone_name = "ozly.au" },
-  # Guides: same SSR engine as the blog (kind='guide').
-  { pattern = "ozly.au/guias", zone_name = "ozly.au" },
-  { pattern = "ozly.au/guias/*", zone_name = "ozly.au" },
+  # Learn/Guides (/aprenda): trilingual SSR (same engine as the blog, kind='guide').
+  # Patterns END WITH * on purpose: a bare "ozly.au/aprenda" route does NOT match a
+  # URL that carries a querystring. The app opens /aprenda?profession=<p>, so an
+  # exact route would fall through to GitHub Pages (404). "…aprenda*" catches the
+  # listing, the query and the slugs in one; the worker's own regex rejects
+  # anything that isn't really a guide path and falls through to origin.
+  { pattern = "ozly.au/aprenda*", zone_name = "ozly.au" },
+  { pattern = "ozly.au/pt/aprenda*", zone_name = "ozly.au" },
+  { pattern = "ozly.au/es/aprenda*", zone_name = "ozly.au" },
+  # Legacy /guias → 301 to /aprenda. The shipped app calls /guias?profession=<p>,
+  # so this MUST catch the querystring too (hence the trailing *, not an exact route).
+  { pattern = "ozly.au/guias*", zone_name = "ozly.au" },
   { pattern = "ozly.au/pt/blog", zone_name = "ozly.au" },
   { pattern = "ozly.au/pt/blog/*", zone_name = "ozly.au" },
   { pattern = "ozly.au/es/blog", zone_name = "ozly.au" },
   { pattern = "ozly.au/es/blog/*", zone_name = "ozly.au" },
+  # NOTE: no worker route for /sitemap.xml — the apex path is already served by
+  # the origin (GitHub Pages static sitemap from scripts/seo-content.mjs) and a
+  # worker route there does NOT take effect. Guide URLs must be added to the
+  # static sitemap generator (seo-content.mjs), same as /blog and /guide, once
+  # guides are published. handleSitemap() stays in src/index.ts but is dormant.
 ]
 
 # Public, non-secret values. The anon Supabase key is safe in client

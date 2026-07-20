@@ -16,7 +16,10 @@ interface Props {
 }
 
 export function OverviewTab({ data, loading, period }: Props) {
-  const { kpi, revenue, timeseries } = data;
+  const { kpi, revenue, timeseries, trialStatus } = data;
+
+  // Trials prestes a virar cobrança (fim do trial nos próximos 7 dias).
+  const trialsExpiring7d = trialStatus?.trials_expiring_7d ?? null;
 
   const activationRate =
     kpi && kpi.activations_period !== null && kpi.signups_period !== null
@@ -120,7 +123,13 @@ export function OverviewTab({ data, loading, period }: Props) {
         <KpiHero
           label="Active trials"
           value={trialsActive}
-          hint={trialsActive === null ? 'Pending RC sync' : 'In free-trial period'}
+          hint={
+            trialsActive === null
+              ? 'Pending RC sync'
+              : trialsExpiring7d !== null && trialsExpiring7d > 0
+                ? `${trialsExpiring7d} viram cobrança em ≤7d`
+                : 'In free-trial period'
+          }
           loading={loading && !kpi}
           tone="brand"
           href="/users?status=trial"
