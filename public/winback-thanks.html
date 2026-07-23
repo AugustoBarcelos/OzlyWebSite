@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Ozly — you're back</title>
+  <style>
+    :root { color-scheme: light only; }
+    * { box-sizing: border-box; }
+    body { margin:0; min-height:100vh; background:#162431;
+      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+      -webkit-font-smoothing:antialiased; display:flex; align-items:flex-start; justify-content:center; }
+    .wrap { width:100%; max-width:460px; padding:9vh 20px; }
+    .card { background:#fff; border-radius:20px; overflow:hidden; box-shadow:0 12px 40px rgba(0,0,0,.3); text-align:center; }
+    .bar { height:7px; background:linear-gradient(90deg,#2BBB97 0%,#9DD760 100%); }
+    .inner { padding:40px 34px; }
+    .wordmark { font-size:20px; font-weight:800; color:#162431; letter-spacing:2px; }
+    .emoji { font-size:48px; line-height:1; margin:22px 0 8px; }
+    h1 { margin:8px 0 12px; font-size:25px; color:#162431; font-weight:800; line-height:1.3; }
+    p { margin:0 auto; max-width:350px; font-size:15.5px; line-height:1.7; color:#41505b; }
+    .btn { display:inline-block; margin-top:26px; padding:15px 34px; background:#2BBB97; color:#fff;
+      font-weight:700; font-size:15px; text-decoration:none; border-radius:12px; }
+    .foot { text-align:center; margin:18px 0 0; font-size:12px; color:#5c6b78; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="bar"></div>
+      <div class="inner">
+        <div class="wordmark">OZLY</div>
+        <div class="emoji">🎉</div>
+        <h1 id="heading">Thanks for staying</h1>
+        <p id="message">Your 30 days are on us — already on your account. Everything's exactly where you left it: your invoices, clients and jobs. Genuinely glad you're giving Ozly another go.</p>
+        <a class="btn" href="https://ozly.au">Open Ozly →</a>
+      </div>
+    </div>
+    <p class="foot">Made for sole traders in Australia</p>
+  </div>
+
+  <script>
+    (function () {
+      var q = new URLSearchParams(location.search);
+      var name = (q.get("name") || "").trim();
+      var already = q.get("already") === "1";
+      var heading = document.getElementById("heading");
+      var message = document.getElementById("message");
+      if (already) {
+        heading.textContent = name ? ("You're all set, " + name) : "You're all set";
+        message.textContent = "Your 30 free days are already on your account — jump back in whenever you like.";
+      } else if (name) {
+        heading.textContent = "Thanks for staying, " + name;
+      }
+    })();
+  </script>
+</body>
+</html>

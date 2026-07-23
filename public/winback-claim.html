@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Ozly — claim your days</title>
+  <style>
+    :root { color-scheme: light only; }
+    * { box-sizing: border-box; }
+    body { margin:0; min-height:100vh; background:#162431;
+      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+      -webkit-font-smoothing:antialiased; display:flex; align-items:flex-start; justify-content:center; }
+    .wrap { width:100%; max-width:460px; padding:9vh 20px; }
+    .card { background:#fff; border-radius:20px; overflow:hidden; box-shadow:0 12px 40px rgba(0,0,0,.3); text-align:center; }
+    .bar { height:7px; background:linear-gradient(90deg,#2BBB97 0%,#9DD760 100%); }
+    .inner { padding:40px 34px; }
+    .wordmark { font-size:20px; font-weight:800; color:#162431; letter-spacing:2px; }
+    .emoji { font-size:48px; line-height:1; margin:22px 0 8px; }
+    h1 { margin:8px 0 12px; font-size:25px; color:#162431; font-weight:800; line-height:1.3; }
+    p { margin:0 auto; max-width:340px; font-size:15.5px; line-height:1.7; color:#41505b; }
+    .btn { display:inline-block; margin-top:26px; padding:15px 34px; background:#2BBB97; color:#fff;
+      font-weight:700; font-size:15px; text-decoration:none; border-radius:12px; }
+    .foot { text-align:center; margin:18px 0 0; font-size:12px; color:#5c6b78; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="bar"></div>
+      <div class="inner">
+        <div class="wordmark">OZLY</div>
+        <div class="emoji" id="emoji">🎁</div>
+        <h1 id="heading">Claim your 30 free days</h1>
+        <p id="message">One tap and they're on your account — free, nothing to pay. Your invoices, clients and jobs are all still there, right where you left them.</p>
+        <a class="btn" id="cta" href="#">Yes, add my 30 days →</a>
+      </div>
+    </div>
+    <p class="foot">Made for sole traders in Australia</p>
+  </div>
+
+  <script>
+    (function () {
+      var SB = "https://jnhwgwnphlnhjlgygjql.supabase.co/functions/v1/claim-winback";
+      var q = new URLSearchParams(location.search);
+      var token = q.get("token") || "";
+      var name = (q.get("name") || "").trim();
+      var expired = q.get("expired") === "1";
+      var error = q.get("error") === "1";
+      var validToken = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(token);
+
+      var emoji = document.getElementById("emoji");
+      var heading = document.getElementById("heading");
+      var message = document.getElementById("message");
+      var cta = document.getElementById("cta");
+
+      function setText(el, t) { el.textContent = t; }
+
+      if (expired || !validToken) {
+        emoji.textContent = "⌛";
+        setText(heading, "This link's expired");
+        setText(message, "Looks like this offer link was already used or timed out. If you're still on your trial, just reply to the email we sent and I'll sort you out.");
+        cta.textContent = "Open Ozly →";
+        cta.href = "https://ozly.au";
+      } else if (error) {
+        emoji.textContent = "⚙️";
+        setText(heading, name ? ("Let's try that again, " + name) : "Let's try that again");
+        setText(message, "We hit a snag adding your days. Give it one more tap — and if it keeps failing, just reply to the email and I'll sort it by hand.");
+        cta.textContent = "Try again →";
+        cta.href = SB + "?token=" + encodeURIComponent(token) + "&confirm=1";
+      } else {
+        setText(heading, name ? ("Claim your 30 days, " + name) : "Claim your 30 free days");
+        cta.href = SB + "?token=" + encodeURIComponent(token) + "&confirm=1";
+      }
+    })();
+  </script>
+</body>
+</html>
