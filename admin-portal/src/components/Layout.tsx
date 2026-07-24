@@ -251,6 +251,7 @@ function useNavGroups(simple: boolean): ReadonlyArray<NavGroup> {
               children: [
                 { label: 'Ativação (primeiros passos)', to: '/product/activation' },
                 { label: 'Retenção (quem volta)', to: '/product/retention' },
+                { label: 'Win-back (trial)', to: '/marketing/winback' },
                 { label: 'Engajamento', to: '/product/engagement' },
                 { label: 'Feedback', to: '/product/feedback' },
               ],
