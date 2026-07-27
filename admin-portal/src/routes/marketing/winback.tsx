@@ -1,16 +1,20 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { callRpc, RpcError } from '@/lib/rpc';
 import { Spinner } from '@/components/Spinner';
 import { AlertTriangleIcon } from '@/components/Icons';
 import { formatRelativeTime } from '@/lib/format';
 
 /**
- * /marketing/winback — trial win-back campaign monitor.
+ * /marketing/winback — communication center.
  *
- * The audience is "trial + auto-renew OFF" (decided not to pay, still in trial).
- * Each gets a personal email with a one-tap "claim 30 free days" link. This page
- * shows, per person, whether we sent it and whether they tapped/claimed — plus a
- * conversion summary. Read-only; data comes from admin_winback_list().
+ * Two levels:
+ *   1. Campaign list — one card per offer campaign (win-back, PRO trial, …) with
+ *      sent / claimed / conversion / unsubscribe. New campaigns appear here on
+ *      their own (grouped from the data), so this scales past win-back.
+ *   2. Drill-in — per-user table for the picked campaign (sent, tapped, status,
+ *      unsubscribe).
+ *
+ * Read-only; data from admin_winback_list().
  */
 
 type WinbackStatus = 'claimed' | 'grant_failed' | 'sent' | 'queued';
@@ -29,24 +33,29 @@ interface WinbackRow {
   marketing_opt_in: boolean;
 }
 
-const CAMPAIGN_LABEL: Record<string, string> = {
-  winback_trial_30d: 'Win-back · 30d',
-  pro_trial_7d: 'PRO trial · 7d',
-};
-
-function campaignLabel(c: string): string {
-  return CAMPAIGN_LABEL[c] ?? c;
-}
-
 interface WinbackResponse {
   rows: WinbackRow[];
   stats: { total: number; sent: number; claimed: number; grant_failed: number };
 }
 
+interface CampaignAgg {
+  campaign: string;
+  total: number;
+  sent: number;
+  claimed: number;
+  unsub: number;
+}
+
+const CAMPAIGN_META: Record<string, { label: string; desc: string }> = {
+  winback_trial_30d: { label: 'Win-back', desc: 'Trial + auto-renew off · 30 dias PRO' },
+  pro_trial_7d: { label: 'PRO trial', desc: 'Base consentida · 7 dias PRO' },
+};
+const meta = (c: string) => CAMPAIGN_META[c] ?? { label: c, desc: 'Campanha de oferta' };
+
 const STATUS_META: Record<WinbackStatus, { label: string; cls: string }> = {
-  claimed: { label: '✅ Apertou — 30d concedidos', cls: 'bg-emerald-50 text-emerald-700' },
-  grant_failed: { label: '⚠️ Apertou, grant falhou', cls: 'bg-rose-50 text-rose-700' },
-  sent: { label: '📨 Enviado — aguardando', cls: 'bg-amber-50 text-amber-700' },
+  claimed: { label: '✅ Apertou', cls: 'bg-emerald-50 text-emerald-700' },
+  grant_failed: { label: '⚠️ Grant falhou', cls: 'bg-rose-50 text-rose-700' },
+  sent: { label: '📨 Enviado', cls: 'bg-amber-50 text-amber-700' },
   queued: { label: '⏳ Na fila', cls: 'bg-navy-100 text-navy-500' },
 };
 
@@ -60,10 +69,15 @@ function StatTile({ label, value, hint }: { label: string; value: string | numbe
   );
 }
 
+function pct(n: number, d: number): string {
+  return d > 0 ? `${((n / d) * 100).toFixed(0)}%` : '—';
+}
+
 export function MarketingWinbackPage() {
   const [data, setData] = useState<WinbackResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -71,7 +85,7 @@ export function MarketingWinbackPage() {
     try {
       setData(await callRpc<WinbackResponse>('admin_winback_list', {}));
     } catch (err) {
-      setError(err instanceof RpcError ? err.message : 'Falha ao carregar a campanha.');
+      setError(err instanceof RpcError ? err.message : 'Falha ao carregar as campanhas.');
     } finally {
       setLoading(false);
     }
@@ -82,8 +96,24 @@ export function MarketingWinbackPage() {
   }, [load]);
 
   const rows = data?.rows ?? [];
-  const stats = data?.stats ?? { total: 0, sent: 0, claimed: 0, grant_failed: 0 };
-  const convRate = stats.sent > 0 ? `${((stats.claimed / stats.sent) * 100).toFixed(0)}%` : '—';
+
+  const campaigns = useMemo<CampaignAgg[]>(() => {
+    const m = new Map<string, CampaignAgg>();
+    for (const r of rows) {
+      const c = m.get(r.campaign) ?? { campaign: r.campaign, total: 0, sent: 0, claimed: 0, unsub: 0 };
+      c.total += 1;
+      if (r.sent_at) c.sent += 1;
+      if (r.status === 'claimed') c.claimed += 1;
+      if (r.lifecycle_opt_out) c.unsub += 1;
+      m.set(r.campaign, c);
+    }
+    return [...m.values()].sort((a, b) => b.sent - a.sent);
+  }, [rows]);
+
+  const drillRows = useMemo(
+    () => (selected ? rows.filter((r) => r.campaign === selected) : []),
+    [rows, selected],
+  );
 
   return (
     <section className="space-y-4">
@@ -91,8 +121,8 @@ export function MarketingWinbackPage() {
         <div>
           <h1 className="text-xl font-semibold text-navy-700">Central de comunicação</h1>
           <p className="text-sm text-navy-400">
-            Todas as campanhas de oferta (win-back e PRO trial): quem recebeu, quem
-            apertou, e quem se descadastrou.
+            Todas as campanhas de oferta num lugar — clique numa pra ver quem recebeu,
+            quem apertou e quem se descadastrou.
           </p>
         </div>
         <button
@@ -105,13 +135,6 @@ export function MarketingWinbackPage() {
         </button>
       </header>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatTile label="Enviados" value={stats.sent} hint={`${stats.total} na campanha`} />
-        <StatTile label="Apertaram" value={stats.claimed} />
-        <StatTile label="Conversão" value={convRate} hint="apertaram ÷ enviados" />
-        <StatTile label="Falhas de grant" value={stats.grant_failed} hint="apertou, grant deu erro" />
-      </div>
-
       {error && (
         <div role="alert" className="flex items-start gap-2 rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
           <AlertTriangleIcon className="mt-0.5 h-4 w-4 shrink-0" />
@@ -119,61 +142,123 @@ export function MarketingWinbackPage() {
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-xl border border-navy-100 bg-white shadow-sm">
-        <table className="min-w-full divide-y divide-navy-100 text-sm">
-          <thead className="bg-navy-50 text-left text-[11px] font-medium uppercase tracking-wide text-navy-400">
-            <tr>
-              <th scope="col" className="px-3 py-2.5">Usuário</th>
-              <th scope="col" className="px-3 py-2.5">Campanha</th>
-              <th scope="col" className="px-3 py-2.5">Enviado</th>
-              <th scope="col" className="px-3 py-2.5">Apertou</th>
-              <th scope="col" className="px-3 py-2.5">Status</th>
-              <th scope="col" className="px-3 py-2.5">Unsub</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-navy-50 bg-white">
-            {loading && rows.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-10 text-center"><Spinner size="md" label="Carregando" /></td></tr>
-            )}
-            {!loading && rows.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-10 text-center text-sm text-navy-400">Ninguém na campanha ainda.</td></tr>
-            )}
-            {rows.map((r) => {
-              const meta = STATUS_META[r.status];
-              const unsub = r.lifecycle_opt_out;
+      {loading && rows.length === 0 && (
+        <div className="rounded-xl border border-navy-100 bg-white p-10 text-center shadow-sm">
+          <Spinner size="md" label="Carregando" />
+        </div>
+      )}
+
+      {/* LEVEL 1 — campaign list */}
+      {!selected && !loading && (
+        campaigns.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-navy-100 bg-navy-50 p-10 text-center text-sm text-navy-400">
+            Nenhuma campanha ainda.
+          </div>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {campaigns.map((c) => {
+              const m = meta(c.campaign);
               return (
-                <tr key={`${r.user_id}-${r.campaign}`} className="hover:bg-navy-50">
-                  <td className="px-3 py-2.5">
-                    <div className="flex flex-col leading-tight">
-                      <span className="font-medium text-navy-700">{r.full_name ?? '—'}</span>
-                      <span className="font-mono text-xs text-navy-500">{r.email}</span>
+                <button
+                  key={c.campaign}
+                  type="button"
+                  onClick={() => setSelected(c.campaign)}
+                  className="rounded-xl border border-navy-100 bg-white p-4 text-left shadow-sm transition-colors hover:border-brand-300"
+                >
+                  <div className="flex items-baseline justify-between">
+                    <span className="font-semibold text-navy-700">{m.label}</span>
+                    <span className="text-xs text-brand-600">ver detalhes →</span>
+                  </div>
+                  <div className="mt-0.5 text-xs text-navy-400">{m.desc}</div>
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                    <div>
+                      <div className="text-lg font-semibold text-navy-700 tabular-nums">{c.sent}</div>
+                      <div className="text-[10px] uppercase tracking-wide text-navy-400">enviados</div>
                     </div>
-                  </td>
-                  <td className="px-3 py-2.5">
-                    <span className="inline-flex items-center rounded-md bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
-                      {campaignLabel(r.campaign)}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2.5 text-navy-500">{r.sent_at ? formatRelativeTime(r.sent_at) : '—'}</td>
-                  <td className="px-3 py-2.5 text-navy-500">{r.claimed_at ? formatRelativeTime(r.claimed_at) : '—'}</td>
-                  <td className="px-3 py-2.5">
-                    <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${meta.cls}`}>
-                      {meta.label}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2.5">
-                    {unsub ? (
-                      <span className="inline-flex items-center rounded-md bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700">🚫 saiu</span>
-                    ) : (
-                      <span className="text-navy-300">—</span>
-                    )}
-                  </td>
-                </tr>
+                    <div>
+                      <div className="text-lg font-semibold text-emerald-600 tabular-nums">{c.claimed}</div>
+                      <div className="text-[10px] uppercase tracking-wide text-navy-400">apertaram</div>
+                    </div>
+                    <div>
+                      <div className="text-lg font-semibold text-brand-600 tabular-nums">{pct(c.claimed, c.sent)}</div>
+                      <div className="text-[10px] uppercase tracking-wide text-navy-400">conversão</div>
+                    </div>
+                  </div>
+                  {c.unsub > 0 && (
+                    <div className="mt-2 text-xs text-rose-600">🚫 {c.unsub} descadastro{c.unsub === 1 ? '' : 's'}</div>
+                  )}
+                </button>
               );
             })}
-          </tbody>
-        </table>
-      </div>
+          </div>
+        )
+      )}
+
+      {/* LEVEL 2 — per-user drill-in */}
+      {selected && (() => {
+        const c = campaigns.find((x) => x.campaign === selected);
+        const m = meta(selected);
+        return (
+          <div className="space-y-3">
+            <button
+              type="button"
+              onClick={() => setSelected(null)}
+              className="text-xs font-medium text-brand-700 hover:underline"
+            >
+              ← Todas as campanhas
+            </button>
+            <div>
+              <h2 className="text-lg font-semibold text-navy-700">{m.label}</h2>
+              <p className="text-xs text-navy-400">{m.desc}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <StatTile label="Enviados" value={c?.sent ?? 0} />
+              <StatTile label="Apertaram" value={c?.claimed ?? 0} />
+              <StatTile label="Conversão" value={pct(c?.claimed ?? 0, c?.sent ?? 0)} />
+              <StatTile label="Descadastros" value={c?.unsub ?? 0} />
+            </div>
+
+            <div className="overflow-x-auto rounded-xl border border-navy-100 bg-white shadow-sm">
+              <table className="min-w-full divide-y divide-navy-100 text-sm">
+                <thead className="bg-navy-50 text-left text-[11px] font-medium uppercase tracking-wide text-navy-400">
+                  <tr>
+                    <th scope="col" className="px-3 py-2.5">Usuário</th>
+                    <th scope="col" className="px-3 py-2.5">Enviado</th>
+                    <th scope="col" className="px-3 py-2.5">Apertou</th>
+                    <th scope="col" className="px-3 py-2.5">Status</th>
+                    <th scope="col" className="px-3 py-2.5">Unsub</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-navy-50 bg-white">
+                  {drillRows.map((r) => {
+                    const sm = STATUS_META[r.status];
+                    return (
+                      <tr key={`${r.user_id}-${r.campaign}`} className="hover:bg-navy-50">
+                        <td className="px-3 py-2.5">
+                          <div className="flex flex-col leading-tight">
+                            <span className="font-medium text-navy-700">{r.full_name ?? '—'}</span>
+                            <span className="font-mono text-xs text-navy-500">{r.email}</span>
+                          </div>
+                        </td>
+                        <td className="px-3 py-2.5 text-navy-500">{r.sent_at ? formatRelativeTime(r.sent_at) : '—'}</td>
+                        <td className="px-3 py-2.5 text-navy-500">{r.claimed_at ? formatRelativeTime(r.claimed_at) : '—'}</td>
+                        <td className="px-3 py-2.5">
+                          <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${sm.cls}`}>{sm.label}</span>
+                        </td>
+                        <td className="px-3 py-2.5">
+                          {r.lifecycle_opt_out
+                            ? <span className="inline-flex items-center rounded-md bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700">🚫 saiu</span>
+                            : <span className="text-navy-300">—</span>}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })()}
     </section>
   );
 }
