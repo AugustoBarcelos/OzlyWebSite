@@ -17,12 +17,25 @@ type WinbackStatus = 'claimed' | 'grant_failed' | 'sent' | 'queued';
 
 interface WinbackRow {
   user_id: string;
+  campaign: string;
+  grant_days: number;
   full_name: string | null;
   email: string;
   sent_at: string | null;
   claimed_at: string | null;
   grant_status: number | null;
   status: WinbackStatus;
+  lifecycle_opt_out: boolean;
+  marketing_opt_in: boolean;
+}
+
+const CAMPAIGN_LABEL: Record<string, string> = {
+  winback_trial_30d: 'Win-back · 30d',
+  pro_trial_7d: 'PRO trial · 7d',
+};
+
+function campaignLabel(c: string): string {
+  return CAMPAIGN_LABEL[c] ?? c;
 }
 
 interface WinbackResponse {
@@ -76,10 +89,10 @@ export function MarketingWinbackPage() {
     <section className="space-y-4">
       <header className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-navy-700">Win-back (trial cancelado)</h1>
+          <h1 className="text-xl font-semibold text-navy-700">Central de comunicação</h1>
           <p className="text-sm text-navy-400">
-            Quem está em trial e desligou a renovação recebe o e-mail dos 30 dias grátis.
-            Aqui você vê quem apertou e quem não.
+            Todas as campanhas de oferta (win-back e PRO trial): quem recebeu, quem
+            apertou, e quem se descadastrou.
           </p>
         </div>
         <button
@@ -111,27 +124,35 @@ export function MarketingWinbackPage() {
           <thead className="bg-navy-50 text-left text-[11px] font-medium uppercase tracking-wide text-navy-400">
             <tr>
               <th scope="col" className="px-3 py-2.5">Usuário</th>
+              <th scope="col" className="px-3 py-2.5">Campanha</th>
               <th scope="col" className="px-3 py-2.5">Enviado</th>
               <th scope="col" className="px-3 py-2.5">Apertou</th>
               <th scope="col" className="px-3 py-2.5">Status</th>
+              <th scope="col" className="px-3 py-2.5">Unsub</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-navy-50 bg-white">
             {loading && rows.length === 0 && (
-              <tr><td colSpan={4} className="px-4 py-10 text-center"><Spinner size="md" label="Carregando" /></td></tr>
+              <tr><td colSpan={6} className="px-4 py-10 text-center"><Spinner size="md" label="Carregando" /></td></tr>
             )}
             {!loading && rows.length === 0 && (
-              <tr><td colSpan={4} className="px-4 py-10 text-center text-sm text-navy-400">Ninguém na campanha ainda.</td></tr>
+              <tr><td colSpan={6} className="px-4 py-10 text-center text-sm text-navy-400">Ninguém na campanha ainda.</td></tr>
             )}
             {rows.map((r) => {
               const meta = STATUS_META[r.status];
+              const unsub = r.lifecycle_opt_out;
               return (
-                <tr key={r.user_id} className="hover:bg-navy-50">
+                <tr key={`${r.user_id}-${r.campaign}`} className="hover:bg-navy-50">
                   <td className="px-3 py-2.5">
                     <div className="flex flex-col leading-tight">
                       <span className="font-medium text-navy-700">{r.full_name ?? '—'}</span>
                       <span className="font-mono text-xs text-navy-500">{r.email}</span>
                     </div>
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <span className="inline-flex items-center rounded-md bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
+                      {campaignLabel(r.campaign)}
+                    </span>
                   </td>
                   <td className="px-3 py-2.5 text-navy-500">{r.sent_at ? formatRelativeTime(r.sent_at) : '—'}</td>
                   <td className="px-3 py-2.5 text-navy-500">{r.claimed_at ? formatRelativeTime(r.claimed_at) : '—'}</td>
@@ -139,6 +160,13 @@ export function MarketingWinbackPage() {
                     <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${meta.cls}`}>
                       {meta.label}
                     </span>
+                  </td>
+                  <td className="px-3 py-2.5">
+                    {unsub ? (
+                      <span className="inline-flex items-center rounded-md bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700">🚫 saiu</span>
+                    ) : (
+                      <span className="text-navy-300">—</span>
+                    )}
                   </td>
                 </tr>
               );

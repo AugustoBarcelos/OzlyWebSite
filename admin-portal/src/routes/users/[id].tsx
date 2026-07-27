@@ -693,9 +693,32 @@ function TimelineSection({ events }: { events: TimelineEvent[] | null }) {
   );
 }
 
+interface UserComms {
+  offers: Array<{
+    campaign: string;
+    grant_days: number;
+    sent_at: string | null;
+    claimed_at: string | null;
+    grant_status: number | null;
+    status: string;
+  }>;
+  lifecycle: Array<{ rule_key: string; sent_at: string | null }>;
+  consent: {
+    marketing_opt_in: boolean;
+    marketing_opt_out_at: string | null;
+    lifecycle_opt_out: boolean;
+  };
+}
+
+const COMMS_CAMPAIGN_LABEL: Record<string, string> = {
+  winback_trial_30d: 'Win-back · 30d',
+  pro_trial_7d: 'PRO trial · 7d',
+};
+
 export function User360Page() {
   const { id } = useParams<{ id: string }>();
   const [data, setData] = useState<User360Payload | null>(null);
+  const [comms, setComms] = useState<UserComms | null>(null);
   const [grants, setGrants] = useState<UserGrantsPayload | null>(null);
   const [audit, setAudit] = useState<UserAuditPayload | null>(null);
   const [timeline, setTimeline] = useState<TimelineEvent[] | null>(null);
@@ -712,7 +735,7 @@ export function User360Page() {
   // Fetch the user 360 payload + grants + audit in parallel.
   const fetchUser = useCallback(
     async (target: string, includePii: boolean) => {
-      const [payload, grantsData, auditData, timelineData, insightsMap] = await Promise.all([
+      const [payload, grantsData, auditData, timelineData, insightsMap, commsData] = await Promise.all([
         callRpc<User360Payload>('admin_get_user_360', {
           p_target: target,
           p_include_pii: includePii,
@@ -730,11 +753,15 @@ export function User360Page() {
         fetchUserInsights([target]).catch(
           (): Record<string, UserInsight> => ({}),
         ),
+        callRpc<UserComms>('admin_user_communications', {
+          p_target: target,
+        }).catch(() => null),
       ]);
       setGrants(grantsData);
       setAudit(auditData);
       setTimeline(timelineData?.events ?? []);
       setInsight(insightsMap[target] ?? null);
+      setComms(commsData);
       return payload;
     },
     []
@@ -1055,6 +1082,7 @@ export function User360Page() {
                 <Tab>Referral</Tab>
                 <Tab>Errors</Tab>
                 <Tab>Audit</Tab>
+                <Tab>Comms</Tab>
               </TabList>
               <TabPanels>
                 {/* PROFILE */}
@@ -1599,6 +1627,100 @@ export function User360Page() {
                           );
                         })}
                       </ul>
+                    )}
+                  </div>
+                </TabPanel>
+
+                {/* COMMS — what we've sent this user + consent/unsubscribe */}
+                <TabPanel>
+                  <div className="mt-3 space-y-4">
+                    {!comms ? (
+                      <div className="rounded-md border border-dashed border-navy-100 bg-navy-50 p-4 text-xs text-navy-400">
+                        Sem dados de comunicação.
+                      </div>
+                    ) : (
+                      <>
+                        <div className="rounded-md border border-navy-100 bg-white p-3">
+                          <div className="text-[11px] font-medium uppercase tracking-wide text-navy-400">
+                            Consentimento
+                          </div>
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <span
+                              className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${
+                                comms.consent.marketing_opt_in
+                                  ? 'bg-emerald-50 text-emerald-700'
+                                  : 'bg-navy-100 text-navy-500'
+                              }`}
+                            >
+                              Marketing: {comms.consent.marketing_opt_in ? 'opt-in' : 'off'}
+                            </span>
+                            {comms.consent.lifecycle_opt_out && (
+                              <span className="inline-flex items-center rounded-md bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700">
+                                🚫 clicou em unsubscribe
+                              </span>
+                            )}
+                            {comms.consent.marketing_opt_out_at && (
+                              <span className="text-xs text-navy-400">
+                                opt-out marketing em {formatDate(comms.consent.marketing_opt_out_at)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-navy-400">
+                            Campanhas de oferta
+                          </div>
+                          {comms.offers.length === 0 ? (
+                            <div className="rounded-md border border-dashed border-navy-100 bg-navy-50 p-3 text-xs text-navy-400">
+                              Nenhuma.
+                            </div>
+                          ) : (
+                            <ul className="space-y-1.5">
+                              {comms.offers.map((o, i) => (
+                                <li key={i} className="rounded-md border border-navy-50 bg-white px-3 py-2 text-xs">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="rounded-md bg-brand-50 px-2 py-0.5 font-medium text-brand-700">
+                                      {COMMS_CAMPAIGN_LABEL[o.campaign] ?? o.campaign}
+                                    </span>
+                                    <span className="text-navy-500">
+                                      enviado {o.sent_at ? formatRelative(o.sent_at) : '—'}
+                                    </span>
+                                    <span className="ml-auto font-medium text-navy-700">
+                                      {o.claimed_at ? `✅ apertou (${o.grant_days}d PRO)` : '📨 não apertou'}
+                                    </span>
+                                  </div>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+
+                        <div>
+                          <div className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-navy-400">
+                            E-mails de ciclo
+                          </div>
+                          {comms.lifecycle.length === 0 ? (
+                            <div className="rounded-md border border-dashed border-navy-100 bg-navy-50 p-3 text-xs text-navy-400">
+                              Nenhum.
+                            </div>
+                          ) : (
+                            <ul className="space-y-1.5">
+                              {comms.lifecycle.map((l, i) => (
+                                <li
+                                  key={i}
+                                  className="flex items-center gap-2 rounded-md border border-navy-50 bg-white px-3 py-2 text-xs"
+                                >
+                                  <span className="font-medium text-navy-700">{l.rule_key}</span>
+                                  <span className="ml-auto text-navy-400">
+                                    {l.sent_at ? formatRelative(l.sent_at) : '—'}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      </>
                     )}
                   </div>
                 </TabPanel>
