@@ -46,6 +46,36 @@ interface CampaignAgg {
   unsub: number;
 }
 
+interface LifecycleAgg {
+  rule_key: string;
+  sent: number;
+  last_at: string | null;
+}
+
+interface BroadcastRow {
+  id: string;
+  channel: string;
+  title: string | null;
+  segment: string | null;
+  status: string | null;
+  sent: number;
+  opened: number;
+  clicked: number;
+  sent_at: string | null;
+}
+
+interface CommsOverview {
+  lifecycle: LifecycleAgg[];
+  broadcasts: BroadcastRow[];
+}
+
+const LIFECYCLE_LABEL: Record<string, string> = {
+  signup_no_invoice: 'Cadastrou, sem invoice',
+  activated_welcome: 'Boas-vindas (1ª invoice)',
+  trial_ending: 'Trial acabando',
+  reactivation: 'Reativação (sumiu)',
+};
+
 const CAMPAIGN_META: Record<string, { label: string; desc: string }> = {
   winback_trial_30d: { label: 'Win-back', desc: 'Trial + auto-renew off · 30 dias PRO' },
   pro_trial_7d: { label: 'PRO trial', desc: 'Base consentida · 7 dias PRO' },
@@ -75,6 +105,7 @@ function pct(n: number, d: number): string {
 
 export function MarketingWinbackPage() {
   const [data, setData] = useState<WinbackResponse | null>(null);
+  const [overview, setOverview] = useState<CommsOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -83,7 +114,12 @@ export function MarketingWinbackPage() {
     setLoading(true);
     setError(null);
     try {
-      setData(await callRpc<WinbackResponse>('admin_winback_list', {}));
+      const [offers, ov] = await Promise.all([
+        callRpc<WinbackResponse>('admin_winback_list', {}),
+        callRpc<CommsOverview>('admin_comms_overview', {}).catch(() => null),
+      ]);
+      setData(offers);
+      setOverview(ov);
     } catch (err) {
       setError(err instanceof RpcError ? err.message : 'Falha ao carregar as campanhas.');
     } finally {
@@ -192,6 +228,76 @@ export function MarketingWinbackPage() {
             })}
           </div>
         )
+      )}
+
+      {/* Lifecycle emails */}
+      {!selected && !loading && (
+        <div>
+          <h2 className="mb-2 text-sm font-semibold text-navy-700">E-mails de ciclo</h2>
+          <div className="overflow-x-auto rounded-xl border border-navy-100 bg-white shadow-sm">
+            <table className="min-w-full divide-y divide-navy-100 text-sm">
+              <thead className="bg-navy-50 text-left text-[11px] font-medium uppercase tracking-wide text-navy-400">
+                <tr>
+                  <th scope="col" className="px-3 py-2.5">Regra</th>
+                  <th scope="col" className="px-3 py-2.5">Enviados</th>
+                  <th scope="col" className="px-3 py-2.5">Último</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-navy-50 bg-white">
+                {(overview?.lifecycle ?? []).length === 0 ? (
+                  <tr><td colSpan={3} className="px-4 py-6 text-center text-sm text-navy-400">Nenhum e-mail de ciclo enviado.</td></tr>
+                ) : (
+                  overview!.lifecycle.map((l) => (
+                    <tr key={l.rule_key} className="hover:bg-navy-50">
+                      <td className="px-3 py-2.5 font-medium text-navy-700">{LIFECYCLE_LABEL[l.rule_key] ?? l.rule_key}</td>
+                      <td className="px-3 py-2.5 tabular-nums text-navy-600">{l.sent}</td>
+                      <td className="px-3 py-2.5 text-navy-500">{l.last_at ? formatRelativeTime(l.last_at) : '—'}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Broadcasts */}
+      {!selected && !loading && (
+        <div>
+          <h2 className="mb-2 text-sm font-semibold text-navy-700">Broadcasts</h2>
+          <div className="overflow-x-auto rounded-xl border border-navy-100 bg-white shadow-sm">
+            <table className="min-w-full divide-y divide-navy-100 text-sm">
+              <thead className="bg-navy-50 text-left text-[11px] font-medium uppercase tracking-wide text-navy-400">
+                <tr>
+                  <th scope="col" className="px-3 py-2.5">Canal</th>
+                  <th scope="col" className="px-3 py-2.5">Assunto / segmento</th>
+                  <th scope="col" className="px-3 py-2.5">Enviados</th>
+                  <th scope="col" className="px-3 py-2.5">Abertos</th>
+                  <th scope="col" className="px-3 py-2.5">Cliques</th>
+                  <th scope="col" className="px-3 py-2.5">Quando</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-navy-50 bg-white">
+                {(overview?.broadcasts ?? []).length === 0 ? (
+                  <tr><td colSpan={6} className="px-4 py-6 text-center text-sm text-navy-400">Nenhum broadcast enviado.</td></tr>
+                ) : (
+                  overview!.broadcasts.map((b) => (
+                    <tr key={b.id} className="hover:bg-navy-50">
+                      <td className="px-3 py-2.5">
+                        <span className="inline-flex items-center rounded-md bg-navy-100 px-2 py-0.5 text-xs font-medium text-navy-600">{b.channel}</span>
+                      </td>
+                      <td className="px-3 py-2.5 text-navy-700">{b.title || b.segment || '—'}</td>
+                      <td className="px-3 py-2.5 tabular-nums text-navy-600">{b.sent}</td>
+                      <td className="px-3 py-2.5 tabular-nums text-navy-500">{b.opened || '—'}</td>
+                      <td className="px-3 py-2.5 tabular-nums text-navy-500">{b.channel === 'push' ? '—' : (b.clicked || '—')}</td>
+                      <td className="px-3 py-2.5 text-navy-500">{b.sent_at ? formatRelativeTime(b.sent_at) : (b.status ?? '—')}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
 
       {/* LEVEL 2 — per-user drill-in */}
