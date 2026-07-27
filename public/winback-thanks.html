@@ -31,8 +31,8 @@
       <div class="inner">
         <div class="wordmark">OZLY</div>
         <div class="emoji">🎉</div>
-        <h1 id="heading">Thanks for staying</h1>
-        <p id="message">Your 30 days are on us — already on your account. Everything's exactly where you left it: your invoices, clients and jobs. Genuinely glad you're giving Ozly another go.</p>
+        <h1 id="heading">You're all set</h1>
+        <p id="message">Your Ozly PRO days are on your account — enjoy. Everything's in one place: invoices, expense tracking, clients and your tax view.</p>
         <a class="btn" href="https://ozly.au">Open Ozly →</a>
       </div>
     </div>
@@ -43,14 +43,15 @@
     (function () {
       var q = new URLSearchParams(location.search);
       var name = (q.get("name") || "").trim();
+      var days = parseInt(q.get("days") || "30", 10); if (!(days > 0)) days = 30;
       var already = q.get("already") === "1";
       var heading = document.getElementById("heading");
       var message = document.getElementById("message");
+      heading.textContent = name ? ("You're all set, " + name) : "You're all set";
       if (already) {
-        heading.textContent = name ? ("You're all set, " + name) : "You're all set";
-        message.textContent = "Your 30 free days are already on your account — jump back in whenever you like.";
-      } else if (name) {
-        heading.textContent = "Thanks for staying, " + name;
+        message.textContent = "Your " + days + " days of Ozly PRO are already on your account — jump back in whenever you like.";
+      } else {
+        message.textContent = "Your " + days + " days of Ozly PRO are on your account — enjoy. Everything's in one place: invoices, expense tracking, clients and your tax view.";
       }
     })();
   </script>

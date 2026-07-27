@@ -31,8 +31,8 @@
       <div class="inner">
         <div class="wordmark">OZLY</div>
         <div class="emoji" id="emoji">🎁</div>
-        <h1 id="heading">Claim your 30 free days</h1>
-        <p id="message">One tap and they're on your account — free, nothing to pay. Your invoices, clients and jobs are all still there, right where you left them.</p>
+        <h1 id="heading">Claim your free days</h1>
+        <p id="message">One tap and it's on your account — free, nothing to pay. You get the full Ozly PRO: invoices, expense tracking, clients and your tax view, all in one place.</p>
         <a class="btn" id="cta" href="#">Yes, add my 30 days →</a>
       </div>
     </div>
@@ -45,6 +45,7 @@
       var q = new URLSearchParams(location.search);
       var token = q.get("token") || "";
       var name = (q.get("name") || "").trim();
+      var days = parseInt(q.get("days") || "30", 10); if (!(days > 0)) days = 30;
       var expired = q.get("expired") === "1";
       var error = q.get("error") === "1";
       var validToken = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(token);
@@ -69,7 +70,8 @@
         cta.textContent = "Try again →";
         cta.href = SB + "?token=" + encodeURIComponent(token) + "&confirm=1";
       } else {
-        setText(heading, name ? ("Claim your 30 days, " + name) : "Claim your 30 free days");
+        setText(heading, name ? ("Claim your " + days + " days, " + name) : ("Claim your " + days + " free days"));
+        cta.textContent = "Yes, add my " + days + " days →";
         cta.href = SB + "?token=" + encodeURIComponent(token) + "&confirm=1";
       }
     })();
