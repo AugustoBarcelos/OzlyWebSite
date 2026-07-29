@@ -25,9 +25,6 @@ const GlossaryPage = lazy(() =>
 );
 
 // ─── Existing pages (preserved) ─────────────────────────────────────────────
-const DashboardPage = lazy(() =>
-  import('./routes/dashboard').then((m) => ({ default: m.DashboardPage })),
-);
 const UserListPage = lazy(() =>
   import('./routes/users/list').then((m) => ({ default: m.UserListPage })),
 );
@@ -390,8 +387,8 @@ export function App() {
                 <Route path="/cockpit" element={lazyRoute(CockpitPage)} />
                 <Route path="/data" element={lazyRoute(DataHubPage)} />
 
-                {/* Legacy /dashboard kept reachable for back-compat */}
-                <Route path="/dashboard" element={lazyRoute(DashboardPage)} />
+                {/* Legacy /dashboard — superseded by Cockpit; redirect old links. */}
+                <Route path="/dashboard" element={<Navigate to="/cockpit" replace />} />
 
                 {/* Inbox */}
                 <Route path="/inbox" element={lazyRoute(InboxPage)} />

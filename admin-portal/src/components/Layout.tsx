@@ -84,34 +84,6 @@ function isBranch(item: NavItem): item is NavBranch {
 }
 
 const SIDEBAR_STATE_KEY = 'ozly-admin-sidebar-overrides';
-const NAV_MODE_KEY = 'ozly-admin-nav-simple';
-
-/**
- * Menu simples vs completo. Simples é o padrão: 8 itens diretos, sem
- * submenus — cada área abre um hub com quadros clicáveis. O menu completo
- * (árvore inteira da IA v4) fica a um clique pra quem precisa.
- */
-function useSimpleNav(): { simple: boolean; toggleSimple: () => void } {
-  const [simple, setSimple] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return true;
-    try {
-      return window.localStorage.getItem(NAV_MODE_KEY) !== 'false';
-    } catch {
-      return true;
-    }
-  });
-  const toggleSimple = () => {
-    setSimple((prev) => {
-      try {
-        window.localStorage.setItem(NAV_MODE_KEY, String(!prev));
-      } catch {
-        /* localStorage disabled — state still toggles for the session */
-      }
-      return !prev;
-    });
-  };
-  return { simple, toggleSimple };
-}
 
 function loadOverrides(): Map<string, boolean> {
   if (typeof window === 'undefined') return new Map();
@@ -147,31 +119,9 @@ function saveOverrides(state: Map<string, boolean>): void {
  * Admin sees the full 9-hub IA. Non-admins see only hubs whose grants they
  * hold (content_creator → Marketing; traffic_manager → Growth; etc).
  */
-function useNavGroups(simple: boolean): ReadonlyArray<NavGroup> {
+function useNavGroups(): ReadonlyArray<NavGroup> {
   const { isAdmin, grants } = useAuth();
   return useMemo(() => {
-    if (isAdmin && simple) {
-      // Menu enxuto — Cockpit/Inbox no topo + as 5 áreas por pergunta.
-      return [
-        {
-          items: [
-            { label: 'Cockpit', to: '/cockpit', icon: HomeIcon, end: true },
-            { label: 'Inbox', to: '/inbox', icon: InboxIcon },
-          ],
-        },
-        {
-          label: 'Áreas',
-          items: [
-            { label: 'Aquisição', to: '/marketing', icon: MegaphoneIcon },
-            { label: 'Comunicação & CRM', to: '/users', icon: MailIcon },
-            { label: 'Produto', to: '/product', icon: PackageIcon },
-            { label: 'Dinheiro', to: '/finance', icon: DollarSignIcon },
-            { label: 'Ozly for Business', to: '/business', icon: HandshakeIcon },
-            { label: 'Ops & Tech', to: '/operations', icon: ServerIcon },
-          ],
-        },
-      ];
-    }
     if (isAdmin) {
       // IA por jornada do usuário: Aquisição (trazer) → Comunicação (relacionar)
       // → Produto (construir) → Dinheiro → Business → Ops. Cockpit/Inbox no topo
@@ -239,9 +189,8 @@ function useNavGroups(simple: boolean): ReadonlyArray<NavGroup> {
               children: [
                 { label: 'Push', to: '/messaging/push' },
                 { label: 'Email', to: '/messaging/email' },
-                { label: 'WhatsApp', to: '/messaging/whatsapp' },
-                { label: 'Messenger', to: '/messaging/messenger' },
-                { label: 'SMS', to: '/messaging/sms' },
+                // WhatsApp / Messenger / SMS ficam fora do menu até integrarem
+                // (hoje são stubs). Rotas seguem acessíveis via Settings → Integrations.
               ],
             },
             {
@@ -287,9 +236,14 @@ function useNavGroups(simple: boolean): ReadonlyArray<NavGroup> {
           ],
         },
         {
-          label: 'Ops & Tech',
+          label: 'Dados & Analytics',
           items: [
             { label: 'Data Hub', to: '/data', icon: LayoutDashboardIcon },
+          ],
+        },
+        {
+          label: 'Ops & Tech',
+          items: [
             {
               label: 'Operações',
               icon: ScrollTextIcon,
@@ -370,7 +324,7 @@ function useNavGroups(simple: boolean): ReadonlyArray<NavGroup> {
       });
     }
     return [{ items }];
-  }, [isAdmin, grants, simple]);
+  }, [isAdmin, grants]);
 }
 
 function useExpandedBranches(items: ReadonlyArray<NavItem>) {
@@ -563,8 +517,7 @@ function SidebarContent({
   onNavigate?: (() => void) | undefined;
 }) {
   const { user, signOut, isAdmin, member } = useAuth();
-  const { simple, toggleSimple } = useSimpleNav();
-  const navGroups = useNavGroups(simple);
+  const navGroups = useNavGroups();
   const allItems = useMemo(
     () => navGroups.flatMap((g) => g.items),
     [navGroups],
@@ -620,17 +573,6 @@ function SidebarContent({
             </ul>
           </div>
         ))}
-
-        {isAdmin && (
-          <button
-            type="button"
-            onClick={toggleSimple}
-            className="mt-2 flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs text-navy-200 transition-colors hover:bg-navy-800/60 hover:text-white"
-          >
-            <MenuIcon className="h-3.5 w-3.5 shrink-0" />
-            {simple ? 'Mostrar menu completo' : 'Voltar ao menu simples'}
-          </button>
-        )}
       </nav>
 
       {/* Footer: external resources + user + sign out */}
