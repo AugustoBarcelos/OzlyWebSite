@@ -305,15 +305,14 @@ Baixa grátis. Link na bio.
 
 **EN — Aussie casual**
 ```
-G'day, mate.
+You do the work. The paperwork shouldn't eat your nights.
 
-Tracking jobs, invoices and BAS on a notebook?
-There's a faster way.
+Invoices in under a minute. Receipts scanned on the spot.
+Always know what to set aside for tax — no nasty surprise at year end.
 
-Ozly does it for you. Sole trader friendly.
-AUD priced. No accountant required for the day-to-day.
+Flat price, no cut of your income. Built for Aussie sole traders.
 
-Free to start. Link in bio.
+Start free — 14-day trial. Link in bio.
 
 #tradie #soletrader #abn #australia #smallbusiness
 ```
@@ -332,10 +331,10 @@ Empieza gratis. Link en la bio.
 
 ## 2.6 Hooks de TikTok / YouTube Shorts (3 primeiros segundos)
 
-1. **EN** — "Mate, you're a sole trader and you're still doing tax on a calculator?"
+1. **EN** — "You do the hard yakka all week — then lose your Sunday to paperwork. There's a better way."
 2. **PT** — "Você é autônomo na Austrália e ainda usa planilha?"
 3. **ES** — "¿Trabajas con ABN y no sabes cuánto guardar para el BAS?"
-4. **EN** — "Three things every Aussie tradie hates: paperwork, paperwork, and paperwork."
+4. **EN** — "Your invoices, expenses and tax — sorted in the time it takes to make a cuppa."
 5. **PT** — "Como brasileiro autônomo aqui na Austrália gasta 4 horas por mês com imposto. Eu gasto 4 minutos."
 
 **Estrutura padrão Shorts:**
