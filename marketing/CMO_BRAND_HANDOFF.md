@@ -292,13 +292,14 @@ Detecção automática por idioma do device/browser. Marketing **adapta**, não 
 
 **PT — pain-point direto**
 ```
-Você é autônomo e ainda calcula imposto na calculadora?
+Você faz o trabalho. A papelada não devia comer suas noites.
 
-Ozly faz isso pra você.
-GST, BAS, deductions — tudo automático.
-Sem planilha. Sem dor de cabeça.
+Invoice em menos de um minuto. Recibo é só fotografar.
+E você sempre sabe quanto separar pro imposto — sem susto no fim do ano.
 
-Baixa grátis. Link na bio.
+Preço fixo, sem tirar % da sua renda. Feito pra autônomo na Austrália.
+
+Comece grátis — 14 dias. Link na bio.
 
 #autonomo #abn #australia #brasileirosnaaustralia #trabalhoaustralia
 ```
@@ -319,12 +320,14 @@ Start free — 14-day trial. Link in bio.
 
 **ES — LATAM migrant empathy**
 ```
-¿Trabajas con ABN en Australia y todavía pierdes horas con planillas?
+Tú haces el trabajo. El papeleo no debería comerte las noches.
 
-Ozly maneja jobs, gastos y BAS por ti.
-En español, dólares australianos, sin complicaciones.
+Invoice en menos de un minuto. El recibo se escanea solo.
+Y siempre sabes cuánto apartar para el impuesto — sin sustos a fin de año.
 
-Empieza gratis. Link en la bio.
+Precio fijo, sin quedarse con un % de tus ingresos. Hecho para autónomos en Australia.
+
+Empieza gratis — 14 días. Link en la bio.
 
 #australia #latinosenAustralia #autonomo #abn
 ```
@@ -332,8 +335,8 @@ Empieza gratis. Link en la bio.
 ## 2.6 Hooks de TikTok / YouTube Shorts (3 primeiros segundos)
 
 1. **EN** — "You do the hard yakka all week — then lose your Sunday to paperwork. There's a better way."
-2. **PT** — "Você é autônomo na Austrália e ainda usa planilha?"
-3. **ES** — "¿Trabajas con ABN y no sabes cuánto guardar para el BAS?"
+2. **PT** — "Você trabalha a semana toda — e perde o domingo na papelada. Dá pra ser diferente."
+3. **ES** — "Trabajas toda la semana — y pierdes el domingo en papeleo. Hay una forma mejor."
 4. **EN** — "Your invoices, expenses and tax — sorted in the time it takes to make a cuppa."
 5. **PT** — "Como brasileiro autônomo aqui na Austrália gasta 4 horas por mês com imposto. Eu gasto 4 minutos."
 
