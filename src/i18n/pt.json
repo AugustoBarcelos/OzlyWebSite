@@ -11,9 +11,9 @@
   },
   "hero": {
     "badge": "Todos os seus trampos, um app",
-    "title": "Chega de bagunça. Shifts, Invoices e Impostos num lugar só.",
-    "titleHighlight": "Feito pra contractors com ABN na Austrália.",
-    "subtitle": "Agende Jobs, emita e gerencie suas invoices, preveja sua receita, lance e organize despesas dedutíveis do seu tax return, estime quanto de imposto você terá que pagar no ano, verifique o compliance do limite de horas trabalhadas, e muito mais, tudo em um só app! A partir de {price}.",
+    "title": "Receba mais rápido. Chegue no imposto tranquilo.",
+    "titleHighlight": "Feito pra autônomos com ABN na Austrália.",
+    "subtitle": "Você faz o trabalho — o Ozly cuida do resto. Emita uma invoice em menos de um minuto, fotografe recibos e saiba sempre quanto separar pro imposto. Preço fixo, sem tirar % da sua renda. A partir de {price}.",
     "price": "$12.50/mês ($2.88/semana)",
     "ctaAppStore": "Baixar na App Store",
     "ctaGooglePlay": "Baixar no Google Play"
@@ -46,7 +46,7 @@
   "features": {
     "title": "Tudo que o contractor ABN precisa,",
     "titleHighlight": "num só app.",
-    "subtitle": "Chega de usar 4 apps diferentes. O Ozly resolve jobs, invoices, despesas, impostos e relatórios financeiros num único lugar.",
+    "subtitle": "Chega de perder noites com papelada e dinheiro no chute do imposto. O Ozly resolve jobs, invoices, despesas e imposto num lugar só — pra você ganhar mais tempo e manter mais do seu dinheiro.",
     "ctaPlans": "Ver planos",
     "shifts": "Shifts & Invoices",
     "shiftsModule": "ABN",
@@ -64,7 +64,7 @@
   "comparison": {
     "title": "Tudo que o Ozly",
     "titleHighlight": "faz por você",
-    "subtitle": "Tudo que você precisa pra trabalhar por conta própria na Austrália — sem planilhas, sem burocracia, sem dor de cabeça. Registre seus trabalhos, cobre seus clientes e saiba quanto sobra no bolso — tudo num app só.",
+    "subtitle": "Tudo que você precisa pra trabalhar por conta própria na Austrália — sem planilhas, sem burocracia, sem susto no imposto. Preço fixo, sem tirar % da sua renda: mais tempo livre e mais dinheiro no seu bolso.",
     "headerFeature": "Recurso",
     "headerOzly": "Ozly",
     "headerOthers": "Outros",
@@ -79,7 +79,7 @@
   },
   "pricing": {
     "title": "Escolha Seu Plano",
-    "subtitle": "Sem surpresas, sem taxa por invoice, sem cobrança de %. Todos os planos incluem 14 dias grátis.",
+    "subtitle": "Um preço fixo por mês. Sem taxa por invoice e sem tirar % da sua renda — fique com 100% do que você ganha. Todo plano começa com 14 dias grátis.",
     "trialBadge": "14 dias grátis em todos os planos",
     "bestValue": "Melhor Custo-Benefício",
     "cta": "Começar 14 dias grátis",
@@ -298,7 +298,7 @@
   },
   "bottomCta": {
     "title": "Enquanto você lê isso, alguém tá mandando Invoice pelo Ozly.",
-    "subtitle": "E recebendo mais rápido que você. Baixe o app e comece agora."
+    "subtitle": "Comece grátis — sua primeira invoice leva menos de um minuto."
   },
   "footer": {
     "copyright": "© 2026 Ozly. Todos os direitos reservados.",

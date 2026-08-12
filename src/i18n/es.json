@@ -11,9 +11,9 @@
   },
   "hero": {
     "badge": "Todos tus trabajos, una app",
-    "title": "Basta de desorden. Shifts, Invoices e Impuestos en un solo lugar.",
-    "titleHighlight": "Hecho para contractors con ABN en Australia.",
-    "subtitle": "Agenda tus jobs, manda y gestiona tus invoices, anticipa tus ingresos, guarda y organiza los gastos deducibles de tu tax return, calcula cuánto impuesto vas a pagar este año, controla el límite de horas de tu visa y mucho más — ¡todo en una sola app! Desde {price}.",
+    "title": "Cobra más rápido. Llega tranquilo al impuesto.",
+    "titleHighlight": "Hecho para autónomos con ABN en Australia.",
+    "subtitle": "Tú haces el trabajo — Ozly se encarga del resto. Manda una invoice en menos de un minuto, escanea recibos y siempre sabes cuánto apartar para el impuesto. Precio fijo, sin quedarse con un % de tus ingresos. Desde {price}.",
     "price": "$12.50/mes ($2.88/semana)",
     "ctaAppStore": "Descargar en App Store",
     "ctaGooglePlay": "Descargar en Google Play"
@@ -46,7 +46,7 @@
   "features": {
     "title": "Todo lo que el contractor ABN necesita,",
     "titleHighlight": "en una sola app.",
-    "subtitle": "Deja de usar 4 apps distintas. Ozly resuelve jobs, invoices, gastos, impuestos y reportes financieros en un solo lugar.",
+    "subtitle": "Basta de perder noches con papeleo y plata por adivinar el impuesto. Ozly resuelve jobs, invoices, gastos e impuestos en un solo lugar — para que ganes más tiempo y te quedes con más de tu dinero.",
     "ctaPlans": "Ver planes",
     "shifts": "Shifts & Invoices",
     "shiftsModule": "ABN",
@@ -64,7 +64,7 @@
   "comparison": {
     "title": "Todo lo que Ozly",
     "titleHighlight": "hace por ti",
-    "subtitle": "Todo lo que necesitas para trabajar por cuenta propia en Australia — sin hojas de cálculo, sin burocracia, sin dolores de cabeza. Registra tus trabajos, cobra a tus clientes y sabe cuánto te queda en el bolsillo — todo en una sola app.",
+    "subtitle": "Todo lo que necesitas para trabajar por cuenta propia en Australia — sin hojas de cálculo, sin burocracia, sin sustos con el impuesto. Precio fijo, sin quedarse con un % de tus ingresos: más tiempo libre y más dinero en tu bolsillo.",
     "headerFeature": "Recurso",
     "headerOzly": "Ozly",
     "headerOthers": "Otros",
@@ -79,7 +79,7 @@
   },
   "pricing": {
     "title": "Elige Tu Plan",
-    "subtitle": "Sin sorpresas, sin tarifa por invoice, sin cobro de %. Todos los planes incluyen 14 días gratis.",
+    "subtitle": "Un precio fijo al mes. Sin tarifa por invoice y sin quedarse con un % de tus ingresos — te quedas con el 100% de lo que ganas. Todos los planes empiezan con 14 días gratis.",
     "trialBadge": "14 días gratis en todos los planes",
     "bestValue": "Mejor Valor",
     "cta": "Comenzar 14 días gratis",
@@ -298,7 +298,7 @@
   },
   "bottomCta": {
     "title": "Mientras lees esto, alguien está mandando un Invoice por Ozly.",
-    "subtitle": "Y cobrando más rápido que tú. Descarga la app y empieza ahora."
+    "subtitle": "Empieza gratis — tu primera invoice toma menos de un minuto."
   },
   "footer": {
     "copyright": "© 2026 Ozly. Todos los derechos reservados.",
