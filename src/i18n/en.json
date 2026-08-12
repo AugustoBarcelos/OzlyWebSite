@@ -11,9 +11,9 @@
   },
   "hero": {
     "badge": "All your gigs, one app",
-    "title": "No more mess. Shifts, Invoices & Taxes in one place.",
-    "titleHighlight": "Built for ABN contractors in Australia.",
-    "subtitle": "Schedule Jobs, issue and manage your invoices, forecast your revenue, track and organise tax-deductible expenses, estimate how much tax you'll owe this year, check your working hours compliance, and much more — all in one app! Starting from {price}.",
+    "title": "Get paid faster. Walk into tax time calm.",
+    "titleHighlight": "Built for Australian sole traders.",
+    "subtitle": "You do the work — Ozly handles the rest. Send an invoice in under a minute, snap receipts, and always know what to set aside for tax. Flat price, no cut of your income. From {price}.",
     "price": "$12.50/mo ($2.88/week)",
     "ctaAppStore": "Download on App Store",
     "ctaGooglePlay": "Get it on Google Play"
@@ -46,7 +46,7 @@
   "features": {
     "title": "Everything ABN contractors need,",
     "titleHighlight": "in one app.",
-    "subtitle": "Stop juggling 4 different apps. Ozly handles jobs, invoices, expenses, tax and financial reports in one place.",
+    "subtitle": "Stop losing nights to admin and money to tax-time guesswork. Ozly handles jobs, invoices, expenses and tax in one place — so you keep more time and more of your money.",
     "ctaPlans": "See plans",
     "shifts": "Shifts & Invoices",
     "shiftsModule": "ABN",
@@ -79,7 +79,7 @@
   },
   "pricing": {
     "title": "Choose Your Plan",
-    "subtitle": "No surprises, no per-invoice fee, no percentage of your earnings. All plans include a 14-day free trial.",
+    "subtitle": "One flat monthly price. No per-invoice fee and no cut of your income — keep 100% of what you earn. Every plan starts with a 14-day free trial.",
     "trialBadge": "14-day free trial on all plans",
     "bestValue": "Best Value",
     "cta": "Start 14-day free trial",
@@ -298,7 +298,7 @@
   },
   "bottomCta": {
     "title": "While you're reading this, someone is sending an Invoice through Ozly.",
-    "subtitle": "Download the app and get started now."
+    "subtitle": "Start free — your first invoice takes under a minute."
   },
   "footer": {
     "copyright": "© 2026 Ozly. All rights reserved.",
