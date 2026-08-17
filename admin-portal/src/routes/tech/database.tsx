@@ -36,6 +36,10 @@ const RANGE_OPTIONS: Array<{ days: number; label: string }> = [
 
 const BYTES_PER_MB = 1024 * 1024;
 
+/** Cota de Database Size do Free Plan da Supabase. Acima disso o projeto entra
+ *  em restrição — não há cobrança de overage no Free. */
+const FREE_PLAN_QUOTA_BYTES = 0.5 * 1024 * 1024 * 1024;
+
 function bytesToMB(bytes: number): number {
   return Math.round((bytes / BYTES_PER_MB) * 100) / 100;
 }
@@ -104,6 +108,7 @@ export function TechDatabasePage() {
   }, [historyDays]);
 
   const totalRows = data?.top_tables.reduce((s, t) => s + t.rows, 0) ?? 0;
+  const quotaPct = ((data?.db_size_bytes ?? 0) / FREE_PLAN_QUOTA_BYTES) * 100;
 
   const totalSeries = useMemo(() => {
     if (!history) return [];
@@ -211,10 +216,42 @@ export function TechDatabasePage() {
       ) : !data ? null : (
         <>
           <section className="grid gap-3 sm:grid-cols-3">
-            <Tile label="DB size total" value={data.db_size_pretty} />
+            <Tile
+              label="DB size total"
+              value={data.db_size_pretty}
+              hint={`${quotaPct.toFixed(0)}% da cota Free (0.5 GB)`}
+              tone={quotaPct >= 80 ? 'danger' : 'brand'}
+            />
             <Tile label="Tabelas analisadas" value={data.top_tables.length.toString()} />
             <Tile label="Linhas (top tabelas)" value={formatNumber(totalRows)} />
           </section>
+
+          {data.by_schema && data.by_schema.length > 0 && (
+            <Card className="ozly-card">
+              <Title className="!text-sm !font-semibold text-navy-700">
+                Tamanho por schema
+              </Title>
+              <p className="mt-0.5 text-xs text-navy-400">
+                A cota da Supabase conta <code>pg_database_size()</code> — todos os
+                schemas, não só <code>public</code>. Crescimento em{' '}
+                <code>cron</code> ou <code>net</code> é log operacional, não dado
+                de usuário.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {data.by_schema.map((s) => (
+                  <div
+                    key={s.schema}
+                    className="rounded-md border border-navy-100 bg-white px-3 py-2"
+                  >
+                    <div className="font-mono text-[11px] text-navy-400">{s.schema}</div>
+                    <div className="text-sm font-semibold tabular-nums text-navy-700">
+                      {s.size_pretty}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
 
           <Card className="ozly-card">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -349,12 +386,21 @@ export function TechDatabasePage() {
                       <th className="py-2 text-right">Tamanho</th>
                       <th className="py-2 text-right">Bytes</th>
                       <th className="py-2 text-right">Linhas</th>
+                      <th className="py-2 text-right">Dead</th>
                     </tr>
                   </thead>
                   <tbody className="text-navy-700">
                     {data.top_tables.map((t) => (
-                      <tr key={t.table} className="border-b border-navy-50/60 last:border-0">
-                        <td className="py-1.5 font-mono text-[11px]">{t.table}</td>
+                      <tr
+                        key={`${t.schema ?? 'public'}.${t.table}`}
+                        className="border-b border-navy-50/60 last:border-0"
+                      >
+                        <td className="py-1.5 font-mono text-[11px]">
+                          {t.schema && t.schema !== 'public' && (
+                            <span className="text-navy-300">{t.schema}.</span>
+                          )}
+                          {t.table}
+                        </td>
                         <td className="py-1.5 text-right tabular-nums font-semibold">
                           {t.size_pretty}
                         </td>
@@ -362,6 +408,16 @@ export function TechDatabasePage() {
                           {formatNumber(t.bytes)}
                         </td>
                         <td className="py-1.5 text-right tabular-nums">{formatNumber(t.rows)}</td>
+                        <td
+                          className={[
+                            'py-1.5 text-right tabular-nums',
+                            (t.dead_rows ?? 0) > (t.rows || 1)
+                              ? 'font-semibold text-rose-600'
+                              : 'text-navy-400',
+                          ].join(' ')}
+                        >
+                          {t.dead_rows === undefined ? '—' : formatNumber(t.dead_rows)}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -603,13 +659,40 @@ function SlowQueriesCard() {
   );
 }
 
-function Tile({ label, value }: { label: string; value: string }) {
+function Tile({
+  label,
+  value,
+  hint,
+  tone = 'brand',
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  tone?: 'brand' | 'danger';
+}) {
   return (
     <div className="ozly-card ozly-card-hero relative px-5 py-4">
       <div className="text-[11px] font-semibold uppercase tracking-wider text-navy-300">
         {label}
       </div>
-      <div className="mt-1 text-2xl font-semibold text-brand-600">{value}</div>
+      <div
+        className={[
+          'mt-1 text-2xl font-semibold',
+          tone === 'danger' ? 'text-rose-600' : 'text-brand-600',
+        ].join(' ')}
+      >
+        {value}
+      </div>
+      {hint && (
+        <div
+          className={[
+            'mt-0.5 text-[11px]',
+            tone === 'danger' ? 'font-medium text-rose-600' : 'text-navy-400',
+          ].join(' ')}
+        >
+          {hint}
+        </div>
+      )}
     </div>
   );
 }

@@ -181,16 +181,27 @@ export interface FeatureUsageResponse {
 }
 
 export interface DbTableRow {
+  /** Schema da relação. Adicionado em 20260817000200 — antes o RPC só olhava
+   *  `public`, então o crescimento em `cron`/`net`/`auth` ficava invisível. */
+  schema?: string;
   table: string;
   size_pretty: string;
   bytes: number;
   rows: number;
+  dead_rows?: number;
+}
+
+export interface DbSchemaRow {
+  schema: string;
+  bytes: number;
+  size_pretty: string;
 }
 
 export interface DbHealthResponse {
   db_size_bytes: number;
   db_size_pretty: string;
   top_tables: DbTableRow[];
+  by_schema?: DbSchemaRow[];
 }
 
 export interface RecentAdminActionRow {

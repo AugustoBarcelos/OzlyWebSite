@@ -166,7 +166,9 @@ export function PendingPayoutsCard({ refreshKey, onSelectAffiliate }: Props) {
         <div>
           <Title className="!text-base">💸 Pagar agora</Title>
           <Text className="mt-0.5 text-xs text-navy-300">
-            Conversões com status <code>commission_ready</code> aguardando payout
+            Tudo aguardando payout: conversões <code>commission_ready</code> +
+            bônus de volume + bônus de retenção. Confira o breakdown de cada
+            afiliado antes de pagar — os três têm origens diferentes.
           </Text>
         </div>
         {totalCount === 0 ? (
@@ -191,7 +193,7 @@ export function PendingPayoutsCard({ refreshKey, onSelectAffiliate }: Props) {
                 {formatMoney(s.cents, s.currency)}
               </div>
               <div className="text-[10px] text-amber-700">
-                {s.count} conv
+                {s.count} {s.count === 1 ? 'item' : 'itens'}
               </div>
             </div>
           ))}
@@ -210,11 +212,18 @@ export function PendingPayoutsCard({ refreshKey, onSelectAffiliate }: Props) {
               : null;
             const breakdown: string[] = [];
             if (a.breakdown_conv_count > 0)
-              breakdown.push(`${a.breakdown_conv_count} convs $${(a.breakdown_conv_cents / 100).toFixed(2)}`);
+              breakdown.push(`${a.breakdown_conv_count} comissão(ões) $${(a.breakdown_conv_cents / 100).toFixed(2)}`);
             if (a.breakdown_volume_count > 0)
-              breakdown.push(`${a.breakdown_volume_count} vol $${(a.breakdown_volume_cents / 100).toFixed(2)}`);
+              breakdown.push(`${a.breakdown_volume_count} bônus volume $${(a.breakdown_volume_cents / 100).toFixed(2)}`);
             if (a.breakdown_milestone_count > 0)
-              breakdown.push(`${a.breakdown_milestone_count} ret $${(a.breakdown_milestone_cents / 100).toFixed(2)}`);
+              breakdown.push(`${a.breakdown_milestone_count} bônus retenção $${(a.breakdown_milestone_cents / 100).toFixed(2)}`);
+
+            // Bônus sem nenhuma comissão base é anomalia: os bônus são calculados
+            // em cima de clientes que renovaram, então zero comissão + bônus
+            // pendente quase sempre significa dado sujo (promo, trial, teste).
+            const bonusWithoutCommission =
+              a.breakdown_conv_count === 0 &&
+              a.breakdown_volume_count + a.breakdown_milestone_count > 0;
 
             return (
               <li
@@ -243,6 +252,12 @@ export function PendingPayoutsCard({ refreshKey, onSelectAffiliate }: Props) {
                   {breakdown.length > 0 && (
                     <div className="mt-0.5 text-[10px] text-navy-400">
                       {breakdown.join(' · ')}
+                    </div>
+                  )}
+                  {bonusWithoutCommission && (
+                    <div className="mt-1 inline-block rounded border border-rose-200 bg-rose-50 px-1.5 py-0.5 text-[10px] font-medium text-rose-800">
+                      ⚠️ bônus sem comissão base — nenhum indicado renovou.
+                      Abra o afiliado e confira as conversions antes de pagar.
                     </div>
                   )}
                 </button>

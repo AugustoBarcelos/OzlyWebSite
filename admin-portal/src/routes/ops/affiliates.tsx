@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   Badge,
   Card,
@@ -82,6 +82,16 @@ interface ConversionRow {
   affiliate_id: string;
   affiliate_code: string | null;
   referred_user_id: string;
+  /** Identidade do indicado — adicionada em 20260817000100. */
+  referred_name: string | null;
+  referred_email_masked: string | null;
+  referred_is_test: boolean;
+  referred_is_deleted: boolean;
+  /** Estado no RevenueCat — mostra se o indicado é pagante de verdade. */
+  rc_status: string | null;
+  rc_is_active: boolean;
+  rc_store: string | null;
+  rc_revenue_usd_cents: number;
   signup_at: string;
   first_purchase_at: string | null;
   first_renewal_at: string | null;
@@ -493,9 +503,9 @@ export function AffiliatesPage() {
           {/* KPI strip */}
           <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <KpiTile
-              label="Afiliados ativos"
+              label="Afiliados habilitados"
               value={loading ? null : totals.active}
-              hint={`de ${totals.totalCount} total`}
+              hint={`de ${totals.totalCount} cadastrados · flag on/off, não performance`}
               tone="brand"
             />
             <KpiTile
@@ -519,7 +529,7 @@ export function AffiliatesPage() {
             <KpiTile
               label="Signups (30d)"
               value={loading ? null : totals.signups30d}
-              hint={`${totals.last30dActive} afiliados ativos`}
+              hint={`${totals.last30dActive} afiliado(s) trouxeram alguém no período`}
               tone="lime"
             />
           </section>
@@ -809,6 +819,7 @@ export function AffiliatesPage() {
                           <TableRow>
                             <TableHeaderCell>Status</TableHeaderCell>
                             <TableHeaderCell>Referred user</TableHeaderCell>
+                            <TableHeaderCell>RevenueCat</TableHeaderCell>
                             <TableHeaderCell>Signed up</TableHeaderCell>
                             <TableHeaderCell>First purchase</TableHeaderCell>
                             <TableHeaderCell>First renewal</TableHeaderCell>
@@ -827,8 +838,44 @@ export function AffiliatesPage() {
                                   {c.status.replace(/_/g, ' ')}
                                 </Badge>
                               </TableCell>
-                              <TableCell className="font-mono text-xs">
-                                {c.referred_user_id.slice(0, 8)}…
+                              <TableCell>
+                                <Link
+                                  to={`/users/${c.referred_user_id}`}
+                                  className="text-sm font-medium text-navy-700 hover:text-brand-700 hover:underline"
+                                >
+                                  {c.referred_name ?? 'sem nome'}
+                                </Link>
+                                <div className="text-[11px] text-navy-400">
+                                  {c.referred_email_masked ?? '—'}
+                                </div>
+                                <div className="mt-0.5 flex flex-wrap gap-1">
+                                  {c.referred_is_test && (
+                                    <Badge color="amber" size="xs">conta de teste</Badge>
+                                  )}
+                                  {c.referred_is_deleted && (
+                                    <Badge color="slate" size="xs">deletada</Badge>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="text-xs text-navy-600">
+                                  {c.rc_status ?? 'sem assinatura'}
+                                  {c.rc_store === 'promotional' && (
+                                    <span className="ml-1 text-amber-700">(promo)</span>
+                                  )}
+                                </div>
+                                <div
+                                  className={[
+                                    'text-[11px] tabular-nums',
+                                    c.rc_revenue_usd_cents > 0
+                                      ? 'text-emerald-700'
+                                      : 'text-rose-600',
+                                  ].join(' ')}
+                                >
+                                  {c.rc_revenue_usd_cents > 0
+                                    ? `USD ${(c.rc_revenue_usd_cents / 100).toFixed(2)} pagos`
+                                    : 'nunca pagou'}
+                                </div>
                               </TableCell>
                               <TableCell>{formatRelativeTime(c.signup_at)}</TableCell>
                               <TableCell>

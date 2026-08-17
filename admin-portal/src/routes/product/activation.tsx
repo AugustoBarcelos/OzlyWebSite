@@ -5,6 +5,7 @@ import { FunnelIcon, PackageIcon } from '@/components/Icons';
 import { Spinner } from '@/components/Spinner';
 import { GlobalFilterBar } from '@/components/GlobalFilterBar';
 import { RawDataPanel } from '@/components/RawDataPanel';
+import { FunnelStageUsers, type FunnelStage } from './FunnelStageUsers';
 import { callRpc, RpcError } from '@/lib/rpc';
 import { useGlobalFilters } from '@/lib/useGlobalFilters';
 import { formatNumber, formatPercent } from '@/lib/format';
@@ -36,6 +37,7 @@ export function ProductActivationPage() {
   const [lifecycle, setLifecycle] = useState<LifecycleFunnelResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [openStage, setOpenStage] = useState<FunnelStage | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -63,7 +65,12 @@ export function ProductActivationPage() {
     };
   }, [periodDays]);
 
-  const lifecycleStages = useMemo(() => {
+  const lifecycleStages = useMemo((): Array<{
+    key: FunnelStage;
+    label: string;
+    value: number;
+    hint: string;
+  }> => {
     if (!lifecycle) return [];
     return [
       { key: 'signed_up', label: 'Cadastrou', value: lifecycle.signed_up, hint: 'Conta criada' },
@@ -137,6 +144,12 @@ export function ProductActivationPage() {
         <Title className="!text-sm !font-semibold text-navy-700">
           Etapas do funil ({periodDays} dias)
         </Title>
+        <p className="mt-0.5 text-[11px] text-navy-400">
+          Funil legado, montado em cima de <code>app_events</code>. O onboarding
+          value-first grava o job direto no banco e pula o evento{' '}
+          <code>job_created</code>, então este funil subconta. Para números
+          confiáveis e drill-down clicável, use o funil comportamental abaixo.
+        </p>
         {loading ? (
           <div className="mt-4 flex items-center gap-2 text-xs text-navy-400">
             <Spinner size="sm" /> Carregando…
@@ -214,41 +227,69 @@ export function ProductActivationPage() {
               const conv = prev && prev.value > 0 ? stage.value / prev.value : null;
               const widthPct =
                 lifecycleMax > 0 ? Math.max((stage.value / lifecycleMax) * 100, 2) : 0;
+              const isOpen = openStage === stage.key;
               return (
-                <li key={stage.key} className="rounded-md border border-navy-50 bg-white p-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-mono text-navy-300">
-                        {String(i + 1).padStart(2, '0')}
-                      </span>
-                      <div>
-                        <div className="text-sm font-medium text-navy-700">{stage.label}</div>
-                        <div className="text-[11px] text-navy-400">{stage.hint}</div>
+                <li key={stage.key}>
+                  <button
+                    type="button"
+                    aria-expanded={isOpen}
+                    onClick={() => setOpenStage(isOpen ? null : stage.key)}
+                    className={[
+                      'w-full rounded-md border bg-white p-3 text-left transition-colors',
+                      isOpen
+                        ? 'border-brand-300 ring-1 ring-brand-200'
+                        : 'border-navy-50 hover:border-brand-200',
+                    ].join(' ')}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-mono text-navy-300">
+                          {String(i + 1).padStart(2, '0')}
+                        </span>
+                        <div>
+                          <div className="text-sm font-medium text-navy-700">{stage.label}</div>
+                          <div className="text-[11px] text-navy-400">{stage.hint}</div>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className="text-base font-semibold text-navy-700">
+                          {formatNumber(stage.value)}
+                        </span>
+                        {conv !== null ? (
+                          <span className="text-[11px] text-brand-600">
+                            {formatPercent(stage.value, prev?.value ?? null)} conv.
+                          </span>
+                        ) : i > 0 ? (
+                          <span className="text-[11px] text-navy-300">conv. n/a</span>
+                        ) : null}
                       </div>
                     </div>
-                    <div className="flex flex-col items-end">
-                      <span className="text-base font-semibold text-navy-700">
-                        {formatNumber(stage.value)}
-                      </span>
-                      {conv !== null ? (
-                        <span className="text-[11px] text-brand-600">
-                          {formatPercent(stage.value, prev?.value ?? null)} conv.
-                        </span>
-                      ) : i > 0 ? (
-                        <span className="text-[11px] text-navy-300">conv. n/a</span>
-                      ) : null}
+                    <div className="mt-2 h-1.5 w-full rounded-full bg-navy-50">
+                      <div
+                        className="h-1.5 rounded-full"
+                        style={{
+                          width: `${widthPct}%`,
+                          background:
+                            'linear-gradient(90deg, var(--color-brand-400), var(--color-lime-400))',
+                        }}
+                      />
                     </div>
-                  </div>
-                  <div className="mt-2 h-1.5 w-full rounded-full bg-navy-50">
-                    <div
-                      className="h-1.5 rounded-full"
-                      style={{
-                        width: `${widthPct}%`,
-                        background:
-                          'linear-gradient(90deg, var(--color-brand-400), var(--color-lime-400))',
-                      }}
-                    />
-                  </div>
+                    <div className="mt-1.5 text-[10px] font-medium text-brand-600">
+                      {isOpen ? 'Fechar lista ▲' : 'Ver quem está aqui ▼'}
+                    </div>
+                  </button>
+
+                  {isOpen && (
+                    <div className="mt-2">
+                      <FunnelStageUsers
+                        stage={stage.key}
+                        stageLabel={stage.label}
+                        periodDays={periodDays}
+                        expectedCount={stage.value}
+                        onClose={() => setOpenStage(null)}
+                      />
+                    </div>
+                  )}
                 </li>
               );
             })}
