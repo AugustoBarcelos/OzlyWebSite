@@ -131,7 +131,9 @@ export function MarketingWinbackPage() {
     void load();
   }, [load]);
 
-  const rows = data?.rows ?? [];
+  // Memoizado porque `?? []` devolve um array novo a cada render enquanto data
+  // é nulo, o que invalidaria os dois useMemo abaixo em todo ciclo.
+  const rows = useMemo(() => data?.rows ?? [], [data]);
 
   const campaigns = useMemo<CampaignAgg[]>(() => {
     const m = new Map<string, CampaignAgg>();
