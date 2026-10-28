@@ -15,12 +15,12 @@
     "@sentry/react": "^8.49.0",
     "@supabase/supabase-js": "^2.46.0",
     "@tremor/react": "^3.18.7",
-    "posthog-js": "^1.205.0",
+    "posthog-js": "^1.440.0",
     "qrcode": "^1.5.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.18.2",
-    "zod": "^3.24.0"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",

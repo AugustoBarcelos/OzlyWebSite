@@ -6,6 +6,7 @@ import {
   deleteBroadcast,
   listBroadcasts,
   sendBroadcastNow,
+  sendBroadcastTest,
   MESSAGING_SEGMENTS,
   type BroadcastRow,
   type MsgChannel,
@@ -86,6 +87,18 @@ export function BroadcastsTable({ channel, refreshKey = 0 }: Props) {
     try {
       await sendBroadcastNow(r.id);
       toast({ title: 'Broadcast na fila de envio (≤1 min)', variant: 'success' });
+      await reload();
+    } catch (e) {
+      toast({ title: e instanceof RpcError ? e.message : 'Failed', variant: 'error' });
+    }
+  }
+
+  async function handleSendTest(r: BroadcastRow) {
+    const email = window.prompt('Enviar teste para qual email?', '');
+    if (!email) return;
+    try {
+      await sendBroadcastTest(r.id, email.trim());
+      toast({ title: `Teste na fila para ${email.trim()} (≤1 min)`, variant: 'success' });
       await reload();
     } catch (e) {
       toast({ title: e instanceof RpcError ? e.message : 'Failed', variant: 'error' });
@@ -174,6 +187,16 @@ export function BroadcastsTable({ channel, refreshKey = 0 }: Props) {
                   </td>
                   <td className="py-3 text-right">
                     <div className="flex items-center justify-end gap-3">
+                      {channel === 'msg_email' &&
+                        (r.status === 'draft' || r.status === 'failed') && (
+                        <button
+                          type="button"
+                          onClick={() => void handleSendTest(r)}
+                          className="text-xs font-medium text-sky-600 hover:underline"
+                        >
+                          Enviar teste
+                        </button>
+                      )}
                       {(r.status === 'draft' ||
                         r.status === 'scheduled' ||
                         r.status === 'failed') && (
