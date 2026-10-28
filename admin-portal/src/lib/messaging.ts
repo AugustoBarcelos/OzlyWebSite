@@ -103,6 +103,17 @@ export async function deleteBroadcast(id: string) {
  * hands it to the messaging-send-broadcast edge function. Delivery is near-real-
  * time (≤1 min), not instant.
  */
+/**
+ * Send a draft/failed email broadcast ONLY to `email` (subject "[TEST]"). The
+ * dispatcher cron picks it up within ~1 min and puts it back to draft.
+ */
+export async function sendBroadcastTest(id: string, email: string) {
+  return callRpc<{ ok: boolean; broadcast_id: string; status: BroadcastStatus }>(
+    'messaging_send_test',
+    { p_id: id, p_email: email },
+  );
+}
+
 export async function sendBroadcastNow(id: string) {
   return callRpc<{ ok: boolean; broadcast_id: string; status: BroadcastStatus }>(
     'messaging_send_now',
