@@ -23,7 +23,8 @@ type EnvKey =
   | 'VITE_SENTRY_ORG'
   | 'VITE_SENTRY_PROJECT'
   | 'VITE_YT_CHANNEL_ID'
-  | 'VITE_APP_URL';
+  | 'VITE_APP_URL'
+  | 'VITE_STAGING';
 
 // IMPORTANT: access each var STATICALLY. A dynamic `import.meta.env[name]`
 // makes Vite inline the ENTIRE env object into the bundle — including any
@@ -40,6 +41,7 @@ const RAW: Record<EnvKey, string | undefined> = {
   VITE_SENTRY_PROJECT: import.meta.env.VITE_SENTRY_PROJECT,
   VITE_YT_CHANNEL_ID: import.meta.env.VITE_YT_CHANNEL_ID,
   VITE_APP_URL: import.meta.env.VITE_APP_URL,
+  VITE_STAGING: import.meta.env.VITE_STAGING,
 };
 
 function read(name: EnvKey): string | undefined {
@@ -93,4 +95,6 @@ export const env = {
   /** YouTube channel id (UCxxxxx) we care about — not a secret. */
   ytChannelId: read('VITE_YT_CHANNEL_ID'),
   appUrl,
+  /** Staging build (synthetic data): enables email+password login. Never set in prod. */
+  isStaging: read('VITE_STAGING') === 'true',
 } as const;

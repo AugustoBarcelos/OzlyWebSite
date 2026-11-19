@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { callRpc, RpcError } from '@/lib/rpc';
 import { identify as identifyPostHog, reset as resetPostHog } from '@/lib/posthog';
 import { Sentry } from '@/lib/sentry';
-import { appUrl } from '@/lib/env';
+import { appUrl, env } from '@/lib/env';
 import {
   AuthContext,
   type AdminRole,
@@ -140,6 +140,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const signInWithPassword = useCallback(async (email: string, password: string) => {
+    if (!env.isStaging) throw new Error('Password sign-in is disabled.');
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw new Error('Invalid email or password.');
+  }, []);
+
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
     resetPostHog();
@@ -184,9 +190,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       hasPortalAccess,
       hasChannelGrant,
       signIn,
+      signInWithPassword,
       signOut,
     }),
-    [user, role, member, grants, loading, isAdmin, hasPortalAccess, hasChannelGrant, signIn, signOut],
+    [user, role, member, grants, loading, isAdmin, hasPortalAccess, hasChannelGrant, signIn, signInWithPassword, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Navigate, useLocation, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 import { useAuth } from '@/lib/auth';
+import { env } from '@/lib/env';
 import { Spinner } from '@/components/Spinner';
 
 /**
@@ -23,11 +24,12 @@ const EmailSchema = z
   .email('Enter a valid email address');
 
 export function LoginPage() {
-  const { user, role, loading, signIn } = useAuth();
+  const { user, role, loading, signIn, signInWithPassword } = useAuth();
   const [searchParams] = useSearchParams();
   const location = useLocation();
 
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -60,8 +62,12 @@ export function LoginPage() {
 
     setSubmitting(true);
     try {
-      await signIn(parsed.data);
-      setSentTo(parsed.data);
+      if (env.isStaging) {
+        await signInWithPassword(parsed.data, password);
+      } else {
+        await signIn(parsed.data);
+        setSentTo(parsed.data);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
@@ -75,6 +81,11 @@ export function LoginPage() {
         aria-labelledby="login-title"
         className="w-full max-w-md rounded-xl border border-navy-100 bg-white p-8 shadow-sm"
       >
+        {env.isStaging && (
+          <div className="mb-4 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+            STAGING — synthetic data only
+          </div>
+        )}
         <div className="mb-6 flex items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-md bg-brand-500 text-base font-bold text-white">
             O
@@ -121,7 +132,9 @@ export function LoginPage() {
               Sign in
             </h1>
             <p className="mt-1 text-sm text-navy-500">
-              We&apos;ll send a one-time link to your email.
+              {env.isStaging
+                ? 'Staging: sign in with email and password.'
+                : <>We&apos;ll send a one-time link to your email.</>}
             </p>
 
             <label
@@ -145,6 +158,27 @@ export function LoginPage() {
               className="mt-1 w-full rounded-md border border-navy-100 bg-white px-3 py-2 text-sm text-navy-700 shadow-sm placeholder:text-navy-300 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:bg-navy-50"
             />
 
+            {env.isStaging && (
+              <>
+                <label
+                  htmlFor="password"
+                  className="mt-4 block text-xs font-medium text-navy-600"
+                >
+                  Password
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={submitting}
+                  className="mt-1 w-full rounded-md border border-navy-100 bg-white px-3 py-2 text-sm text-navy-700 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:bg-navy-50"
+                />
+              </>
+            )}
+
             {error && (
               <p
                 role="alert"
@@ -160,7 +194,9 @@ export function LoginPage() {
               className="mt-5 flex w-full items-center justify-center gap-2 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-500 disabled:cursor-not-allowed disabled:bg-brand-300"
             >
               {submitting && <Spinner size="sm" label="Sending" />}
-              {submitting ? 'Sending…' : 'Send magic link'}
+              {env.isStaging
+                ? (submitting ? 'Signing in…' : 'Sign in')
+                : (submitting ? 'Sending…' : 'Send magic link')}
             </button>
 
             <p className="mt-6 text-[11px] leading-relaxed text-navy-400">

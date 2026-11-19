@@ -66,6 +66,8 @@ export interface AuthContextValue {
   /** Convenience helper — re-check is also enforced server-side. */
   hasChannelGrant: (kind: ChannelKind, perm: ChannelPerm) => boolean;
   signIn: (email: string) => Promise<void>;
+  /** Staging only (env.isStaging) — prod is magic-link only. */
+  signInWithPassword: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
